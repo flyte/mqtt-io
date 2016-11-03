@@ -58,13 +58,13 @@ if __name__ == "__main__":
 
     def on_conn(client, userdata, flags, rc):
         for output_config in config["digital_outputs"]:
-            topic = "%s/output/%s" % (topic_prefix, output_config["name"])
+            topic = "%s/output/%s/set" % (topic_prefix, output_config["name"])
             client.subscribe(topic, qos=1)
             _LOG.info("Subscribed to topic: %r", topic)
 
     def on_msg(client, userdata, msg):
         _LOG.info("Got message on topic %r: %r", msg.topic, msg.payload)
-        output_name = msg.topic[len("%s/output/" % topic_prefix):]
+        output_name = msg.topic[len("%s/output/" % topic_prefix):-4]
         output_config = None
         for output in config["digital_outputs"]:
             if output["name"] == output_name:
@@ -82,6 +82,7 @@ if __name__ == "__main__":
         gpio = GPIOS[output_config["module"]]
         gpio.set_pin(output_config["pin"], value)
         _LOG.info("Set output %r to %r", output_config["name"], value)
+        client.publish("%s/output/%s" % (topic_prefix, output_name), payload=msg.payload)
 
     client.on_disconnect = on_disconnect
     client.on_connect = on_conn
