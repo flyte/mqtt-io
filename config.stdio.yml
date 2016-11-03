@@ -1,0 +1,51 @@
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  user: ""
+  password: ""
+  topic_prefix: pimqttgpio/mydevice
+
+# gpio_modules:
+#   - name: raspberrypi
+#     module: raspberrypi
+
+#   - name: pcf8574
+#     module: pcf8574
+#     i2c_bus_num: 1
+#     chip_addr: 0x20
+
+# digital_inputs:
+#   - name: button
+#     module: raspberrypi
+#     pin: 21
+#     on_payload: "ON"
+#     off_payload: "OFF"
+#     pullup: no
+#     pulldown: yes
+
+# digital_outputs:
+#   - name: bell
+#     module: raspberrypi
+#     pin: 20
+#     on_payload: "ON"
+#     off_payload: "OFF"
+
+gpio_modules:
+  - name: stdio
+    module: stdio
+
+digital_inputs:
+  - name: button
+    module: stdio
+    pin: 21
+    on_payload: "ON"
+    off_payload: "OFF"
+    pullup: yes
+    pulldown: no
+
+digital_outputs:
+  - name: bell
+    module: stdio
+    pin: 20
+    on_payload: "ON"
+    off_payload: "OFF"

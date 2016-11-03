@@ -2,12 +2,16 @@ import argparse
 import logging
 import yaml
 from time import sleep
+from importlib import import_module
 
-import RPi.GPIO as gpio
 import paho.mqtt.client as mqtt
+
+from pi_mqtt_gpio.modules import PinPullup, PinDirection
 
 
 RECONNECT_DELAY_SECS = 5
+GPIOS = {}
+LAST_STATES = {}
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
@@ -19,6 +23,21 @@ def on_disconnect(client, userdata, rc):
     while rc != 0:
         sleep(RECONNECT_DELAY_SECS)
         rc = client.reconnect()
+
+
+def install_missing_requirements(module):
+    reqs = getattr(module, "REQUIREMENTS")
+    if reqs is None:
+        return
+    import pkg_resources
+    installed = pkg_resources.WorkingSet()
+    not_installed = []
+    for req in reqs:
+        if installed.find(pkg_resources.Requirement.parse(req)) is None:
+            not_installed.append(req)
+    if not_installed:
+        import pip
+        pip.main(["install"] + not_installed)
 
 
 if __name__ == "__main__":
@@ -60,27 +79,33 @@ if __name__ == "__main__":
                 msg.payload)
             return
         value = msg.payload == output_config["on_payload"]
-        gpio.output(output_config["pin"], value)
+        gpio = GPIOS[output_config["module"]]
+        gpio.set_pin(output_config["pin"], value)
         _LOG.info("Set output %r to %r", output_config["name"], value)
 
     client.on_disconnect = on_disconnect
     client.on_connect = on_conn
     client.on_message = on_msg
 
-    gpio.setmode(gpio.BCM)
-    last_states = {}
+    for gpio_config in config["gpio_modules"]:
+        gpio_module = import_module("pi_mqtt_gpio.modules.%s" % gpio_config["module"])
+        install_missing_requirements(gpio_module)
+        GPIOS[gpio_config["name"]] = gpio_module.GPIO(gpio_config)
 
     for input_config in config["digital_inputs"]:
         pud = None
         if input_config["pullup"]:
-            pud = gpio.PUD_UP
+            pud = PinPullup.UP
         elif input_config["pulldown"]:
-            pud = gpio.PUD_DOWN
-        gpio.setup(input_config["pin"], gpio.IN, pull_up_down=pud)
-        last_states[input_config["pin"]] = None
+            pud = PinPullup.DOWN
+
+        gpio = GPIOS[input_config["module"]]
+        gpio.setup_pin(input_config["pin"], PinDirection.INPUT, pud, input_config)
+        LAST_STATES[input_config["name"]] = None
 
     for output_config in config["digital_outputs"]:
-        gpio.setup(output_config["pin"], gpio.OUT)
+        gpio = GPIOS[output_config["module"]]
+        gpio.setup_pin(output_config["pin"], PinDirection.OUTPUT, None, output_config)
 
     client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     client.loop_start()
@@ -88,11 +113,12 @@ if __name__ == "__main__":
     try:
         while True:
             for input_config in config["digital_inputs"]:
-                state = bool(gpio.input(input_config["pin"]))
+                gpio = GPIOS[input_config["module"]]
+                state = bool(gpio.get_pin(input_config["pin"]))
                 sleep(0.05)
-                if bool(gpio.input(input_config["pin"])) != state:
+                if bool(gpio.get_pin(input_config["pin"])) != state:
                     continue
-                if state != last_states[input_config["pin"]]:
+                if state != LAST_STATES[input_config["name"]]:
                     _LOG.info(
                         "Input %r state changed to %r",
                         input_config["name"],
@@ -101,9 +127,10 @@ if __name__ == "__main__":
                         "%s/input/%s" % (topic_prefix, input_config["name"]),
                         payload=(input_config["on_payload"] if state
                                  else input_config["off_payload"]))
-                    last_states[input_config["pin"]] = state
+                    LAST_STATES[input_config["name"]] = state
             sleep(0.05)
     except KeyboardInterrupt:
         print ""
     finally:
+        client.disconnect()
         client.loop_stop()

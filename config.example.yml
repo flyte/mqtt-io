@@ -5,8 +5,21 @@ mqtt:
   password: ""
   topic_prefix: pimqttgpio/mydevice
 
+gpio_modules:
+  - name: raspberrypi
+    module: raspberrypi
+
+  - name: pcf8574
+    module: pcf8574
+    i2c_bus_num: 1
+    chip_addr: 0x20
+
+  - name: dev
+    module: stdio
+
 digital_inputs:
   - name: button
+    module: raspberrypi
     pin: 21
     on_payload: "ON"
     off_payload: "OFF"
@@ -15,6 +28,13 @@ digital_inputs:
 
 digital_outputs:
   - name: bell
+    module: pcf8574
     pin: 20
+    on_payload: "ON"
+    off_payload: "OFF"
+
+  - name: test
+    module: dev
+    pin: 1
     on_payload: "ON"
     off_payload: "OFF"
