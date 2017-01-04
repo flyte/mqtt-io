@@ -82,14 +82,17 @@ if __name__ == "__main__":
         gpio = GPIOS[output_config["module"]]
         gpio.set_pin(output_config["pin"], value)
         _LOG.info("Set output %r to %r", output_config["name"], value)
-        client.publish("%s/output/%s" % (topic_prefix, output_name), payload=msg.payload)
+        client.publish(
+            "%s/output/%s" % (topic_prefix, output_name),
+            payload=msg.payload)
 
     client.on_disconnect = on_disconnect
     client.on_connect = on_conn
     client.on_message = on_msg
 
     for gpio_config in config["gpio_modules"]:
-        gpio_module = import_module("pi_mqtt_gpio.modules.%s" % gpio_config["module"])
+        gpio_module = import_module(
+            "pi_mqtt_gpio.modules.%s" % gpio_config["module"])
         install_missing_requirements(gpio_module)
         GPIOS[gpio_config["name"]] = gpio_module.GPIO(gpio_config)
 
@@ -101,12 +104,14 @@ if __name__ == "__main__":
             pud = PinPullup.DOWN
 
         gpio = GPIOS[input_config["module"]]
-        gpio.setup_pin(input_config["pin"], PinDirection.INPUT, pud, input_config)
+        gpio.setup_pin(
+            input_config["pin"], PinDirection.INPUT, pud, input_config)
         LAST_STATES[input_config["name"]] = None
 
     for output_config in config["digital_outputs"]:
         gpio = GPIOS[output_config["module"]]
-        gpio.setup_pin(output_config["pin"], PinDirection.OUTPUT, None, output_config)
+        gpio.setup_pin(
+            output_config["pin"], PinDirection.OUTPUT, None, output_config)
 
     client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     client.loop_start()

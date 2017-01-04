@@ -1,0 +1,21 @@
+language: python
+python: 2.7
+env:
+- TOX_ENV=py27
+- TOX_ENV=py33
+- TOX_ENV=py34
+- TOX_ENV=flake8
+- TOX_ENV=pylint
+install:
+- pip install tox
+script:
+- tox -e $TOX_ENV
+deploy:
+  provider: pypi
+  user: flyte
+  password:
+    secure: doZN0aLEdMiNq9lw4n2AWYTMa+HiW0SIirMX3ffSLT9L4ynFkZA1R0RCpXkVRgIC2ug/bl7OjYpLp6QRbvoRkqaMpbtT+vFB9j0ywkZte8V00uEqgrEa2D2bOAXmcSRq965LJ46b9WoHy3+5/1YjTKv+VXzDxy7wVK1i97pc0N51YxNVKO8c77C+D3CXo/Oey3webXllMwiUFuSTEQgErE8qMMNsE1XI9M67Vy55ZK9qs+UTqUdU+fXDIaJmK3jnDp1b/yhtZTeHyWiPRM2DNUGj+dsAulLBINAmWqC7tswUJ53WdXtKgETffslwEYCLw+6hoLPAYv2vMumlihm7PjrK65dN7PoPBL5qYSVLG2DpxBYtYkmLiu1yvOcaswgk0TmwMAQa76sF0fJ1AIwPCUEOn7OvVAqG76dggvl00hZU/gBic+PaFqmZT7t72cAP9i+9xdfeUdwdOsuLuKH2lvvQKskS2tX0U21kdzhj7G5S8g5qNVJ9hnerG6oQx2aHvP9lCzMr6/VFu6Zbr6XrHmNyQjOuimO1ytL7X5j4k9UdME2FyVnxXqc/8NydwWrTFINFtsKN8jXl1J+mCdeAud+X4Q/8uFq5KqYtE3UgZYwY71vt06SN3Nk+O9hMNkfkcgIwf4jLap/QgHpK3jXVz1Zqd/atV8motNZ3ZzBgKSU=
+  on:
+    tags: true
+    repo: flyte/pi-mqtt-gpio
+  distributions: sdist
