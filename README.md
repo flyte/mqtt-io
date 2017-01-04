@@ -8,6 +8,10 @@ Installation
 
 `pip install pi-mqtt-gpio`
 
+Execution
+---------
+`python -m pi_mqtt_gpio.server config.yml`
+
 Configuration
 -------------
 
