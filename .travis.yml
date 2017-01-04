@@ -5,7 +5,6 @@ env:
 - TOX_ENV=py33
 - TOX_ENV=py34
 - TOX_ENV=flake8
-- TOX_ENV=pylint
 install:
 - pip install tox
 script:
