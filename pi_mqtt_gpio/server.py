@@ -26,8 +26,10 @@ def on_disconnect(client, userdata, rc):
 
 
 def install_missing_requirements(module):
-    reqs = getattr(module, "REQUIREMENTS")
-    if reqs is None:
+    try:
+        reqs = getattr(module, "REQUIREMENTS")
+    except AttributeError:
+        _LOG.info("Module %r has no extra requirements to install." % module)
         return
     import pkg_resources
     installed = pkg_resources.WorkingSet()
