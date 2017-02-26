@@ -59,7 +59,7 @@ if __name__ == "__main__":
         client.username_pw_set(user, password)
 
     def on_conn(client, userdata, flags, rc):
-        for output_config in config["digital_outputs"]:
+        for output_config in config.get("digital_outputs", []):
             topic = "%s/output/%s/set" % (topic_prefix, output_config["name"])
             client.subscribe(topic, qos=1)
             _LOG.info("Subscribed to topic: %r", topic)
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         _LOG.info("Got message on topic %r: %r", msg.topic, msg.payload)
         output_name = msg.topic[len("%s/output/" % topic_prefix):-4]
         output_config = None
-        for output in config["digital_outputs"]:
+        for output in config.get("digital_outputs", []):
             if output["name"] == output_name:
                 output_config = output
         if output_config is None:
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         install_missing_requirements(gpio_module)
         GPIOS[gpio_config["name"]] = gpio_module.GPIO(gpio_config)
 
-    for input_config in config["digital_inputs"]:
+    for input_config in config.get("digital_inputs", []):
         pud = None
         if input_config["pullup"]:
             pud = PinPullup.UP
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             input_config["pin"], PinDirection.INPUT, pud, input_config)
         LAST_STATES[input_config["name"]] = None
 
-    for output_config in config["digital_outputs"]:
+    for output_config in config.get("digital_outputs", []):
         gpio = GPIOS[output_config["module"]]
         gpio.setup_pin(
             output_config["pin"], PinDirection.OUTPUT, None, output_config)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     try:
         while True:
-            for input_config in config["digital_inputs"]:
+            for input_config in config.get("digital_inputs", []):
                 gpio = GPIOS[input_config["module"]]
                 state = bool(gpio.get_pin(input_config["pin"]))
                 sleep(0.05)
