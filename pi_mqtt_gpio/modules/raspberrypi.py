@@ -21,6 +21,7 @@ class GPIO(GenericGPIO):
         }
 
         PULLUPS = {
+            PinPullup.OFF: gpio.PUD_OFF,
             PinPullup.UP: gpio.PUD_UP,
             PinPullup.DOWN: gpio.PUD_DOWN
         }
@@ -29,9 +30,13 @@ class GPIO(GenericGPIO):
 
     def setup_pin(self, pin, direction, pullup, pin_config):
         direction = DIRECTIONS[direction]
-        if pullup is not None:
+
+        if pullup is None:
+            pullup = PULLUPS[0]
+        else:
             pullup = PULLUPS[pullup]
-        self.io.setup(pin, direction, pull_up_down=pullup)
+
+	self.io.setup(pin, direction, pull_up_down=pullup)
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)

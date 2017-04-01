@@ -9,8 +9,9 @@ class PinDirection(Enum):
 
 
 class PinPullup(Enum):
-    UP = 0
-    DOWN = 1
+    OFF = 0
+    UP = 1
+    DOWN = 2
 
 
 class GenericGPIO(object):
