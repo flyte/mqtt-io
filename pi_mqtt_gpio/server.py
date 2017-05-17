@@ -53,7 +53,7 @@ if __name__ == "__main__":
     client = mqtt.Client()
     user = config["mqtt"].get("user")
     password = config["mqtt"].get("password")
-    topic_prefix = config["mqtt"]["topic_prefix"].strip("/")
+    topic_prefix = config["mqtt"]["topic_prefix"].rstrip("/")
 
     if user and password:
         client.username_pw_set(user, password)
