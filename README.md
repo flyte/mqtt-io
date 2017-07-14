@@ -17,9 +17,9 @@ Configuration
 
 Configuration is handled by a YAML file which is passed as an argument to the server on startup.
 
-###Pins
+### Pins
 
-With the following example config, switch pin 21 on by publishing to the `home/kitchen/output/lights/set` topic with a payload of `ON`.
+With the following example config, switch pin 21 on by publishing to the `home/kitchen/output/lights/set` topic with a payload of `ON`, and pin 22 by publishing to `home/kitchen/output/fan/set`.
 
 ```yaml
 mqtt:
@@ -37,6 +37,12 @@ digital_outputs:
   - name: lights
     module: raspberrypi
     pin: 21
+    on_payload: "ON"
+    off_payload: "OFF"
+  
+  - name: fan
+    module: raspberrypi
+    pin: 22
     on_payload: "ON"
     off_payload: "OFF"
 ```
@@ -65,7 +71,7 @@ digital_inputs:
     pulldown: no
 ```
 
-###Modules
+### Modules
 
 The IO modules are pluggable and multiple may be used at once. For example, if you have a Raspberry PI with some GPIO pins in use and also a PCF8574 IO expander on the I2C bus, you'd list two modules in the `gpio_modules` section and set up the inputs and outputs accordingly:
 
