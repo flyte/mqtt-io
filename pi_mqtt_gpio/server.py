@@ -50,7 +50,11 @@ if __name__ == "__main__":
     with open(args.config) as f:
         config = yaml.load(f)
 
-    client = mqtt.Client()
+    if config["mqtt"].get("protocol") == "MQTTv31":
+        client = mqtt.Client("", True, None, mqtt.MQTTv31)
+    else:
+        client = mqtt.Client()
+        
     user = config["mqtt"].get("user")
     password = config["mqtt"].get("password")
     topic_prefix = config["mqtt"]["topic_prefix"].rstrip("/")

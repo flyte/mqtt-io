@@ -4,6 +4,7 @@ mqtt:
   user: ""
   password: ""
   topic_prefix: pimqttgpio/mydevice
+  protocol: "MQTTv311"   # Set this to MQTTv31 if you get "Disconnected from MQTT server with code: 1"
 
 gpio_modules:
   - name: raspberrypi
