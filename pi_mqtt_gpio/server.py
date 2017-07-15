@@ -5,6 +5,7 @@ from time import sleep
 from importlib import import_module
 
 import paho.mqtt.client as mqtt
+import cerberus
 
 from pi_mqtt_gpio.modules import PinPullup, PinDirection
 
@@ -14,7 +15,9 @@ GPIOS = {}
 LAST_STATES = {}
 SET_TOPIC = "set"
 OUTPUT_TOPIC = "output"
-
+# @TODO: Don't load this at module level
+with open("config.schema.yml") as schema:
+    CONFIG_SCHEMA = yaml.load(schema)
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
@@ -89,45 +92,19 @@ def init_mqtt(config):
 
     def on_conn(client, userdata, flags, rc):
         for output_config in config.get("digital_outputs", []):
-            topic = "%s/%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"], SET_TOPIC)
+            topic = "%s/%s/%s/%s" % (
+                topic_prefix, OUTPUT_TOPIC, output_config["name"], SET_TOPIC)
             client.subscribe(topic, qos=1)
             _LOG.info("Subscribed to topic: %r", topic)
 
     def on_msg(client, userdata, msg):
         _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
-
-
-
-
-if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("config")
-    args = p.parse_args()
-
-    with open(args.config) as f:
-        config = yaml.load(f)
-
-    client = mqtt.Client()
-    user = config["mqtt"].get("user")
-    password = config["mqtt"].get("password")
-    topic_prefix = config["mqtt"]["topic_prefix"].rstrip("/")
-
-    if user and password:
-        client.username_pw_set(user, password)
-
-    def on_conn(client, userdata, flags, rc):
-        for output_config in config.get("digital_outputs", []):
-            topic = "%s/output/%s/%s" % (topic_prefix, output_config["name"], SET_TOPIC)
-            client.subscribe(topic, qos=1)
-            _LOG.info("Subscribed to topic: %r", topic)
-
-    def on_msg(client, userdata, msg):
-        _LOG.info("Got message on topic %r: %r", msg.topic, msg.payload)
-        output_name = msg.topic[len("%s/output/" % topic_prefix):-4]
+        output_name = output_name_from_topic_set(msg.topic, topic_prefix)
         output_config = None
         for output in config.get("digital_outputs", []):
             if output["name"] == output_name:
                 output_config = output
+                break
         if output_config is None:
             _LOG.warning("No output found with name of %r", output_name)
             return
@@ -140,14 +117,31 @@ if __name__ == "__main__":
         value = msg.payload == output_config["on_payload"]
         gpio = GPIOS[output_config["module"]]
         gpio.set_pin(output_config["pin"], value)
-        _LOG.info("Set output %r to %r", output_config["name"], value)
+        _LOG.info(
+            "Set %r output %r to %r",
+            output_config["module"],
+            output_config["name"],
+            value)
         client.publish(
-            "%s/output/%s" % (topic_prefix, output_name),
+            "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_name),
             payload=msg.payload)
 
     client.on_disconnect = on_disconnect
     client.on_connect = on_conn
     client.on_message = on_msg
+
+    return client
+
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("config")
+    args = p.parse_args()
+
+    with open(args.config) as f:
+        config = yaml.load(f)
+
+    client = init_mqtt(config)
 
     for gpio_config in config["gpio_modules"]:
         gpio_module = import_module(

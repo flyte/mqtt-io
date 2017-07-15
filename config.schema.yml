@@ -1,0 +1,81 @@
+mqtt:
+  type: dict
+  schema:
+    host:
+      type: string
+      empty: no
+    port:
+      type: integer
+      min: 1
+      max: 65535
+    user:
+      type: string
+      required: no
+    password:
+      type: string
+      required: no
+    topic_prefix:
+      type: string
+
+gpio_modules:
+  type: list
+  allow_unknown: yes
+  schema:
+    name:
+      type: string
+      empty: no
+    module:
+      type: string
+      empty: no
+
+digital_inputs:
+  type: list
+  required: no
+  schema:
+    name:
+      type: string
+      required: yes
+    module:
+      type: string
+      required: yes
+    pin:
+      type: integer
+      required: yes
+      min: 0
+    on_payload:
+      type: string
+      required: no
+      empty: no
+    off_payload:
+      type: string
+      required: no
+      empty: no
+    pullup:
+      type: boolean
+      required: no
+    pulldown:
+      type: boolean
+      required: no
+
+digital_outputs:
+  type: list
+  required: no
+  schema:
+    name:
+      type: string
+      required: yes
+    module:
+      type: string
+      required: yes
+    pin:
+      type: integer
+      required: yes
+      min: 0
+    on_payload:
+      type: string
+      required: no
+      empty: no
+    off_payload:
+      type: string
+      required: no
+      empty: no
