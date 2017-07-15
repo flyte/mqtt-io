@@ -12,10 +12,17 @@ from pi_mqtt_gpio.modules import PinPullup, PinDirection
 RECONNECT_DELAY_SECS = 5
 GPIOS = {}
 LAST_STATES = {}
+SET_TOPIC = "set"
+OUTPUT_TOPIC = "output"
+
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
 _LOG.setLevel(logging.DEBUG)
+
+
+class CannotInstallModuleRequirements(Exception):
+    pass
 
 
 def on_disconnect(client, userdata, rc):
@@ -26,20 +33,70 @@ def on_disconnect(client, userdata, rc):
 
 
 def install_missing_requirements(module):
+    """
+    Some of the modules require external packages to be installed. This gets
+    the list from the `REQUIREMENTS` module attribute and attempts to
+    install the requirements using pip.
+    """
+    reqs = []
     try:
         reqs = getattr(module, "REQUIREMENTS")
     except AttributeError:
+        pass
+    if not reqs:
         _LOG.info("Module %r has no extra requirements to install." % module)
         return
     import pkg_resources
-    installed = pkg_resources.WorkingSet()
-    not_installed = []
+    pkgs_installed = pkg_resources.WorkingSet()
+    pkgs_required = []
     for req in reqs:
-        if installed.find(pkg_resources.Requirement.parse(req)) is None:
-            not_installed.append(req)
-    if not_installed:
-        import pip
-        pip.main(["install"] + not_installed)
+        if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
+            pkgs_required.append(req)
+    if pkgs_required:
+        from pip.commands.install import InstallCommand
+        from pip.status_codes import SUCCESS
+        cmd = InstallCommand()
+        result = cmd.main(pkgs_required)
+        if result != SUCCESS:
+            raise CannotInstallModuleRequirements(
+                "Unable to install packages for module %r (%s)..." % (
+                    module, pkgs_required))
+
+
+def output_name_from_topic_set(topic, topic_prefix):
+    """
+    Return the name of the output which the topic is setting.
+    :param topic: str such as mytopicprefix/output/tv_lamp/set
+    :param topic_prefix: str prefix of our topics
+    :return: str name of the output this topic is setting
+    """
+    if not topic.endswith("/%s" % SET_TOPIC):
+        raise ValueError("This topic does not end with '/%s'" % SET_TOPIC)
+    return topic[len("%s/%s/" % (topic_prefix, OUTPUT_TOPIC)):-len(SET_TOPIC)-1]
+
+
+def init_mqtt(config):
+    """
+    Configure MQTT client.
+    """
+    client = mqtt.Client()
+    user = config["mqtt"].get("user")
+    password = config["mqtt"].get("password")
+    topic_prefix = config["mqtt"]["topic_prefix"].rstrip("/")
+
+    if user and password:
+        client.username_pw_set(user, password)
+
+    def on_conn(client, userdata, flags, rc):
+        for output_config in config.get("digital_outputs", []):
+            topic = "%s/%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"], SET_TOPIC)
+            client.subscribe(topic, qos=1)
+            _LOG.info("Subscribed to topic: %r", topic)
+
+    def on_msg(client, userdata, msg):
+        _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
+
+
 
 
 if __name__ == "__main__":
@@ -60,7 +117,7 @@ if __name__ == "__main__":
 
     def on_conn(client, userdata, flags, rc):
         for output_config in config.get("digital_outputs", []):
-            topic = "%s/output/%s/set" % (topic_prefix, output_config["name"])
+            topic = "%s/output/%s/%s" % (topic_prefix, output_config["name"], SET_TOPIC)
             client.subscribe(topic, qos=1)
             _LOG.info("Subscribed to topic: %r", topic)
 
@@ -138,7 +195,7 @@ if __name__ == "__main__":
                     LAST_STATES[input_config["name"]] = state
             sleep(0.05)
     except KeyboardInterrupt:
-        print ""
+        print("")
     finally:
         client.disconnect()
         client.loop_stop()
