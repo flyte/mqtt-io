@@ -82,7 +82,9 @@ def output_name_from_topic_set(topic, topic_prefix):
     """
     if not topic.endswith("/%s" % SET_TOPIC):
         raise ValueError("This topic does not end with '/%s'" % SET_TOPIC)
-    return topic[len("%s/%s/" % (topic_prefix, OUTPUT_TOPIC)):-len(SET_TOPIC)-1]
+    lindex = len("%s/%s/" % (topic_prefix, OUTPUT_TOPIC))
+    rindex = -len(SET_TOPIC)-1
+    return topic[lindex:rindex]
 
 
 def init_mqtt(config):
