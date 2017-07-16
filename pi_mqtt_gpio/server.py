@@ -91,17 +91,18 @@ def init_mqtt(config):
     Configure MQTT client.
     """
     client = mqtt.Client()
-    user = config["mqtt"].get("user")
-    password = config["mqtt"].get("password")
+    user = config["mqtt"]["user"]
+    password = config["mqtt"]["password"]
     topic_prefix = config["mqtt"]["topic_prefix"]
+    digital_outputs = config["digital_outputs"]
 
     if user and password:
         client.username_pw_set(user, password)
 
     def on_conn(client, userdata, flags, rc):
-        for output_config in config.get("digital_outputs", []):
+        for out_conf in digital_outputs:
             topic = "%s/%s/%s/%s" % (
-                topic_prefix, OUTPUT_TOPIC, output_config["name"], SET_TOPIC)
+                topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC)
             client.subscribe(topic, qos=1)
             _LOG.info("Subscribed to topic: %r", topic)
 
@@ -109,7 +110,7 @@ def init_mqtt(config):
         _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
         output_name = output_name_from_topic_set(msg.topic, topic_prefix)
         output_config = None
-        for output in config.get("digital_outputs", []):
+        for output in digital_outputs:
             if output["name"] == output_name:
                 output_config = output
                 break
@@ -156,6 +157,9 @@ if __name__ == "__main__":
         sys.exit(1)
     config = validator.normalized(config)
 
+    digital_inputs = config["digital_inputs"]
+    digital_outputs = config["digital_outputs"]
+
     client = init_mqtt(config)
 
     for gpio_config in config["gpio_modules"]:
@@ -178,22 +182,22 @@ if __name__ == "__main__":
         install_missing_requirements(gpio_module)
         GPIOS[gpio_config["name"]] = gpio_module.GPIO(gpio_config)
 
-    for input_config in config.get("digital_inputs", []):
+    for in_conf in digital_inputs:
         pud = None
-        if input_config["pullup"]:
+        if in_conf["pullup"]:
             pud = PinPullup.UP
-        elif input_config["pulldown"]:
+        elif in_conf["pulldown"]:
             pud = PinPullup.DOWN
 
-        gpio = GPIOS[input_config["module"]]
+        gpio = GPIOS[in_conf["module"]]
         gpio.setup_pin(
-            input_config["pin"], PinDirection.INPUT, pud, input_config)
-        LAST_STATES[input_config["name"]] = None
+            in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+        LAST_STATES[in_conf["name"]] = None
 
-    for output_config in config.get("digital_outputs", []):
-        gpio = GPIOS[output_config["module"]]
+    for out_conf in digital_outputs:
+        gpio = GPIOS[out_conf["module"]]
         gpio.setup_pin(
-            output_config["pin"], PinDirection.OUTPUT, None, output_config)
+            out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
 
     client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     client.loop_start()
@@ -201,22 +205,22 @@ if __name__ == "__main__":
     topic_prefix = config["mqtt"]["topic_prefix"]
     try:
         while True:
-            for input_config in config.get("digital_inputs", []):
-                gpio = GPIOS[input_config["module"]]
-                state = bool(gpio.get_pin(input_config["pin"]))
+            for in_conf in digital_inputs:
+                gpio = GPIOS[in_conf["module"]]
+                state = bool(gpio.get_pin(in_conf["pin"]))
                 sleep(0.05)
-                if bool(gpio.get_pin(input_config["pin"])) != state:
+                if bool(gpio.get_pin(in_conf["pin"])) != state:
                     continue
-                if state != LAST_STATES[input_config["name"]]:
+                if state != LAST_STATES[in_conf["name"]]:
                     _LOG.info(
                         "Input %r state changed to %r",
-                        input_config["name"],
+                        in_conf["name"],
                         state)
                     client.publish(
-                        "%s/input/%s" % (topic_prefix, input_config["name"]),
-                        payload=(input_config["on_payload"] if state
-                                 else input_config["off_payload"]))
-                    LAST_STATES[input_config["name"]] = state
+                        "%s/input/%s" % (topic_prefix, in_conf["name"]),
+                        payload=(in_conf["on_payload"] if state
+                                 else in_conf["off_payload"]))
+                    LAST_STATES[in_conf["name"]] = state
             sleep(0.05)
     except KeyboardInterrupt:
         print("")
