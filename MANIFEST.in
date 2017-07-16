@@ -1,2 +1,3 @@
 # http://packages.python.org/distribute/setuptools.html#including-data-files
 include *requirements.txt
+recursive-include *.yml

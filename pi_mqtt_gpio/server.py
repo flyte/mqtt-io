@@ -16,6 +16,7 @@ GPIOS = {}
 LAST_STATES = {}
 SET_TOPIC = "set"
 OUTPUT_TOPIC = "output"
+INPUT_TOPIC = "input2"
 # @TODO: Don't load this at module level
 with open("config.schema.yml") as schema:
     CONFIG_SCHEMA = yaml.load(schema)
@@ -27,6 +28,12 @@ _LOG.setLevel(logging.DEBUG)
 
 class CannotInstallModuleRequirements(Exception):
     pass
+
+
+class ModuleConfigInvalid(Exception):
+    def __init__(self, errors, *args, **kwargs):
+        self.errors = errors
+        super(ModuleConfigInvalid, self).__init__(*args, **kwargs)
 
 
 class ConfigValidator(cerberus.Validator):
@@ -191,6 +198,61 @@ def init_mqtt(config, digital_outputs):
     return client
 
 
+def configure_gpio_module(gpio_config):
+    """
+    Imports gpio module, validates its config and returns an instance of it.
+    :param gpio_config: Module configuration values
+    :type gpio_config: dict
+    :return: Configured instance of the gpio module
+    :rtype: pi_mqtt_gpio.modules.GenericGPIO
+    """
+    gpio_module = import_module(
+        "pi_mqtt_gpio.modules.%s" % gpio_config["module"])
+    # Doesn't need to be a deep copy because we won't modify the base
+    # validation rules, just add more of them.
+    module_config_schema = BASE_SCHEMA.copy()
+    module_config_schema.update(
+        getattr(gpio_module, "CONFIG_SCHEMA", {}))
+    module_validator = cerberus.Validator(module_config_schema)
+    if not module_validator.validate(gpio_config):
+        raise ModuleConfigInvalid(module_validator.errors)
+    gpio_config = module_validator.normalized(gpio_config)
+    install_missing_requirements(gpio_module)
+    return gpio_module.GPIO(gpio_config)
+
+
+def initialise_digital_input(in_conf, gpio):
+    """
+    Initialises digital input.
+    :param in_conf: Input config
+    :type in_conf: dict
+    :param gpio: Instance of GenericGPIO to use to configure the pin
+    :type gpio: pi_mqtt_gpio.modules.GenericGPIO
+    :return: None
+    :rtype: NoneType
+    """
+    pud = None
+    if in_conf["pullup"]:
+        pud = PinPullup.UP
+    elif in_conf["pulldown"]:
+        pud = PinPullup.DOWN
+    gpio.setup_pin(
+        in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+
+
+def initialise_digital_output(out_conf, gpio):
+    """
+    Initialises digital output.
+    :param out_conf: Output config
+    :type out_conf: dict
+    :param gpio: Instance of GenericGPIO to use to configure the pin
+    :type gpio: pi_mqtt_gpio.modules.GenericGPIO
+    :return: None
+    :rtype: NoneType
+    """
+    gpio.setup_pin(out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
+
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("config")
@@ -209,45 +271,26 @@ if __name__ == "__main__":
     digital_inputs = config["digital_inputs"]
     digital_outputs = config["digital_outputs"]
 
-    client = init_mqtt(config["mqtt"], config["output_config"])
+    client = init_mqtt(config["mqtt"], config["digital_outputs"])
 
     for gpio_config in config["gpio_modules"]:
-        gpio_module = import_module(
-            "pi_mqtt_gpio.modules.%s" % gpio_config["module"])
-        # Doesn't need to be a deep copy because we won't modify the base
-        # validation rules, just add more of them.
-        module_config_schema = BASE_SCHEMA.copy()
-        module_config_schema.update(
-            getattr(gpio_module, "CONFIG_SCHEMA", {}))
-        module_validator = cerberus.Validator(module_config_schema)
-        if not module_validator.validate(gpio_config):
+        try:
+            GPIOS[gpio_config["name"]] = configure_gpio_module(gpio_config)
+        except ModuleConfigInvalid as exc:
             _LOG.error(
                 "Config for %r module named %r did not validate:\n%s",
                 gpio_config["module"],
                 gpio_config["name"],
-                yaml.dump(module_validator.errors)
+                yaml.dump(exc.errors)
             )
             sys.exit(1)
-        gpio_config = module_validator.normalized(gpio_config)
-        install_missing_requirements(gpio_module)
-        GPIOS[gpio_config["name"]] = gpio_module.GPIO(gpio_config)
 
     for in_conf in digital_inputs:
-        pud = None
-        if in_conf["pullup"]:
-            pud = PinPullup.UP
-        elif in_conf["pulldown"]:
-            pud = PinPullup.DOWN
-
-        gpio = GPIOS[in_conf["module"]]
-        gpio.setup_pin(
-            in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+        initialise_digital_input(in_conf, GPIOS[in_conf["module"]])
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
-        gpio = GPIOS[out_conf["module"]]
-        gpio.setup_pin(
-            out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
+        initialise_digital_output(out_conf, GPIOS[out_conf["module"]])
 
     client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     client.loop_start()
@@ -267,7 +310,9 @@ if __name__ == "__main__":
                         in_conf["name"],
                         state)
                     client.publish(
-                        "%s/input/%s" % (topic_prefix, in_conf["name"]),
+                        "%s/%s/%s" % (
+                            topic_prefix, INPUT_TOPIC, in_conf["name"]
+                        ),
                         payload=(in_conf["on_payload"] if state
                                  else in_conf["off_payload"]))
                     LAST_STATES[in_conf["name"]] = state
