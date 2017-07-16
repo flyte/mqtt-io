@@ -30,11 +30,33 @@ class CannotInstallModuleRequirements(Exception):
 
 
 class ConfigValidator(cerberus.Validator):
-    def _normalize_coerce_rstrip_slash(self, value):
+    """
+    Cerberus Validator containing function(s) for use with validating or
+    coercing values relevant to the pi_mqtt_gpio project.
+    """
+
+    @staticmethod
+    def _normalize_coerce_rstrip_slash(value):
+        """
+        Strip forward slashes from the end of the string.
+        :param value: String to strip forward slashes from
+        :type value: str
+        :return: String without forward slashes on the end
+        :rtype: str
+        """
         return value.rstrip("/")
 
 
 def on_disconnect(client, userdata, rc):
+    """
+    Called when MQTT client disconnects. Attempts to reconnect indefinitely
+    if disconnection was unintentional.
+    :param client: MQTT client instance
+    :param userdata: Any user data set in client
+    :param rc: The disconnection result (0 is intentional disconnect)
+    :return: None
+    :rtype: NoneType
+    """
     _LOG.warning("Disconnected from MQTT server with code: %s" % rc)
     while rc != 0:
         sleep(RECONNECT_DELAY_SECS)
@@ -46,6 +68,10 @@ def install_missing_requirements(module):
     Some of the modules require external packages to be installed. This gets
     the list from the `REQUIREMENTS` module attribute and attempts to
     install the requirements using pip.
+    :param module: GPIO module
+    :type module: ModuleType
+    :return: None
+    :rtype: NoneType
     """
     reqs = []
     try:
@@ -75,9 +101,12 @@ def install_missing_requirements(module):
 def output_name_from_topic_set(topic, topic_prefix):
     """
     Return the name of the output which the topic is setting.
-    :param topic: str such as mytopicprefix/output/tv_lamp/set
-    :param topic_prefix: str prefix of our topics
-    :return: str name of the output this topic is setting
+    :param topic: String such as 'mytopicprefix/output/tv_lamp/set'
+    :type topic: str
+    :param topic_prefix: Prefix of our topics
+    :type topic_prefix: str
+    :return: Name of the output this topic is setting
+    :rtype: str
     """
     if not topic.endswith("/%s" % SET_TOPIC):
         raise ValueError("This topic does not end with '/%s'" % SET_TOPIC)
@@ -86,20 +115,30 @@ def output_name_from_topic_set(topic, topic_prefix):
     return topic[lindex:rindex]
 
 
-def init_mqtt(config):
+def init_mqtt(config, digital_outputs):
     """
     Configure MQTT client.
+    :param config: Validated config dict containing MQTT connection details
+    :type config: dict
+    :param digital_outputs: List of validated config dicts for digital outputs
+    :type digital_outputs: list
+    :return: Connected and initialised MQTT client
+    :rtype: paho.mqtt.client.Client
     """
     client = mqtt.Client()
-    user = config["mqtt"]["user"]
-    password = config["mqtt"]["password"]
-    topic_prefix = config["mqtt"]["topic_prefix"]
-    digital_outputs = config["digital_outputs"]
+    topic_prefix = config["topic_prefix"]
 
-    if user and password:
-        client.username_pw_set(user, password)
+    if config["user"] and config["password"]:
+        client.username_pw_set(config["user"], config["password"])
 
-    def on_conn(client, userdata, flags, rc):
+    def on_conn(client, *args, **kwargs):
+        """
+        On connection to MQTT, subscribe to the relevant topics.
+        :param client: Connected MQTT client instance
+        :type client: paho.mqtt.client.Client
+        :return: None
+        :rtype: NoneType
+        """
         for out_conf in digital_outputs:
             topic = "%s/%s/%s/%s" % (
                 topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC)
@@ -107,6 +146,16 @@ def init_mqtt(config):
             _LOG.info("Subscribed to topic: %r", topic)
 
     def on_msg(client, userdata, msg):
+        """
+        On reception of MQTT message, set the relevant output to a new value.
+        :param client: Connected MQTT client instance
+        :type client: paho.mqtt.client.Client
+        :param userdata: User data (any data type)
+        :param msg: Received message instance
+        :type msg: paho.mqtt.client.MQTTMessage
+        :return: None
+        :rtype: NoneType
+        """
         _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
         output_name = output_name_from_topic_set(msg.topic, topic_prefix)
         output_config = None
@@ -160,7 +209,7 @@ if __name__ == "__main__":
     digital_inputs = config["digital_inputs"]
     digital_outputs = config["digital_outputs"]
 
-    client = init_mqtt(config)
+    client = init_mqtt(config["mqtt"], config["output_config"])
 
     for gpio_config in config["gpio_modules"]:
         gpio_module = import_module(
