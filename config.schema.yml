@@ -5,10 +5,14 @@ mqtt:
     host:
       type: string
       empty: no
+      required: no
+      default: localhost
     port:
       type: integer
       min: 1
       max: 65535
+      required: no
+      default: 1883
     user:
       type: string
       required: no
@@ -19,6 +23,8 @@ mqtt:
       default: ""
     topic_prefix:
       type: string
+      required: no
+      default: ""
       coerce: rstrip_slash
 
 gpio_modules:
