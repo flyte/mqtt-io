@@ -7,15 +7,13 @@ REQUIREMENTS = ("pcf8574",)
 CONFIG_SCHEMA = {
     "i2c_bus_num": {
         "type": "integer",
-        "required": False,
-        "empty": False,
-        "default": 1
+        "required": True,
+        "empty": False
     },
     "chip_addr": {
         "type": "integer",
-        "required": False,
-        "empty": False,
-        "default": 0x20
+        "required": True,
+        "empty": False
     }
 }
 

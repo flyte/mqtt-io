@@ -153,7 +153,7 @@ if __name__ == "__main__":
     if not validator.validate(config):
         _LOG.error(
             "Config did not validate:\n%s",
-            yaml.dump(validator.errors, indent=2))
+            yaml.dump(validator.errors))
         sys.exit(1)
     config = validator.normalized(config)
 
@@ -173,9 +173,10 @@ if __name__ == "__main__":
         module_validator = cerberus.Validator(module_config_schema)
         if not module_validator.validate(gpio_config):
             _LOG.error(
-                "Config for module named %r did not validate:\n%r",
+                "Config for %r module named %r did not validate:\n%s",
+                gpio_config["module"],
                 gpio_config["name"],
-                yaml.dump(module_validator.errors, indent=2)
+                yaml.dump(module_validator.errors)
             )
             sys.exit(1)
         gpio_config = module_validator.normalized(gpio_config)
