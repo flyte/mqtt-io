@@ -12,7 +12,7 @@ from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
 
 
 RECONNECT_DELAY_SECS = 5
-GPIOS = {}
+GPIO_MODULES = {}
 LAST_STATES = {}
 SET_TOPIC = "set"
 OUTPUT_TOPIC = "output"
@@ -80,11 +80,7 @@ def install_missing_requirements(module):
     :return: None
     :rtype: NoneType
     """
-    reqs = []
-    try:
-        reqs = getattr(module, "REQUIREMENTS")
-    except AttributeError:
-        pass
+    reqs = getattr(module, "REQUIREMENTS", [])
     if not reqs:
         _LOG.info("Module %r has no extra requirements to install." % module)
         return
@@ -176,11 +172,11 @@ def init_mqtt(config, digital_outputs):
         if msg.payload not in (
                 output_config["on_payload"], output_config["off_payload"]):
             _LOG.warning(
-                "Payload does not relate to configured on/off values: %r",
+                "Payload %r does not relate to configured on/off values.",
                 msg.payload)
             return
         value = msg.payload == output_config["on_payload"]
-        gpio = GPIOS[output_config["module"]]
+        gpio = GPIO_MODULES[output_config["module"]]
         gpio.set_pin(output_config["pin"], value)
         _LOG.info(
             "Set %r output %r to %r",
@@ -275,7 +271,8 @@ if __name__ == "__main__":
 
     for gpio_config in config["gpio_modules"]:
         try:
-            GPIOS[gpio_config["name"]] = configure_gpio_module(gpio_config)
+            GPIO_MODULES[gpio_config["name"]] = configure_gpio_module(
+                gpio_config)
         except ModuleConfigInvalid as exc:
             _LOG.error(
                 "Config for %r module named %r did not validate:\n%s",
@@ -286,11 +283,11 @@ if __name__ == "__main__":
             sys.exit(1)
 
     for in_conf in digital_inputs:
-        initialise_digital_input(in_conf, GPIOS[in_conf["module"]])
+        initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
-        initialise_digital_output(out_conf, GPIOS[out_conf["module"]])
+        initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
 
     client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     client.loop_start()
@@ -299,7 +296,7 @@ if __name__ == "__main__":
     try:
         while True:
             for in_conf in digital_inputs:
-                gpio = GPIOS[in_conf["module"]]
+                gpio = GPIO_MODULES[in_conf["module"]]
                 state = bool(gpio.get_pin(in_conf["pin"]))
                 sleep(0.05)
                 if bool(gpio.get_pin(in_conf["pin"])) != state:
