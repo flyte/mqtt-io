@@ -1,7 +1,6 @@
 import argparse
 import logging
 import yaml
-import json
 import sys
 from time import sleep
 from importlib import import_module
@@ -9,7 +8,7 @@ from importlib import import_module
 import paho.mqtt.client as mqtt
 import cerberus
 
-from pi_mqtt_gpio.modules import PinPullup, PinDirection
+from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
 
 
 RECONNECT_DELAY_SECS = 5
@@ -153,7 +152,7 @@ if __name__ == "__main__":
     if not validator.validate(config):
         _LOG.error(
             "Config did not validate:\n%s",
-            json.dumps(validator.errors, indent=2))
+            yaml.dump(validator.errors, indent=2))
         sys.exit(1)
     config = validator.normalized(config)
 
@@ -162,6 +161,20 @@ if __name__ == "__main__":
     for gpio_config in config["gpio_modules"]:
         gpio_module = import_module(
             "pi_mqtt_gpio.modules.%s" % gpio_config["module"])
+        # Doesn't need to be a deep copy because we won't modify the base
+        # validation rules, just add more of them.
+        module_config_schema = BASE_SCHEMA.copy()
+        module_config_schema.update(
+            getattr(gpio_module, "CONFIG_SCHEMA", {}))
+        module_validator = cerberus.Validator(module_config_schema)
+        if not module_validator.validate(gpio_config):
+            _LOG.error(
+                "Config for module named %r did not validate:\n%r",
+                gpio_config["name"],
+                yaml.dump(module_validator.errors, indent=2)
+            )
+            sys.exit(1)
+        gpio_config = module_validator.normalized(gpio_config)
         install_missing_requirements(gpio_module)
         GPIOS[gpio_config["name"]] = gpio_module.GPIO(gpio_config)
 

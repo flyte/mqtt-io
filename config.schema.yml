@@ -1,5 +1,6 @@
 mqtt:
   type: dict
+  required: yes
   schema:
     host:
       type: string
@@ -20,63 +21,72 @@ mqtt:
 
 gpio_modules:
   type: list
-  allow_unknown: yes
+  required: yes
   schema:
-    name:
-      type: string
-      empty: no
-    module:
-      type: string
-      empty: no
+    type: dict
+    allow_unknown: yes
+    schema:
+      name:
+        type: string
+        required: yes
+        empty: no
+      module:
+        type: string
+        required: yes
+        empty: no
 
 digital_inputs:
   type: list
   required: no
   schema:
-    name:
-      type: string
-      required: yes
-    module:
-      type: string
-      required: yes
-    pin:
-      type: integer
-      required: yes
-      min: 0
-    on_payload:
-      type: string
-      required: no
-      empty: no
-    off_payload:
-      type: string
-      required: no
-      empty: no
-    pullup:
-      type: boolean
-      required: no
-    pulldown:
-      type: boolean
-      required: no
+    type: dict
+    schema:
+      name:
+        type: string
+        required: yes
+      module:
+        type: string
+        required: yes
+      pin:
+        type: integer
+        required: yes
+        min: 0
+      on_payload:
+        type: string
+        required: no
+        empty: no
+      off_payload:
+        type: string
+        required: no
+        empty: no
+      pullup:
+        type: boolean
+        required: no
+      pulldown:
+        type: boolean
+        required: no
 
 digital_outputs:
   type: list
   required: no
   schema:
-    name:
-      type: string
-      required: yes
-    module:
-      type: string
-      required: yes
-    pin:
-      type: integer
-      required: yes
-      min: 0
-    on_payload:
-      type: string
-      required: no
-      empty: no
-    off_payload:
-      type: string
-      required: no
-      empty: no
+    type: dict
+    schema:
+      name:
+        type: string
+        required: yes
+      module:
+        type: string
+        required: yes
+      pin:
+        type: integer
+        required: yes
+        min: 0
+      on_payload:
+        type: string
+        required: no
+        empty: no
+      off_payload:
+        type: string
+        required: no
+        empty: no

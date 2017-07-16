@@ -3,6 +3,18 @@ import abc
 from enum import Enum
 
 
+BASE_SCHEMA = {
+    "name": {
+        "required": True,
+        "empty": False
+    },
+    "module": {
+        "required": True,
+        "empty": False
+    }
+}
+
+
 class PinDirection(Enum):
     INPUT = 0
     OUTPUT = 1

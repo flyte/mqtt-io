@@ -4,6 +4,20 @@ from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
 
 
 REQUIREMENTS = ("pcf8574",)
+CONFIG_SCHEMA = {
+    "i2c_bus_num": {
+        "type": "integer",
+        "required": False,
+        "empty": False,
+        "default": 1
+    },
+    "chip_addr": {
+        "type": "integer",
+        "required": False,
+        "empty": False,
+        "default": 0x20
+    }
+}
 
 PULLUPS = None
 
@@ -18,10 +32,8 @@ class GPIO(GenericGPIO):
             PinPullup.UP: True,
             PinPullup.DOWN: False
         }
-        i2c_bus_num = config.get("i2c_bus_num", 1)
-        chip_addr = config.get("chip_addr", 0x20)
         from pcf8574 import PCF8574
-        self.io = PCF8574(i2c_bus_num, chip_addr)
+        self.io = PCF8574(config["i2c_bus_num"], config["chip_addr"])
 
     def setup_pin(self, pin, direction, pullup, pin_config):
         if direction == PinDirection.INPUT and pullup is not None:
