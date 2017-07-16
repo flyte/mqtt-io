@@ -16,6 +16,7 @@ mqtt:
       required: no
     topic_prefix:
       type: string
+      coerce: rstrip_slash
 
 gpio_modules:
   type: list

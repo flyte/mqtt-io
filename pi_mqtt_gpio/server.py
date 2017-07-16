@@ -1,6 +1,8 @@
 import argparse
 import logging
 import yaml
+import json
+import sys
 from time import sleep
 from importlib import import_module
 
@@ -26,6 +28,11 @@ _LOG.setLevel(logging.DEBUG)
 
 class CannotInstallModuleRequirements(Exception):
     pass
+
+
+class ConfigValidator(cerberus.Validator):
+    def _normalize_coerce_rstrip_slash(self, value):
+        return value.rstrip("/")
 
 
 def on_disconnect(client, userdata, rc):
@@ -85,7 +92,7 @@ def init_mqtt(config):
     client = mqtt.Client()
     user = config["mqtt"].get("user")
     password = config["mqtt"].get("password")
-    topic_prefix = config["mqtt"]["topic_prefix"].rstrip("/")
+    topic_prefix = config["mqtt"]["topic_prefix"]
 
     if user and password:
         client.username_pw_set(user, password)
@@ -140,6 +147,13 @@ if __name__ == "__main__":
 
     with open(args.config) as f:
         config = yaml.load(f)
+    validator = ConfigValidator(CONFIG_SCHEMA)
+    if not validator.validate(config):
+        _LOG.error(
+            "Config did not validate:\n%s",
+            json.dumps(validator.errors, indent=2))
+        sys.exit(1)
+    config = validator.normalized(config)
 
     client = init_mqtt(config)
 
@@ -169,6 +183,7 @@ if __name__ == "__main__":
     client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     client.loop_start()
 
+    topic_prefix = config["mqtt"]["topic_prefix"]
     try:
         while True:
             for input_config in config.get("digital_inputs", []):
