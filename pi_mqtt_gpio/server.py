@@ -123,8 +123,7 @@ def set_pin(output_config, value):
         output_config["module"],
         output_config["name"],
         value)
-    payload = output_config["on_payload"] if value \
-              else output_config["off_payload"]
+    payload = output_config["on_payload" if value else "off_payload"]
     client.publish(
         "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),
         payload=payload)
@@ -155,7 +154,6 @@ def handle_set_ms(msg, value):
     output_config = output_by_name(output_name)
     if output_config is None:
         return
-    payload = output_config["on_payload" if value else "off_payload"]
     gpio = GPIO_MODULES[output_config["module"]]
     previous_value = gpio.get_pin(output_config["pin"])
     set_pin(output_config, value)
@@ -302,7 +300,8 @@ def init_mqtt(config, digital_outputs):
         :rtype: NoneType
         """
         try:
-            _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
+            _LOG.info(
+                "Received message on topic %r: %r", msg.topic, msg.payload)
             if msg.topic.endswith("/%s" % SET_TOPIC):
                 handle_set(msg)
             elif msg.topic.endswith("/%s" % SET_ON_MS_TOPIC):
