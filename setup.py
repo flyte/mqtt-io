@@ -24,7 +24,7 @@ def required(fname):
 
 setup(
     name="pi_mqtt_gpio",
-    version="0.0.5",
+    version="0.0.6",
     packages=find_packages(
         exclude=[
             "*.tests",
