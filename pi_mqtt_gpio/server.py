@@ -2,6 +2,7 @@ import argparse
 import logging
 import yaml
 import sys
+import socket
 from time import sleep
 from importlib import import_module
 
@@ -11,6 +12,13 @@ import cerberus
 from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
 
 
+LOG_LEVEL_MAP = {
+    mqtt.MQTT_LOG_INFO: logging.INFO,
+    mqtt.MQTT_LOG_NOTICE: logging.INFO,
+    mqtt.MQTT_LOG_WARNING: logging.WARNING,
+    mqtt.MQTT_LOG_ERR: logging.ERROR,
+    mqtt.MQTT_LOG_DEBUG: logging.DEBUG
+}
 RECONNECT_DELAY_SECS = 5
 GPIO_MODULES = {}
 LAST_STATES = {}
@@ -78,6 +86,19 @@ def on_disconnect(client, userdata, rc):
     while rc != 0:
         sleep(RECONNECT_DELAY_SECS)
         rc = client.reconnect()
+
+
+def on_log(client, userdata, level, buf):
+    """
+    Called when MQTT client wishes to log something.
+    :param client: MQTT client instance
+    :param userdata: Any user data set in the client
+    :param level: MQTT log level
+    :param buf: The log message buffer
+    :return: None
+    :rtype: NoneType
+    """
+    _LOG.log(LOG_LEVEL_MAP[level], "MQTT client: %s" % buf)
 
 
 def install_missing_requirements(module):
@@ -178,7 +199,8 @@ def init_mqtt(config, digital_outputs):
                 "Invalid client identifier used to connect to MQTT broker.")
             sys.exit(1)
         elif rc == 3:
-            _LOG.warning("MQTT broker unavailable. Retrying...")
+            _LOG.warning("MQTT broker unavailable. Retrying in %s secs...")
+            sleep(RECONNECT_DELAY_SECS)
             client.reconnect()
         elif rc == 4:
             _LOG.fatal(
@@ -231,6 +253,7 @@ def init_mqtt(config, digital_outputs):
     client.on_disconnect = on_disconnect
     client.on_connect = on_conn
     client.on_message = on_msg
+    client.on_log = on_log
 
     return client
 
@@ -330,7 +353,11 @@ if __name__ == "__main__":
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
 
-    client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
+    try:
+        client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
+    except socket.error as err:
+        _LOG.fatal("Unable to connect to MQTT server: %s" % err)
+        sys.exit(1)
     client.loop_start()
 
     topic_prefix = config["mqtt"]["topic_prefix"]
