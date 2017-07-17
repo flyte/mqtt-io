@@ -109,6 +109,13 @@ def on_log(client, userdata, level, buf):
 
 
 def output_by_name(output_name):
+    """
+    Returns the output configuration for a given output name.
+    :param output_name: The name of the output
+    :type output_name: str
+    :return: The output configuration or None if not found
+    :rtype: dict
+    """
     for output in digital_outputs:
         if output["name"] == output_name:
             return output
@@ -116,6 +123,15 @@ def output_by_name(output_name):
 
 
 def set_pin(output_config, value):
+    """
+    Sets the output pin to a new value and publishes it on MQTT.
+    :param output_config: The output configuration
+    :type output_config: dict
+    :param value: The new value to set it to
+    :type value: bool
+    :return: None
+    :rtype: NoneType
+    """
     gpio = GPIO_MODULES[output_config["module"]]
     gpio.set_pin(output_config["pin"], value)
     _LOG.info(
@@ -130,6 +146,13 @@ def set_pin(output_config, value):
 
 
 def handle_set(msg):
+    """
+    Handles an incoming 'set' MQTT message.
+    :param msg: The incoming MQTT message
+    :type msg: paho.mqtt.client.MQTTMessage
+    :return: None
+    :rtype: NoneType
+    """
     output_name = output_name_from_topic(msg.topic, topic_prefix, SET_TOPIC)
     output_config = output_by_name(output_name)
     if output_config is None:
@@ -144,6 +167,15 @@ def handle_set(msg):
 
 
 def handle_set_ms(msg, value):
+    """
+    Handles an incoming 'set_<on/off>_ms' MQTT message.
+    :param msg: The incoming MQTT message
+    :type msg: paho.mqtt.client.MQTTMessage
+    :param value: The value to set the output to
+    :type value: bool
+    :return: None
+    :rtype: NoneType
+    """
     try:
         ms = int(msg.payload)
     except ValueError:
