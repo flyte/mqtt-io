@@ -3,13 +3,14 @@ import logging
 import yaml
 import sys
 import socket
-from time import sleep
+from time import sleep, time
 from importlib import import_module
 
 import paho.mqtt.client as mqtt
 import cerberus
 
 from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
+from pi_mqtt_gpio.scheduler import Scheduler, Task
 
 
 LOG_LEVEL_MAP = {
@@ -23,6 +24,8 @@ RECONNECT_DELAY_SECS = 5
 GPIO_MODULES = {}
 LAST_STATES = {}
 SET_TOPIC = "set"
+SET_ON_MS_TOPIC = "set_on_ms"
+SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input2"
 # @TODO: Don't load this at module level
@@ -35,6 +38,10 @@ _LOG.setLevel(logging.DEBUG)
 
 
 class CannotInstallModuleRequirements(Exception):
+    pass
+
+
+class InvalidPayload(Exception):
     pass
 
 
@@ -101,6 +108,72 @@ def on_log(client, userdata, level, buf):
     _LOG.log(LOG_LEVEL_MAP[level], "MQTT client: %s" % buf)
 
 
+def output_by_name(output_name):
+    for output in digital_outputs:
+        if output["name"] == output_name:
+            return output
+    _LOG.warning("No output found with name of %r", output_name)
+
+
+def set_pin(output_config, value):
+    gpio = GPIO_MODULES[output_config["module"]]
+    gpio.set_pin(output_config["pin"], value)
+    _LOG.info(
+        "Set %r output %r to %r",
+        output_config["module"],
+        output_config["name"],
+        value)
+    payload = output_config["on_payload"] if value \
+              else output_config["off_payload"]
+    client.publish(
+        "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),
+        payload=payload)
+
+
+def handle_set(msg):
+    output_name = output_name_from_topic(msg.topic, topic_prefix, SET_TOPIC)
+    output_config = output_by_name(output_name)
+    if output_config is None:
+        return
+    if msg.payload not in (
+            output_config["on_payload"], output_config["off_payload"]):
+        _LOG.warning(
+            "Payload %r does not relate to configured on/off values.",
+            msg.payload)
+        return
+    set_pin(output_config, msg.payload == output_config["on_payload"])
+
+
+def handle_set_ms(msg, value):
+    try:
+        ms = int(msg.payload)
+    except ValueError:
+        raise InvalidPayload(
+            "Could not parse ms value %r to an integer." % msg.payload)
+    suffix = SET_ON_MS_TOPIC if value else SET_OFF_MS_TOPIC
+    output_name = output_name_from_topic(msg.topic, topic_prefix, suffix)
+    output_config = output_by_name(output_name)
+    if output_config is None:
+        return
+    payload = output_config["on_payload" if value else "off_payload"]
+    gpio = GPIO_MODULES[output_config["module"]]
+    previous_value = gpio.get_pin(output_config["pin"])
+    set_pin(output_config, value)
+    if value != previous_value:
+        scheduler.add_task(Task(
+            time() + ms/1000.0,
+            set_pin,
+            output_config,
+            previous_value
+        ))
+        _LOG.info(
+            "Scheduled output %r to change back to %r after %r ms.",
+            output_config["name"],
+            previous_value,
+            ms
+        )
+
+
 def install_missing_requirements(module):
     """
     Some of the modules require external packages to be installed. This gets
@@ -132,20 +205,22 @@ def install_missing_requirements(module):
                     module, pkgs_required))
 
 
-def output_name_from_topic_set(topic, topic_prefix):
+def output_name_from_topic(topic, topic_prefix, suffix):
     """
     Return the name of the output which the topic is setting.
     :param topic: String such as 'mytopicprefix/output/tv_lamp/set'
     :type topic: str
     :param topic_prefix: Prefix of our topics
     :type topic_prefix: str
+    :param suffix: The suffix of the topic such as "set" or "set_ms"
+    :type suffix: str
     :return: Name of the output this topic is setting
     :rtype: str
     """
-    if not topic.endswith("/%s" % SET_TOPIC):
-        raise ValueError("This topic does not end with '/%s'" % SET_TOPIC)
+    if not topic.endswith("/%s" % suffix):
+        raise ValueError("This topic does not end with '/%s'" % suffix)
     lindex = len("%s/%s/" % (topic_prefix, OUTPUT_TOPIC))
-    rindex = -len(SET_TOPIC)-1
+    rindex = -len(suffix)-1
     return topic[lindex:rindex]
 
 
@@ -186,10 +261,14 @@ def init_mqtt(config, digital_outputs):
                 "Connected to the MQTT broker with protocol v%s.",
                 config["protocol"])
             for out_conf in digital_outputs:
-                topic = "%s/%s/%s/%s" % (
-                    topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC)
-                client.subscribe(topic, qos=1)
-                _LOG.info("Subscribed to topic: %r", topic)
+                for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
+                    topic = "%s/%s/%s/%s" % (
+                        topic_prefix,
+                        OUTPUT_TOPIC,
+                        out_conf["name"],
+                        suffix)
+                    client.subscribe(topic, qos=1)
+                    _LOG.info("Subscribed to topic: %r", topic)
         elif rc == 1:
             _LOG.fatal(
                 "Incorrect protocol version used to connect to MQTT broker.")
@@ -207,7 +286,7 @@ def init_mqtt(config, digital_outputs):
                 "Bad username or password used to connect to MQTT broker.")
             sys.exit(1)
         elif rc == 5:
-            _LOG.fata(
+            _LOG.fatal(
                 "Not authorised to connect to MQTT broker.")
             sys.exit(1)
 
@@ -222,33 +301,20 @@ def init_mqtt(config, digital_outputs):
         :return: None
         :rtype: NoneType
         """
-        _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
-        output_name = output_name_from_topic_set(msg.topic, topic_prefix)
-        output_config = None
-        for output in digital_outputs:
-            if output["name"] == output_name:
-                output_config = output
-                break
-        if output_config is None:
-            _LOG.warning("No output found with name of %r", output_name)
-            return
-        if msg.payload not in (
-                output_config["on_payload"], output_config["off_payload"]):
-            _LOG.warning(
-                "Payload %r does not relate to configured on/off values.",
-                msg.payload)
-            return
-        value = msg.payload == output_config["on_payload"]
-        gpio = GPIO_MODULES[output_config["module"]]
-        gpio.set_pin(output_config["pin"], value)
-        _LOG.info(
-            "Set %r output %r to %r",
-            output_config["module"],
-            output_config["name"],
-            value)
-        client.publish(
-            "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_name),
-            payload=msg.payload)
+        try:
+            _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
+            if msg.topic.endswith("/%s" % SET_TOPIC):
+                handle_set(msg)
+            elif msg.topic.endswith("/%s" % SET_ON_MS_TOPIC):
+                handle_set_ms(msg, True)
+            elif msg.topic.endswith("/%s" % SET_OFF_MS_TOPIC):
+                handle_set_ms(msg, False)
+            else:
+                _LOG.warning("Unhandled topic %r.", msg.topic)
+        except InvalidPayload as exc:
+            _LOG.warning("Invalid payload on received MQTT message: %s" % exc)
+        except Exception:
+            _LOG.exception("Exception while handling received MQTT message:")
 
     client.on_disconnect = on_disconnect
     client.on_connect = on_conn
@@ -360,13 +426,15 @@ if __name__ == "__main__":
         sys.exit(1)
     client.loop_start()
 
+    scheduler = Scheduler()
+
     topic_prefix = config["mqtt"]["topic_prefix"]
     try:
         while True:
             for in_conf in digital_inputs:
                 gpio = GPIO_MODULES[in_conf["module"]]
                 state = bool(gpio.get_pin(in_conf["pin"]))
-                sleep(0.05)
+                sleep(0.01)
                 if bool(gpio.get_pin(in_conf["pin"])) != state:
                     continue
                 if state != LAST_STATES[in_conf["name"]]:
@@ -381,7 +449,8 @@ if __name__ == "__main__":
                         payload=(in_conf["on_payload"] if state
                                  else in_conf["off_payload"]))
                     LAST_STATES[in_conf["name"]] = state
-            sleep(0.05)
+            scheduler.loop()
+            sleep(0.01)
     except KeyboardInterrupt:
         print("")
     finally:
