@@ -53,6 +53,16 @@ class ConfigValidator(cerberus.Validator):
         """
         return value.rstrip("/")
 
+    @staticmethod
+    def _normalize_coerce_tostring(value):
+        """
+        Convert value to string.
+        :param value: Value to convert
+        :return: Value represented as a string.
+        :rtype: str
+        """
+        return str(value)
+
 
 def on_disconnect(client, userdata, rc):
     """
@@ -128,25 +138,56 @@ def init_mqtt(config, digital_outputs):
     :return: Connected and initialised MQTT client
     :rtype: paho.mqtt.client.Client
     """
-    client = mqtt.Client()
     topic_prefix = config["topic_prefix"]
+    protocol = mqtt.MQTTv311
+    if config["protocol"] == "3.1":
+        protocol = mqtt.MQTTv31
+    client = mqtt.Client(protocol=protocol)
 
     if config["user"] and config["password"]:
         client.username_pw_set(config["user"], config["password"])
 
-    def on_conn(client, *args, **kwargs):
+    def on_conn(client, userdata, flags, rc):
         """
         On connection to MQTT, subscribe to the relevant topics.
         :param client: Connected MQTT client instance
         :type client: paho.mqtt.client.Client
+        :param userdata: User data
+        :param flags: Response flags from the broker
+        :type flags: dict
+        :param rc: Response code from the broker
+        :type rc: int
         :return: None
         :rtype: NoneType
         """
-        for out_conf in digital_outputs:
-            topic = "%s/%s/%s/%s" % (
-                topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC)
-            client.subscribe(topic, qos=1)
-            _LOG.info("Subscribed to topic: %r", topic)
+        if rc == 0:
+            _LOG.info(
+                "Connected to the MQTT broker with protocol v%s.",
+                config["protocol"])
+            for out_conf in digital_outputs:
+                topic = "%s/%s/%s/%s" % (
+                    topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC)
+                client.subscribe(topic, qos=1)
+                _LOG.info("Subscribed to topic: %r", topic)
+        elif rc == 1:
+            _LOG.fatal(
+                "Incorrect protocol version used to connect to MQTT broker.")
+            sys.exit(1)
+        elif rc == 2:
+            _LOG.fatal(
+                "Invalid client identifier used to connect to MQTT broker.")
+            sys.exit(1)
+        elif rc == 3:
+            _LOG.warning("MQTT broker unavailable. Retrying...")
+            client.reconnect()
+        elif rc == 4:
+            _LOG.fatal(
+                "Bad username or password used to connect to MQTT broker.")
+            sys.exit(1)
+        elif rc == 5:
+            _LOG.fata(
+                "Not authorised to connect to MQTT broker.")
+            sys.exit(1)
 
     def on_msg(client, userdata, msg):
         """

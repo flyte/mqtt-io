@@ -4,6 +4,7 @@ mqtt:
   user: ""
   password: ""
   topic_prefix: pimqttgpio/mydevice
+  protocol: 3.1.1
 
 gpio_modules:
   - name: stdio
