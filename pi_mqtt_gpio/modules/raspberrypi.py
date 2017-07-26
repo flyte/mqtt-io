@@ -32,7 +32,7 @@ class GPIO(GenericGPIO):
         direction = DIRECTIONS[direction]
 
         if pullup is None:
-            pullup = PULLUPS[0]
+            pullup = PULLUPS[PinPullup.OFF]
         else:
             pullup = PULLUPS[pullup]
 
