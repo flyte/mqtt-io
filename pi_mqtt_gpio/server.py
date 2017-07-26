@@ -155,13 +155,16 @@ def handle_set(msg):
     output_config = output_by_name(output_name)
     if output_config is None:
         return
-    if msg.payload not in (
+    payload = msg.payload.decode("utf8")
+    if payload not in (
             output_config["on_payload"], output_config["off_payload"]):
         _LOG.warning(
-            "Payload %r does not relate to configured on/off values.",
-            msg.payload)
+            "Payload %r does not relate to configured on/off values %r and %r",
+            payload,
+            output_config["on_payload"],
+            output_config["off_payload"])
         return
-    set_pin(output_config, msg.payload == output_config["on_payload"])
+    set_pin(output_config, payload == output_config["on_payload"])
 
 
 def handle_set_ms(msg, value):
