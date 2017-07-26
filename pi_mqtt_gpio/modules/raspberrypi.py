@@ -43,3 +43,6 @@ class GPIO(GenericGPIO):
 
     def get_pin(self, pin):
         return self.io.input(pin)
+
+    def cleanup(self):
+        self.io.cleanup()

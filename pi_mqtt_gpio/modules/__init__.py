@@ -44,3 +44,9 @@ class GenericGPIO(object):
     @abc.abstractmethod
     def get_pin(self, pin):
         pass
+
+    def cleanup(self):
+        """
+        Called when closing the program to handle any cleanup operations.
+        """
+        pass

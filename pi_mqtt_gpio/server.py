@@ -488,3 +488,9 @@ if __name__ == "__main__":
     finally:
         client.disconnect()
         client.loop_stop()
+        for name, gpio in GPIO_MODULES.items():
+            try:
+                gpio.cleanup()
+            except Exception:
+                _LOG.exception(
+                    "Unable to execute cleanup routine for module %r:", name)
