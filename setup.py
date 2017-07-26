@@ -5,13 +5,18 @@ Setuptools script for the pi-mqtt-gpio project.
 
 import os
 from textwrap import fill, dedent
+from string import Template
+from distutils.core import Command
+
 
 try:
     from setuptools import setup, find_packages
+    from setuptools.command.build_py import build_py
 except ImportError:
     from ez_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, find_packages
+    from setuptools.command.build_py import build_py
 
 
 def required(fname):
@@ -22,9 +27,31 @@ def required(fname):
     ).read().split('\n')
 
 
+class SchemaCommand(Command):
+    user_options = []
+
+    def run(self):
+        if self.dry_run:
+            return
+
+        with open("pi_mqtt_gpio/__init__.py.template") as f_templ:
+            templ = Template(f_templ.read())
+        with open("config.schema.yml") as f_schema:
+            with open("pi_mqtt_gpio/__init__.py", "w") as f_out:
+                f_out.write(templ.substitute(config_schema=f_schema.read()))
+                f_out.flush()
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+
 setup(
     name="pi_mqtt_gpio",
     version="0.0.12",
+    cmdclass={"insert_schema": SchemaCommand},
     packages=find_packages(
         exclude=[
             "*.tests",
