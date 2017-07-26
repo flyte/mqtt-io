@@ -3,7 +3,6 @@ import logging
 import yaml
 import sys
 import socket
-import os
 from time import sleep, time
 from importlib import import_module
 
