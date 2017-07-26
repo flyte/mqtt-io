@@ -3,6 +3,7 @@ import logging
 import yaml
 import sys
 import socket
+import os
 from time import sleep, time
 from importlib import import_module
 
@@ -28,8 +29,10 @@ SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input2"
+
 # @TODO: Don't load this at module level
-with open("config.schema.yml") as schema:
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+with open(os.path.join(THIS_DIR, "..", "config.schema.yml")) as schema:
     CONFIG_SCHEMA = yaml.load(schema)
 
 _LOG = logging.getLogger(__name__)
