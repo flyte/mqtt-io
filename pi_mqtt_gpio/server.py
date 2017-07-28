@@ -188,22 +188,20 @@ def handle_set_ms(msg, value):
     output_config = output_by_name(output_name)
     if output_config is None:
         return
-    gpio = GPIO_MODULES[output_config["module"]]
-    previous_value = gpio.get_pin(output_config["pin"])
+
     set_pin(output_config, value)
-    if value != previous_value:
-        scheduler.add_task(Task(
-            time() + ms/1000.0,
-            set_pin,
-            output_config,
-            previous_value
-        ))
-        _LOG.info(
-            "Scheduled output %r to change back to %r after %r ms.",
-            output_config["name"],
-            previous_value,
-            ms
-        )
+    scheduler.add_task(Task(
+        time() + ms/1000.0,
+        set_pin,
+        output_config,
+        not value
+    ))
+    _LOG.info(
+        "Scheduled output %r to change back to %r after %r ms.",
+        output_config["name"],
+        not value,
+        ms
+    )
 
 
 def install_missing_requirements(module):

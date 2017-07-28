@@ -43,6 +43,7 @@ digital_outputs:
   - name: fan
     module: raspberrypi
     pin: 22
+    inverted: yes  # This pin may control an open-collector output which is "on" when the output is "low".
     on_payload: "ON"
     off_payload: "OFF"
 ```
@@ -70,6 +71,12 @@ digital_inputs:
     pullup: yes
     pulldown: no
 ```
+
+#### Temporary Set
+
+You may want to set the output to a given value for a certain amount of time. This can be done using the `/set_on_ms` and `/set_off_ms` topics. If an output is already set to that value, it will stay that value for the given amount of milliseconds and then switch to the opposite.
+
+For example, to set an output named `light` on for one second, publish `1000` as the payload to the `myprefix/output/light/set_on_ms` topic.
 
 ### Modules
 
@@ -108,3 +115,18 @@ digital_outputs:
     on_payload: "ON"
     off_payload: "OFF"
 ```
+
+### MQTT Status Topic
+
+MQTT supports a "last will and testament" (LWT) feature which means the server will publish to a configured topic with a message of your choosing if it loses connection to the client unexpectedly. Using this feature, this project can be configured to publish to a status topic as depicted in the following example config:
+
+```yaml
+mqtt:
+  ...
+  status_topic: status
+  status_payload_running: running
+  status_payload_stopped: stopped
+  status_payload_dead: dead
+```
+
+These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any.
