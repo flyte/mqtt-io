@@ -274,6 +274,18 @@ def init_mqtt(config, digital_outputs):
     if config["user"] and config["password"]:
         client.username_pw_set(config["user"], config["password"])
 
+    # Set last will and testament (LWT)
+    status_topic = "%s/%s" % (topic_prefix, config["status_topic"])
+    client.will_set(
+        status_topic,
+        payload=config["status_payload_dead"],
+        qos=1,
+        retain=True)
+    _LOG.debug(
+        "Last will set on %r as %r.",
+        status_topic,
+        config["status_payload_dead"])
+
     def on_conn(client, userdata, flags, rc):
         """
         On connection to MQTT, subscribe to the relevant topics.
@@ -291,16 +303,6 @@ def init_mqtt(config, digital_outputs):
             _LOG.info(
                 "Connected to the MQTT broker with protocol v%s.",
                 config["protocol"])
-            status_topic = "%s/%s" % (topic_prefix, config["status_topic"])
-            client.will_set(
-                status_topic,
-                payload=config["status_payload_dead"],
-                qos=1,
-                retain=True)
-            _LOG.debug(
-                "Last will set on %r as %r.",
-                status_topic,
-                config["status_payload_dead"])
             for out_conf in digital_outputs:
                 for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
                     topic = "%s/%s/%s/%s" % (
@@ -504,8 +506,8 @@ if __name__ == "__main__":
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
             config["mqtt"]["status_payload_stopped"], qos=1, retain=True)
+        # This should also quit the mqtt loop thread.
         client.disconnect()
-        client.loop_stop()
         for name, gpio in GPIO_MODULES.items():
             try:
                 gpio.cleanup()
