@@ -131,12 +131,13 @@ def set_pin(output_config, value):
     :rtype: NoneType
     """
     gpio = GPIO_MODULES[output_config["module"]]
-    gpio.set_pin(output_config["pin"], value)
+    set_value = not value if output_config["inverted"] else value
+    gpio.set_pin(output_config["pin"], set_value)
     _LOG.info(
         "Set %r output %r to %r",
         output_config["module"],
         output_config["name"],
-        value)
+        set_value)
     payload = output_config["on_payload" if value else "off_payload"]
     client.publish(
         "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),

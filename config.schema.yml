@@ -129,3 +129,7 @@ digital_outputs:
         type: string
         required: no
         empty: no
+      inverted:
+        type: boolean
+        required: no
+        default: no
