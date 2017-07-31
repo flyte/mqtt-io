@@ -28,7 +28,7 @@ SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
-INPUT_TOPIC = "input2"
+INPUT_TOPIC = "input"
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
