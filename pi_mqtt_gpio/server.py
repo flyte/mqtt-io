@@ -77,22 +77,6 @@ class ConfigValidator(cerberus.Validator):
         return str(value)
 
 
-def on_disconnect(client, userdata, rc):
-    """
-    Called when MQTT client disconnects. Attempts to reconnect indefinitely
-    if disconnection was unintentional.
-    :param client: MQTT client instance
-    :param userdata: Any user data set in client
-    :param rc: The disconnection result (0 is intentional disconnect)
-    :return: None
-    :rtype: NoneType
-    """
-    _LOG.warning("Disconnected from MQTT server with code: %s" % rc)
-    while rc != 0:
-        sleep(RECONNECT_DELAY_SECS)
-        rc = client.reconnect()
-
-
 def on_log(client, userdata, level, buf):
     """
     Called when MQTT client wishes to log something.
@@ -364,7 +348,6 @@ def init_mqtt(config, digital_outputs):
         except Exception:
             _LOG.exception("Exception while handling received MQTT message:")
 
-    client.on_disconnect = on_disconnect
     client.on_connect = on_conn
     client.on_message = on_msg
     client.on_log = on_log
