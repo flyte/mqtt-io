@@ -5,6 +5,7 @@ import sys
 import socket
 from time import sleep, time
 from importlib import import_module
+from functools import partial
 
 import paho.mqtt.client as mqtt
 import cerberus
@@ -28,8 +29,12 @@ LAST_STATES = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
+SET_PWM_TOPIC = "set_pwm"
+SET_FREQ_TOPIC = "set_freq"
+SET_DUTY_TOPIC = "set_duty"
 OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input"
+PWM_TOPIC = "pwm"
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
@@ -105,6 +110,20 @@ def output_by_name(output_name):
     _LOG.warning("No output found with name of %r", output_name)
 
 
+def pwm_output_by_name(output_name):
+    """
+    Returns the PWM output configuration for a given output name.
+    :param output_name: The name of the output
+    :type output_name: str
+    :return: The output configuration or None if not found
+    :rtype: dict
+    """
+    for output in pwm_outputs:
+        if output["name"] == output_name:
+            return output
+    _LOG.warning("No PWM output found with name of %r", output_name)
+
+
 def set_pin(output_config, value):
     """
     Sets the output pin to a new value and publishes it on MQTT.
@@ -126,6 +145,32 @@ def set_pin(output_config, value):
     payload = output_config["on_payload" if value else "off_payload"]
     client.publish(
         "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),
+        payload=payload)
+
+
+def set_pwm_pin(pwm_config, value):
+    """
+    Sets the PWM output pin on or off and publishes it on MQTT.
+    :param pwm_config: The PWM configuration
+    :type pwm_config: dict
+    :param: value: The new value to set it to
+    :type value: bool
+    :return: None
+    :rtype: NoneType
+    """
+    gpio = GPIO_MODULES[pwm_config["module"]]
+    if value:
+        gpio.start_pwm(pwm_config["pin"])
+        action = "Started"
+    else:
+        gpio.stop_pwm(pwm_config["pin"])
+        action = "Stopped"
+    _LOG.info(
+        "%s PWM on %r pin %r",
+        action, pwm_config["module"], pwm_config["name"])
+    payload = pwm_config["on_payload" if value else "off_payload"]
+    client.publish(
+        "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, pwm_config["name"]),
         payload=payload)
 
 
@@ -189,6 +234,33 @@ def handle_set_ms(msg, value):
     )
 
 
+def handle_set_pwm(msg):
+    output_name = output_name_from_topic(
+        msg.topic, topic_prefix, SET_PWM_TOPIC)
+    pwm_config = pwm_output_by_name(output_name)
+    if pwm_config is None:
+        return
+    payload = msg.payload.decode("utf8")
+    if payload not in (
+            pwm_config["on_payload"], pwm_config["off_payload"]):
+        _LOG.warning(
+            "Payload %r does not relate to configured on/off values %r and %r",
+            payload,
+            pwm_config["on_payload"],
+            pwm_config["off_payload"])
+        return
+
+    set_pin(pwm_config, payload == pwm_config["on_payload"])
+
+
+def handle_set_freq(msg):
+    pass
+
+
+def handle_set_duty(msg):
+    pass
+
+
 def install_missing_requirements(module):
     """
     Some of the modules require external packages to be installed. This gets
@@ -239,13 +311,15 @@ def output_name_from_topic(topic, topic_prefix, suffix):
     return topic[lindex:rindex]
 
 
-def init_mqtt(config, digital_outputs):
+def init_mqtt(config, digital_outputs, pwm_outputs):
     """
     Configure MQTT client.
     :param config: Validated config dict containing MQTT connection details
     :type config: dict
     :param digital_outputs: List of validated config dicts for digital outputs
     :type digital_outputs: list
+    :param pwm_outputs: List of validated config dicts for pwm outputs
+    :type pwm_outputs: list
     :return: Connected and initialised MQTT client
     :rtype: paho.mqtt.client.Client
     """
@@ -287,15 +361,24 @@ def init_mqtt(config, digital_outputs):
             _LOG.info(
                 "Connected to the MQTT broker with protocol v%s.",
                 config["protocol"])
-            for out_conf in digital_outputs:
-                for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
+            def sub_topics(suffixes, output):
+                for suffix in suffixes:
                     topic = "%s/%s/%s/%s" % (
                         topic_prefix,
                         OUTPUT_TOPIC,
-                        out_conf["name"],
-                        suffix)
+                        output["name"],
+                        suffix
+                    )
                     client.subscribe(topic, qos=1)
                     _LOG.info("Subscribed to topic: %r", topic)
+            map(
+                partial(sub_topics, (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC)),
+                digital_outputs
+            )
+            map(
+                partial(sub_topics, (SET_PWM_TOPIC, SET_FREQ_TOPIC, SET_DUTY_TOPIC)),
+                pwm_outputs
+            )
             client.publish(
                 status_topic,
                 config["status_payload_running"],
@@ -342,6 +425,12 @@ def init_mqtt(config, digital_outputs):
                 handle_set_ms(msg, True)
             elif msg.topic.endswith("/%s" % SET_OFF_MS_TOPIC):
                 handle_set_ms(msg, False)
+            elif msg.topic.endswith("/%s" % SET_FREQ_TOPIC):
+                handle_set_freq(msg)
+            elif msg.topic.endswith("/%s" % SET_DUTY_TOPIC):
+                handle_set_duty(msg)
+            elif msg.topic.endswith("/%s" % SET_PWM_TOPIC):
+                handle_set_pwm(msg)
             else:
                 _LOG.warning("Unhandled topic %r.", msg.topic)
         except InvalidPayload as exc:
@@ -411,6 +500,22 @@ def initialise_digital_output(out_conf, gpio):
     gpio.setup_pin(out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
 
 
+def initialise_pwm_output(pwm_conf, gpio):
+    """
+    Initialises a PWM output.
+    :param pwm_conf: PWM config
+    :type pwm_conf: dict
+    :param gpio: Instance of GenericGPIO to use to configure the pin
+    :type gpio: pi_mqtt_gpio.modules.GenericGPIO
+    :return: None
+    :rtype: NoneType
+    """
+    gpio.setup_pwm(
+        pwm_conf["pin"], pwm_conf["initial_freq"], pwm_conf["initial_duty"])
+    if pwm_conf["initial_state"]:
+        gpio.start_pwm(pwm_conf["pin"])
+
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("config")
@@ -428,8 +533,10 @@ if __name__ == "__main__":
 
     digital_inputs = config["digital_inputs"]
     digital_outputs = config["digital_outputs"]
+    pwm_outputs = config["pwm_outputs"]
 
-    client = init_mqtt(config["mqtt"], config["digital_outputs"])
+    client = init_mqtt(
+        config["mqtt"], config["digital_outputs"], config["pwm_outputs"])
 
     for gpio_config in config["gpio_modules"]:
         GPIO_CONFIGS[gpio_config["name"]] = gpio_config
@@ -451,6 +558,9 @@ if __name__ == "__main__":
 
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
+
+    for pwm_conf in pwm_outputs:
+        initialise_pwm_output(pwm_conf, GPIO_MODULES[pwm_conf["module"]])
 
     try:
         client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)

@@ -143,3 +143,38 @@ digital_outputs:
         allowed:
           - high
           - low
+
+pwm_outputs:
+  type: list
+  required: no
+  default: []
+  schema:
+    type: dict
+    schema:
+      name:
+        type: string
+        required: yes
+      module:
+        type: string
+        required: yes
+      pin:
+        type: integer
+        required: yes
+        min: 0
+      on_payload:
+        type: string
+        required: no
+        empty: no
+      off_payload:
+        type: string
+        required: no
+        empty: no
+      initial_state:
+        type: boolean
+        required: no
+      initial_freq:
+        type: integer
+        required: no
+      initial_duty:
+        type: integer
+        required: no

@@ -1,7 +1,7 @@
 from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
 
 
-REQUIREMENTS = ("RPi.GPIO",)
+REQUIREMENTS = ("RPi.GPIO>=0.5.2a",)
 
 DIRECTIONS = None
 PULLUPS = None
@@ -27,6 +27,7 @@ class GPIO(GenericGPIO):
         }
 
         gpio.setmode(gpio.BCM)
+        self.pwms = {}
 
     def setup_pin(self, pin, direction, pullup, pin_config):
         direction = DIRECTIONS[direction]
@@ -51,3 +52,31 @@ class GPIO(GenericGPIO):
 
     def cleanup(self):
         self.io.cleanup()
+
+    def setup_pwm(self, pin, freq, duty=50):
+        self.io.setup(pin, self.io.OUT)
+        pwm_config = dict(
+            freq=freq,
+            duty=duty,
+            obj=self.io.PWM(pin, freq)
+        )
+        pwm_config["obj"].ChangeDutyCycle(duty)
+        self.pwms[pin] = pwm_config
+
+    def start_pwm(self, pin):
+        # @TODO: KeyError
+        self.pwms[pin]["obj"].start(self.pwms[pin]["duty"])
+
+    def stop_pwm(self, pin):
+        # @TODO: KeyError
+        self.pwms[pin]["obj"].stop()
+
+    def set_pwm_frequency(self, pin, freq):
+        # @TODO: KeyError
+        self.pwms[pin]["obj"].ChangeFrequency(freq)
+        self.pwms[pin]["freq"] = freq
+
+    def set_pwm_duty(self, pin, duty):
+        # @TODO: KeyError
+        self.pwms[pin]["obj"].ChangeDutyCycle(duty)
+        self.pwms[pin]["duty"] = duty
