@@ -39,6 +39,7 @@ digital_outputs:
     pin: 21
     on_payload: "ON"
     off_payload: "OFF"
+    initial: low  # This optional value controls the initial state of the pin before receipt of any messages from MQTT. Valid options are 'low' and 'high'.
   
   - name: fan
     module: raspberrypi
@@ -61,6 +62,7 @@ mqtt:
 gpio_modules:
   - name: raspberrypi
     module: raspberrypi
+    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
 
 digital_inputs:
   - name: doorbell
