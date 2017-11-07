@@ -16,6 +16,7 @@ gpio_modules:
 
   - name: dev
     module: stdio
+    cleanup: no
 
 digital_inputs:
   - name: button
@@ -32,6 +33,7 @@ digital_outputs:
     pin: 20
     on_payload: "ON"
     off_payload: "OFF"
+    initial: low
 
   - name: test
     module: dev

@@ -36,7 +36,12 @@ class GPIO(GenericGPIO):
         else:
             pullup = PULLUPS[pullup]
 
-        self.io.setup(pin, direction, pull_up_down=pullup)
+        initial = {
+            None: -1,
+            "low": 0,
+            "high": 1
+        }[pin_config.get("initial")]
+        self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)

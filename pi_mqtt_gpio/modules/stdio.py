@@ -13,6 +13,12 @@ class GPIO(GenericGPIO):
     def setup_pin(self, pin, direction, pullup, pin_config):
         print("setup_pin(pin=%r, direction=%r, pullup=%r, pin_config=%r)" % (
             pin, direction, pullup, pin_config))
+        initial = pin_config.get("initial")
+        if initial is not None:
+            if initial == "high":
+                self.set_pin(pin, True)
+            elif initial == "low":
+                self.set_pin(pin, False)
 
     def set_pin(self, pin, value):
         print("set_pin(pin=%r, value=%r)" % (pin, value))

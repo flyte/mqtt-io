@@ -11,6 +11,11 @@ BASE_SCHEMA = {
     "module": {
         "required": True,
         "empty": False
+    },
+    "cleanup": {
+        "required": False,
+        "type": "boolean",
+        "default": True
     }
 }
 

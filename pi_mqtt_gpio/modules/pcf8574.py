@@ -36,6 +36,12 @@ class GPIO(GenericGPIO):
     def setup_pin(self, pin, direction, pullup, pin_config):
         if direction == PinDirection.INPUT and pullup is not None:
             self.io.port[pin] = PULLUPS[pullup]
+        initial = pin_config.get("initial")
+        if initial is not None:
+            if initial == 'high':
+                self.set_pin(pin, True)
+            elif initial == 'low':
+                self.set_pin(pin, False)
 
     def set_pin(self, pin, value):
         self.io.port[pin] = value

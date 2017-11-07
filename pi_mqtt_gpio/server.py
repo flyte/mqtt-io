@@ -23,6 +23,7 @@ LOG_LEVEL_MAP = {
 }
 RECONNECT_DELAY_SECS = 5
 GPIO_MODULES = {}
+GPIO_CONFIGS = {}
 LAST_STATES = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
@@ -431,6 +432,7 @@ if __name__ == "__main__":
     client = init_mqtt(config["mqtt"], config["digital_outputs"])
 
     for gpio_config in config["gpio_modules"]:
+        GPIO_CONFIGS[gpio_config["name"]] = gpio_config
         try:
             GPIO_MODULES[gpio_config["name"]] = configure_gpio_module(
                 gpio_config)
@@ -491,6 +493,9 @@ if __name__ == "__main__":
         # This should also quit the mqtt loop thread.
         client.disconnect()
         for name, gpio in GPIO_MODULES.items():
+            if not GPIO_CONFIGS[name]["cleanup"]:
+                _LOG.info("Cleanup disabled for module %r.", name)
+                continue
             try:
                 gpio.cleanup()
             except Exception:

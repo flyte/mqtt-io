@@ -67,6 +67,10 @@ gpio_modules:
         type: string
         required: yes
         empty: no
+      cleanup:
+        type: boolean
+        required: no
+        default: yes
 
 digital_inputs:
   type: list
@@ -133,3 +137,9 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      initial:
+        type: string
+        required: no
+        allowed:
+          - high
+          - low
