@@ -253,7 +253,7 @@ def init_mqtt(config, digital_outputs):
     protocol = mqtt.MQTTv311
     if config["protocol"] == "3.1":
         protocol = mqtt.MQTTv31
-    client = mqtt.Client(protocol=protocol)
+    client = mqtt.Client(client_id=socket.gethostname(), protocol=protocol)
 
     if config["user"] and config["password"]:
         client.username_pw_set(config["user"], config["password"])
