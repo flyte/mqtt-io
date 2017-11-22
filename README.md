@@ -132,3 +132,50 @@ mqtt:
 ```
 
 These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any.
+
+Serving Suggestion
+------------------
+
+This project is not tied to any specific deployment method, but one recommended way is to use `virtualenv` and `supervisor`. This will launch the project at boot time and handle restarting and log file rotation. It's quite simple to set up:
+
+If using Raspbian, install `supervisor` with `apt`.
+
+```bash
+sudo apt-get update
+sudo apt-get install supervisor
+```
+
+Not strictly necessary, but it's recommended to install the project into a [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/#lower-level-virtualenv). Generally, the best way to get an up-to-date version of `virtualenv` is to use `pip install --upgrade virtualenv`. If you don't already have `pip`, then [check here](https://pip.pypa.io/en/stable/installing/) for installation instructions.
+
+```bash
+cd /home/pi
+virtualenv ve
+. ve/bin/activate
+pip install pi-mqtt-gpio
+```
+
+Create yourself a config file, following instructions and examples above, and save it somewhere, such as `/home/pi/pi-mqtt-gpio.yml`.
+
+Create a [supervisor config file](http://supervisord.org/configuration.html#program-x-section-settings) in /etc/supervisor/conf.d/pi-mqtt-gpio.conf something along the lines of the following:
+
+```
+[program:pi_mqtt_gpio]
+command = /home/pi/ve/bin/python -m pi_mqtt_gpio.server pi-mqtt-gpio.yml
+directory = /home/pi
+redirect_stderr = true
+stdout_logfile = /var/log/pi-mqtt-gpio.log
+```
+
+Save the file and then run the following to update supervisor and start the program running.
+
+```bash
+sudo supervisorctl update
+```
+
+Check the status of your new supervisor job:
+
+```bash
+sudo supervisorctl status
+```
+
+Check the [supervisor docs](http://supervisord.org/running.html#supervisorctl-command-line-options) for more `supervisorctl` commands.
