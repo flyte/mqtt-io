@@ -125,7 +125,7 @@ def set_pin(output_config, value):
 		output_config["retain"]
         set_value)
     payload = output_config["on_payload" if value else "off_payload"]
-	retain = output_config["retain"]
+	retain = 1 if output_config["retain"] else 0
     client.publish(
         "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),
 		retain=retain,
