@@ -40,6 +40,7 @@ digital_outputs:
     on_payload: "ON"
     off_payload: "OFF"
     initial: low  # This optional value controls the initial state of the pin before receipt of any messages from MQTT. Valid options are 'low' and 'high'.
+    retain: yes # This option value contols if the message is retained. Default is no.
   
   - name: fan
     module: raspberrypi
