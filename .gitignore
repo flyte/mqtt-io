@@ -89,3 +89,5 @@ ENV/
 
 # Rope project settings
 .ropeproject
+pi_mqtt_gpio/modules/test.py
+pi_mqtt_gpio/modules/ds18b20.py
