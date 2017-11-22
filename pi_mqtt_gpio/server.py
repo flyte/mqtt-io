@@ -122,7 +122,6 @@ def set_pin(output_config, value):
         "Set %r output %r to %r",
         output_config["module"],
         output_config["name"],
-        output_config["retain"]
         set_value)
     payload = output_config["on_payload" if value else "off_payload"]
 	retain = 1 if output_config["retain"] else 0
