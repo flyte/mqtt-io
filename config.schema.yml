@@ -2,30 +2,36 @@ mqtt:
   type: dict
   required: yes
   schema:
+
     host:
       type: string
       empty: no
       required: no
       default: localhost
+
     port:
       type: integer
       min: 0
       max: 65535
       required: no
       default: 1883
+
     user:
       type: string
       required: no
       default: ""
+
     password:
       type: string
       required: no
       default: ""
+
     topic_prefix:
       type: string
       required: no
       default: ""
       coerce: rstrip_slash
+
     protocol:
       type: string
       required: no
@@ -35,48 +41,52 @@ mqtt:
       allowed:
         - "3.1"
         - "3.1.1"
+
     status_topic:
       type: string
       required: no
       default: status
+
     status_payload_running:
       type: string
       required: no
       default: running
+
     status_payload_stopped:
       type: string
       required: no
       default: stopped
+
     status_payload_dead:
       type: string
       required: no
       default: dead
 
+
 gpio_modules:
-  type: list
+  type: dict
   required: yes
-  schema:
+  valueschema:
     type: dict
-    allow_unknown: yes
+    allow_unknown: yes  # Modules can set their own extra config schemas
     schema:
-      name:
-        type: string
-        required: yes
-        empty: no
+
       module:
         type: string
         required: yes
         empty: no
+
       cleanup:
         type: boolean
         required: no
         default: yes
 
+
 digital_inputs:
   type: dict
   required: no
   default: {}
-  schema:
+  valueschema:
     type: dict
     schema:
 
@@ -129,18 +139,19 @@ digital_inputs:
       pullup:
         type: boolean
         required: no
-        default: no
+        excludes: pulldown
 
       pulldown:
         type: boolean
         required: no
-        default: no
+        excludes: pullup
+
 
 analog_inputs:
   type: dict
   required: no
   default: {}
-  schema:
+  valueschema:
     type: dict
     schema:
 
@@ -160,7 +171,7 @@ analog_inputs:
         default: 0.1
         min: 0.01
 
-      change_percent:
+      change_threshold:  # This is percent when normalized is True, or else just amount changed
         type: number
         required: no
         default: 5
@@ -170,11 +181,12 @@ analog_inputs:
         required: no
         default: yes
 
+
 outputs:
   type: dict
   required: no
   default: {}
-  schema:
+  valueschema:
     type: dict
     schema:
 
@@ -225,7 +237,8 @@ outputs:
 
           frequency:
             type: number
-            required: yes
+            required: no
+            default: 50
 
           duty_cycle:
             type: number

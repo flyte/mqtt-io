@@ -1,42 +1,80 @@
 mqtt:
-  host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
-  topic_prefix: pimqttgpio/mydevice
+  host: test.mosquitto.org  # localhost
+  port: 1883  # 1883
+  user: myuser  # <empty>
+  password: mypassword  # <empty>
+
 
 gpio_modules:
-  - name: raspberrypi
+  raspberrypi:
     module: raspberrypi
 
-  - name: pcf8574
+  pcf8574:
     module: pcf8574
     i2c_bus_num: 1
     chip_addr: 0x20
 
-  - name: dev
+  dev:
     module: stdio
     cleanup: no
 
+
 digital_inputs:
-  - name: button
+  button:
     module: raspberrypi
     pin: 21
     on_payload: "ON"
     off_payload: "OFF"
-    pullup: no
     pulldown: yes
 
-digital_outputs:
-  - name: bell
+  door_sensor:
+    module: pcf8574
+    pin: 1
+    type: interrupt_both
+    pullup: yes
+    publish: on_change
+
+  light_switch:
+    module: pcf8574
+    pin: 2
+    type: polling
+    publish: always
+    poll_interval: 5
+
+
+analog_inputs:
+  light_sensor:
+    module: raspberrypi
+    pin: 22
+    poll_interval: 5
+    normalized: yes
+
+  temperature_sensor:
+    module: raspberrypi
+    pin: 24
+    poll_interval: 10
+    change_threshold: 1
+    normalized: no
+
+
+outputs:
+  bell:
     module: pcf8574
     pin: 20
     on_payload: "ON"
     off_payload: "OFF"
     initial: low
 
-  - name: test
+  test:
     module: dev
     pin: 1
     on_payload: "ON"
     off_payload: "OFF"
+
+  blinds_servo:
+    module: raspberrypi
+    pin: 14
+    initial_pwm:
+      enabled: yes
+      frequency: 50
+      duty_cycle: 20
