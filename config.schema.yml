@@ -9,7 +9,7 @@ mqtt:
       default: localhost
     port:
       type: integer
-      min: 1
+      min: 0
       max: 65535
       required: no
       default: 1883
@@ -73,73 +73,163 @@ gpio_modules:
         default: yes
 
 digital_inputs:
-  type: list
+  type: dict
   required: no
-  default: []
+  default: {}
   schema:
     type: dict
     schema:
-      name:
-        type: string
-        required: yes
-        empty: no
+
       module:
         type: string
         required: yes
         empty: no
+
       pin:
         type: integer
         required: yes
         min: 0
+
+      type:
+        type: string
+        required: no
+        default: polling
+        allowed:
+          - polling
+          - interrupt_rising  # Sets up an interrupt and publishes on rising edge
+          - interrupt_falling  # Same as above, but falling edge
+          - interrupt_both  # Same as above, but both rising and falling edges
+
+      poll_interval:
+        type: number
+        required: no
+        default: 0.1
+        min: 0.01
+
+      publish:
+        type: string
+        required: no
+        default: on_change
+        allowed:
+          - on_change
+          - always
+
       on_payload:
         type: string
-        required: yes
+        required: no
         empty: no
+        default: "ON"
+
       off_payload:
         type: string
-        required: yes
+        required: no
         empty: no
+        default: "OFF"
+
       pullup:
         type: boolean
         required: no
         default: no
+
       pulldown:
         type: boolean
         required: no
         default: no
 
-digital_outputs:
-  type: list
+analog_inputs:
+  type: dict
   required: no
-  default: []
+  default: {}
   schema:
     type: dict
     schema:
-      name:
-        type: string
-        required: yes
+
       module:
         type: string
         required: yes
+        empty: no
+
       pin:
         type: integer
         required: yes
         min: 0
+
+      poll_interval:
+        type: number
+        required: no
+        default: 0.1
+        min: 0.01
+
+      change_percent:
+        type: number
+        required: no
+        default: 5
+
+      normalized:
+        type: boolean
+        required: no
+        default: yes
+
+outputs:
+  type: dict
+  required: no
+  default: {}
+  schema:
+    type: dict
+    schema:
+
+      module:
+        type: string
+        required: yes
+        empty: no
+
+      pin:
+        type: integer
+        required: yes
+        min: 0
+
       on_payload:
         type: string
         required: no
         empty: no
+        default: "ON"
+
       off_payload:
         type: string
         required: no
         empty: no
+        default: "OFF"
+
       inverted:
         type: boolean
         required: no
         default: no
+
       initial:
         type: string
         required: no
         allowed:
           - high
           - low
+
+      initial_pwm:
+        type: dict
+        required: no
+        default: {}
+        schema:
+
+          enabled:
+            type: boolean
+            required: no
+            default: yes
+
+          frequency:
+            type: number
+            required: yes
+
+          duty_cycle:
+            type: number
+            required: no
+            min: 0
+            max: 100
+            default: 50
