@@ -1,26 +1,20 @@
 import argparse
 import logging
-import yaml
 import sys
 import socket
 from time import sleep, time
 from importlib import import_module
 
+import yaml
 import paho.mqtt.client as mqtt
 import cerberus
 
-from pi_mqtt_gpio import CONFIG_SCHEMA
-from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
-from pi_mqtt_gpio.scheduler import Scheduler, Task
+from . import CONFIG_SCHEMA
+from .modules import PinPullup, PinDirection, BASE_SCHEMA
+from .scheduler import Scheduler, Task
 
 
-LOG_LEVEL_MAP = {
-    mqtt.MQTT_LOG_INFO: logging.INFO,
-    mqtt.MQTT_LOG_NOTICE: logging.INFO,
-    mqtt.MQTT_LOG_WARNING: logging.WARNING,
-    mqtt.MQTT_LOG_ERR: logging.ERROR,
-    mqtt.MQTT_LOG_DEBUG: logging.DEBUG
-}
+
 RECONNECT_DELAY_SECS = 5
 GPIO_MODULES = {}
 GPIO_CONFIGS = {}
@@ -36,59 +30,8 @@ _LOG.addHandler(logging.StreamHandler())
 _LOG.setLevel(logging.DEBUG)
 
 
-class CannotInstallModuleRequirements(Exception):
-    pass
-
-
-class InvalidPayload(Exception):
-    pass
-
-
-class ModuleConfigInvalid(Exception):
-    def __init__(self, errors, *args, **kwargs):
-        self.errors = errors
-        super(ModuleConfigInvalid, self).__init__(*args, **kwargs)
-
-
-class ConfigValidator(cerberus.Validator):
-    """
-    Cerberus Validator containing function(s) for use with validating or
-    coercing values relevant to the pi_mqtt_gpio project.
-    """
-
-    @staticmethod
-    def _normalize_coerce_rstrip_slash(value):
-        """
-        Strip forward slashes from the end of the string.
-        :param value: String to strip forward slashes from
-        :type value: str
-        :return: String without forward slashes on the end
-        :rtype: str
-        """
-        return value.rstrip("/")
-
-    @staticmethod
-    def _normalize_coerce_tostring(value):
-        """
-        Convert value to string.
-        :param value: Value to convert
-        :return: Value represented as a string.
-        :rtype: str
-        """
-        return str(value)
-
-
-def on_log(client, userdata, level, buf):
-    """
-    Called when MQTT client wishes to log something.
-    :param client: MQTT client instance
-    :param userdata: Any user data set in the client
-    :param level: MQTT log level
-    :param buf: The log message buffer
-    :return: None
-    :rtype: NoneType
-    """
-    _LOG.log(LOG_LEVEL_MAP[level], "MQTT client: %s" % buf)
+## TODO ##
+# - Put logging config in config file
 
 
 def output_by_name(output_name):
@@ -189,35 +132,7 @@ def handle_set_ms(msg, value):
     )
 
 
-def install_missing_requirements(module):
-    """
-    Some of the modules require external packages to be installed. This gets
-    the list from the `REQUIREMENTS` module attribute and attempts to
-    install the requirements using pip.
-    :param module: GPIO module
-    :type module: ModuleType
-    :return: None
-    :rtype: NoneType
-    """
-    reqs = getattr(module, "REQUIREMENTS", [])
-    if not reqs:
-        _LOG.info("Module %r has no extra requirements to install." % module)
-        return
-    import pkg_resources
-    pkgs_installed = pkg_resources.WorkingSet()
-    pkgs_required = []
-    for req in reqs:
-        if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
-            pkgs_required.append(req)
-    if pkgs_required:
-        from pip.commands.install import InstallCommand
-        from pip.status_codes import SUCCESS
-        cmd = InstallCommand()
-        result = cmd.main(pkgs_required)
-        if result != SUCCESS:
-            raise CannotInstallModuleRequirements(
-                "Unable to install packages for module %r (%s)..." % (
-                    module, pkgs_required))
+
 
 
 def output_name_from_topic(topic, topic_prefix, suffix):
@@ -411,11 +326,14 @@ def initialise_digital_output(out_conf, gpio):
     gpio.setup_pin(out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+def main():
+    # Get the config file path from the command line argument
     p = argparse.ArgumentParser()
     p.add_argument("config")
     args = p.parse_args()
 
+    # Open the config file, load the YAML and validate its schema
     with open(args.config) as f:
         config = yaml.load(f)
     validator = ConfigValidator(CONFIG_SCHEMA)
@@ -429,8 +347,10 @@ if __name__ == "__main__":
     digital_inputs = config["digital_inputs"]
     digital_outputs = config["digital_outputs"]
 
+    # Create and initialise our MQTT client
     client = init_mqtt(config["mqtt"], config["digital_outputs"])
 
+    # Configure and initialise each of the GPIO modules
     for gpio_config in config["gpio_modules"]:
         GPIO_CONFIGS[gpio_config["name"]] = gpio_config
         try:
@@ -445,13 +365,16 @@ if __name__ == "__main__":
             )
             sys.exit(1)
 
+    # Initialise digital inputs
     for in_conf in digital_inputs:
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
         LAST_STATES[in_conf["name"]] = None
 
+    # Initialise digital outputs
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
 
+    # Connect our MQTT client to its server
     try:
         client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
     except socket.error as err:
@@ -463,7 +386,9 @@ if __name__ == "__main__":
 
     topic_prefix = config["mqtt"]["topic_prefix"]
     try:
+        # Main loop start
         while True:
+            # Poll each of the digital inputs for changed state
             for in_conf in digital_inputs:
                 gpio = GPIO_MODULES[in_conf["module"]]
                 state = bool(gpio.get_pin(in_conf["pin"]))
@@ -490,8 +415,11 @@ if __name__ == "__main__":
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
             config["mqtt"]["status_payload_stopped"], qos=1, retain=True)
+
         # This should also quit the mqtt loop thread.
         client.disconnect()
+
+        # Perform any required cleanup for each of the modules
         for name, gpio in GPIO_MODULES.items():
             if not GPIO_CONFIGS[name]["cleanup"]:
                 _LOG.info("Cleanup disabled for module %r.", name)
