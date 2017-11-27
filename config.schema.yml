@@ -143,3 +143,8 @@ digital_outputs:
         allowed:
           - high
           - low
+      retain:
+        type: boolean
+        required: no
+        default: no
+
