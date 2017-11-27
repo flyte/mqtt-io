@@ -1,3 +1,22 @@
+logging:
+  loggers:
+    pi_mqtt_gpio:
+      level: DEBUG
+      propagate: yes
+      handlers:
+        - console
+
+  formatters:
+    full:
+      format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: full
+      level: DEBUG
+
+
 mqtt:
   host: test.mosquitto.org  # localhost
   port: 1883  # 1883
