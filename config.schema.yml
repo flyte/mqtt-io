@@ -107,6 +107,10 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      retain:
+        type: boolean
+        required: no
+        default: no
 
 digital_outputs:
   type: list

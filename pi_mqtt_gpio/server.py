@@ -481,7 +481,9 @@ if __name__ == "__main__":
                             topic_prefix, INPUT_TOPIC, in_conf["name"]
                         ),
                         payload=(in_conf["on_payload"] if state
-                                 else in_conf["off_payload"]))
+                                 else in_conf["off_payload"]),
+                        retain=in_conf["retain"]
+                    )
                     LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
             sleep(0.01)
