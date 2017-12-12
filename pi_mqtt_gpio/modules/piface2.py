@@ -1,4 +1,4 @@
-from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
+from pi_mqtt_gpio.modules import GenericGPIO
 
 
 REQUIREMENTS = ("pifacedigitalio", "pifacecommon")
