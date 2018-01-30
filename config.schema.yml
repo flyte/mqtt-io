@@ -21,6 +21,10 @@ mqtt:
       type: string
       required: no
       default: ""
+    client_id:
+      type: string
+      required: no
+      default: ""
     topic_prefix:
       type: string
       required: no

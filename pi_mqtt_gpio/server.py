@@ -5,6 +5,7 @@ import sys
 import socket
 from time import sleep, time
 from importlib import import_module
+from hashlib import sha1
 
 import paho.mqtt.client as mqtt
 import cerberus
@@ -254,7 +255,16 @@ def init_mqtt(config, digital_outputs):
     protocol = mqtt.MQTTv311
     if config["protocol"] == "3.1":
         protocol = mqtt.MQTTv31
-    client = mqtt.Client(protocol=protocol)
+
+    # https://stackoverflow.com/questions/45774538/what-is-the-maximum-length-of-client-id-in-mqtt
+    # TLDR: Soft limit of 23, but we needn't truncate it on our end.
+    client_id = config['client_id']
+    if not client_id:
+        client_id = "pi-mqtt-gpio-%s" % sha1(
+            topic_prefix.encode('utf8')).hexdigest()
+
+    client = mqtt.Client(
+        client_id=client_id, clean_session=False, protocol=protocol)
 
     if config["user"] and config["password"]:
         client.username_pw_set(config["user"], config["password"])
