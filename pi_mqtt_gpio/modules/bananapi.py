@@ -2,7 +2,7 @@ from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
 
 
 REQUIREMENTS = (
-    "git+https://github.com/BPI-SINOVOIP/BPI-WiringPi2-Python.git#egg=wiringpi2",
+    "git+https://github.com/BPI-SINOVOIP/BPI-WiringPi2-Python.git#egg=wiringpi2",  # noqa: E501
 )
 CONFIG_SCHEMA = {
     "pin_mode": {
