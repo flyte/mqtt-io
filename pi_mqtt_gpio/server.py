@@ -14,6 +14,14 @@ from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
 from pi_mqtt_gpio.scheduler import Scheduler, Task
 
 
+try:
+    # Python 2
+    from urlparse import urlparse
+except ImportError:
+    # Python 3
+    from urllib.parse import urlparse
+
+
 LOG_LEVEL_MAP = {
     mqtt.MQTT_LOG_INFO: logging.INFO,
     mqtt.MQTT_LOG_NOTICE: logging.INFO,
@@ -76,6 +84,15 @@ class ConfigValidator(cerberus.Validator):
         :rtype: str
         """
         return str(value)
+
+
+def is_str(var):
+    try:
+        # Python 2
+        return isinstance(var, basestring)
+    except NameError:
+        # Python 3
+        return isinstance(var, str)
 
 
 def on_log(client, userdata, level, buf):
@@ -208,7 +225,18 @@ def install_missing_requirements(module):
     pkgs_installed = pkg_resources.WorkingSet()
     pkgs_required = []
     for req in reqs:
-        if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
+        if req.startswith("git+"):
+            url = urlparse(req)
+            params = {x[0]: x[1] for x in map(
+                lambda y: y.split('='), url.fragment.split('&'))}
+            try:
+                pkg = params["egg"]
+            except KeyError:
+                raise CannotInstallModuleRequirements(
+                    "Package %r in module %r must include '#egg=<pkgname>'")
+        else:
+            pkg = req
+        if pkgs_installed.find(pkg_resources.Requirement.parse(pkg)) is None:
             pkgs_required.append(req)
     if pkgs_required:
         from pip.commands.install import InstallCommand
