@@ -233,7 +233,8 @@ def install_missing_requirements(module):
                 pkg = params["egg"]
             except KeyError:
                 raise CannotInstallModuleRequirements(
-                    "Package %r in module %r must include '#egg=<pkgname>'")
+                    "Package %r in module %r must include '#egg=<pkgname>'" % (
+                        req, module))
         else:
             pkg = req
         if pkgs_installed.find(pkg_resources.Requirement.parse(pkg)) is None:
