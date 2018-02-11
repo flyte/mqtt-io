@@ -2,7 +2,7 @@ from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
 
 
 REQUIREMENTS = (
-    "git+https://github.com/LeMaker/RPi.GPIO_BP@bananapi#egg=RPi.GPIO",
+    "git+https://github.com/LeMaker/RPi.GPIO_BP@bananapro#egg=RPi.GPIO",
 )
 
 DIRECTIONS = None
@@ -11,7 +11,7 @@ PULLUPS = None
 
 class GPIO(GenericGPIO):
     """
-    Implementation of GPIO class for Banana Pi native GPIO.
+    Implementation of GPIO class for Banana Pi Pro native GPIO.
     """
     def __init__(self, config):
         global DIRECTIONS, PULLUPS
