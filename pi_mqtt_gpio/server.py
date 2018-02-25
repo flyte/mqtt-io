@@ -5,6 +5,7 @@ import sys
 import socket
 from time import sleep, time
 from importlib import import_module
+from hashlib import sha1
 
 import paho.mqtt.client as mqtt
 import cerberus
@@ -126,6 +127,7 @@ def set_pin(output_config, value):
     payload = output_config["on_payload" if value else "off_payload"]
     client.publish(
         "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),
+        retain=output_config["retain"],
         payload=payload)
 
 
@@ -253,7 +255,16 @@ def init_mqtt(config, digital_outputs):
     protocol = mqtt.MQTTv311
     if config["protocol"] == "3.1":
         protocol = mqtt.MQTTv31
-    client = mqtt.Client(client_id=socket.gethostname(), protocol=protocol)
+
+    # https://stackoverflow.com/questions/45774538/what-is-the-maximum-length-of-client-id-in-mqtt
+    # TLDR: Soft limit of 23, but we needn't truncate it on our end.
+    client_id = config['client_id']
+    if not client_id:
+        client_id = "pi-mqtt-gpio-%s" % sha1(
+            topic_prefix.encode('utf8')).hexdigest()
+
+    client = mqtt.Client(
+        client_id=client_id, clean_session=False, protocol=protocol)
 
     if config["user"] and config["password"]:
         client.username_pw_set(config["user"], config["password"])
@@ -480,7 +491,9 @@ if __name__ == "__main__":
                             topic_prefix, INPUT_TOPIC, in_conf["name"]
                         ),
                         payload=(in_conf["on_payload"] if state
-                                 else in_conf["off_payload"]))
+                                 else in_conf["off_payload"]),
+                        retain=in_conf["retain"]
+                    )
                     LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
             sleep(0.01)

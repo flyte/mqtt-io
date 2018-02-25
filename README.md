@@ -1,7 +1,14 @@
 PI MQTT GPIO
 ============
 
-Expose the Raspberry Pi GPIO pins (and/or external IO modules such as the PCF8574) to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics.
+Expose the Raspberry Pi GPIO pins and/or external IO modules to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics.
+
+Modules
+-------
+
+- Raspberry Pi GPIO (`raspberrypi`)
+- PCF8574 IO chip (`pcf8574`)
+- PiFaceDigital 2 IO board (`piface2`)
 
 Installation
 ------------
@@ -40,6 +47,7 @@ digital_outputs:
     on_payload: "ON"
     off_payload: "OFF"
     initial: low  # This optional value controls the initial state of the pin before receipt of any messages from MQTT. Valid options are 'low' and 'high'.
+    retain: yes # This option value controls if the message is retained. Default is no.
   
   - name: fan
     module: raspberrypi
@@ -132,3 +140,50 @@ mqtt:
 ```
 
 These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any.
+
+Serving Suggestion
+------------------
+
+This project is not tied to any specific deployment method, but one recommended way is to use `virtualenv` and `supervisor`. This will launch the project at boot time and handle restarting and log file rotation. It's quite simple to set up:
+
+If using Raspbian, install `supervisor` with `apt`.
+
+```bash
+sudo apt-get update
+sudo apt-get install supervisor
+```
+
+Not strictly necessary, but it's recommended to install the project into a [virtualenv](http://docs.python-guide.org/en/latest/dev/virtualenvs/#lower-level-virtualenv). Generally, the best way to get an up-to-date version of `virtualenv` is to use `pip install --upgrade virtualenv`. If you don't already have `pip`, then [check here](https://pip.pypa.io/en/stable/installing/) for installation instructions.
+
+```bash
+cd /home/pi
+virtualenv ve
+. ve/bin/activate
+pip install pi-mqtt-gpio
+```
+
+Create yourself a config file, following instructions and examples above, and save it somewhere, such as `/home/pi/pi-mqtt-gpio.yml`.
+
+Create a [supervisor config file](http://supervisord.org/configuration.html#program-x-section-settings) in /etc/supervisor/conf.d/pi-mqtt-gpio.conf something along the lines of the following:
+
+```
+[program:pi_mqtt_gpio]
+command = /home/pi/ve/bin/python -m pi_mqtt_gpio.server pi-mqtt-gpio.yml
+directory = /home/pi
+redirect_stderr = true
+stdout_logfile = /var/log/pi-mqtt-gpio.log
+```
+
+Save the file and then run the following to update supervisor and start the program running.
+
+```bash
+sudo supervisorctl update
+```
+
+Check the status of your new supervisor job:
+
+```bash
+sudo supervisorctl status
+```
+
+Check the [supervisor docs](http://supervisord.org/running.html#supervisorctl-command-line-options) for more `supervisorctl` commands.
