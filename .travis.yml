@@ -1,6 +1,7 @@
 language: python
 
 stages:
+  - lint
   - test
   - name: publish
     if: tag =~ ^\d+\.\d+\.\d+$
@@ -11,15 +12,20 @@ install:
 jobs:
   include:
     - python: 2.7
+      stage: lint
+      script: tox -e flake8
+
+    - python: 3.4
+      stage: lint
+      script: tox -e flake8
+
+    - python: 2.7
       stage: test
       script: tox -e py27
 
     - python: 3.4
       stage: test
       script: tox -e py34
-
-    - python: 3.4
-      script: tox -e flake8
 
     - stage: publish
       script: skip
