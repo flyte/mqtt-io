@@ -1,20 +1,51 @@
 language: python
-python: 2.7
-env:
-- TOX_ENV=py27
-- TOX_ENV=py34
-- TOX_ENV=flake8
-install:
-- pip install tox
-script:
-- tox -e $TOX_ENV
-before_deploy: python setup.py insert_schema
-deploy:
-  provider: pypi
-  user: flyte
-  password:
-    secure: XdHA2XZ+EXieCxoTTMQBr0rh7Fi2dI6DOc1qHvcCMLLkkAU0G/TQ1vt9p1JNvHG3+2SjghhdeCwTdYq4n2voFogmp5QCP/JgY4Xg24aDLU6YhG3FTAsziOJ9t1rex4/Wk8QiIeP2pdDufzVVWE2RU7/RlLAbEzKu6UElIKDPnXmblrmGRLu2jVM5rIuXp30PtGAKMf2Eld5HyFjbLzZ4NwHta0r37yh0Fm0+yHjt2AHsWluB5z00CAsf4CAbm6wbdNv+IOKZegLIWwiMXgKEVb/kQHb9t6kto5BKIm0kg982RdLRtfG3y5WemdqP/TUf26kZgn0z3DkDsSbQMRs1xy1a9e0M/izux1ceMz96Ke/ksJV+7LXUHF7joDDUkX8+3KV5LW2FzzrYOfDwW1/FvcELDd2OtKzRAosTBgwHN3C4RRDdTGvyXYglsJApXAChzX67s8TMXKePUbUzjr0KYofUeE46ww2HmCtj0FYvAkaeSH5c74B6Y56Eycq3qOuyD+c36rNgBqI733DSz2+pLyMB6AmIA14Pt4RP8SOPi2u6J5wrlATKY8X1NtfZ5GQPfVwl/G2RTqiykujvDVyCUS7AFkHFMTOuWMSiGcKRu9H/MJmOWIkSU9RdMDo4xywBLpeGpiKHHFmiDu0vopPn3emCh7CHxWNXtZmoPs8ilJI=
-  on:
-    tags: true
-    repo: flyte/pi-mqtt-gpio
-  distributions: sdist bdist_wheel
+
+stages:
+  - test
+  - name: publish
+    if: tag =~ ^\d+\.\d+\.\d+$
+
+jobs:
+  include:
+    - python: 2.7
+      stage: test
+      install:
+        - pip install tox
+      script: tox -e py27
+
+    - python: 3.4
+      stage: test
+      install:
+        - pip install tox
+      script: tox -e py34
+
+    - python: 3.4
+      install:
+        - pip install tox
+      script: tox -e flake8
+
+    - stage: publish
+      script: skip
+      python: 2.7
+      deploy:
+        provider: pypi
+        user: flyte
+        password:
+          secure: XdHA2XZ+EXieCxoTTMQBr0rh7Fi2dI6DOc1qHvcCMLLkkAU0G/TQ1vt9p1JNvHG3+2SjghhdeCwTdYq4n2voFogmp5QCP/JgY4Xg24aDLU6YhG3FTAsziOJ9t1rex4/Wk8QiIeP2pdDufzVVWE2RU7/RlLAbEzKu6UElIKDPnXmblrmGRLu2jVM5rIuXp30PtGAKMf2Eld5HyFjbLzZ4NwHta0r37yh0Fm0+yHjt2AHsWluB5z00CAsf4CAbm6wbdNv+IOKZegLIWwiMXgKEVb/kQHb9t6kto5BKIm0kg982RdLRtfG3y5WemdqP/TUf26kZgn0z3DkDsSbQMRs1xy1a9e0M/izux1ceMz96Ke/ksJV+7LXUHF7joDDUkX8+3KV5LW2FzzrYOfDwW1/FvcELDd2OtKzRAosTBgwHN3C4RRDdTGvyXYglsJApXAChzX67s8TMXKePUbUzjr0KYofUeE46ww2HmCtj0FYvAkaeSH5c74B6Y56Eycq3qOuyD+c36rNgBqI733DSz2+pLyMB6AmIA14Pt4RP8SOPi2u6J5wrlATKY8X1NtfZ5GQPfVwl/G2RTqiykujvDVyCUS7AFkHFMTOuWMSiGcKRu9H/MJmOWIkSU9RdMDo4xywBLpeGpiKHHFmiDu0vopPn3emCh7CHxWNXtZmoPs8ilJI=
+        on:
+          tags: true
+          repo: flyte/pi-mqtt-gpio
+        distributions: bdist_wheel
+
+    - stage: publish
+      python: 3.4
+      script: skip
+      deploy:
+        provider: pypi
+        user: flyte
+        password:
+          secure: XdHA2XZ+EXieCxoTTMQBr0rh7Fi2dI6DOc1qHvcCMLLkkAU0G/TQ1vt9p1JNvHG3+2SjghhdeCwTdYq4n2voFogmp5QCP/JgY4Xg24aDLU6YhG3FTAsziOJ9t1rex4/Wk8QiIeP2pdDufzVVWE2RU7/RlLAbEzKu6UElIKDPnXmblrmGRLu2jVM5rIuXp30PtGAKMf2Eld5HyFjbLzZ4NwHta0r37yh0Fm0+yHjt2AHsWluB5z00CAsf4CAbm6wbdNv+IOKZegLIWwiMXgKEVb/kQHb9t6kto5BKIm0kg982RdLRtfG3y5WemdqP/TUf26kZgn0z3DkDsSbQMRs1xy1a9e0M/izux1ceMz96Ke/ksJV+7LXUHF7joDDUkX8+3KV5LW2FzzrYOfDwW1/FvcELDd2OtKzRAosTBgwHN3C4RRDdTGvyXYglsJApXAChzX67s8TMXKePUbUzjr0KYofUeE46ww2HmCtj0FYvAkaeSH5c74B6Y56Eycq3qOuyD+c36rNgBqI733DSz2+pLyMB6AmIA14Pt4RP8SOPi2u6J5wrlATKY8X1NtfZ5GQPfVwl/G2RTqiykujvDVyCUS7AFkHFMTOuWMSiGcKRu9H/MJmOWIkSU9RdMDo4xywBLpeGpiKHHFmiDu0vopPn3emCh7CHxWNXtZmoPs8ilJI=
+        on:
+          tags: true
+          repo: flyte/pi-mqtt-gpio
+        distributions: sdist bdist_wheel
