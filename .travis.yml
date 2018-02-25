@@ -5,23 +5,20 @@ stages:
   - name: publish
     if: tag =~ ^\d+\.\d+\.\d+$
 
+install:
+  - pip install tox
+
 jobs:
   include:
     - python: 2.7
       stage: test
-      install:
-        - pip install tox
       script: tox -e py27
 
     - python: 3.4
       stage: test
-      install:
-        - pip install tox
       script: tox -e py34
 
     - python: 3.4
-      install:
-        - pip install tox
       script: tox -e flake8
 
     - stage: publish
