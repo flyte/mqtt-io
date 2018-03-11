@@ -9,6 +9,9 @@ gpio_modules:
   - name: raspberrypi
     module: raspberrypi
 
+  - name: orangepi
+    module: orangepi
+
   - name: pcf8574
     module: pcf8574
     i2c_bus_num: 1
