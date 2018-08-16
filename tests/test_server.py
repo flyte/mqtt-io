@@ -2,7 +2,6 @@ import uuid
 
 import mock
 import pytest
-from pip.status_codes import SUCCESS
 
 from pi_mqtt_gpio import server
 
@@ -29,16 +28,16 @@ def test_imr_blank_list(mock_ws):
 
 
 @mock.patch("pkg_resources.WorkingSet.find", return_value=None)
-@mock.patch("pip.commands.install.InstallCommand.main", return_value=SUCCESS)
-def test_imr_has_requirements(mock_pip, mock_find):
+@mock.patch("subprocess.check_call")
+def test_imr_has_requirements(mock_check_call, mock_find):
     """
     Should install all missing args.
     """
     module = mock.Mock()
     module.REQUIREMENTS = ["testreq1", "testreq2==1.2.3"]
     server.install_missing_requirements(module)
-    args, _ = mock_pip.call_args
-    assert args == (["testreq1", "testreq2==1.2.3"],)
+    args, _ = mock_check_call.call_args
+    assert args == (["/usr/bin/env", "pip", "install", "testreq1", "testreq2==1.2.3"],)
 
 
 @mock.patch("pkg_resources.WorkingSet.find", return_value=None)
