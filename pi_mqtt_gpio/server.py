@@ -212,14 +212,15 @@ def install_missing_requirements(module):
         if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
             pkgs_required.append(req)
     if pkgs_required:
-        from pip.commands.install import InstallCommand
-        from pip.status_codes import SUCCESS
-        cmd = InstallCommand()
-        result = cmd.main(pkgs_required)
-        if result != SUCCESS:
+        from subprocess import check_call, CalledProcessError
+        try:
+            check_call(['/usr/bin/env', 'pip', 'install'] + pkgs_required)
+        except CalledProcessError as err:
             raise CannotInstallModuleRequirements(
-                "Unable to install packages for module %r (%s)..." % (
-                    module, pkgs_required))
+                "Unable to install packages for module %r (%s): %s" % (
+                    module, pkgs_required, err
+                )
+            )
 
 
 def output_name_from_topic(topic, topic_prefix, suffix):
