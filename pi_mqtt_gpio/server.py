@@ -527,8 +527,11 @@ if __name__ == "__main__":
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
             config["mqtt"]["status_payload_stopped"], qos=1, retain=True)
-        # This should also quit the mqtt loop thread.
+
+        client.loop_stop()
         client.disconnect()
+        client.loop_forever()
+
         for name, gpio in GPIO_MODULES.items():
             if not GPIO_CONFIGS[name]["cleanup"]:
                 _LOG.info("Cleanup disabled for module %r.", name)
