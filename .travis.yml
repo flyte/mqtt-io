@@ -34,7 +34,7 @@ jobs:
         provider: pypi
         user: flyte
         password:
-          secure: XdHA2XZ+EXieCxoTTMQBr0rh7Fi2dI6DOc1qHvcCMLLkkAU0G/TQ1vt9p1JNvHG3+2SjghhdeCwTdYq4n2voFogmp5QCP/JgY4Xg24aDLU6YhG3FTAsziOJ9t1rex4/Wk8QiIeP2pdDufzVVWE2RU7/RlLAbEzKu6UElIKDPnXmblrmGRLu2jVM5rIuXp30PtGAKMf2Eld5HyFjbLzZ4NwHta0r37yh0Fm0+yHjt2AHsWluB5z00CAsf4CAbm6wbdNv+IOKZegLIWwiMXgKEVb/kQHb9t6kto5BKIm0kg982RdLRtfG3y5WemdqP/TUf26kZgn0z3DkDsSbQMRs1xy1a9e0M/izux1ceMz96Ke/ksJV+7LXUHF7joDDUkX8+3KV5LW2FzzrYOfDwW1/FvcELDd2OtKzRAosTBgwHN3C4RRDdTGvyXYglsJApXAChzX67s8TMXKePUbUzjr0KYofUeE46ww2HmCtj0FYvAkaeSH5c74B6Y56Eycq3qOuyD+c36rNgBqI733DSz2+pLyMB6AmIA14Pt4RP8SOPi2u6J5wrlATKY8X1NtfZ5GQPfVwl/G2RTqiykujvDVyCUS7AFkHFMTOuWMSiGcKRu9H/MJmOWIkSU9RdMDo4xywBLpeGpiKHHFmiDu0vopPn3emCh7CHxWNXtZmoPs8ilJI=
+          secure: "eSedXSEOXM+YGl+zQUjDg2EGhTIHfiMBn2Bcrx5Gyinx19Z9vaL/oy6wUw+0bpA3hztQZzgFwxxgAlEvvp9xoWknR+9AWUYlmmruWrZMcnxWG6d+kTmLehQ+xetObgqszZorVC/WmvvL7t6Tuyh/DHZZ3nw5T817jOg243eXVaQr53UFL20879I7elnRc1gGZOz9GuFMJRhGqX3D3tgseR3sKI7IYSOLNVYfJGN9FVdbn8qMcdb6Q8Ecb1RtmmK5p3uBTFe0rSZrhBD3gWjxFrpojSSsrve/duxHkY0c5ZQkv3uihFLzyLh7a8r8HW8sC7uej+HOr989Y9I6So86BHcqynKIZjrXknEsffAeCf/81hrr6Q4hiwNi+d3adnDWz2SwfYF9LvPRYJLguyKSHdjkKp8OJcJedi9rdF6CxX1Tz5RqndZLUkJH4Eybsjf65xJ4KnSbFKizESGzA9ecwCddp39lUt87bto9pZ9uXpxkKm5PLYJVxint1F1Y3C4yq5zDcRsv2J7GKFVsvfkd++N3NMaTm80bxo2sJnw0xoLr3nokzHICkgr5aUuxipYiDt0tiI3xV7k0jRqQM2dsY5Dqq31Sz7CRHVg9JaBcRe58FMrKsKnBisPbzCpAX8xbR/eXo+Y+CIi3ABf9txMz+qft8/LXEJGel2J0srOZCcQ="
         on:
           tags: true
           repo: flyte/pi-mqtt-gpio
@@ -47,7 +47,7 @@ jobs:
         provider: pypi
         user: flyte
         password:
-          secure: XdHA2XZ+EXieCxoTTMQBr0rh7Fi2dI6DOc1qHvcCMLLkkAU0G/TQ1vt9p1JNvHG3+2SjghhdeCwTdYq4n2voFogmp5QCP/JgY4Xg24aDLU6YhG3FTAsziOJ9t1rex4/Wk8QiIeP2pdDufzVVWE2RU7/RlLAbEzKu6UElIKDPnXmblrmGRLu2jVM5rIuXp30PtGAKMf2Eld5HyFjbLzZ4NwHta0r37yh0Fm0+yHjt2AHsWluB5z00CAsf4CAbm6wbdNv+IOKZegLIWwiMXgKEVb/kQHb9t6kto5BKIm0kg982RdLRtfG3y5WemdqP/TUf26kZgn0z3DkDsSbQMRs1xy1a9e0M/izux1ceMz96Ke/ksJV+7LXUHF7joDDUkX8+3KV5LW2FzzrYOfDwW1/FvcELDd2OtKzRAosTBgwHN3C4RRDdTGvyXYglsJApXAChzX67s8TMXKePUbUzjr0KYofUeE46ww2HmCtj0FYvAkaeSH5c74B6Y56Eycq3qOuyD+c36rNgBqI733DSz2+pLyMB6AmIA14Pt4RP8SOPi2u6J5wrlATKY8X1NtfZ5GQPfVwl/G2RTqiykujvDVyCUS7AFkHFMTOuWMSiGcKRu9H/MJmOWIkSU9RdMDo4xywBLpeGpiKHHFmiDu0vopPn3emCh7CHxWNXtZmoPs8ilJI=
+          secure: "eSedXSEOXM+YGl+zQUjDg2EGhTIHfiMBn2Bcrx5Gyinx19Z9vaL/oy6wUw+0bpA3hztQZzgFwxxgAlEvvp9xoWknR+9AWUYlmmruWrZMcnxWG6d+kTmLehQ+xetObgqszZorVC/WmvvL7t6Tuyh/DHZZ3nw5T817jOg243eXVaQr53UFL20879I7elnRc1gGZOz9GuFMJRhGqX3D3tgseR3sKI7IYSOLNVYfJGN9FVdbn8qMcdb6Q8Ecb1RtmmK5p3uBTFe0rSZrhBD3gWjxFrpojSSsrve/duxHkY0c5ZQkv3uihFLzyLh7a8r8HW8sC7uej+HOr989Y9I6So86BHcqynKIZjrXknEsffAeCf/81hrr6Q4hiwNi+d3adnDWz2SwfYF9LvPRYJLguyKSHdjkKp8OJcJedi9rdF6CxX1Tz5RqndZLUkJH4Eybsjf65xJ4KnSbFKizESGzA9ecwCddp39lUt87bto9pZ9uXpxkKm5PLYJVxint1F1Y3C4yq5zDcRsv2J7GKFVsvfkd++N3NMaTm80bxo2sJnw0xoLr3nokzHICkgr5aUuxipYiDt0tiI3xV7k0jRqQM2dsY5Dqq31Sz7CRHVg9JaBcRe58FMrKsKnBisPbzCpAX8xbR/eXo+Y+CIi3ABf9txMz+qft8/LXEJGel2J0srOZCcQ="
         on:
           tags: true
           repo: flyte/pi-mqtt-gpio
