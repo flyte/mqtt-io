@@ -58,6 +58,40 @@ mqtt:
       type: string
       required: no
       default: dead
+    tls:
+      type: dict
+      required: no
+      schema:
+        enabled:
+          type: boolean
+          required: yes
+        ca_certs:
+          type: string
+          required: no
+        certfile:
+          type: string
+          required: no
+        keyfile:
+          type: string
+          required: no
+        cert_reqs:
+          type: string
+          required: no
+          allowed:
+            - CERT_NONE
+            - CERT_OPTIONAL
+            - CERT_REQUIRED
+          default: CERT_REQUIRED
+        tls_version:
+          type: string
+          required: no
+        ciphers:
+          type: string
+          required: no
+        insecure:
+          type: boolean
+          required: no
+          default: false
 
 gpio_modules:
   type: list
@@ -158,6 +192,5 @@ digital_outputs:
         type: boolean
         required: no
         default: no
-
 
 """)
