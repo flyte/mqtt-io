@@ -3,6 +3,7 @@ import logging
 import yaml
 import sys
 import socket
+import ssl
 from time import sleep, time
 from importlib import import_module
 from hashlib import sha1
@@ -281,6 +282,28 @@ def init_mqtt(config, digital_outputs):
         "Last will set on %r as %r.",
         status_topic,
         config["status_payload_dead"])
+
+    # Set TLS options
+    tls_enabled = config.get("tls", {}).get("enabled")
+    if tls_enabled:
+        tls_config = config["tls"]
+        tls_kwargs = dict(
+            ca_certs=tls_config.get("ca_certs"),
+            certfile=tls_config.get("certfile"),
+            keyfile=tls_config.get("keyfile"),
+            ciphers=tls_config.get("ciphers")
+        )
+        try:
+            tls_kwargs["cert_reqs"] = getattr(ssl, tls_config["cert_reqs"])
+        except KeyError:
+            pass
+        try:
+            tls_kwargs["tls_version"] = getattr(ssl, tls_config["tls_version"])
+        except KeyError:
+            pass
+
+        client.tls_set(**tls_kwargs)
+        client.tls_insecure_set(tls_config["insecure"])
 
     def on_conn(client, userdata, flags, rc):
         """

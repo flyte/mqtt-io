@@ -48,7 +48,7 @@ digital_outputs:
     off_payload: "OFF"
     initial: low  # This optional value controls the initial state of the pin before receipt of any messages from MQTT. Valid options are 'low' and 'high'.
     retain: yes # This option value controls if the message is retained. Default is no.
-  
+
   - name: fan
     module: raspberrypi
     pin: 22
@@ -80,6 +80,41 @@ digital_inputs:
     off_payload: "OFF"
     pullup: yes
     pulldown: no
+```
+
+#### SSL/TLS
+
+You may want to connect to a remote server, in which case it's a good idea to use an encrypted connection. If the server supports this, then you can supply the relevant config values for the [tls_set()](https://github.com/eclipse/paho.mqtt.python#tls_set) command.
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 8883
+  tls:
+    enabled: yes
+```
+
+You may need to supply a trusted CA certificate, as instructed on https://test.mosquitto.org/.
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 8883
+  tls:
+    enabled: yes
+    ca_certs: mosquitto.org.crt
+```
+
+Or you might want to use SSL/TLS but not verify the server's certificate (not recommended).
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 8883
+  tls:
+    enabled: yes
+    cert_reqs: CERT_NONE
+    insecure: yes
 ```
 
 #### Temporary Set
