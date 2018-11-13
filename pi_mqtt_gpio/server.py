@@ -284,7 +284,7 @@ def init_mqtt(config, digital_outputs):
         config["status_payload_dead"])
 
     # Set TLS options
-    if tls_config["enabled"]:
+    if config["tls"]["enabled"]:
         tls_config = config["tls"]
         tls_kwargs = dict(
             ca_certs=tls_config.get("ca_certs"),
