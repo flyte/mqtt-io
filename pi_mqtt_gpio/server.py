@@ -8,6 +8,9 @@ from time import sleep, time
 from importlib import import_module
 from hashlib import sha1
 
+import datetime, threading  # For callback functions
+from fractions import gcd   # for calculating the callback periodic time
+
 import paho.mqtt.client as mqtt
 import cerberus
 
@@ -23,15 +26,19 @@ LOG_LEVEL_MAP = {
     mqtt.MQTT_LOG_ERR: logging.ERROR,
     mqtt.MQTT_LOG_DEBUG: logging.DEBUG
 }
+
 RECONNECT_DELAY_SECS = 5
-GPIO_MODULES = {}
-GPIO_CONFIGS = {}
+GPIO_MODULES = {}       #storage for gpio modules
+SENSOR_MODULES = {}     #storage for sensor modules
+GPIO_CONFIGS = {}       #storage for gpios
+SENSOR_CONFIGS = {}     #storage for sensors
 LAST_STATES = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input"
+SENSOR_TOPIC = "sensor"
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
@@ -413,6 +420,28 @@ def configure_gpio_module(gpio_config):
     install_missing_requirements(gpio_module)
     return gpio_module.GPIO(gpio_config)
 
+def configure_sensor_module(sensor_config):
+    """
+    Imports sensor module, validates its config and returns an instance of it.
+    :param sensor_config: Module configuration values
+    :type sensor_config: dict
+    :return: Configured instance of the sensor module
+    :rtype: pi_mqtt_gpio.modules.GenericSensor
+    """
+    sensor_module = import_module(
+        "pi_mqtt_gpio.modules.%s" % sensor_config["module"])
+    # Doesn't need to be a deep copy because we won't modify the base
+    # validation rules, just add more of them.
+    module_config_schema = BASE_SCHEMA.copy()
+    module_config_schema.update(
+        getattr(sensor_module, "CONFIG_SCHEMA", {}))
+    module_validator = cerberus.Validator(module_config_schema)
+    if not module_validator.validate(sensor_config):
+        raise ModuleConfigInvalid(module_validator.errors)
+    sensor_config = module_validator.normalized(sensor_config)
+    install_missing_requirements(sensor_module)
+    return sensor_module.Sensor(sensor_config)
+    
 
 def initialise_digital_input(in_conf, gpio):
     """
@@ -445,6 +474,81 @@ def initialise_digital_output(out_conf, gpio):
     """
     gpio.setup_pin(out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
 
+def initialise_sensor_input(sens_conf, sensor):
+    """
+    Initialises sensor input.
+    :param in_conf: Sensor config
+    :type in_conf: dict
+    :param sensor: Instance of GenericSensor to use
+    :type sensor: pi_mqtt_gpio.modules.GenericSensor
+    :return: None
+    :rtype: NoneType
+    """
+    sensor.setup_sensor(sens_conf)
+
+def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
+    """
+    Timer thread for the sensors
+    To reduce cpu usage, there is only one cyclic thread for all sensors.
+    At the beginning the cycle time is calculated (ggT) to match all intervals.
+    For each sensor interval, the reduction value is calculated, that triggers
+    the read, round and publish for the sensor, when loop_count is a multiple
+    of it. In worst case, the cycle_time is 1 second, in best case, e.g., when
+    there is only one sensor, cycle_time is its interval.
+    """
+    #calculate the min time
+    arr=[]
+    for sens_conf in sensor_inputs:
+        arr.append(sens_conf.get("interval", 60))
+    
+    #get the greates common divisor (gcd) for the list of interval times
+    cycle_time = reduce(lambda x,y:gcd(x,y),arr)   
+
+    _LOG.info(
+        "sensor_timer_thread: calculated cycle_time will be %d seconds",
+        cycle_time)
+    
+    for sens_conf in sensor_inputs:
+        sens_conf["interval_reduction"]=sens_conf.get("interval", 60)/cycle_time
+    
+    #Start the cyclic thread
+    loop_count = 0
+    next_call = time()
+    while True:
+        loop_count = loop_count + 1
+        for sens_conf in sensor_inputs:
+            if(loop_count % sens_conf["interval_reduction"] == 0):
+                sensor = SENSOR_MODULES[sens_conf["module"]]
+                
+                try:
+                    value = round(sensor.get_value(sensor),sens_conf["digits"]) #try catch, todo: variable round from ini-file
+
+                    _LOG.info(
+                        "sensor_timer_thread: reading sensor '%s' value %r",
+                        sens_conf["name"],
+                        value
+                    )
+                    
+                    #publish each value
+                    client.publish(
+                        "%s/%s/%s" % (
+                            topic_prefix, SENSOR_TOPIC, sens_conf["name"]
+                        ),
+                        payload=value,
+                        retain=sens_conf["retain"]
+                    )
+                except ModuleConfigInvalid as exc:
+                    _LOG.error(
+                        "sensor_timer_thread: failed to read sensor '%s': %s",
+                        sens_conf["name"],
+                        exc
+                    )
+                
+        # schedule next call
+        next_call = next_call+cycle_time; #every cycle_time sec
+        sleep(next_call - time())
+
+
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
@@ -463,9 +567,11 @@ if __name__ == "__main__":
 
     digital_inputs = config["digital_inputs"]
     digital_outputs = config["digital_outputs"]
+    sensor_inputs = config["sensor_inputs"]
 
     client = init_mqtt(config["mqtt"], config["digital_outputs"])
 
+    # Install modules for GPIOs
     for gpio_config in config["gpio_modules"]:
         GPIO_CONFIGS[gpio_config["name"]] = gpio_config
         try:
@@ -478,6 +584,20 @@ if __name__ == "__main__":
                 gpio_config["name"],
                 yaml.dump(exc.errors)
             )
+    
+    # Install modules for Sensors
+    for sensor_config in config["sensor_modules"]:
+        SENSOR_CONFIGS[sensor_config["name"]] = sensor_config
+        try:
+            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(
+                sensor_config)
+        except ModuleConfigInvalid as exc:
+            _LOG.error(
+                "Config for %r module named %r did not validate:\n%s",
+                sensor_config["module"],
+                sensor_config["name"],
+                yaml.dump(exc.errors)
+            )
             sys.exit(1)
 
     for in_conf in digital_inputs:
@@ -486,6 +606,9 @@ if __name__ == "__main__":
 
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
+
+    for sens_conf in sensor_inputs:
+        initialise_sensor_input(sens_conf, SENSOR_MODULES[sens_conf["module"]])
 
     try:
         client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
@@ -498,6 +621,16 @@ if __name__ == "__main__":
 
     topic_prefix = config["mqtt"]["topic_prefix"]
     try:
+        # Starting the sensor thread (if there are sensors configured)
+        if(len(sensor_inputs) > 0):
+            sensor_thread = threading.Thread(target=sensor_timer_thread,
+                                             kwargs={'SENSOR_MODULES': SENSOR_MODULES,
+                                                     'sensor_inputs': sensor_inputs,
+                                                     'topic_prefix': topic_prefix})
+            sensor_thread.name='pi-mqtt-gpio_SensorReader'
+            sensor_thread.daemon = True # stops the thread, when main program terminates
+            sensor_thread.start()
+        
         while True:
             for in_conf in digital_inputs:
                 gpio = GPIO_MODULES[in_conf["module"]]
@@ -524,6 +657,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("")
     finally:
+        
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
             config["mqtt"]["status_payload_stopped"], qos=1, retain=True)

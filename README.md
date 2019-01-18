@@ -1,14 +1,19 @@
 PI MQTT GPIO
 ============
 
-Expose the Raspberry Pi GPIO pins and/or external IO modules to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics.
+Expose the Raspberry Pi GPIO pins, external IO modules and I2C sensors to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics. The I2C sensors will be read periodically and publish their values. 
 
-Modules
--------
+GPIO Modules
+------------
 
 - Raspberry Pi GPIO (`raspberrypi`)
 - PCF8574 IO chip (`pcf8574`)
 - PiFaceDigital 2 IO board (`piface2`)
+
+I2C Sensors
+-----------
+
+- LM75 i2c temperature sensor (`lm75`)
 
 Installation
 ------------
@@ -80,6 +85,32 @@ digital_inputs:
     off_payload: "OFF"
     pullup: yes
     pulldown: no
+```
+
+### Sensors
+
+Receive updates on the value of a sensor by subscribing to the `home/sensor/temperature` topic:
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  user: ""
+  password: ""
+  topic_prefix: home
+
+sensor_modules:
+  - name: lm75
+    module: lm75
+    i2c_bus_num: 1
+    chip_addr: 0x48
+    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
+
+sensor_inputs:
+  - name: temperature
+    module: lm75
+    interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
 ```
 
 #### SSL/TLS
