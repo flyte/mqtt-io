@@ -18,6 +18,12 @@ gpio_modules:
     module: stdio
     cleanup: no
 
+sensor_modules:
+  - name: lm75
+    module: lm75
+    i2c_bus_num: 1
+    chip_addr: 0x48
+
 digital_inputs:
   - name: button
     module: raspberrypi
@@ -40,3 +46,10 @@ digital_outputs:
     pin: 1
     on_payload: "ON"
     off_payload: "OFF"
+
+sensor_inputs:
+  - name: temperature
+    module: lm75
+    interval: 15
+    digits: 4
+
