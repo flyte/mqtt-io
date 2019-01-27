@@ -1,18 +1,22 @@
-from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
-
+from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, InterruptEdge
+import logging
 
 REQUIREMENTS = ("RPi.GPIO",)
 
 DIRECTIONS = None
 PULLUPS = None
+INTERRUPT = None
 
+_LOG = logging.getLogger(__name__)
+_LOG.addHandler(logging.StreamHandler())
+_LOG.setLevel(logging.DEBUG)
 
 class GPIO(GenericGPIO):
     """
     Implementation of GPIO class for Raspberry Pi native GPIO.
     """
     def __init__(self, config):
-        global DIRECTIONS, PULLUPS
+        global DIRECTIONS, PULLUPS, INTERRUPT
         import RPi.GPIO as gpio
         self.io = gpio
         DIRECTIONS = {
@@ -24,6 +28,12 @@ class GPIO(GenericGPIO):
             PinPullup.OFF: gpio.PUD_OFF,
             PinPullup.UP: gpio.PUD_UP,
             PinPullup.DOWN: gpio.PUD_DOWN
+        }
+        
+        INTERRUPT = {
+            InterruptEdge.RISING: gpio.RISING,
+            InterruptEdge.FALLING: gpio.FALLING,
+            InterruptEdge.BOTH: gpio.BOTH
         }
 
         gpio.setmode(gpio.BCM)
@@ -42,6 +52,22 @@ class GPIO(GenericGPIO):
             "high": 1
         }[pin_config.get("initial")]
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
+
+    def setup_interrupt(self, pin, edge, callback, bouncetime=100):
+        """
+        install interrupt callback function
+        pin:        gpio to watch for interrupts
+        edge:       triggering edge: RISING, FALLING or BOTH
+        callback:   the callback function to be called, when interrupt occurs
+        bouncetime: minimum time between two interrupts
+        """
+        edge = INTERRUPT[edge]
+        cbf = lambda arg1=pin: callback(arg1)
+        _LOG.info("setup_interrupt: adding pin(%s), edge(%s), \
+                  callback(%s), bouncetime(%s)",
+                  pin, edge, callback, bouncetime)
+
+        self.io.add_event_detect(pin, edge, callback=cbf, bouncetime=bouncetime)
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)

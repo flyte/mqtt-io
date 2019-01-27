@@ -29,6 +29,11 @@ class PinPullup(Enum):
     OFF = 0
     UP = 1
     DOWN = 2
+    
+class InterruptEdge(Enum):
+    RISING = 0
+    FALLING = 1
+    BOTH = 2
 
 
 class GenericGPIO(object):
