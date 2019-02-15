@@ -32,7 +32,7 @@ class Sensor(GenericSensor):
 
     def get_value(self, sensor):
         """get the temperature value from the sensor"""
-        value = self.bus.read_word_data(self._address,
+        value = self.bus.read_word_data(self.address,
                                         LM75_TEMP_REGISTER) & 0xFFFF
         value = ((value << 8) & 0xFF00) + (value >> 8)
         return self.convert_to_celsius(value)
