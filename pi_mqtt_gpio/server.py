@@ -509,7 +509,7 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
     # get the greatest common divisor (gcd) for the list of interval times
     cycle_time = reduce(lambda x, y: gcd(x, y), arr)
 
-    _LOG.info(
+    _LOG.debug(
         "sensor_timer_thread: calculated cycle_time will be %d seconds",
         cycle_time)
 
