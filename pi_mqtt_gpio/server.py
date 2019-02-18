@@ -628,7 +628,7 @@ if __name__ == "__main__":
     topic_prefix = config["mqtt"]["topic_prefix"]
     try:
         # Starting the sensor thread (if there are sensors configured)
-        if(len(sensor_inputs) > 0):
+        if sensor_inputs:
             sensor_thread = threading.Thread(target=sensor_timer_thread,
                                              kwargs={'SENSOR_MODULES':
                                                      SENSOR_MODULES,
