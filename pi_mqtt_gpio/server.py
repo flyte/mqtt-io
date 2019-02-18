@@ -521,7 +521,7 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
     loop_count = 0
     next_call = time()
     while True:
-        loop_count = loop_count + 1
+        loop_count += 1
         for sens_conf in sensor_inputs:
             if(loop_count % sens_conf["interval_reduction"] == 0):
                 sensor = SENSOR_MODULES[sens_conf["module"]]
