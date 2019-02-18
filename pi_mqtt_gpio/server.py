@@ -506,7 +506,7 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
     for sens_conf in sensor_inputs:
         arr.append(sens_conf.get("interval", 60))
 
-    # get the greates common divisor (gcd) for the list of interval times
+    # get the greatest common divisor (gcd) for the list of interval times
     cycle_time = reduce(lambda x, y: gcd(x, y), arr)
 
     _LOG.info(
