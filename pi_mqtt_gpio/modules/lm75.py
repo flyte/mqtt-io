@@ -20,7 +20,7 @@ LM75_TEMP_REGISTER = 0
 
 class Sensor(GenericSensor):
     """
-    Implementation of GPIO class for the PCF8574 IO expander chip.
+    Implementation of Sensor class for the LM75 temperature sensor.
     """
     def __init__(self, config):
         import smbus
