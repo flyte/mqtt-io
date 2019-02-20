@@ -1,15 +1,13 @@
-from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, InterruptEdge
-import logging
+from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, \
+                                 InterruptEdge
 
 REQUIREMENTS = ("RPi.GPIO",)
 
 DIRECTIONS = None
 PULLUPS = None
 INTERRUPT = None
+GPIO_INTERRUPT_CALLBACK_LOOKUP = {}
 
-_LOG = logging.getLogger(__name__)
-_LOG.addHandler(logging.StreamHandler())
-_LOG.setLevel(logging.DEBUG)
 
 class GPIO(GenericGPIO):
     """
@@ -29,7 +27,7 @@ class GPIO(GenericGPIO):
             PinPullup.UP: gpio.PUD_UP,
             PinPullup.DOWN: gpio.PUD_DOWN
         }
-        
+
         INTERRUPT = {
             InterruptEdge.RISING: gpio.RISING,
             InterruptEdge.FALLING: gpio.FALLING,
@@ -53,7 +51,7 @@ class GPIO(GenericGPIO):
         }[pin_config.get("initial")]
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
 
-    def setup_interrupt(self, pin, edge, callback, bouncetime=100):
+    def setup_interrupt(self, handle, pin, edge, callback, bouncetime=100):
         """
         install interrupt callback function
         pin:        gpio to watch for interrupts
@@ -61,19 +59,25 @@ class GPIO(GenericGPIO):
         callback:   the callback function to be called, when interrupt occurs
         bouncetime: minimum time between two interrupts
         """
+        global GPIO_INTERRUPT_CALLBACK_LOOKUP
+        print("edge: ", edge)
         edge = INTERRUPT[edge]
-        cbf = lambda arg1=pin: callback(arg1)
-        _LOG.info("setup_interrupt: adding pin(%s), edge(%s), \
-                  callback(%s), bouncetime(%s)",
-                  pin, edge, callback, bouncetime)
-
-        self.io.add_event_detect(pin, edge, callback=cbf, bouncetime=bouncetime)
+        self.io.add_event_detect(pin, edge, callback=self.interrupt_callback,
+                                 bouncetime=bouncetime)
+        GPIO_INTERRUPT_CALLBACK_LOOKUP[pin] = {"handle": handle,
+                                               "callback": callback}
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)
 
     def get_pin(self, pin):
         return self.io.input(pin)
+
+    def interrupt_callback(self, pin):
+        value = self.io.input(pin)
+        callback = GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("callback")
+        handle = GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("handle")
+        callback(handle, pin, value)
 
     def cleanup(self):
         self.io.cleanup()

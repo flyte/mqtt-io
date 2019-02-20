@@ -29,7 +29,8 @@ class PinPullup(Enum):
     OFF = 0
     UP = 1
     DOWN = 2
-    
+
+
 class InterruptEdge(Enum):
     RISING = 0
     FALLING = 1
@@ -46,6 +47,10 @@ class GenericGPIO(object):
     @abc.abstractmethod
     def setup_pin(self, pin, direction, pullup, pin_config):
         pass
+
+    # may be overloaded, if module supports interrupts
+    def setup_interrupt(self, handle, pin, edge, callback, bouncetime):
+        raise(NotImplementedError)
 
     @abc.abstractmethod
     def set_pin(self, pin, value):

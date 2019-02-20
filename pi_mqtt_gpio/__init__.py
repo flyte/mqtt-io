@@ -168,6 +168,20 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      interrupt:
+        type: string
+        required: no
+        default: none
+        allowed:
+          - rising
+          - falling
+          - both
+          - none
+      bouncetime:
+        type: integer
+        required: no
+        default: 100
+        min: 1
       retain:
         type: boolean
         required: no

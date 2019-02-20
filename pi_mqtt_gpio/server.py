@@ -16,7 +16,8 @@ import paho.mqtt.client as mqtt
 import cerberus
 
 from pi_mqtt_gpio import CONFIG_SCHEMA
-from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
+from pi_mqtt_gpio.modules import PinPullup, PinDirection, InterruptEdge, \
+                                 BASE_SCHEMA
 from pi_mqtt_gpio.scheduler import Scheduler, Task
 
 
@@ -34,6 +35,7 @@ SENSOR_MODULES = {}     # storage for sensor modules
 GPIO_CONFIGS = {}       # storage for gpios
 SENSOR_CONFIGS = {}     # storage for sensors
 LAST_STATES = {}
+GPIO_INTERRUPT_LOOKUP = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
@@ -237,7 +239,7 @@ def output_name_from_topic(topic, topic_prefix, suffix):
     Return the name of the output which the topic is setting.
     :param topic: String such as 'mytopicprefix/output/tv_lamp/set'
     :type topic: str
-    :param topic_prefix: Prefix of our topics
+    :param topic_prefix: Prefix of our topicsclient,
     :type topic_prefix: str
     :param suffix: The suffix of the topic such as "set" or "set_ms"
     :type suffix: str
@@ -455,6 +457,7 @@ def initialise_digital_input(in_conf, gpio):
     :return: None
     :rtype: NoneType
     """
+    #print(in_conf)
     pud = None
     if in_conf["pullup"]:
         pud = PinPullup.UP
@@ -463,6 +466,39 @@ def initialise_digital_input(in_conf, gpio):
     gpio.setup_pin(
         in_conf["pin"], PinDirection.INPUT, pud, in_conf)
 
+    # try to initialize interrupt, if available
+    if in_conf["interrupt"] != "none":
+        try:
+            edge = {
+                "rising": InterruptEdge.RISING,
+                "falling": InterruptEdge.FALLING,
+                "both": InterruptEdge.BOTH
+            }[in_conf["interrupt"]]
+        except KeyError as exc:
+            _LOG.error(
+                "initialise_digital_input: config value(%s) for 'interrupt' \
+                 invalid in  entry '%s'",
+                in_conf["interrupt"],
+                in_conf["name"]
+            )
+
+        try:
+            bouncetime = in_conf["bouncetime"]
+            gpio.setup_interrupt(in_conf, 
+                in_conf["pin"], edge, gpio_interrupt_callback, bouncetime)
+            
+            # store for callback function handling
+            if not GPIO_INTERRUPT_LOOKUP.get(in_conf["module"]):
+                GPIO_INTERRUPT_LOOKUP[in_conf["module"]] = {}
+            GPIO_INTERRUPT_LOOKUP[in_conf["module"]][in_conf["pin"]] = in_conf
+        except NotImplementedError as exc:
+            _LOG.error(
+                "initialise_digital_input: interrupt not implemented for \
+                 input(%s) on module(%s)",
+                in_conf["name"],
+                in_conf["module"]
+            )
+            
 
 def initialise_digital_output(out_conf, gpio):
     """
@@ -555,12 +591,27 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
         next_call = next_call+cycle_time  # every cycle_time sec
         sleep(next_call - time())
 
+def gpio_interrupt_callback(module, pin, value):
+    try:
+        in_conf = GPIO_INTERRUPT_LOOKUP[module][pin]
+    except KeyError as exc:
+        _LOG.error(
+            "gpio_interrupt_callback: no interrupt configured for pin '%s' on module %s: %s",
+            pin,
+            module,
+            exc
+        )
+        
+    # publish each value
+    client.publish(
+        "%s/%s/%s" % (
+            topic_prefix, SENSOR_TOPIC, in_conf["name"]
+        ),
+        payload=value,
+        retain=in_conf["retain"]
+    )
 
-if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("config")
-    args = p.parse_args()
-
+def main(args):
     with open(args.config) as f:
         config = yaml.load(f)
     validator = ConfigValidator(CONFIG_SCHEMA)
@@ -590,9 +641,10 @@ if __name__ == "__main__":
                 gpio_config["name"],
                 yaml.dump(exc.errors)
             )
+            sys.exit(1)
 
     # Install modules for Sensors
-    for sensor_config in config["sensor_modules"]:
+    for sensor_config in config.get("sensor_modules", {}):
         SENSOR_CONFIGS[sensor_config["name"]] = sensor_config
         try:
             SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(
@@ -607,6 +659,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
     for in_conf in digital_inputs:
+	print (digital_inputs)
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
         LAST_STATES[in_conf["name"]] = None
 
@@ -685,3 +738,9 @@ if __name__ == "__main__":
             except Exception:
                 _LOG.exception(
                     "Unable to execute cleanup routine for module %r:", name)
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("config")
+    args = p.parse_args()
+    main(args)
