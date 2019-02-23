@@ -2,6 +2,8 @@ import pytest
 import time
 from pi_mqtt_gpio.modules import raspberrypi, PinDirection, PinPullup, InterruptEdge
 
+pytestmark = pytest.mark.hw_raspberrypi
+
 '''
 Definition of wired connected GPIOs
 You may connect them with a 10kOhm resistor
@@ -24,7 +26,7 @@ interrupt_count = 0
 test_handle = 0
 
 @pytest.fixture(autouse=True)
-def test_raspberrypi_setup_teardown():
+def fix_raspberrypi_setup_teardown():
     # Code that will run before your test, for example:
     global gpio
     gpio = raspberrypi.GPIO("")
