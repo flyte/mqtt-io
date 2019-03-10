@@ -10,8 +10,11 @@ pytest = "*"
 [packages]
 paho-mqtt = "*"
 enum34 = "*"
-PyYAML = "*"
+PyYAML = ">=4.2b1"
 Cerberus = "*"
 
 [requires]
 python_version = "3.6"
+
+[pipenv]
+allow_prereleases = true
