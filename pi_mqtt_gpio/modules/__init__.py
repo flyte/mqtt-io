@@ -55,3 +55,25 @@ class GenericGPIO(object):
         Called when closing the program to handle any cleanup operations.
         """
         pass
+
+
+class GenericSensor(object):
+    """
+    Abstracts a generic sensor interface to be implemented
+    by the modules in this directory.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def setup_sensor(self, config):
+        pass
+
+    @abc.abstractmethod
+    def get_value(self, sensor):
+        pass
+
+    def cleanup(self):
+        """
+        Called when closing the program to handle any cleanup operations.
+        """
+        pass

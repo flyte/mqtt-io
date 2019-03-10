@@ -95,7 +95,29 @@ mqtt:
 
 gpio_modules:
   type: list
-  required: yes
+  required: no
+  default: []
+  schema:
+    type: dict
+    allow_unknown: yes
+    schema:
+      name:
+        type: string
+        required: yes
+        empty: no
+      module:
+        type: string
+        required: yes
+        empty: no
+      cleanup:
+        type: boolean
+        required: no
+        default: yes
+
+sensor_modules:
+  type: list
+  required: no
+  default: []
   schema:
     type: dict
     allow_unknown: yes
@@ -192,5 +214,35 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+
+sensor_inputs:
+  type: list
+  required: no
+  default: []
+  schema:
+    type: dict
+    schema:
+      name:
+        type: string
+        required: yes
+        empty: no
+      module:
+        type: string
+        required: yes
+        empty: no
+      retain:
+        type: boolean
+        required: no
+        default: no
+      interval:
+        type: integer
+        required: no
+        default: 60
+        min: 1
+      digits:
+        type: integer
+        required: no
+        default: 2
+        min: 0
 
 """)
