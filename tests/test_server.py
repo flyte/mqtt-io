@@ -56,8 +56,7 @@ def test_onfts_no_set():
     Should raise a ValueError when there's no /set at the end of the topic.
     """
     with pytest.raises(ValueError):
-        server.output_name_from_topic(
-            "myprefix/output/myoutputname", "myprefix", "set")
+        server.output_name_from_topic("myprefix/output/myoutputname", "myprefix", "set")
 
 
 def test_onfts_returns_output_name():
@@ -66,8 +65,6 @@ def test_onfts_returns_output_name():
     """
     output_name = "myoutputname"
     ret = server.output_name_from_topic(
-        "myprefix/output/%s/%s" % (output_name, server.SET_TOPIC),
-        "myprefix",
-        "set"
+        "myprefix/output/%s/%s" % (output_name, server.SET_TOPIC), "myprefix", "set"
     )
     assert ret == output_name

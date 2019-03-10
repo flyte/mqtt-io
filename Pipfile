@@ -6,6 +6,8 @@ verify_ssl = true
 [dev-packages]
 mock = "*"
 pytest = "*"
+tox = "*"
+pylint = "*"
 
 [packages]
 paho-mqtt = "*"

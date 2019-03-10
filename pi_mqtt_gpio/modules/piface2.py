@@ -11,8 +11,10 @@ class GPIO(GenericGPIO):
     """
     Implementation of GPIO class for PiFaceDigital IO board.
     """
+
     def __init__(self, config):
         import pifacedigitalio as pfdio
+
         pfdio.init()
         self.io = pfdio
 
