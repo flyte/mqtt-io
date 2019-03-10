@@ -1,0 +1,17 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+mock = "*"
+pytest = "*"
+
+[packages]
+paho-mqtt = "*"
+enum34 = "*"
+PyYAML = "*"
+Cerberus = "*"
+
+[requires]
+python_version = "3.6"
