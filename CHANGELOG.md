@@ -1,3 +1,13 @@
+v0.3.1 - 2019-03-10
+===================
+- Pin safe version of PyYAML in requirements
+
+v0.3.0 - 2019-03-10
+===================
+- Merge PR from @BenjiU which implements a new sensor interface. #52
+
+---
+
 v0.0.12 - 2017-07-26
 ====================
 - Add cleanup function to modules which are called before program exit. #16
