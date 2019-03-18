@@ -279,7 +279,9 @@ def init_mqtt(config, digital_outputs):
     client.will_set(
         status_topic, payload=config["status_payload_dead"], qos=1, retain=True
     )
-    _LOG.debug("Last will set on %r as %r.", status_topic, config["status_payload_dead"])
+    _LOG.debug(
+        "Last will set on %r as %r.", status_topic, config["status_payload_dead"]
+    )
 
     # Set TLS options
     tls_enabled = config.get("tls", {}).get("enabled")
@@ -425,8 +427,6 @@ def configure_sensor_module(sensor_config):
     return sensor_module.Sensor(sensor_config)
 
 
-
-
 def initialise_digital_input(in_conf, gpio):
     """
     Initialises digital input.
@@ -570,7 +570,9 @@ if __name__ == "__main__":
     for sensor_config in config["sensor_modules"]:
         SENSOR_CONFIGS[sensor_config["name"]] = sensor_config
         try:
-            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(sensor_config)
+            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(
+                sensor_config
+            )
         except ModuleConfigInvalid as exc:
             _LOG.error(
                 "Config for %r module named %r did not validate:\n%s",
