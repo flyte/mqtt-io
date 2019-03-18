@@ -1,5 +1,5 @@
 paho-mqtt
-PyYAML
+PyYAML>=4.2b1
 enum34
 cerberus
 

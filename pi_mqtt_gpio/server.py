@@ -8,8 +8,8 @@ from time import sleep, time
 from importlib import import_module
 from hashlib import sha1
 
-import threading            # For callback functions
-from fractions import gcd   # for calculating the callback periodic time
+import threading  # For callback functions
+from fractions import gcd  # for calculating the callback periodic time
 from functools import reduce
 
 import paho.mqtt.client as mqtt
@@ -25,14 +25,14 @@ LOG_LEVEL_MAP = {
     mqtt.MQTT_LOG_NOTICE: logging.INFO,
     mqtt.MQTT_LOG_WARNING: logging.WARNING,
     mqtt.MQTT_LOG_ERR: logging.ERROR,
-    mqtt.MQTT_LOG_DEBUG: logging.DEBUG
+    mqtt.MQTT_LOG_DEBUG: logging.DEBUG,
 }
 
 RECONNECT_DELAY_SECS = 5
-GPIO_MODULES = {}       # storage for gpio modules
-SENSOR_MODULES = {}     # storage for sensor modules
-GPIO_CONFIGS = {}       # storage for gpios
-SENSOR_CONFIGS = {}     # storage for sensors
+GPIO_MODULES = {}  # storage for gpio modules
+SENSOR_MODULES = {}  # storage for sensor modules
+GPIO_CONFIGS = {}  # storage for gpios
+SENSOR_CONFIGS = {}  # storage for sensors
 LAST_STATES = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
@@ -132,12 +132,14 @@ def set_pin(output_config, value):
         "Set %r output %r to %r",
         output_config["module"],
         output_config["name"],
-        set_value)
+        set_value,
+    )
     payload = output_config["on_payload" if value else "off_payload"]
     client.publish(
         "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, output_config["name"]),
         retain=output_config["retain"],
-        payload=payload)
+        payload=payload,
+    )
 
 
 def handle_set(msg):
@@ -153,13 +155,13 @@ def handle_set(msg):
     if output_config is None:
         return
     payload = msg.payload.decode("utf8")
-    if payload not in (
-            output_config["on_payload"], output_config["off_payload"]):
+    if payload not in (output_config["on_payload"], output_config["off_payload"]):
         _LOG.warning(
             "Payload %r does not relate to configured on/off values %r and %r",
             payload,
             output_config["on_payload"],
-            output_config["off_payload"])
+            output_config["off_payload"],
+        )
         return
     set_pin(output_config, payload == output_config["on_payload"])
 
@@ -177,8 +179,7 @@ def handle_set_ms(msg, value):
     try:
         ms = int(msg.payload)
     except ValueError:
-        raise InvalidPayload(
-            "Could not parse ms value %r to an integer." % msg.payload)
+        raise InvalidPayload("Could not parse ms value %r to an integer." % msg.payload)
     suffix = SET_ON_MS_TOPIC if value else SET_OFF_MS_TOPIC
     output_name = output_name_from_topic(msg.topic, topic_prefix, suffix)
     output_config = output_by_name(output_name)
@@ -186,17 +187,12 @@ def handle_set_ms(msg, value):
         return
 
     set_pin(output_config, value)
-    scheduler.add_task(Task(
-        time() + ms/1000.0,
-        set_pin,
-        output_config,
-        not value
-    ))
+    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, output_config, not value))
     _LOG.info(
         "Scheduled output %r to change back to %r after %r ms.",
         output_config["name"],
         not value,
-        ms
+        ms,
     )
 
 
@@ -215,6 +211,7 @@ def install_missing_requirements(module):
         _LOG.info("Module %r has no extra requirements to install." % module)
         return
     import pkg_resources
+
     pkgs_installed = pkg_resources.WorkingSet()
     pkgs_required = []
     for req in reqs:
@@ -222,13 +219,13 @@ def install_missing_requirements(module):
             pkgs_required.append(req)
     if pkgs_required:
         from subprocess import check_call, CalledProcessError
+
         try:
-            check_call(['/usr/bin/env', 'pip', 'install'] + pkgs_required)
+            check_call(["/usr/bin/env", "pip", "install"] + pkgs_required)
         except CalledProcessError as err:
             raise CannotInstallModuleRequirements(
-                "Unable to install packages for module %r (%s): %s" % (
-                    module, pkgs_required, err
-                )
+                "Unable to install packages for module %r (%s): %s"
+                % (module, pkgs_required, err)
             )
 
 
@@ -247,7 +244,7 @@ def output_name_from_topic(topic, topic_prefix, suffix):
     if not topic.endswith("/%s" % suffix):
         raise ValueError("This topic does not end with '/%s'" % suffix)
     lindex = len("%s/%s/" % (topic_prefix, OUTPUT_TOPIC))
-    rindex = -len(suffix)-1
+    rindex = -len(suffix) - 1
     return topic[lindex:rindex]
 
 
@@ -268,13 +265,11 @@ def init_mqtt(config, digital_outputs):
 
     # https://stackoverflow.com/questions/45774538/what-is-the-maximum-length-of-client-id-in-mqtt
     # TLDR: Soft limit of 23, but we needn't truncate it on our end.
-    client_id = config['client_id']
+    client_id = config["client_id"]
     if not client_id:
-        client_id = "pi-mqtt-gpio-%s" % sha1(
-            topic_prefix.encode('utf8')).hexdigest()
+        client_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
 
-    client = mqtt.Client(
-        client_id=client_id, clean_session=False, protocol=protocol)
+    client = mqtt.Client(client_id=client_id, clean_session=False, protocol=protocol)
 
     if config["user"] and config["password"]:
         client.username_pw_set(config["user"], config["password"])
@@ -282,14 +277,9 @@ def init_mqtt(config, digital_outputs):
     # Set last will and testament (LWT)
     status_topic = "%s/%s" % (topic_prefix, config["status_topic"])
     client.will_set(
-        status_topic,
-        payload=config["status_payload_dead"],
-        qos=1,
-        retain=True)
-    _LOG.debug(
-        "Last will set on %r as %r.",
-        status_topic,
-        config["status_payload_dead"])
+        status_topic, payload=config["status_payload_dead"], qos=1, retain=True
+    )
+    _LOG.debug("Last will set on %r as %r.", status_topic, config["status_payload_dead"])
 
     # Set TLS options
     tls_enabled = config.get("tls", {}).get("enabled")
@@ -299,7 +289,7 @@ def init_mqtt(config, digital_outputs):
             ca_certs=tls_config.get("ca_certs"),
             certfile=tls_config.get("certfile"),
             keyfile=tls_config.get("keyfile"),
-            ciphers=tls_config.get("ciphers")
+            ciphers=tls_config.get("ciphers"),
         )
         try:
             tls_kwargs["cert_reqs"] = getattr(ssl, tls_config["cert_reqs"])
@@ -328,41 +318,36 @@ def init_mqtt(config, digital_outputs):
         """
         if rc == 0:
             _LOG.info(
-                "Connected to the MQTT broker with protocol v%s.",
-                config["protocol"])
+                "Connected to the MQTT broker with protocol v%s.", config["protocol"]
+            )
             for out_conf in digital_outputs:
                 for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
                     topic = "%s/%s/%s/%s" % (
                         topic_prefix,
                         OUTPUT_TOPIC,
                         out_conf["name"],
-                        suffix)
+                        suffix,
+                    )
                     client.subscribe(topic, qos=1)
                     _LOG.info("Subscribed to topic: %r", topic)
             client.publish(
-                status_topic,
-                config["status_payload_running"],
-                qos=1,
-                retain=True)
+                status_topic, config["status_payload_running"], qos=1, retain=True
+            )
         elif rc == 1:
-            _LOG.fatal(
-                "Incorrect protocol version used to connect to MQTT broker.")
+            _LOG.fatal("Incorrect protocol version used to connect to MQTT broker.")
             sys.exit(1)
         elif rc == 2:
-            _LOG.fatal(
-                "Invalid client identifier used to connect to MQTT broker.")
+            _LOG.fatal("Invalid client identifier used to connect to MQTT broker.")
             sys.exit(1)
         elif rc == 3:
             _LOG.warning("MQTT broker unavailable. Retrying in %s secs...")
             sleep(RECONNECT_DELAY_SECS)
             client.reconnect()
         elif rc == 4:
-            _LOG.fatal(
-                "Bad username or password used to connect to MQTT broker.")
+            _LOG.fatal("Bad username or password used to connect to MQTT broker.")
             sys.exit(1)
         elif rc == 5:
-            _LOG.fatal(
-                "Not authorised to connect to MQTT broker.")
+            _LOG.fatal("Not authorised to connect to MQTT broker.")
             sys.exit(1)
 
     def on_msg(client, userdata, msg):
@@ -377,8 +362,7 @@ def init_mqtt(config, digital_outputs):
         :rtype: NoneType
         """
         try:
-            _LOG.info(
-                "Received message on topic %r: %r", msg.topic, msg.payload)
+            _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
             if msg.topic.endswith("/%s" % SET_TOPIC):
                 handle_set(msg)
             elif msg.topic.endswith("/%s" % SET_ON_MS_TOPIC):
@@ -407,13 +391,11 @@ def configure_gpio_module(gpio_config):
     :return: Configured instance of the gpio module
     :rtype: pi_mqtt_gpio.modules.GenericGPIO
     """
-    gpio_module = import_module(
-        "pi_mqtt_gpio.modules.%s" % gpio_config["module"])
+    gpio_module = import_module("pi_mqtt_gpio.modules.%s" % gpio_config["module"])
     # Doesn't need to be a deep copy because we won't modify the base
     # validation rules, just add more of them.
     module_config_schema = BASE_SCHEMA.copy()
-    module_config_schema.update(
-        getattr(gpio_module, "CONFIG_SCHEMA", {}))
+    module_config_schema.update(getattr(gpio_module, "CONFIG_SCHEMA", {}))
     module_validator = cerberus.Validator(module_config_schema)
     if not module_validator.validate(gpio_config):
         raise ModuleConfigInvalid(module_validator.errors)
@@ -430,19 +412,19 @@ def configure_sensor_module(sensor_config):
     :return: Configured instance of the sensor module
     :rtype: pi_mqtt_gpio.modules.GenericSensor
     """
-    sensor_module = import_module(
-        "pi_mqtt_gpio.modules.%s" % sensor_config["module"])
+    sensor_module = import_module("pi_mqtt_gpio.modules.%s" % sensor_config["module"])
     # Doesn't need to be a deep copy because we won't modify the base
     # validation rules, just add more of them.
     module_config_schema = BASE_SCHEMA.copy()
-    module_config_schema.update(
-        getattr(sensor_module, "CONFIG_SCHEMA", {}))
+    module_config_schema.update(getattr(sensor_module, "CONFIG_SCHEMA", {}))
     module_validator = cerberus.Validator(module_config_schema)
     if not module_validator.validate(sensor_config):
         raise ModuleConfigInvalid(module_validator.errors)
     sensor_config = module_validator.normalized(sensor_config)
     install_missing_requirements(sensor_module)
     return sensor_module.Sensor(sensor_config)
+
+
 
 
 def initialise_digital_input(in_conf, gpio):
@@ -460,8 +442,7 @@ def initialise_digital_input(in_conf, gpio):
         pud = PinPullup.UP
     elif in_conf["pulldown"]:
         pud = PinPullup.DOWN
-    gpio.setup_pin(
-        in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+    gpio.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
 
 
 def initialise_digital_output(out_conf, gpio):
@@ -510,12 +491,11 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
     cycle_time = reduce(lambda x, y: gcd(x, y), arr)
 
     _LOG.debug(
-        "sensor_timer_thread: calculated cycle_time will be %d seconds",
-        cycle_time)
+        "sensor_timer_thread: calculated cycle_time will be %d seconds", cycle_time
+    )
 
     for sens_conf in sensor_inputs:
-        sens_conf["interval_reduction"] = sens_conf.get("interval",
-                                                        60) / cycle_time
+        sens_conf["interval_reduction"] = sens_conf.get("interval", 60) / cycle_time
 
     # Start the cyclic thread
     loop_count = 0
@@ -527,32 +507,29 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                 sensor = SENSOR_MODULES[sens_conf["module"]]
 
                 try:
-                    value = round(sensor.get_value(sensor),
-                                  sens_conf["digits"])
+                    value = round(sensor.get_value(sensor), sens_conf["digits"])
 
                     _LOG.info(
                         "sensor_timer_thread: reading sensor '%s' value %r",
                         sens_conf["name"],
-                        value
+                        value,
                     )
 
                     # publish each value
                     client.publish(
-                        "%s/%s/%s" % (
-                            topic_prefix, SENSOR_TOPIC, sens_conf["name"]
-                        ),
+                        "%s/%s/%s" % (topic_prefix, SENSOR_TOPIC, sens_conf["name"]),
                         payload=value,
-                        retain=sens_conf["retain"]
+                        retain=sens_conf["retain"],
                     )
                 except ModuleConfigInvalid as exc:
                     _LOG.error(
                         "sensor_timer_thread: failed to read sensor '%s': %s",
                         sens_conf["name"],
-                        exc
+                        exc,
                     )
 
         # schedule next call
-        next_call = next_call+cycle_time  # every cycle_time sec
+        next_call = next_call + cycle_time  # every cycle_time sec
         sleep(next_call - time())
 
 
@@ -562,12 +539,10 @@ if __name__ == "__main__":
     args = p.parse_args()
 
     with open(args.config) as f:
-        config = yaml.load(f)
+        config = yaml.safe_load(f)
     validator = ConfigValidator(CONFIG_SCHEMA)
     if not validator.validate(config):
-        _LOG.error(
-            "Config did not validate:\n%s",
-            yaml.dump(validator.errors))
+        _LOG.error("Config did not validate:\n%s", yaml.dump(validator.errors))
         sys.exit(1)
     config = validator.normalized(config)
 
@@ -581,28 +556,27 @@ if __name__ == "__main__":
     for gpio_config in config["gpio_modules"]:
         GPIO_CONFIGS[gpio_config["name"]] = gpio_config
         try:
-            GPIO_MODULES[gpio_config["name"]] = configure_gpio_module(
-                gpio_config)
+            GPIO_MODULES[gpio_config["name"]] = configure_gpio_module(gpio_config)
         except ModuleConfigInvalid as exc:
             _LOG.error(
                 "Config for %r module named %r did not validate:\n%s",
                 gpio_config["module"],
                 gpio_config["name"],
-                yaml.dump(exc.errors)
+                yaml.dump(exc.errors),
             )
+            sys.exit(1)
 
     # Install modules for Sensors
     for sensor_config in config["sensor_modules"]:
         SENSOR_CONFIGS[sensor_config["name"]] = sensor_config
         try:
-            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(
-                sensor_config)
+            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(sensor_config)
         except ModuleConfigInvalid as exc:
             _LOG.error(
                 "Config for %r module named %r did not validate:\n%s",
                 sensor_config["module"],
                 sensor_config["name"],
-                yaml.dump(exc.errors)
+                yaml.dump(exc.errors),
             )
             sys.exit(1)
 
@@ -629,14 +603,15 @@ if __name__ == "__main__":
     try:
         # Starting the sensor thread (if there are sensors configured)
         if sensor_inputs:
-            sensor_thread = threading.Thread(target=sensor_timer_thread,
-                                             kwargs={'SENSOR_MODULES':
-                                                     SENSOR_MODULES,
-                                                     'sensor_inputs':
-                                                     sensor_inputs,
-                                                     'topic_prefix':
-                                                     topic_prefix})
-            sensor_thread.name = 'pi-mqtt-gpio_SensorReader'
+            sensor_thread = threading.Thread(
+                target=sensor_timer_thread,
+                kwargs={
+                    "SENSOR_MODULES": SENSOR_MODULES,
+                    "sensor_inputs": sensor_inputs,
+                    "topic_prefix": topic_prefix,
+                },
+            )
+            sensor_thread.name = "pi-mqtt-gpio_SensorReader"
             # stops the thread, when main program terminates
             sensor_thread.daemon = True
             sensor_thread.start()
@@ -649,17 +624,13 @@ if __name__ == "__main__":
                 if bool(gpio.get_pin(in_conf["pin"])) != state:
                     continue
                 if state != LAST_STATES[in_conf["name"]]:
-                    _LOG.info(
-                        "Input %r state changed to %r",
-                        in_conf["name"],
-                        state)
+                    _LOG.info("Input %r state changed to %r", in_conf["name"], state)
                     client.publish(
-                        "%s/%s/%s" % (
-                            topic_prefix, INPUT_TOPIC, in_conf["name"]
+                        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+                        payload=(
+                            in_conf["on_payload"] if state else in_conf["off_payload"]
                         ),
-                        payload=(in_conf["on_payload"] if state
-                                 else in_conf["off_payload"]),
-                        retain=in_conf["retain"]
+                        retain=in_conf["retain"],
                     )
                     LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
@@ -670,7 +641,10 @@ if __name__ == "__main__":
 
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
-            config["mqtt"]["status_payload_stopped"], qos=1, retain=True)
+            config["mqtt"]["status_payload_stopped"],
+            qos=1,
+            retain=True,
+        )
 
         client.loop_stop()
         client.disconnect()
@@ -683,5 +657,4 @@ if __name__ == "__main__":
             try:
                 gpio.cleanup()
             except Exception:
-                _LOG.exception(
-                    "Unable to execute cleanup routine for module %r:", name)
+                _LOG.exception("Unable to execute cleanup routine for module %r:", name)

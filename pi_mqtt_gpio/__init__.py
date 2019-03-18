@@ -1,6 +1,7 @@
 import yaml
 
-CONFIG_SCHEMA = yaml.load("""
+CONFIG_SCHEMA = yaml.safe_load(
+    """
 mqtt:
   type: dict
   required: yes
@@ -244,5 +245,5 @@ sensor_inputs:
         required: no
         default: 2
         min: 0
-
-""")
+"""
+)

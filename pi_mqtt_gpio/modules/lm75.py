@@ -3,6 +3,7 @@ from pi_mqtt_gpio.modules import GenericSensor
 
 """REQUIREMENTS = ("smbus",)"""
 CONFIG_SCHEMA = {
+<<<<<<< HEAD
     "i2c_bus_num": {
         "type": "integer",
         "required": True,
@@ -13,6 +14,10 @@ CONFIG_SCHEMA = {
         "required": True,
         "empty": False
     }
+=======
+    "i2c_bus_num": {"type": "integer", "required": True, "empty": False},
+    "chip_addr": {"type": "integer", "required": True, "empty": False},
+>>>>>>> upstream/develop
 }
 
 LM75_TEMP_REGISTER = 0
@@ -22,8 +27,15 @@ class Sensor(GenericSensor):
     """
     Implementation of Sensor class for the LM75 temperature sensor.
     """
+<<<<<<< HEAD
     def __init__(self, config):
         import smbus
+=======
+
+    def __init__(self, config):
+        import smbus
+
+>>>>>>> upstream/develop
         self.bus = smbus.SMBus(config["i2c_bus_num"])
         self.address = config["chip_addr"]
 
@@ -32,8 +44,12 @@ class Sensor(GenericSensor):
 
     def get_value(self, sensor):
         """get the temperature value from the sensor"""
+<<<<<<< HEAD
         value = self.bus.read_word_data(self.address,
                                         LM75_TEMP_REGISTER) & 0xFFFF
+=======
+        value = self.bus.read_word_data(self.address, LM75_TEMP_REGISTER) & 0xFFFF
+>>>>>>> upstream/develop
         value = ((value << 8) & 0xFF00) + (value >> 8)
         return self.convert_to_celsius(value)
 
