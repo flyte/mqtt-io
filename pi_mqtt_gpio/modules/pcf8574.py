@@ -25,6 +25,7 @@ class GPIO(GenericGPIO):
         self.io = PCF8574(config["i2c_bus_num"], config["chip_addr"])
 
     def setup_pin(self, pin, direction, pullup, pin_config):
+        pin = int(pin)
         if direction == PinDirection.INPUT and pullup is not None:
             self.io.port[pin] = PULLUPS[pullup]
         initial = pin_config.get("initial")
@@ -35,7 +36,7 @@ class GPIO(GenericGPIO):
                 self.set_pin(pin, False)
 
     def set_pin(self, pin, value):
-        self.io.port[pin] = value
+        self.io.port[int(pin)] = value
 
     def get_pin(self, pin):
-        return self.io.port[pin]
+        return self.io.port[int(pin)]

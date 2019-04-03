@@ -28,6 +28,7 @@ class GPIO(GenericGPIO):
         gpio.setmode(gpio.BCM)
 
     def setup_pin(self, pin, direction, pullup, pin_config):
+        pin = int(pin)
         direction = DIRECTIONS[direction]
 
         if pullup is None:
@@ -39,10 +40,10 @@ class GPIO(GenericGPIO):
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
 
     def set_pin(self, pin, value):
-        self.io.output(pin, value)
+        self.io.output(int(pin), value)
 
     def get_pin(self, pin):
-        return self.io.input(pin)
+        return self.io.input(int(pin))
 
     def cleanup(self):
         self.io.cleanup()
