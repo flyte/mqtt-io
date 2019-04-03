@@ -22,10 +22,10 @@ class GPIO(GenericGPIO):
         pass
 
     def set_pin(self, pin, value):
-        self.io.digital_write(int(pin), value)
+        self.io.digital_write(pin, value)
 
     def get_pin(self, pin):
-        return self.io.digital_read(int(pin))
+        return self.io.digital_read(pin)
 
     def cleanup(self):
         self.io.deinit()
