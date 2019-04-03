@@ -87,19 +87,6 @@ class ConfigValidator(cerberus.Validator):
         """
         return str(value)
 
-    @staticmethod
-    def _normalize_coerce_int_if_possible(value):
-        """
-        Convert value to integer if possible.
-        :param value: Value to convert
-        :return: Value represented as an int if possible, else string.
-        :rtype: str or int
-        """
-        try:
-            return int(value)
-        except ValueError:
-            return value
-
 
 def on_log(client, userdata, level, buf):
     """

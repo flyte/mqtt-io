@@ -151,10 +151,11 @@ digital_inputs:
         required: yes
         empty: no
       pin:
-        type: string
+        type:
+          - string
+          - integer
         required: yes
         empty: no
-        coerce: int_if_possible
       on_payload:
         type: string
         required: yes
@@ -190,10 +191,11 @@ digital_outputs:
         type: string
         required: yes
       pin:
-        type: string
+        type:
+          - string
+          - integer
         required: yes
         empty: no
-        coerce: int_if_possible
       on_payload:
         type: string
         required: no
