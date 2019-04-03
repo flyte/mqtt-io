@@ -9,6 +9,7 @@ GPIO Modules
 - Raspberry Pi GPIO (`raspberrypi`)
 - PCF8574 IO chip (`pcf8574`)
 - PiFaceDigital 2 IO board (`piface2`)
+- Beaglebone GPIO (`beaglebone`)
 
 I2C Sensors
 -----------
