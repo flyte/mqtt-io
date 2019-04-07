@@ -1,7 +1,7 @@
 import asyncio
 import re
 import logging
-from functools import partial
+from functools import partial, partialmethod
 from importlib import import_module
 
 from . import mqtt
@@ -106,22 +106,26 @@ class MqttGpio:
                 # Create loops which handle new entries on the queue
                 async def output_loop():
                     while True:
-                        module, module_config, output_config, payload = await queue.get()
-                        pin = output_config["pin"]
-                        if payload == output_config["on_payload"]:
-                            await module.async_set_pin(pin, True)
-                        elif payload == output_config["off_payload"]:
-                            await module.async_set_pin(pin, False)
-                        else:
-                            print("Payload was weird: %r" % payload)
+                        await self.set_output(*await queue.get())
 
                 self.tasks.append(self.loop.create_task(output_loop()))
+
+    async def set_output(self, module, output_config, payload):
+        pin = output_config["pin"]
+        if payload == output_config["on_payload"]:
+            await module.async_set_pin(pin, True)
+        elif payload == output_config["off_payload"]:
+            await module.async_set_pin(pin, False)
+        else:
+            _LOG.warning(
+                "Payload received did not match 'on' or 'off' payloads: %r", payload
+            )
 
     async def _init_mqtt(self):
         self.mqtt = await mqtt.connect(self.config["mqtt"]["host"])
         await self.mqtt.subscribe([("mqtt_gpio/#", mqtt.QOS_1)])
 
-    async def _mqtt_loop(self):
+    async def _mqtt_rx_loop(self):
         try:
             while True:
                 msg = await self.mqtt.deliver_message()
@@ -129,16 +133,7 @@ class MqttGpio:
                 payload = msg.publish_packet.payload.data.decode("utf8")
                 print("%s - %s" % (topic, payload))
                 _LOG.info("Received message on topic %r: %r", topic, payload)
-                if topic.endswith("/%s" % SET_TOPIC):
-                    topic_prefix = self.config["mqtt"]["topic_prefix"]
-                    lindex = len("%s/%s/" % (topic_prefix, OUTPUT_TOPIC))
-                    rindex = -len(SET_TOPIC) - 1
-                    output_name = topic[lindex:rindex]
-                    output_config = self.digital_output_configs[output_name]
-                    module_config = self.gpio_configs[output_config["module"]]
-                    module = self.gpio_modules[output_config["module"]]
-                    queue = self.module_output_queues[module_config["name"]]
-                    queue.put_nowait((module, module_config, output_config, payload))
+                self._handle_mqtt_msg(topic, payload)
         finally:
             print("\nDisconnecting from MQTT...")
             await self.mqtt.disconnect()
@@ -146,7 +141,7 @@ class MqttGpio:
 
     def run(self):
         self.loop.run_until_complete(self._init_mqtt())
-        tasks = asyncio.gather(self._mqtt_loop())
+        tasks = asyncio.gather(self._mqtt_rx_loop())
         try:
             self.loop.run_until_complete(tasks)
         except KeyboardInterrupt:
@@ -160,7 +155,21 @@ class MqttGpio:
                 )
             )
 
-    # async def output_loop(self):
-    #     while True:
-    #         item = await self.module_output_queues["stdio"].get()
-    #         print("Got item! %r" % (item,))
+    def _handle_mqtt_msg(self, topic, payload):
+        topic_prefix = self.config["mqtt"]["topic_prefix"]
+        if topic.endswith("/%s" % SET_TOPIC):
+            # This is a message to set a digital output to a given value
+            output_name = output_name_from_topic(topic, topic_prefix, SET_TOPIC)
+            output_config = self.digital_output_configs[output_name]
+            module = self.gpio_modules[output_config["module"]]
+            self.module_output_queues[output_config["module"]].put_nowait(
+                (module, output_config, payload)
+            )
+
+
+def output_name_from_topic(topic, prefix, suffix):
+    if not topic.endswith("/%s" % suffix):
+        raise ValueError("This topic does not end with '/%s'" % suffix)
+    return re.match(
+        "^{}/{}/(.+?)/{}$".format(prefix, OUTPUT_TOPIC, SET_TOPIC), topic
+    ).group(1)
