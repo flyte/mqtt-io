@@ -14,6 +14,7 @@ paho-mqtt = "*"
 enum34 = "*"
 PyYAML = ">=4.2b1"
 Cerberus = "*"
+hbmqtt = "*"
 
 [requires]
 python_version = "3.6"
