@@ -1,10 +1,13 @@
 import asyncio
-import re
 import logging
+import re
 from functools import partial, partialmethod
+from hashlib import sha1
 from importlib import import_module
 
-from . import mqtt
+from hbmqtt.client import ClientException, MQTTClient
+from hbmqtt.mqtt.constants import QOS_1
+
 from .config import validate_and_normalise_config
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
@@ -16,25 +19,6 @@ SET_TOPIC = "set"
 OUTPUT_TOPIC = "output"
 
 MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
-
-
-class ModuleCommand:
-    def __init__(self, output, _):
-        self.output = output
-        self._ = _
-
-
-async def mqtt_dispatcher(mqtt):
-    while True:
-        msg = await mqtt.deliver_message()
-        topic = msg.publish_packet.variable_header.topic_name
-        payload = msg.publish_packet.payload.data
-
-        # Pseudocode
-        prefix, module_name, output, _ = re.match(r"xxxx", topic)
-        module_cmd = ModuleCommand(output, _)
-        MODULES = {}
-        MODULES[module_name].queue.put_nowait(module_cmd)
 
 
 def _init_gpio_module(module_config, module_type):
@@ -122,8 +106,43 @@ class MqttGpio:
             )
 
     async def _init_mqtt(self):
-        self.mqtt = await mqtt.connect(self.config["mqtt"]["host"])
-        await self.mqtt.subscribe([("mqtt_gpio/#", mqtt.QOS_1)])
+        config = self.config["mqtt"]
+        topic_prefix = config["topic_prefix"]
+
+        client_id = config["client_id"]
+        if not client_id:
+            client_id = "mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
+
+        tls_enabled = config.get("tls", {}).get("enabled")
+
+        uri = "mqtt%s://" % ("s" if tls_enabled else "")
+        if config["user"] and config["password"]:
+            uri += "%s:%s" % (config["user"], config["password"])
+        uri += "%s:%s" % (config["host"], config["port"])
+
+        client_config = {}
+        connect_kwargs = dict(cleansession=False)
+        if tls_enabled:
+            tls_config = config["tls"]
+            if tls_config.get("certfile") and tls_config.get("keyfile"):
+                client_config.update(
+                    dict(
+                        certfile=tls_config.get("certfile") or None,
+                        keyfile=tls_config.get("keyfile") or None,
+                    )
+                )
+            client_config["check_hostname"] = not tls_config["insecure"]
+            connect_kwargs.update(
+                dict(
+                    capath=tls_config.get("ca_certs"),
+                    cafile=tls_config.get("ca_file"),
+                    cadata=tls_config.get("ca_data"),
+                )
+            )
+
+        self.mqtt = MQTTClient(client_id=client_id, config=client_config, loop=self.loop)
+        await self.mqtt.connect(uri, **connect_kwargs)
+        await self.mqtt.subscribe([("mqtt_gpio/#", QOS_1)])
 
     async def _mqtt_rx_loop(self):
         try:
