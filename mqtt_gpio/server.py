@@ -170,7 +170,7 @@ class MqttGpio:
             self.loop.run_until_complete(
                 asyncio.gather(
                     *(self.tasks + [tasks] + list(self.mqtt.client_tasks)),
-                    return_exceptions=True
+                    return_exceptions=True,
                 )
             )
 
@@ -178,7 +178,11 @@ class MqttGpio:
         topic_prefix = self.config["mqtt"]["topic_prefix"]
         if topic.endswith("/%s" % SET_TOPIC):
             # This is a message to set a digital output to a given value
-            output_name = output_name_from_topic(topic, topic_prefix, SET_TOPIC)
+            try:
+                output_name = output_name_from_topic(topic, topic_prefix, SET_TOPIC)
+            except ValueError as e:
+                _LOG.warning(f"Unable to parse topic: {e}")
+                return
             output_config = self.digital_output_configs[output_name]
             module = self.gpio_modules[output_config["module"]]
             self.module_output_queues[output_config["module"]].put_nowait(
@@ -189,6 +193,7 @@ class MqttGpio:
 def output_name_from_topic(topic, prefix, suffix):
     if not topic.endswith("/%s" % suffix):
         raise ValueError("This topic does not end with '/%s'" % suffix)
-    return re.match(
-        "^{}/{}/(.+?)/{}$".format(prefix, OUTPUT_TOPIC, SET_TOPIC), topic
-    ).group(1)
+    match = re.match("^{}/{}/(.+?)/{}$".format(prefix, OUTPUT_TOPIC, SET_TOPIC), topic)
+    if match is None:
+        raise ValueError(f"Topic {topic!r} does not adhere to expected structure")
+    return match.group(1)
