@@ -160,6 +160,9 @@ class MqttGpio:
 
     def run(self):
         self.loop.run_until_complete(self._init_mqtt())
+        # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
+        # This is where we add any other async tasks that we want to run, such as polling
+        # inputs, sensor loops etc.
         tasks = asyncio.gather(self._mqtt_rx_loop())
         try:
             self.loop.run_until_complete(tasks)
@@ -174,6 +177,9 @@ class MqttGpio:
                 )
             )
 
+    def _poll_inputs(self):
+        pass
+
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]
         if topic.endswith("/%s" % SET_TOPIC):
@@ -181,7 +187,7 @@ class MqttGpio:
             try:
                 output_name = output_name_from_topic(topic, topic_prefix, SET_TOPIC)
             except ValueError as e:
-                _LOG.warning(f"Unable to parse topic: {e}")
+                _LOG.warning("Unable to parse topic: %s", e)
                 return
             output_config = self.digital_output_configs[output_name]
             module = self.gpio_modules[output_config["module"]]
@@ -195,5 +201,5 @@ def output_name_from_topic(topic, prefix, suffix):
         raise ValueError("This topic does not end with '/%s'" % suffix)
     match = re.match("^{}/{}/(.+?)/{}$".format(prefix, OUTPUT_TOPIC, SET_TOPIC), topic)
     if match is None:
-        raise ValueError(f"Topic {topic!r} does not adhere to expected structure")
+        raise ValueError("Topic %r does not adhere to expected structure" % topic)
     return match.group(1)
