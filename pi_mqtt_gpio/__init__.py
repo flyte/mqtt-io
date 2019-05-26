@@ -249,4 +249,25 @@ sensor_inputs:
         default: 2
         min: 0
 
+logging:
+  type: dict
+  required: no
+  allow_unknown: yes
+  default:
+    version: 1
+    formatters:
+      simple:
+        format: "%(asctime)s %(name)s (%(levelname)s): %(message)s"
+    handlers:
+      console:
+        class: logging.StreamHandler
+        level: DEBUG
+        formatter: simple
+        stream: ext://sys.stdout
+    loggers:
+      mqtt_gpio:
+        level: INFO
+        handlers: [console]
+        propagate: yes
+
 """)

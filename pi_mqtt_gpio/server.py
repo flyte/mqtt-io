@@ -1,5 +1,6 @@
 import argparse
 import logging
+import logging.config
 import yaml
 import sys
 import socket
@@ -41,9 +42,7 @@ OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
-_LOG = logging.getLogger(__name__)
-_LOG.addHandler(logging.StreamHandler())
-_LOG.setLevel(logging.DEBUG)
+_LOG = logging.getLogger("mqtt_gpio")
 
 
 class CannotInstallModuleRequirements(Exception):
@@ -543,6 +542,8 @@ if __name__ == "__main__":
         _LOG.error("Config did not validate:\n%s", yaml.dump(validator.errors))
         sys.exit(1)
     config = validator.normalized(config)
+
+    logging.config.dictConfig(config["logging"])
 
     digital_inputs = config["digital_inputs"]
     digital_outputs = config["digital_outputs"]
