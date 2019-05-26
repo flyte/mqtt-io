@@ -208,6 +208,31 @@ mqtt:
 
 These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any.
 
+### Logging
+
+Logging may be configured by including a `logging` section in your `config.yml`. The standard Python logging system is used, so configuration questions should be answered by looking at [the Python logging howto](https://docs.python.org/3/howto/logging.html).
+
+The default config is set as follows. If you wish to change this, copy and paste this section into your `config.yml` and change whichever parts you'd like.
+
+```yaml
+logging:
+  version: 1
+  formatters:
+    simple:
+      format: "%(asctime)s %(name)s (%(levelname)s): %(message)s"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+      stream: ext://sys.stdout
+  loggers:
+    mqtt_gpio:
+      level: INFO
+      handlers: [console]
+      propagate: yes
+```
+
 Serving Suggestion
 ------------------
 
