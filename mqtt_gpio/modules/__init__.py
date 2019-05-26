@@ -1,5 +1,7 @@
 import logging
 
+from ..exceptions import CannotInstallModuleRequirements
+
 _LOG = logging.getLogger(__name__)
 
 BASE_SCHEMA = {
