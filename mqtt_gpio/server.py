@@ -142,7 +142,7 @@ class MqttGpio:
 
         self.mqtt = MQTTClient(client_id=client_id, config=client_config, loop=self.loop)
         await self.mqtt.connect(uri, **connect_kwargs)
-        await self.mqtt.subscribe([("mqtt_gpio/#", QOS_1)])
+        await self.mqtt.subscribe([("%s/#" % topic_prefix, QOS_1)])
 
     async def _mqtt_rx_loop(self):
         try:
