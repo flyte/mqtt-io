@@ -72,9 +72,23 @@ class MqttGpio:
                 pud = PinPUD.UP
             elif in_conf["pulldown"]:
                 pud = PinPUD.DOWN
-            self.gpio_modules[in_conf["module"]].setup_pin(
-                in_conf["pin"], PinDirection.INPUT, pud, in_conf
-            )
+            module = self.gpio_modules[in_conf["module"]]
+            module.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+
+            async def input_loop():
+                last_value = None
+                while True:
+                    value = await module.async_get_pin(in_conf["pin"])
+                    if value != last_value:
+                        await self.mqtt.publish(
+                            "%s/input/%s"
+                            % (self.config["topic_prefix"], in_conf["name"]),
+                            in_conf["on_payload"] if value else in_conf["off_payload"],
+                        )
+                    last_value = value
+                    await asyncio.sleep(0.1)
+
+            self.unawaited_tasks.append(self.loop.create_task(input_loop()))
 
     def _init_digital_outputs(self):
         self.digital_output_configs = {
