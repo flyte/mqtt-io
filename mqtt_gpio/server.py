@@ -14,6 +14,8 @@ from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
 
 _LOG = logging.getLogger(__name__)
+_LOG.addHandler(logging.StreamHandler())
+_LOG.setLevel(logging.DEBUG)
 
 SET_TOPIC = "set"
 OUTPUT_TOPIC = "output"
@@ -90,11 +92,14 @@ class MqttGpio:
                 # Create loops which handle new entries on the queue
                 async def output_loop():
                     while True:
+                        _LOG.debug("Awaiting output change...")
                         await self.set_output(*await queue.get())
+                        _LOG.debug("Got output change!")
 
                 self.tasks.append(self.loop.create_task(output_loop()))
 
     async def set_output(self, module, output_config, payload):
+        _LOG.debug("Setting output!")
         pin = output_config["pin"]
         if payload == output_config["on_payload"]:
             await module.async_set_pin(pin, True)
@@ -104,6 +109,7 @@ class MqttGpio:
             _LOG.warning(
                 "Payload received did not match 'on' or 'off' payloads: %r", payload
             )
+        _LOG.debug("Output set!")
 
     async def _init_mqtt(self):
         config = self.config["mqtt"]
@@ -150,7 +156,6 @@ class MqttGpio:
                 msg = await self.mqtt.deliver_message()
                 topic = msg.publish_packet.variable_header.topic_name
                 payload = msg.publish_packet.payload.data.decode("utf8")
-                print("%s - %s" % (topic, payload))
                 _LOG.info("Received message on topic %r: %r", topic, payload)
                 self._handle_mqtt_msg(topic, payload)
         finally:

@@ -1,4 +1,6 @@
 import abc
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 
 
@@ -38,3 +40,11 @@ class GenericGPIO(object):
         Called when closing the program to handle any cleanup operations.
         """
         pass
+
+    async def async_set_pin(self, pin, value):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(ThreadPoolExecutor(), self.set_pin, pin, value)
+
+    async def async_get_pin(self, pin, value):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_pin, pin)
