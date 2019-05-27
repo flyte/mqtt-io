@@ -18,6 +18,8 @@ _LOG.addHandler(logging.StreamHandler())
 _LOG.setLevel(logging.DEBUG)
 
 SET_TOPIC = "set"
+SET_ON_MS_TOPIC = "set_on_ms"
+SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
 
 MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
@@ -46,7 +48,7 @@ class MqttGpio:
         self.module_output_queues = {}
 
         self.loop = asyncio.get_event_loop()
-        self.tasks = []
+        self.unawaited_tasks = []
 
         self._init_gpio_modules()
         self._init_digital_inputs()
@@ -94,7 +96,7 @@ class MqttGpio:
                     while True:
                         await self.set_output(*await queue.get())
 
-                self.tasks.append(self.loop.create_task(output_loop()))
+                self.unawaited_tasks.append(self.loop.create_task(output_loop()))
 
     async def set_output(self, module, output_config, payload):
         pin = output_config["pin"]
@@ -161,19 +163,35 @@ class MqttGpio:
 
     def run(self):
         self.loop.run_until_complete(self._init_mqtt())
+
+        async def remove_finished_tasks():
+            while True:
+                await asyncio.sleep(1)
+                finished_tasks = [x for x in self.unawaited_tasks if x.done()]
+                if not finished_tasks:
+                    continue
+                for task in finished_tasks:
+                    try:
+                        await task
+                    except Exception as e:
+                        _LOG.exception("Exception in task: %r:", task)
+                self.unawaited_tasks = list(
+                    filter(lambda x: not x.done(), self.unawaited_tasks)
+                )
+
         # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
         # This is where we add any other async tasks that we want to run, such as polling
         # inputs, sensor loops etc.
-        tasks = asyncio.gather(self._mqtt_rx_loop())
+        tasks = asyncio.gather(self._mqtt_rx_loop(), remove_finished_tasks())
         try:
             self.loop.run_until_complete(tasks)
         except KeyboardInterrupt:
             tasks.cancel()
-            for task in list(self.mqtt.client_tasks) + self.tasks:
+            for task in list(self.mqtt.client_tasks) + self.unawaited_tasks:
                 task.cancel()
             self.loop.run_until_complete(
                 asyncio.gather(
-                    *(self.tasks + [tasks] + list(self.mqtt.client_tasks)),
+                    *(self.unawaited_tasks + [tasks] + list(self.mqtt.client_tasks)),
                     return_exceptions=True,
                 )
             )
@@ -183,24 +201,46 @@ class MqttGpio:
 
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]
-        if topic.endswith("/%s" % SET_TOPIC):
-            # This is a message to set a digital output to a given value
+
+        if any(
+            topic.endswith("/%s" % x)
+            for x in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC)
+        ):
             try:
-                output_name = output_name_from_topic(topic, topic_prefix, SET_TOPIC)
+                output_name = output_name_from_topic(topic, topic_prefix)
             except ValueError as e:
                 _LOG.warning("Unable to parse topic: %s", e)
                 return
             output_config = self.digital_output_configs[output_name]
             module = self.gpio_modules[output_config["module"]]
-            self.module_output_queues[output_config["module"]].put_nowait(
-                (module, output_config, payload)
-            )
+            if topic.endswith("/%s" % SET_TOPIC):
+                # This is a message to set a digital output to a given value
+                self.module_output_queues[output_config["module"]].put_nowait(
+                    (module, output_config, payload)
+                )
+            else:
+                value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
+                if output_config["inverted"]:
+                    value = not value
+
+                async def set_ms():
+                    try:
+                        secs = float(payload) / 1000
+                    except ValueError:
+                        _LOG.warning(
+                            "Unable to parse ms value as float from payload %r", payload
+                        )
+                        return
+                    await module.async_set_pin(output_config["pin"], value)
+                    await asyncio.sleep(secs)
+                    await module.async_set_pin(output_config["pin"], not value)
+
+                task = self.loop.create_task(set_ms())
+                self.unawaited_tasks.append(task)
 
 
-def output_name_from_topic(topic, prefix, suffix):
-    if not topic.endswith("/%s" % suffix):
-        raise ValueError("This topic does not end with '/%s'" % suffix)
-    match = re.match("^{}/{}/(.+?)/{}$".format(prefix, OUTPUT_TOPIC, SET_TOPIC), topic)
+def output_name_from_topic(topic, prefix):
+    match = re.match("^{}/{}/(.+?)/.+$".format(prefix, OUTPUT_TOPIC), topic)
     if match is None:
         raise ValueError("Topic %r does not adhere to expected structure" % topic)
     return match.group(1)
