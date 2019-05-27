@@ -117,7 +117,7 @@ class MqttGpio:
 
         uri = "mqtt%s://" % ("s" if tls_enabled else "")
         if config["user"] and config["password"]:
-            uri += "%s:%s" % (config["user"], config["password"])
+            uri += "%s:%s@" % (config["user"], config["password"])
         uri += "%s:%s" % (config["host"], config["port"])
 
         client_config = {}
