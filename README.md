@@ -126,16 +126,19 @@ sensor_modules:
     pin: 4
 
 sensor_inputs:
-  - name: temperature # has to be kept as it is
+  - name: dht22_temperature 
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
-
-  - name: humidity # has to be kept as it is
+    options:
+      type: temperature # Can be temperature or humidity
+      
+  - name: dht22_humidity 
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
-    
+    options:
+      type: humidity # Can be temperature or humidity   
     
 ```
 

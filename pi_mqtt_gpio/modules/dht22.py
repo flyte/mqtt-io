@@ -32,13 +32,13 @@ class Sensor(GenericSensor):
     def setup_sensor(self, config):
         return True  # nothing to do here
 
-    def get_value(self, sensor, value):
+    def get_value(self, sensor, options):
         """get the temperature or humidity value from the sensor"""
         humidity, temperature = self.sensor.read_retry(self.sensor_type, self.pin)
         if humidity is not None and temperature is not None:
-          if value == "temperature" :
+          if options["type"] == "temperature" :
             return temperature
-          if value == "humidity" :
+          if options["type"] == "humidity" :
             return humidity
         return float('NAN')
 
