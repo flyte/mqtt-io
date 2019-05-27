@@ -42,9 +42,15 @@ class GenericGPIO(object):
         pass
 
     async def async_set_pin(self, pin, value):
+        """
+        Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
+        """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(ThreadPoolExecutor(), self.set_pin, pin, value)
 
     async def async_get_pin(self, pin, value):
+        """
+        Use a ThreadPoolExecutor to call the module's synchronous get_pin function.
+        """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(ThreadPoolExecutor(), self.get_pin, pin)
