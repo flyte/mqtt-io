@@ -24,7 +24,7 @@ class Sensor(GenericSensor):
     def setup_sensor(self, config):
         return True  # nothing to do here
 
-    def get_value(self, sensor):
+    def get_value(self, config):
         """get the temperature value from the sensor"""
         value = self.bus.read_word_data(self.address, LM75_TEMP_REGISTER) & 0xFFFF
         value = ((value << 8) & 0xFF00) + (value >> 8)

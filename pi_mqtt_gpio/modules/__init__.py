@@ -61,7 +61,7 @@ class GenericSensor(object):
         pass
 
     @abc.abstractmethod
-    def get_value(self, sensor, options):
+    def get_value(self, config):
         pass
 
     def cleanup(self):

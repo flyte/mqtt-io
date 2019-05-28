@@ -34,6 +34,7 @@ GPIO_MODULES = {}  # storage for gpio modules
 SENSOR_MODULES = {}  # storage for sensor modules
 GPIO_CONFIGS = {}  # storage for gpios
 SENSOR_CONFIGS = {}  # storage for sensors
+SENSOR_INPUT_CONFIGS = {}  # storage for sensor input configs
 LAST_STATES = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
@@ -455,6 +456,27 @@ def initialise_digital_output(out_conf, gpio):
     gpio.setup_pin(out_conf["pin"], PinDirection.OUTPUT, None, out_conf)
 
 
+def validate_sensor_input_config(sens_conf):
+    """
+    Validates sensor input config.
+    :param sens_conf: Sensor input config
+    :type sens_conf: dict
+    :return: None
+    :rtype: NoneType
+    """
+    sensor_module = import_module(
+        "pi_mqtt_gpio.modules.%s" % SENSOR_CONFIGS[sens_conf["module"]]["module"]
+    )
+    # Doesn't need to be a deep copy because we won't modify the base
+    # validation rules, just add more of them.
+    sensor_input_schema = CONFIG_SCHEMA["sensor_inputs"]["schema"]["schema"].copy()
+    sensor_input_schema.update(getattr(sensor_module, "SENSOR_SCHEMA", {}))
+    sensor_validator = cerberus.Validator(sensor_input_schema)
+    if not sensor_validator.validate(sens_conf):
+        raise ModuleConfigInvalid(sensor_validator.errors)
+    return sensor_validator.normalized(sens_conf)
+
+
 def initialise_sensor_input(sens_conf, sensor):
     """
     Initialises sensor input.
@@ -478,7 +500,6 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
     of it. In worst case, the cycle_time is 1 second, in best case, e.g., when
     there is only one sensor, cycle_time is its interval.
     """
-
     # calculate the min time
     arr = []
     for sens_conf in sensor_inputs:
@@ -504,7 +525,14 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                 sensor = SENSOR_MODULES[sens_conf["module"]]
 
                 try:
-                    value = round(sensor.get_value(sensor,sens_conf["options"]), sens_conf["digits"])
+                    value = sensor.get_value(sens_conf)
+                    if value is None:
+                        _LOG.warning(
+                            "sensor_timer_thread: sensor %r returned null",
+                            sens_conf["name"],
+                        )
+                        continue
+                    value = round(value, sens_conf["digits"])
 
                     _LOG.info(
                         "sensor_timer_thread: reading sensor '%s' value %r",
@@ -526,7 +554,7 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                     )
 
         # schedule next call
-	
+
         next_call = next_call + cycle_time  # every cycle_time sec
         sleep(max(0, next_call - time()))
 
@@ -587,6 +615,18 @@ if __name__ == "__main__":
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
 
     for sens_conf in sensor_inputs:
+        try:
+            SENSOR_INPUT_CONFIGS[sens_conf["name"]] = validate_sensor_input_config(
+                sens_conf
+            )
+        except ModuleConfigInvalid as exc:
+            _LOG.error(
+                "Config for %r sensor named %r did not validate:\n%s",
+                SENSOR_CONFIGS[sens_conf["module"]]["module"],
+                sens_conf["name"],
+                yaml.dump(exc.errors),
+            )
+            sys.exit(1)
         initialise_sensor_input(sens_conf, SENSOR_MODULES[sens_conf["module"]])
 
     try:
@@ -606,7 +646,7 @@ if __name__ == "__main__":
                 target=sensor_timer_thread,
                 kwargs={
                     "SENSOR_MODULES": SENSOR_MODULES,
-                    "sensor_inputs": sensor_inputs,
+                    "sensor_inputs": SENSOR_INPUT_CONFIGS.values(),
                     "topic_prefix": topic_prefix,
                 },
             )
