@@ -16,6 +16,11 @@ I2C Sensors
 
 - LM75 i2c temperature sensor (`lm75`)
 
+DHT22 Sensors
+-----------
+
+- DHT11 DHT22 AM2302 temperature/humidity sensor (`lm75`)
+
 Installation
 ------------
 
@@ -112,6 +117,29 @@ sensor_inputs:
     module: lm75
     interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
+    
+
+sensor_modules:
+  - name: dht22
+    module: dht22
+    sensor_type: AM2302 # can be  DHT11, DHT22 or AM2302
+    pin: 4
+
+sensor_inputs:
+  - name: dht22_temperature 
+    module: dht22
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    options:
+      type: temperature # Can be temperature or humidity
+      
+  - name: dht22_humidity 
+    module: dht22
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    options:
+      type: humidity # Can be temperature or humidity   
+    
 ```
 
 #### SSL/TLS

@@ -173,6 +173,15 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      options:
+        type: dict
+        default: {}
+        required: no
+        allow_unknown: yes        
+        schema:      
+          type:
+            type: string 
+            required: no    
 
 digital_outputs:
   type: list

@@ -504,7 +504,7 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                 sensor = SENSOR_MODULES[sens_conf["module"]]
 
                 try:
-                    value = round(sensor.get_value(sensor), sens_conf["digits"])
+                    value = round(sensor.get_value(sensor,sens_conf["options"]), sens_conf["digits"])
 
                     _LOG.info(
                         "sensor_timer_thread: reading sensor '%s' value %r",
@@ -526,8 +526,9 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                     )
 
         # schedule next call
+	
         next_call = next_call + cycle_time  # every cycle_time sec
-        sleep(next_call - time())
+        sleep(max(0, next_call - time()))
 
 
 if __name__ == "__main__":
