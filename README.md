@@ -95,7 +95,7 @@ digital_inputs:
 
 ### Sensors
 
-Receive updates on the value of a sensor by subscribing to the `home/sensor/temperature` topic:
+Receive updates on the value of a sensor by subscribing to the `home/sensor/<sensor input name>` topic. In the following example, this would be `home/sensor/temperature`:
 
 ```yaml
 mqtt:
@@ -122,7 +122,7 @@ sensor_inputs:
 sensor_modules:
   - name: dht22
     module: dht22
-    sensor_type: AM2302 # can be  DHT11, DHT22 or AM2302
+    type: AM2302 # can be  DHT11, DHT22 or AM2302
     pin: 4
 
 sensor_inputs:
@@ -130,15 +130,13 @@ sensor_inputs:
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
-    options:
-      type: temperature # Can be temperature or humidity
+    type: temperature # Can be temperature or humidity
       
   - name: dht22_humidity 
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
-    options:
-      type: humidity # Can be temperature or humidity   
+    type: humidity # Can be temperature or humidity   
     
 ```
 
