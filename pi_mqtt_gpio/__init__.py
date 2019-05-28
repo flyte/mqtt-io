@@ -252,11 +252,7 @@ sensor_inputs:
         type: dict
         default: {}
         required: no
-        allow_unknown: yes        
-        schema:      
-          type:
-            type: string 
-            required: no            
+        allow_unknown: yes
 
 logging:
   type: dict
