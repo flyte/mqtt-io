@@ -9,6 +9,8 @@ from hbmqtt.client import ClientException, MQTTClient
 from hbmqtt.mqtt.constants import QOS_1
 
 from .config import validate_and_normalise_config
+from .events import EventBus
+from .io import digital_input_poller, DigitalInputChangedEvent
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
@@ -22,12 +24,13 @@ SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
 
+MODULE_IMPORT_PATH = "mqtt_io.modules"
 MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
 
 
 def _init_gpio_module(module_config, module_type):
     module = import_module(
-        "mqtt_gpio.modules.%s.%s" % (module_type, module_config["module"])
+        "%s.%s.%s" % (MODULE_IMPORT_PATH, module_type, module_config["module"])
     )
     # Doesn't need to be a deep copy because we're not mutating the base rules
     module_schema = MODULE_BASE_SCHEMA.copy()
@@ -36,6 +39,16 @@ def _init_gpio_module(module_config, module_type):
     module_config = validate_and_normalise_config(module_config, module_schema)
     install_missing_requirements(module)
     return getattr(module, MODULE_CLASS_NAMES[module_type])(module_config)
+
+
+async def set_output(module, output_config, payload):
+    pin = output_config["pin"]
+    if payload == output_config["on_payload"]:
+        await module.async_set_pin(pin, True)
+    elif payload == output_config["off_payload"]:
+        await module.async_set_pin(pin, False)
+    else:
+        _LOG.warning("Payload received did not match 'on' or 'off' payloads: %r", payload)
 
 
 class MqttGpio:
@@ -50,9 +63,9 @@ class MqttGpio:
         self.loop = asyncio.get_event_loop()
         self.unawaited_tasks = []
 
-        self._init_gpio_modules()
-        self._init_digital_inputs()
-        self._init_digital_outputs()
+        self.event_bus = EventBus(self.loop)
+
+    # Init methods
 
     def _init_gpio_modules(self):
         self.gpio_configs = {x["name"]: x for x in self.config["gpio_modules"]}
@@ -75,20 +88,39 @@ class MqttGpio:
             module = self.gpio_modules[in_conf["module"]]
             module.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
 
-            async def input_loop():
-                last_value = None
-                while True:
-                    value = await module.async_get_pin(in_conf["pin"])
-                    if value != last_value:
-                        await self.mqtt.publish(
-                            "%s/input/%s"
-                            % (self.config["topic_prefix"], in_conf["name"]),
-                            in_conf["on_payload"] if value else in_conf["off_payload"],
-                        )
-                    last_value = value
-                    await asyncio.sleep(0.1)
+            # async def input_loop():
+            #     """
+            #     Polls an input to check for changes.
+            #     """
+            #     last_value = None
+            #     while True:
+            #         value = await module.async_get_pin(in_conf["pin"])
+            #         if value != last_value:
+            #             await self.mqtt.publish(
+            #                 "%s/input/%s"
+            #                 % (self.config["mqtt"]["topic_prefix"], in_conf["name"]),
+            #                 in_conf["on_payload"] if value else in_conf["off_payload"],
+            #             )
+            #         last_value = value
+            #         await asyncio.sleep(0.1)
 
-            self.unawaited_tasks.append(self.loop.create_task(input_loop()))
+            # Set up MQTT publish callback for input event
+            async def publish_callback(event):
+                val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
+                await self.mqtt.publish(
+                    "%s/input/%s"
+                    % (self.config["mqtt"]["topic_prefix"], in_conf["name"]),
+                    val.encode("utf8"),
+                )
+
+            self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
+
+            # Start poller task
+            self.unawaited_tasks.append(
+                self.loop.create_task(
+                    digital_input_poller(self.event_bus, module, in_conf)
+                )
+            )
 
     def _init_digital_outputs(self):
         self.digital_output_configs = {
@@ -108,20 +140,9 @@ class MqttGpio:
                 # Create loops which handle new entries on the queue
                 async def output_loop():
                     while True:
-                        await self.set_output(*await queue.get())
+                        await set_output(*await queue.get())
 
                 self.unawaited_tasks.append(self.loop.create_task(output_loop()))
-
-    async def set_output(self, module, output_config, payload):
-        pin = output_config["pin"]
-        if payload == output_config["on_payload"]:
-            await module.async_set_pin(pin, True)
-        elif payload == output_config["off_payload"]:
-            await module.async_set_pin(pin, False)
-        else:
-            _LOG.warning(
-                "Payload received did not match 'on' or 'off' payloads: %r", payload
-            )
 
     async def _init_mqtt(self):
         config = self.config["mqtt"]
@@ -162,56 +183,7 @@ class MqttGpio:
         await self.mqtt.connect(uri, **connect_kwargs)
         await self.mqtt.subscribe([("%s/#" % topic_prefix, QOS_1)])
 
-    async def _mqtt_rx_loop(self):
-        try:
-            while True:
-                msg = await self.mqtt.deliver_message()
-                topic = msg.publish_packet.variable_header.topic_name
-                payload = msg.publish_packet.payload.data.decode("utf8")
-                _LOG.info("Received message on topic %r: %r", topic, payload)
-                self._handle_mqtt_msg(topic, payload)
-        finally:
-            print("\nDisconnecting from MQTT...")
-            await self.mqtt.disconnect()
-            print("MQTT disconnected")
-
-    def run(self):
-        self.loop.run_until_complete(self._init_mqtt())
-
-        async def remove_finished_tasks():
-            while True:
-                await asyncio.sleep(1)
-                finished_tasks = [x for x in self.unawaited_tasks if x.done()]
-                if not finished_tasks:
-                    continue
-                for task in finished_tasks:
-                    try:
-                        await task
-                    except Exception as e:
-                        _LOG.exception("Exception in task: %r:", task)
-                self.unawaited_tasks = list(
-                    filter(lambda x: not x.done(), self.unawaited_tasks)
-                )
-
-        # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
-        # This is where we add any other async tasks that we want to run, such as polling
-        # inputs, sensor loops etc.
-        tasks = asyncio.gather(self._mqtt_rx_loop(), remove_finished_tasks())
-        try:
-            self.loop.run_until_complete(tasks)
-        except KeyboardInterrupt:
-            tasks.cancel()
-            for task in list(self.mqtt.client_tasks) + self.unawaited_tasks:
-                task.cancel()
-            self.loop.run_until_complete(
-                asyncio.gather(
-                    *(self.unawaited_tasks + [tasks] + list(self.mqtt.client_tasks)),
-                    return_exceptions=True,
-                )
-            )
-
-    def _poll_inputs(self):
-        pass
+    # Runtime methods
 
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]
@@ -251,6 +223,63 @@ class MqttGpio:
 
                 task = self.loop.create_task(set_ms())
                 self.unawaited_tasks.append(task)
+
+    # Tasks
+
+    async def _mqtt_rx_loop(self):
+        try:
+            while True:
+                msg = await self.mqtt.deliver_message()
+                topic = msg.publish_packet.variable_header.topic_name
+                payload = msg.publish_packet.payload.data.decode("utf8")
+                _LOG.info("Received message on topic %r: %r", topic, payload)
+                self._handle_mqtt_msg(topic, payload)
+        finally:
+            print("\nDisconnecting from MQTT...")
+            await self.mqtt.disconnect()
+            print("MQTT disconnected")
+
+    async def remove_finished_tasks(self):
+        while True:
+            await asyncio.sleep(1)
+            finished_tasks = [x for x in self.unawaited_tasks if x.done()]
+            if not finished_tasks:
+                continue
+            for task in finished_tasks:
+                try:
+                    await task
+                except Exception as e:
+                    _LOG.exception("Exception in task: %r:", task)
+            self.unawaited_tasks = list(
+                filter(lambda x: not x.done(), self.unawaited_tasks)
+            )
+
+    # Main entry point
+
+    def run(self):
+        # Get connected to the MQTT server
+        self.loop.run_until_complete(self._init_mqtt())
+
+        self._init_gpio_modules()
+        self._init_digital_inputs()
+        self._init_digital_outputs()
+
+        # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
+        # This is where we add any other async tasks that we want to run, such as polling
+        # inputs, sensor loops etc.
+        tasks = asyncio.gather(self._mqtt_rx_loop(), self.remove_finished_tasks())
+        try:
+            self.loop.run_until_complete(tasks)
+        except KeyboardInterrupt:
+            tasks.cancel()
+            for task in list(self.mqtt.client_tasks) + self.unawaited_tasks:
+                task.cancel()
+            self.loop.run_until_complete(
+                asyncio.gather(
+                    *(self.unawaited_tasks + [tasks] + list(self.mqtt.client_tasks)),
+                    return_exceptions=True,
+                )
+            )
 
 
 def output_name_from_topic(topic, prefix):
