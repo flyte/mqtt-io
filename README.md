@@ -11,14 +11,10 @@ GPIO Modules
 - PiFaceDigital 2 IO board (`piface2`)
 - Beaglebone GPIO (`beaglebone`)
 
-I2C Sensors
------------
+Sensors
+-------
 
 - LM75 i2c temperature sensor (`lm75`)
-
-DHT22 Sensors
------------
-
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 
 Installation
