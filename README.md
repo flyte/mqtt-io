@@ -228,7 +228,16 @@ mqtt:
   status_payload_dead: dead
 ```
 
-These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any.
+These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any. For example, with the following config:
+
+```yaml
+mqtt:
+  ...
+  topic_prefix: home/office
+  status_topic: status
+```
+
+the status messages will appear on topic `home/office/status`.
 
 ### Logging
 
