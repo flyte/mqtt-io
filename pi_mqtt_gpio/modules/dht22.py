@@ -32,7 +32,7 @@ class Sensor(GenericSensor):
         if sensor_type == "dht22":
             self.sensor_type = DHTsensor.DHT22
         elif sensor_type == "dht11":
-            self.sensor_type = DHTsensor.dht11
+            self.sensor_type = DHTsensor.DHT11
         elif sensor_type == "am2302":
             self.sensor_type = DHTsensor.AM2302
         else:
