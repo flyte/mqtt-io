@@ -225,6 +225,7 @@ sensor_inputs:
   default: []
   schema:
     type: dict
+    allow_unknown: yes
     schema:
       name:
         type: string
@@ -248,11 +249,6 @@ sensor_inputs:
         required: no
         default: 2
         min: 0
-      options:
-        type: dict
-        default: {}
-        required: no
-        allow_unknown: yes
 
 logging:
   type: dict
