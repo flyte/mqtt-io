@@ -19,7 +19,7 @@ I2C Sensors
 DHT22 Sensors
 -----------
 
-- DHT11 DHT22 AM2302 temperature/humidity sensor (`lm75`)
+- DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 
 Installation
 ------------
