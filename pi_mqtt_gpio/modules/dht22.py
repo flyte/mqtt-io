@@ -1,11 +1,11 @@
 from pi_mqtt_gpio.modules import GenericSensor
 
-
 REQUIREMENTS = ("Adafruit_DHT",)
+ALLOWED_TYPES = ["dht11", "dht22", "am2302"]
 CONFIG_SCHEMA = {
     "pin": dict(type="integer", required=True, empty=False),
     "type": dict(
-        type="string", required=True, empty=False, allowed=["dht11", "dht22", "am2302"]
+        type="string", required=True, empty=False, allowed=ALLOWED_TYPES + list(map(str.upper, ALLOWED_TYPES))
     ),
 }
 SENSOR_SCHEMA = {
@@ -32,7 +32,7 @@ class Sensor(GenericSensor):
         if sensor_type == "dht22":
             self.sensor_type = DHTsensor.DHT22
         elif sensor_type == "dht11":
-            self.sensor_type = DHTsensor.dht11
+            self.sensor_type = DHTsensor.DHT11
         elif sensor_type == "am2302":
             self.sensor_type = DHTsensor.AM2302
         else:
