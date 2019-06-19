@@ -1,0 +1,6 @@
+.tox
+.eggs
+.ignore
+.pytest_cache
+.vscode
+dist
