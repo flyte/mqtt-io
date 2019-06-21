@@ -93,6 +93,7 @@ mqtt:
 gpio_modules:
   type: list
   required: no
+  default: []
   schema:
     type: dict
     allow_unknown: yes
@@ -113,6 +114,7 @@ gpio_modules:
 sensor_modules:
   type: list
   required: no
+  default: []
   schema:
     type: dict
     allow_unknown: yes
@@ -173,6 +175,7 @@ digital_inputs:
           - rising
           - falling
           - both
+          - none
       bouncetime:
         type: integer
         required: no

@@ -96,6 +96,7 @@ mqtt:
 gpio_modules:
   type: list
   required: no
+  default: []
   schema:
     type: dict
     allow_unknown: yes
@@ -116,6 +117,7 @@ gpio_modules:
 sensor_modules:
   type: list
   required: no
+  default: []
   schema:
     type: dict
     allow_unknown: yes
@@ -257,4 +259,4 @@ sensor_inputs:
         default: 2
         min: 0
 
-""")
+""", Loader=yaml.FullLoader)

@@ -32,11 +32,19 @@ digital_inputs:
     off_payload: "OFF"
     pullup: no
     pulldown: yes
+    
+  - name: button_left
+    module: raspberrypi
+    pin: 23
+    on_payload: "ON"
+    off_payload: "OFF"
+    pullup: no
+    pulldown: yes
 
 digital_outputs:
   - name: bell
     module: pcf8574
-    pin: 20
+    pin: 5
     on_payload: "ON"
     off_payload: "OFF"
     initial: low

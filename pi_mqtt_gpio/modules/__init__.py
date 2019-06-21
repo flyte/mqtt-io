@@ -4,19 +4,9 @@ from enum import Enum
 
 
 BASE_SCHEMA = {
-    "name": {
-        "required": True,
-        "empty": False
-    },
-    "module": {
-        "required": True,
-        "empty": False
-    },
-    "cleanup": {
-        "required": False,
-        "type": "boolean",
-        "default": True
-    }
+    "name": {"required": True, "empty": False},
+    "module": {"required": True, "empty": False},
+    "cleanup": {"required": False, "type": "boolean", "default": True},
 }
 
 
@@ -42,6 +32,7 @@ class GenericGPIO(object):
     Abstracts a generic GPIO interface to be implemented by the modules in this
     directory.
     """
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -72,6 +63,7 @@ class GenericSensor(object):
     Abstracts a generic sensor interface to be implemented
     by the modules in this directory.
     """
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod

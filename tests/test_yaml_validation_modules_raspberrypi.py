@@ -30,7 +30,7 @@ digital_inputs = {}
 digital_outputs = {}
 config = {}
 with open("config.example.yml") as f:
-    config = yaml.load(f)
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 class ModuleConfigInvalid(Exception):
     def __init__(self, errors, *args, **kwargs):
@@ -53,8 +53,8 @@ def test_raspberrypi_setup_teardown():
     yield
 
     # Code that will run after your test, for example:
-    yaml.dump(module_validator_input.errors)
-    yaml.dump(module_validator_output.errors)
+    print(module_validator_input.errors)
+    print(module_validator_output.errors)
 
 """
 Tests for raspberry pi digital digital_inputs
@@ -62,7 +62,6 @@ Tests for raspberry pi digital digital_inputs
 def test_yaml_validation_modules_raspberrypi_digital_input_good():
     # test a valid digital_inputs configuration for digital_inputs
     if not module_validator_input.validate(digital_inputs):
-        yaml.dump(module_validator_input.errors)
         raise ModuleConfigInvalid(module_validator_input.errors)
 
 def test_yaml_validation_modules_raspberrypi_digital_input_unknown_key():
@@ -70,7 +69,6 @@ def test_yaml_validation_modules_raspberrypi_digital_input_unknown_key():
     digital_inputs["digital_inputs"][0]['unknown'] = "key"
     with pytest.raises(ModuleConfigInvalid):
         if not module_validator_input.validate(digital_inputs):
-            yaml.dump(module_validator_input.errors)
             raise ModuleConfigInvalid(module_validator_input.errors)
 
 def test_yaml_validation_modules_raspberrypi_digital_input_module_missing():
@@ -78,7 +76,6 @@ def test_yaml_validation_modules_raspberrypi_digital_input_module_missing():
     del digital_inputs["digital_inputs"][0]['module']
     with pytest.raises(ModuleConfigInvalid):
         if not module_validator_input.validate(digital_inputs):
-            yaml.dump(module_validator_input.errors)
             raise ModuleConfigInvalid(module_validator_input.errors)
 
 def test_yaml_validation_modules_raspberrypi_digital_input_module_no_string():

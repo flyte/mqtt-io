@@ -2,4 +2,4 @@ import yaml
 
 CONFIG_SCHEMA = yaml.load("""
 $config_schema
-""")
+""", Loader=yaml.FullLoader)

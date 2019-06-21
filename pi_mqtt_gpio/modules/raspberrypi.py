@@ -13,19 +13,18 @@ class GPIO(GenericGPIO):
     """
     Implementation of GPIO class for Raspberry Pi native GPIO.
     """
+
     def __init__(self, config):
         global DIRECTIONS, PULLUPS, INTERRUPT
         import RPi.GPIO as gpio
+
         self.io = gpio
-        DIRECTIONS = {
-            PinDirection.INPUT: gpio.IN,
-            PinDirection.OUTPUT: gpio.OUT
-        }
+        DIRECTIONS = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
 
         PULLUPS = {
             PinPullup.OFF: gpio.PUD_OFF,
             PinPullup.UP: gpio.PUD_UP,
-            PinPullup.DOWN: gpio.PUD_DOWN
+            PinPullup.DOWN: gpio.PUD_DOWN,
         }
 
         INTERRUPT = {
@@ -44,11 +43,7 @@ class GPIO(GenericGPIO):
         else:
             pullup = PULLUPS[pullup]
 
-        initial = {
-            None: -1,
-            "low": 0,
-            "high": 1
-        }[pin_config.get("initial")]
+        initial = {None: -1, "low": 0, "high": 1}[pin_config.get("initial")]
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
 
     def setup_interrupt(self, handle, pin, edge, callback, bouncetime=100):

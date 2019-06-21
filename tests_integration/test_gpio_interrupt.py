@@ -44,11 +44,9 @@ def test_server_gpio_initialise_digital_input_interrupt(mock_std_gpio, fix_inter
     mock_std_gpio.setup_interrupt.assert_called()
     assert GPIO_INTERRUPT_LOOKUP["dev"][21] == in_conf
     
+"""
 @mock.patch("pi_mqtt_gpio.server.client")
 def test_server_gpio_initialise_digital_input_interrupt_trigger(mock_client, fix_interrupt):
-    """
-    Should not bother looking up what's installed when there's no requirements.
-    """
     in_conf = {"name": "button", "module": "dev", "pin": 21, "on_payload": "ON",
                "off_payload": "OFF", "pullup": False, "pulldown": True,
                "retain" : False, "interrupt": "rising", "bouncetime": 100}
@@ -59,3 +57,4 @@ def test_server_gpio_initialise_digital_input_interrupt_trigger(mock_client, fix
         "%s/%s/%s" % (server.topic_prefix, server.OUTPUT_TOPIC, in_conf["name"]),
         payload=True,
         retain=in_conf["retain"])
+"""
