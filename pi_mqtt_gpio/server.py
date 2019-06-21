@@ -43,6 +43,12 @@ OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
+# getting flake satisfied
+client = None
+scheduler = None
+topic_prefix = ""
+digital_outputs = {}
+
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
 _LOG.setLevel(logging.DEBUG)
@@ -439,13 +445,14 @@ def initialise_digital_input(in_conf, gpio):
     :return: None
     :rtype: NoneType
     """
-    #print(in_conf)
+    pin = in_conf["pin"]
     pud = None
     if in_conf["pullup"]:
         pud = PinPullup.UP
     elif in_conf["pulldown"]:
         pud = PinPullup.DOWN
-    gpio.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+
+    gpio.setup_pin(pin, PinDirection.INPUT, pud, in_conf)
 
     # try to initialize interrupt, if available
     if in_conf["interrupt"] != "none":
@@ -465,21 +472,24 @@ def initialise_digital_input(in_conf, gpio):
 
         try:
             bouncetime = in_conf["bouncetime"]
-            gpio.setup_interrupt(in_conf, 
-                in_conf["pin"], edge, gpio_interrupt_callback, bouncetime)
-            
+            module = in_conf["module"]
+            gpio.setup_interrupt(
+                module, pin, edge, gpio_interrupt_callback, bouncetime)
+
             # store for callback function handling
-            if not GPIO_INTERRUPT_LOOKUP.get(in_conf["module"]):
-                GPIO_INTERRUPT_LOOKUP[in_conf["module"]] = {}
-            GPIO_INTERRUPT_LOOKUP[in_conf["module"]][in_conf["pin"]] = in_conf
+            if not GPIO_INTERRUPT_LOOKUP.get(module):
+                GPIO_INTERRUPT_LOOKUP[module] = {}
+            if not GPIO_INTERRUPT_LOOKUP[module].get(pin):
+                GPIO_INTERRUPT_LOOKUP[module][pin] = in_conf
         except NotImplementedError as exc:
             _LOG.error(
                 "initialise_digital_input: interrupt not implemented for \
-                 input(%s) on module(%s)",
+                 input(%s) on module(%s): %s",
                 in_conf["name"],
-                in_conf["module"]
+                in_conf["module"],
+                exc
             )
-            
+
 
 def initialise_digital_output(out_conf, gpio):
     """
@@ -568,25 +578,28 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
         next_call = next_call + cycle_time  # every cycle_time sec
         sleep(next_call - time())
 
+
 def gpio_interrupt_callback(module, pin, value):
     try:
         in_conf = GPIO_INTERRUPT_LOOKUP[module][pin]
     except KeyError as exc:
         _LOG.error(
-            "gpio_interrupt_callback: no interrupt configured for pin '%s' on module %s: %s",
+            "gpio_interrupt_callback: no interrupt configured \
+            for pin '%s' on module %s: %s",
             pin,
             module,
             exc
         )
-        
+
     # publish each value
     client.publish(
         "%s/%s/%s" % (
-            topic_prefix, SENSOR_TOPIC, in_conf["name"]
+            topic_prefix, OUTPUT_TOPIC, in_conf["name"]
         ),
         payload=value,
         retain=in_conf["retain"]
     )
+
 
 def main(args):
     with open(args.config) as f:
@@ -634,14 +647,16 @@ def main(args):
             sys.exit(1)
 
     for in_conf in digital_inputs:
-        print (digital_inputs)
+        print (in_conf)
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
+        print (out_conf)
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
 
     for sens_conf in sensor_inputs:
+        print (sens_conf)
         initialise_sensor_input(sens_conf, SENSOR_MODULES[sens_conf["module"]])
 
     try:
@@ -712,6 +727,7 @@ def main(args):
                 gpio.cleanup()
             except Exception:
                 _LOG.exception("Unable to execute cleanup routine for module %r:", name)
+
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()

@@ -34,6 +34,7 @@ class GenericGPIO(object):
     """
 
     __metaclass__ = abc.ABCMeta
+    GPIO_INTERRUPT_CALLBACK_LOOKUP = {}
 
     @abc.abstractmethod
     def setup_pin(self, pin, direction, pullup, pin_config):
@@ -50,6 +51,12 @@ class GenericGPIO(object):
     @abc.abstractmethod
     def get_pin(self, pin):
         pass
+
+    def interrupt_callback(self, pin):
+        value = self.get_pin(pin)
+        callback = self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("callback")
+        handle = self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("handle")
+        callback(handle, pin, value)
 
     def cleanup(self):
         """
