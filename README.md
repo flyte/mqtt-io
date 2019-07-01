@@ -1,6 +1,8 @@
 PI MQTT GPIO
 ============
 
+[![Gitter](https://badges.gitter.im/mqtt-io/community.svg)](https://gitter.im/mqtt-io/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 Expose the Raspberry Pi GPIO pins, external IO modules and I2C sensors to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics. The I2C sensors will be read periodically and publish their values. 
 
 GPIO Modules
@@ -9,11 +11,13 @@ GPIO Modules
 - Raspberry Pi GPIO (`raspberrypi`)
 - PCF8574 IO chip (`pcf8574`)
 - PiFaceDigital 2 IO board (`piface2`)
+- Beaglebone GPIO (`beaglebone`)
 
-I2C Sensors
------------
+Sensors
+-------
 
 - LM75 i2c temperature sensor (`lm75`)
+- DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 
 Installation
 ------------
@@ -89,7 +93,7 @@ digital_inputs:
 
 ### Sensors
 
-Receive updates on the value of a sensor by subscribing to the `home/sensor/temperature` topic:
+Receive updates on the value of a sensor by subscribing to the `home/sensor/<sensor input name>` topic. In the following example, this would be `home/sensor/temperature`:
 
 ```yaml
 mqtt:
@@ -111,6 +115,27 @@ sensor_inputs:
     module: lm75
     interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
+    
+
+sensor_modules:
+  - name: dht22
+    module: dht22
+    type: AM2302 # can be  DHT11, DHT22 or AM2302
+    pin: 4
+
+sensor_inputs:
+  - name: dht22_temperature 
+    module: dht22
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    type: temperature # Can be temperature or humidity
+      
+  - name: dht22_humidity 
+    module: dht22
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    type: humidity # Can be temperature or humidity   
+    
 ```
 
 #### SSL/TLS
@@ -205,7 +230,41 @@ mqtt:
   status_payload_dead: dead
 ```
 
-These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any.
+These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any. For example, with the following config:
+
+```yaml
+mqtt:
+  ...
+  topic_prefix: home/office
+  status_topic: status
+```
+
+the status messages will appear on topic `home/office/status`.
+
+### Logging
+
+Logging may be configured by including a `logging` section in your `config.yml`. The standard Python logging system is used, so configuration questions should be answered by looking at [the Python logging howto](https://docs.python.org/3/howto/logging.html).
+
+The default config is set as follows. If you wish to change this, copy and paste this section into your `config.yml` and change whichever parts you'd like.
+
+```yaml
+logging:
+  version: 1
+  formatters:
+    simple:
+      format: "%(asctime)s %(name)s (%(levelname)s): %(message)s"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+      stream: ext://sys.stdout
+  loggers:
+    mqtt_gpio:
+      level: INFO
+      handlers: [console]
+      propagate: yes
+```
 
 Serving Suggestion
 ------------------
@@ -253,3 +312,32 @@ sudo supervisorctl status
 ```
 
 Check the [supervisor docs](http://supervisord.org/running.html#supervisorctl-command-line-options) for more `supervisorctl` commands.
+
+Docker
+------
+
+You may also run this software using Docker. You must create your config file as above, then run the docker image:
+
+```
+docker run -ti --rm -v /path/to/your/config.yml:/config.yml flyte/mqtt-gpio
+```
+
+Or to run in the background:
+
+```
+docker run -d --name mqtt-gpio -v /path/to/your/config.yml:/config.yml flyte/mqtt-gpio
+```
+
+You'll most likely want to use some hardware devices in your config, since that's what this project is all about. For example, if you wish to use the i2c bus, pass it through with a `--device` parameter:
+
+```
+docker run -ti --rm -v /path/to/your/config.yml:/config.yml --device /dev/i2c-0 flyte/mqtt-gpio
+```
+
+If you aren't able to find the exact device path to use, then you can also run the docker container in `--privileged` mode which will pass all of the devices through from the host:
+
+```
+docker run -ti --rm -v /path/to/your/config.yml:/config.yml --privileged flyte/mqtt-gpio
+```
+
+_Please raise an issue on Github if any of this information is incorrect._

@@ -1,6 +1,6 @@
 import yaml
 
-CONFIG_SCHEMA = yaml.load("""
+CONFIG_SCHEMA = yaml.safe_load("""
 mqtt:
   type: dict
   required: yes
@@ -151,9 +151,11 @@ digital_inputs:
         required: yes
         empty: no
       pin:
-        type: integer
+        type:
+          - string
+          - integer
         required: yes
-        min: 0
+        empty: no
       on_payload:
         type: string
         required: yes
@@ -203,9 +205,11 @@ digital_outputs:
         type: string
         required: yes
       pin:
-        type: integer
+        type:
+          - string
+          - integer
         required: yes
-        min: 0
+        empty: no
       on_payload:
         type: string
         required: no
@@ -235,6 +239,7 @@ sensor_inputs:
   default: []
   schema:
     type: dict
+    allow_unknown: yes
     schema:
       name:
         type: string
@@ -259,4 +264,25 @@ sensor_inputs:
         default: 2
         min: 0
 
-""", Loader=yaml.FullLoader)
+logging:
+  type: dict
+  required: no
+  allow_unknown: yes
+  default:
+    version: 1
+    formatters:
+      simple:
+        format: "%(asctime)s %(name)s (%(levelname)s): %(message)s"
+    handlers:
+      console:
+        class: logging.StreamHandler
+        level: DEBUG
+        formatter: simple
+        stream: ext://sys.stdout
+    loggers:
+      mqtt_gpio:
+        level: INFO
+        handlers: [console]
+        propagate: yes
+
+""")

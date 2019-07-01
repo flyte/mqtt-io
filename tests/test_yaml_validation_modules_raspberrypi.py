@@ -114,7 +114,7 @@ def test_yaml_validation_modules_raspberrypi_digital_input_pin_no_number():
     # setup gpio TEST_RASPBERRYPI_GPIO_SET_GET_OUTPUT as output
     digital_inputs["digital_inputs"][0]['pin'] = "12"
     with pytest.raises(ModuleConfigInvalid):
-        if not module_validator_input.validate(digital_inputs):
+        if module_validator_input.validate(digital_inputs):
             yaml.dump(module_validator_input.errors)
             raise ModuleConfigInvalid(module_validator_input.errors)
 
@@ -274,7 +274,7 @@ def test_yaml_validation_modules_raspberrypi_digital_output_pin_no_number():
     # setup gpio TEST_RASPBERRYPI_GPIO_SET_GET_OUTPUT as output
     digital_outputs["digital_outputs"][0]['pin'] = "12"
     with pytest.raises(ModuleConfigInvalid):
-        if not module_validator_output.validate(digital_outputs):
+        if module_validator_output.validate(digital_outputs):
             yaml.dump(module_validator_output.errors)
             raise ModuleConfigInvalid(module_validator_output.errors)
 
