@@ -8,7 +8,7 @@ pytestmark = pytest.mark.hw_raspberrypi
 '''
 Attention: 
 The following tests will only work with hardware modifikations.
-Definition of wired connected GPIOs, always konnect xxx_OUTPUT
+Definition of wired connected GPIOs, always connect xxx_OUTPUT
 with xxx_INPUT. You may connect them with a 10kOhm resistor.
 '''
 # gpio pins for get and set
@@ -24,7 +24,7 @@ TEST_RASPBERRYPI_GPIO_INTERRUPT_BOTH_OUTPUT    = 6
 TEST_RASPBERRYPI_GPIO_INTERRUPT_BOTH_INPUT     = 12
 
 # global gpio and interrupt callback function
-gpio = null
+gpio = None
 interrupt_count = 0
 test_handle = 0
 

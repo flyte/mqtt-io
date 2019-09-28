@@ -30,7 +30,7 @@ digital_inputs = {}
 digital_outputs = {}
 config = {}
 with open("config.example.yml") as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
+    config = yaml.safe_load(f)
 
 class ModuleConfigInvalid(Exception):
     def __init__(self, errors, *args, **kwargs):
