@@ -96,3 +96,7 @@ ENV/
 
 #Kate
 *.kate-swp
+
+# User's Config File
+config.yml
+

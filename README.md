@@ -18,6 +18,7 @@ Sensors
 
 - LM75 i2c temperature sensor (`lm75`)
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
+- BH1750 light level sensor (`bh1750`)
 
 Installation
 ------------
@@ -135,6 +136,18 @@ sensor_inputs:
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
     type: humidity # Can be temperature or humidity   
+
+sensor_modules:
+  - name: bh1750
+    module: bh1750
+    i2c_bus_num: 1
+    chip_addr: 0x23
+
+sensor_inputs:
+  - name: bh1750_lux
+    module: bh1750
+    interval: 10
+    digits: 2
     
 ```
 
