@@ -117,7 +117,7 @@ def output_by_name(output_name):
     _LOG.warning("No output found with name of %r", output_name)
 
 
-def set_pin(output_config, value):
+def set_pin(topic_prefix, output_config, value):
     """
     Sets the output pin to a new value and publishes it on MQTT.
     :param output_config: The output configuration
@@ -144,7 +144,7 @@ def set_pin(output_config, value):
     )
 
 
-def handle_set(msg):
+def handle_set(topic_prefix, msg):
     """
     Handles an incoming 'set' MQTT message.
     :param msg: The incoming MQTT message
@@ -165,10 +165,10 @@ def handle_set(msg):
             output_config["off_payload"],
         )
         return
-    set_pin(output_config, payload == output_config["on_payload"])
+    set_pin(topic_prefix, output_config, payload == output_config["on_payload"])
 
 
-def handle_set_ms(msg, value):
+def handle_set_ms(topic_prefix, msg, value):
     """
     Handles an incoming 'set_<on/off>_ms' MQTT message.
     :param msg: The incoming MQTT message
@@ -260,6 +260,7 @@ def init_mqtt(config, digital_outputs):
     :return: Connected and initialised MQTT client
     :rtype: paho.mqtt.client.Client
     """
+    global topic_prefix
     topic_prefix = config["topic_prefix"]
     protocol = mqtt.MQTTv311
     if config["protocol"] == "3.1":
@@ -368,11 +369,11 @@ def init_mqtt(config, digital_outputs):
         try:
             _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
             if msg.topic.endswith("/%s" % SET_TOPIC):
-                handle_set(msg)
+                handle_set(topic_prefix, msg)
             elif msg.topic.endswith("/%s" % SET_ON_MS_TOPIC):
-                handle_set_ms(msg, True)
+                handle_set_ms(topic_prefix, msg, True)
             elif msg.topic.endswith("/%s" % SET_OFF_MS_TOPIC):
-                handle_set_ms(msg, False)
+                handle_set_ms(topic_prefix, msg, False)
             else:
                 _LOG.warning("Unhandled topic %r.", msg.topic)
         except InvalidPayload as exc:
@@ -522,8 +523,8 @@ def validate_sensor_input_config(sens_conf):
 def initialise_sensor_input(sens_conf, sensor):
     """
     Initialises sensor input.
-    :param in_conf: Sensor config
-    :type in_conf: dict
+    :param sens_conf: Sensor config
+    :type sens_conf: dict
     :param sensor: Instance of GenericSensor to use
     :type sensor: pi_mqtt_gpio.modules.GenericSensor
     :return: None
@@ -612,18 +613,21 @@ def gpio_interrupt_callback(module, pin, value):
             module,
             exc
         )
-
+    _LOG.info("Input %r state changed to %r", in_conf["name"], True if value else False)
     # publish each value
     client.publish(
         "%s/%s/%s" % (
             topic_prefix, OUTPUT_TOPIC, in_conf["name"]
         ),
-        payload=value,
+        payload=in_conf["on_payload" if value else "off_payload"],
         retain=in_conf["retain"]
     )
 
 
 def main(args):
+    global digital_outputs
+    global client
+
     with open(args.config) as f:
         config = yaml.safe_load(f)
     validator = ConfigValidator(CONFIG_SCHEMA)
@@ -671,12 +675,11 @@ def main(args):
             sys.exit(1)
 
     for in_conf in digital_inputs:
-        print (in_conf)
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
+        in_conf["startup_read"] = False
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
-        print (out_conf)
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
 
     for sens_conf in sensor_inputs:
@@ -722,27 +725,28 @@ def main(args):
 
         while True:
             for in_conf in digital_inputs:
-                gpio = GPIO_MODULES[in_conf["module"]]
-                state = bool(gpio.get_pin(in_conf["pin"]))
-                sleep(0.01)
-                if bool(gpio.get_pin(in_conf["pin"])) != state:
-                    continue
-                if state != LAST_STATES[in_conf["name"]]:
-                    _LOG.info("Input %r state changed to %r", in_conf["name"], state)
-                    client.publish(
-                        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
-                        payload=(
-                            in_conf["on_payload"] if state else in_conf["off_payload"]
-                        ),
-                        retain=in_conf["retain"],
-                    )
-                    LAST_STATES[in_conf["name"]] = state
+                if (in_conf["interrupt"] == "none" or in_conf["startup_read"] == False):
+                    gpio = GPIO_MODULES[in_conf["module"]]
+                    state = bool(gpio.get_pin(in_conf["pin"]))
+                    sleep(0.01)
+                    if bool(gpio.get_pin(in_conf["pin"])) != state:
+                        continue
+                    if state != LAST_STATES[in_conf["name"]]:
+                        _LOG.info("Input %r state changed to %r", in_conf["name"], state)
+                        client.publish(
+                            "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+                            payload=(
+                                in_conf["on_payload"] if state else in_conf["off_payload"]
+                            ),
+                            retain=in_conf["retain"],
+                        )
+                        LAST_STATES[in_conf["name"]] = state
+                    in_conf["startup_read"] = True
             scheduler.loop()
             sleep(0.01)
     except KeyboardInterrupt:
         print("")
     finally:
-
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
             config["mqtt"]["status_payload_stopped"],
