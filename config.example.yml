@@ -40,6 +40,8 @@ digital_inputs:
     off_payload: "OFF"
     pullup: no
     pulldown: yes
+    interrupt: falling
+    bouncetime: 200
 
 digital_outputs:
   - name: bell
@@ -60,4 +62,3 @@ sensor_inputs:
     module: lm75
     interval: 15
     digits: 4
-

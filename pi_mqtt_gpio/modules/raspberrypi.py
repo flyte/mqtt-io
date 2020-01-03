@@ -49,6 +49,7 @@ class GPIO(GenericGPIO):
     def setup_interrupt(self, handle, pin, edge, callback, bouncetime=100):
         """
         install interrupt callback function
+        handle:     is returned in the callback function as identification
         pin:        gpio to watch for interrupts
         edge:       triggering edge: RISING, FALLING or BOTH
         callback:   the callback function to be called, when interrupt occurs

@@ -53,6 +53,10 @@ class GenericGPIO(object):
         pass
 
     def interrupt_callback(self, pin):
+        """
+        This function should not be overloaded, but be called in the ISR
+        of the module triggering the interrupt
+        """
         value = self.get_pin(pin)
         callback = self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("callback")
         handle = self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("handle")

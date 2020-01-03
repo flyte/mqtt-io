@@ -120,6 +120,8 @@ def output_by_name(output_name):
 def set_pin(topic_prefix, output_config, value):
     """
     Sets the output pin to a new value and publishes it on MQTT.
+    :param topic_prefix: the name of the topic, the pin is published
+    :type topic_prefix: string
     :param output_config: The output configuration
     :type output_config: dict
     :param value: The new value to set it to
@@ -147,6 +149,8 @@ def set_pin(topic_prefix, output_config, value):
 def handle_set(topic_prefix, msg):
     """
     Handles an incoming 'set' MQTT message.
+    :param topic_prefix: the name of the topic, the pin is published
+    :type topic_prefix: string
     :param msg: The incoming MQTT message
     :type msg: paho.mqtt.client.MQTTMessage
     :return: None
@@ -171,6 +175,8 @@ def handle_set(topic_prefix, msg):
 def handle_set_ms(topic_prefix, msg, value):
     """
     Handles an incoming 'set_<on/off>_ms' MQTT message.
+    :param topic_prefix: the name of the topic
+    :type topic_prefix: string
     :param msg: The incoming MQTT message
     :type msg: paho.mqtt.client.MQTTMessage
     :param value: The value to set the output to
@@ -597,7 +603,6 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                     )
 
         # schedule next call
-
         next_call = next_call + cycle_time  # every cycle_time sec
         sleep(max(0, next_call - time()))
 
@@ -614,7 +619,8 @@ def gpio_interrupt_callback(module, pin, value):
             exc
         )
     _LOG.info("Input %r state changed to %r", in_conf["name"], True if value else False)
-    # publish each value
+    
+    # publish the value
     client.publish(
         "%s/%s/%s" % (
             topic_prefix, OUTPUT_TOPIC, in_conf["name"]
@@ -725,6 +731,7 @@ def main(args):
 
         while True:
             for in_conf in digital_inputs:
+                # only read pins, that are not configured as interrupt. Read interrupts once at startup (startup_read)
                 if (in_conf["interrupt"] == "none" or in_conf["startup_read"] == False):
                     gpio = GPIO_MODULES[in_conf["module"]]
                     state = bool(gpio.get_pin(in_conf["pin"]))
