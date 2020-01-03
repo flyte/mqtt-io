@@ -12,7 +12,7 @@ pylint = "*"
 [packages]
 paho-mqtt = "*"
 enum34 = "*"
-PyYAML = ">=4.2b1"
+PyYAML = "<=5.2,>=4.2b1"
 Cerberus = "*"
 
 [requires]
