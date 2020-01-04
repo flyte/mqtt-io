@@ -118,25 +118,9 @@ def test_yaml_validation_modules_raspberrypi_digital_input_pin_no_number():
             yaml.dump(module_validator_input.errors)
             raise ModuleConfigInvalid(module_validator_input.errors)
 
-def test_yaml_validation_modules_raspberrypi_digital_input_on_payload_missing():
-    # setup gpio TEST_RASPBERRYPI_GPIO_SET_GET_OUTPUT as output
-    del digital_inputs["digital_inputs"][0]['on_payload']
-    with pytest.raises(ModuleConfigInvalid):
-        if not module_validator_input.validate(digital_inputs):
-            yaml.dump(module_validator_input.errors)
-            raise ModuleConfigInvalid(module_validator_input.errors)
-
 def test_yaml_validation_modules_raspberrypi_digital_input_on_payload_no_string():
     # setup gpio TEST_RASPBERRYPI_GPIO_SET_GET_OUTPUT as output
     digital_inputs["digital_inputs"][0]['on_payload'] = True
-    with pytest.raises(ModuleConfigInvalid):
-        if not module_validator_input.validate(digital_inputs):
-            yaml.dump(module_validator_input.errors)
-            raise ModuleConfigInvalid(module_validator_input.errors)
-
-def test_yaml_validation_modules_raspberrypi_digital_input_off_payload_missing():
-    # setup gpio TEST_RASPBERRYPI_GPIO_SET_GET_OUTPUT as output
-    del digital_inputs["digital_inputs"][0]['off_payload']
     with pytest.raises(ModuleConfigInvalid):
         if not module_validator_input.validate(digital_inputs):
             yaml.dump(module_validator_input.errors)

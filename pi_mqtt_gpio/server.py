@@ -45,6 +45,8 @@ OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
+_LOG = logging.getLogger("mqtt_gpio")
+
 class CannotInstallModuleRequirements(Exception):
     pass
 
@@ -227,7 +229,7 @@ def install_missing_requirements(module):
     """
     reqs = getattr(module, "REQUIREMENTS", [])
     if not reqs:
-        _LOG.info("Module %r has no extra requirements to install." % module)
+        _LOG.info("Module %r has no extra requirements to install.", module)
         return
     import pkg_resources
 
@@ -790,9 +792,7 @@ def main(args):
 
 
 if __name__ == "__main__": 
-    global _LOG
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s (%(levelname)s): %(message)s')
-    _LOG = logging.getLogger("mqtt_gpio")
 
     p = argparse.ArgumentParser()
     p.add_argument("config")
