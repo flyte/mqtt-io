@@ -683,7 +683,6 @@ def main(args):
 
     for in_conf in digital_inputs:
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
-        in_conf["startup_read"] = False
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
@@ -733,7 +732,7 @@ def main(args):
         while True:
             for in_conf in digital_inputs:
                 # only read pins, that are not configured as interrupt. Read interrupts once at startup (startup_read)
-                if (in_conf["interrupt"] == "none" or in_conf["startup_read"] == False):
+                if (in_conf["interrupt"] == "none"):
                     gpio = GPIO_MODULES[in_conf["module"]]
                     state = bool(gpio.get_pin(in_conf["pin"]))
                     sleep(0.01)
@@ -749,7 +748,6 @@ def main(args):
                             retain=in_conf["retain"],
                         )
                         LAST_STATES[in_conf["name"]] = state
-                    in_conf["startup_read"] = True
             scheduler.loop()
             sleep(0.01)
     except KeyboardInterrupt:
