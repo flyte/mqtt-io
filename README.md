@@ -197,7 +197,7 @@ If you want to force an output to always set to on/off for a configured amount o
 
 Interrupts may be used for inputs instead of polling for raspberry modules. Specify `interrupt` and a strategy `rising`, `falling` or `both` to switch from polling to interrupt mode. The `bouncetime` is default `100ms` but may be changed (at least 1ms). The interrupt trigger will send a configurable `interrupt_payload` (default: `"INT"`) and not the current value of the pin: reading the current pin value in the ISR, returned 'old' values. Reading again in the ISR after 100ms gave 'changed' value, but waiting in ISR is not a good solution. So only a trigger message is transmitted on each ISR trigger.
 
-'''yaml
+```yaml
 digital_inputs:
   - name: button_left
     module: raspberrypi
@@ -207,7 +207,7 @@ digital_inputs:
     pulldown: yes
     interrupt: falling
     bouncetime: 200
-'''
+```
 
 ### Modules
 
