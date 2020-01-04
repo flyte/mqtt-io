@@ -192,6 +192,8 @@ You may want to set the output to a given value for a certain amount of time. Th
 
 For example, to set an output named `light` on for one second, publish `1000` as the payload to the `myprefix/output/light/set_on_ms` topic.
 
+If you want to force an output to always set to on/off for a configured amount of time, you can add `timed_set_ms` to your output config. This will mean that if you send "ON" to `myprefix/output/light/set`, then it will turn the light on for however many milliseconds are configured in `timed_set_ms` and then turn it off again. Whether the light is on already or not, sending "ON" will make the light eventually turn off after `timed_set_ms` milliseconds. This also works inversely with sending "OFF", which will turn the light off, then on after `timed_set_ms` milliseconds, so don't expect this to always keep your devices set to on/off.
+
 ### Modules
 
 The IO modules are pluggable and multiple may be used at once. For example, if you have a Raspberry PI with some GPIO pins in use and also a PCF8574 IO expander on the I2C bus, you'd list two modules in the `gpio_modules` section and set up the inputs and outputs accordingly:

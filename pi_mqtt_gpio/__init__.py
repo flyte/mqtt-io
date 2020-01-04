@@ -218,6 +218,10 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      timed_set_ms:
+        type: integer
+        required: no
+        min: 1
 
 sensor_inputs:
   type: list
