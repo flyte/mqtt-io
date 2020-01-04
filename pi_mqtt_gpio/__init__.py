@@ -232,6 +232,10 @@ digital_outputs:
         allowed:
           - high
           - low
+      timed_set_ms:
+        type: integer
+        required: no
+        empty: yes
       retain:
         type: boolean
         required: no

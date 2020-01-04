@@ -166,7 +166,21 @@ def handle_set(topic_prefix, msg):
             output_config["off_payload"],
         )
         return
-    set_pin(topic_prefix, output_config, payload == output_config["on_payload"])
+
+    value = payload == output_config["on_payload"]
+    set_pin(topic_prefix, output_config, value)
+
+    try:
+        ms = output_config["timed_set_ms"]
+    except KeyError:
+        return
+    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value))
+    _LOG.info(
+        "Scheduled output %r to change back to %r after %r ms.",
+        output_config["name"],
+        not value,
+        ms,
+    )
 
 
 def handle_set_ms(topic_prefix, msg, value):
@@ -191,8 +205,8 @@ def handle_set_ms(topic_prefix, msg, value):
     if output_config is None:
         return
 
-    set_pin(output_config, value)
-    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, output_config, not value))
+    set_pin(topic_prefix, output_config, value)
+    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value))
     _LOG.info(
         "Scheduled output %r to change back to %r after %r ms.",
         output_config["name"],
@@ -628,6 +642,7 @@ def gpio_interrupt_callback(module, pin):
 def main(args):
     global digital_outputs
     global client
+    global scheduler
     
     _LOG.info("Startup")
 
