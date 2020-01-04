@@ -13,7 +13,7 @@ def fix_interrupt():
 @mock.patch("pi_mqtt_gpio.modules.stdio.GPIO")
 def test_server_gpio_configure_gpio_module(mock_std_gpio):
     """
-    Should not bother looking up what's installed when there's no requirements.
+    check stdio configure module
     """
     gpio_config = {"name": "dev", "module": "stdio", "cleanup": False}
     server.configure_gpio_module(gpio_config)
@@ -22,7 +22,7 @@ def test_server_gpio_configure_gpio_module(mock_std_gpio):
 @mock.patch("pi_mqtt_gpio.modules.stdio.GPIO")
 def test_server_gpio_initialise_digital_input(mock_std_gpio):
     """
-    Should not bother looking up what's installed when there's no requirements.
+    check stdio input
     """
     in_conf = {"name": "button", "module": "dev", "pin": 21, "on_payload": "ON",
                "off_payload": "OFF", "pullup": False, "pulldown": True,
@@ -34,7 +34,7 @@ def test_server_gpio_initialise_digital_input(mock_std_gpio):
 @mock.patch("pi_mqtt_gpio.modules.stdio.GPIO")
 def test_server_gpio_initialise_digital_input_interrupt(mock_std_gpio, fix_interrupt):
     """	
-    Should not bother looking up what's installed when there's no requirements.
+    check stdio input with interrupt
     """
     in_conf = {"name": "button", "module": "dev", "pin": 21, "on_payload": "ON",
                "off_payload": "OFF", "pullup": False, "pulldown": True,
@@ -43,18 +43,3 @@ def test_server_gpio_initialise_digital_input_interrupt(mock_std_gpio, fix_inter
     mock_std_gpio.setup_pin.assert_called()
     mock_std_gpio.setup_interrupt.assert_called()
     assert GPIO_INTERRUPT_LOOKUP["dev"][21] == in_conf
-    
-"""
-@mock.patch("pi_mqtt_gpio.server.client")
-def test_server_gpio_initialise_digital_input_interrupt_trigger(mock_client, fix_interrupt):
-    in_conf = {"name": "button", "module": "dev", "pin": 21, "on_payload": "ON",
-               "off_payload": "OFF", "pullup": False, "pulldown": True,
-               "retain" : False, "interrupt": "rising", "bouncetime": 100}
-    GPIO_INTERRUPT_LOOKUP["dev"] = {}
-    GPIO_INTERRUPT_LOOKUP["dev"][21] = in_conf
-    server.gpio_interrupt_callback("dev", 21, True)
-    mock_client.publish.assert_called_once_with(
-        "%s/%s/%s" % (server.topic_prefix, server.OUTPUT_TOPIC, in_conf["name"]),
-        payload=True,
-        retain=in_conf["retain"])
-"""

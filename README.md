@@ -91,7 +91,6 @@ digital_inputs:
     pullup: yes
     pulldown: no
 ```
-
 ### Sensors
 
 Receive updates on the value of a sensor by subscribing to the `home/sensor/<sensor input name>` topic. In the following example, this would be `home/sensor/temperature`:
@@ -193,6 +192,22 @@ You may want to set the output to a given value for a certain amount of time. Th
 For example, to set an output named `light` on for one second, publish `1000` as the payload to the `myprefix/output/light/set_on_ms` topic.
 
 If you want to force an output to always set to on/off for a configured amount of time, you can add `timed_set_ms` to your output config. This will mean that if you send "ON" to `myprefix/output/light/set`, then it will turn the light on for however many milliseconds are configured in `timed_set_ms` and then turn it off again. Whether the light is on already or not, sending "ON" will make the light eventually turn off after `timed_set_ms` milliseconds. This also works inversely with sending "OFF", which will turn the light off, then on after `timed_set_ms` milliseconds, so don't expect this to always keep your devices set to on/off.
+
+#### Interrupts
+
+Interrupts may be used for inputs instead of polling for raspberry modules. Specify `interrupt` and a strategy `rising`, `falling` or `both` to switch from polling to interrupt mode. The `bouncetime` is default `100ms` but may be changed (at least 1ms). The interrupt trigger will send a configurable `interrupt_payload` (default: `"INT"`) and not the current value of the pin: reading the current pin value in the ISR, returned 'old' values. Reading again in the ISR after 100ms gave 'changed' value, but waiting in ISR is not a good solution. So only a trigger message is transmitted on each ISR trigger.
+
+'''yaml
+digital_inputs:
+  - name: button_left
+    module: raspberrypi
+    pin: 23
+    interrupt_payload: "trigger"
+    pullup: no
+    pulldown: yes
+    interrupt: falling
+    bouncetime: 200
+'''
 
 ### Modules
 
