@@ -36,8 +36,7 @@ digital_inputs:
   - name: button_left
     module: raspberrypi
     pin: 23
-    on_payload: "ON"
-    off_payload: "OFF"
+    interrupt_payload: "trigger"
     pullup: no
     pulldown: yes
     interrupt: falling

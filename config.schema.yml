@@ -155,12 +155,16 @@ digital_inputs:
         empty: no
       on_payload:
         type: string
-        required: yes
-        empty: no
+        required: no
+        default: "ON"
       off_payload:
         type: string
-        required: yes
-        empty: no
+        required: no
+        default: "OFF"
+      interrupt_payload:
+        type: string
+        required: no
+        default: "INT"
       pullup:
         type: boolean
         required: no

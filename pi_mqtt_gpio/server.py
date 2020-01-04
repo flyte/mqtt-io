@@ -45,9 +45,6 @@ OUTPUT_TOPIC = "output"
 INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
-_LOG = logging.getLogger("mqtt_gpio")
-
-
 class CannotInstallModuleRequirements(Exception):
     pass
 
@@ -607,7 +604,7 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
         sleep(max(0, next_call - time()))
 
 
-def gpio_interrupt_callback(module, pin, value):
+def gpio_interrupt_callback(module, pin):
     try:
         in_conf = GPIO_INTERRUPT_LOOKUP[module][pin]
     except KeyError as exc:
@@ -618,21 +615,21 @@ def gpio_interrupt_callback(module, pin, value):
             module,
             exc
         )
-    _LOG.info("Input %r state changed to %r", in_conf["name"], True if value else False)
+    _LOG.info("Interrupt: Input %r triggered", in_conf["name"])
     
-    # publish the value
+    # publish the interrupt trigger
     client.publish(
-        "%s/%s/%s" % (
-            topic_prefix, OUTPUT_TOPIC, in_conf["name"]
-        ),
-        payload=in_conf["on_payload" if value else "off_payload"],
-        retain=in_conf["retain"]
+        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+        payload=in_conf["interrupt_payload"],
+        retain=in_conf["retain"],
     )
 
 
 def main(args):
     global digital_outputs
     global client
+    
+    _LOG.info("Startup")
 
     with open(args.config) as f:
         config = yaml.safe_load(f)
@@ -642,6 +639,10 @@ def main(args):
         sys.exit(1)
     config = validator.normalized(config)
 
+    # Remove all handlers associated with the root logger object.
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    # and load the new config from the config file
     logging.config.dictConfig(config["logging"])
 
     digital_inputs = config["digital_inputs"]
@@ -739,7 +740,7 @@ def main(args):
                     if bool(gpio.get_pin(in_conf["pin"])) != state:
                         continue
                     if state != LAST_STATES[in_conf["name"]]:
-                        _LOG.info("Input %r state changed to %r", in_conf["name"], state)
+                        _LOG.info("Polling: Input %r state changed to %r", in_conf["name"], state)
                         client.publish(
                             "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
                             payload=(
@@ -775,7 +776,11 @@ def main(args):
                 _LOG.exception("Unable to execute cleanup routine for module %r:", name)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
+    global _LOG
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s (%(levelname)s): %(message)s')
+    _LOG = logging.getLogger("mqtt_gpio")
+
     p = argparse.ArgumentParser()
     p.add_argument("config")
     args = p.parse_args()
