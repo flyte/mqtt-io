@@ -19,7 +19,7 @@ Sensors
 - LM75 i2c temperature sensor (`lm75`)
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 - BH1750 light level sensor (`bh1750`)
-- one-wire sensors: DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K (`ds18b`)
+- DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 
 Installation
 ------------
