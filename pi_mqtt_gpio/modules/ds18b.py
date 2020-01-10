@@ -11,11 +11,12 @@ CONFIG_SCHEMA = {
 
 class Sensor(GenericSensor):
     """
-    Implementation of Sensor class for the DHT22 temperature sensor.
+    Implementation of Sensor class for the one wire temperature sensors. DS18B etc.
     """
 
     def __init__(self, config):
-
+        from w1thermsensor import W1ThermSensor
+         
         sensor_config_type = config["type"]
         
         #get the sensor type mapping
