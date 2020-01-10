@@ -19,6 +19,7 @@ Sensors
 - LM75 i2c temperature sensor (`lm75`)
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 - BH1750 light level sensor (`bh1750`)
+- one-wire sensors: DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K (`ds18b`)
 
 Installation
 ------------
@@ -149,6 +150,17 @@ sensor_inputs:
     interval: 10
     digits: 2
     
+sensor_modules:
+  - name: ds18b22
+    module: ds18b
+    type: DS18S20
+    address: 000803702e49
+
+sensor_inputs:
+  - name: ds18b22
+    module: ds18b22
+    interval: 60
+    digits: 2
 ```
 
 #### SSL/TLS
