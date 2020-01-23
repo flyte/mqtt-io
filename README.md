@@ -161,6 +161,7 @@ gpio_modules:
   - name: orangepi
     module: orangepi
     board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
+    mode: board
 ```
 
 #### SSL/TLS
