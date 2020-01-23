@@ -230,6 +230,7 @@ gpio_modules:
   - name: orangepi
     module: orangepi
     board: r1
+    mode: board
 
 digital_inputs:
   - name: button
