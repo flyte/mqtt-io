@@ -1,7 +1,18 @@
 from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
 
-
+ALLOWED_BOARDS = [
+    'zero', 'r1', 'zeroplus', 'zeroplus2h5', 'zeroplus2h3',
+    'pcpcplus', 'one', 'lite', 'plus2e', 'pc2', 'prime'
+]
 REQUIREMENTS = ("OrangePi.GPIO",)
+CONFIG_SCHEMA = {
+    "board": {
+        "type": "string",
+        "required": True,
+        "empty": False,
+        "allowed": ALLOWED_BOARDS + list(map(str.upper, ALLOWED_BOARDS))
+    }
+}
 
 DIRECTIONS = None
 PULLUPS = None
@@ -9,7 +20,7 @@ PULLUPS = None
 
 class GPIO(GenericGPIO):
     """
-    Implementation of GPIO class for Raspberry Pi native GPIO.
+    Implementation of GPIO class for Orange Pi native GPIO.
     """
 
     def __init__(self, config):
