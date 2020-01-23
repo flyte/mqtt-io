@@ -4,6 +4,7 @@ ALLOWED_BOARDS = [
     'zero', 'r1', 'zeroplus', 'zeroplus2h5', 'zeroplus2h3',
     'pcpcplus', 'one', 'lite', 'plus2e', 'pc2', 'prime'
 ]
+ALLOWED_MODES = ['bcm', 'board', 'mode_soc']
 REQUIREMENTS = ("OrangePi.GPIO",)
 CONFIG_SCHEMA = {
     "board": {
@@ -11,6 +12,12 @@ CONFIG_SCHEMA = {
         "required": True,
         "empty": False,
         "allowed": ALLOWED_BOARDS + list(map(str.upper, ALLOWED_BOARDS))
+    },
+    "mode": {
+        "type": "string",
+        "required": False,
+        "empty": False,
+        "allowed": ALLOWED_MODES + list(map(str.upper, ALLOWED_MODES))
     }
 }
 
@@ -37,10 +44,11 @@ class GPIO(GenericGPIO):
         }
 
         board = config["board"].upper()
+        mode = config.get("mode", "bcm").upper()
         if not hasattr(gpio, board):
             raise AssertionError("%s board not found" % board)
         gpio.setboard(getattr(gpio, board))
-        gpio.setmode(gpio.BCM)
+        gpio.setmode(getattr(gpio, mode))
 
     def setup_pin(self, pin, direction, pullup, pin_config):
         direction = DIRECTIONS[direction]
@@ -51,7 +59,10 @@ class GPIO(GenericGPIO):
             pullup = PULLUPS[pullup]
 
         initial = {None: -1, "low": 0, "high": 1}[pin_config.get("initial")]
-        self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
+        try:
+            self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
+        except ValueError as e:
+            raise IOError("channel %d setup failed" % pin) from e
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)
