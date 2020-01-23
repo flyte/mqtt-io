@@ -9,6 +9,7 @@ GPIO Modules
 ------------
 
 - Raspberry Pi GPIO (`raspberrypi`)
+- Orange Pi GPIO (`orangepi`)
 - PCF8574 IO chip (`pcf8574`)
 - PiFaceDigital 2 IO board (`piface2`)
 - Beaglebone GPIO (`beaglebone`)
@@ -151,6 +152,17 @@ sensor_inputs:
     
 ```
 
+### OrangePi boards
+
+You need to specify what OrangePi board you use
+
+```yaml
+gpio_modules:
+  - name: orangepi
+    module: orangepi
+    board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
+```
+
 #### SSL/TLS
 
 You may want to connect to a remote server, in which case it's a good idea to use an encrypted connection. If the server supports this, then you can supply the relevant config values for the [tls_set()](https://github.com/eclipse/paho.mqtt.python#tls_set) command.
@@ -214,6 +226,10 @@ gpio_modules:
     module: pcf8574
     i2c_bus_num: 1
     chip_addr: 0x20
+
+  - name: orangepi
+    module: orangepi
+    board: r1
 
 digital_inputs:
   - name: button
