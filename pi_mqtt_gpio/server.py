@@ -655,7 +655,7 @@ def hass_annonce_digital_input(in_conf, topic_prefix, mqtt_config):
     :return: None
     :rtype: NoneType
     """
-    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()  # TODO: Unify with MQTT Client ID
+    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]  # TODO: Unify with MQTT Client ID
     sensor_name = in_conf["name"]
     sensor_config = {
         "name": sensor_name,
@@ -688,7 +688,7 @@ def hass_annonce_digital_output(out_conf, topic_prefix, mqtt_config):
     :return: None
     :rtype: NoneType
     """
-    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()  # TODO: Unify with MQTT Client ID
+    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]  # TODO: Unify with MQTT Client ID
     sensor_name = out_conf["name"]
     sensor_config = {
         "name": sensor_name,
