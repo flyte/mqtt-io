@@ -1,4 +1,5 @@
 import argparse
+import json
 import logging
 import logging.config
 import yaml
@@ -641,6 +642,73 @@ def gpio_interrupt_callback(module, pin):
     )
 
 
+def hass_annonce_digital_input(in_conf, topic_prefix, mqtt_config):
+    """
+    Announces digital input as binary_sensor to HomeAssistant.
+    :param in_conf: Input config
+    :type in_conf: dict
+    :return: None
+    :rtype: NoneType
+    """
+    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()  # TODO: Unify with MQTT Client ID
+    sensor_name = in_conf["name"]
+    sensor_config = {
+        "name": sensor_name,
+        "unique_id": "%s_%s_input_%s" % (device_id, in_conf["module"], sensor_name),
+        "state_topic": "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+        "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
+        "payload_available": mqtt_config["status_payload_running"],
+        "payload_not_available": mqtt_config["status_payload_dead"],
+        "payload_on": in_conf["on_payload"],
+        "payload_off": in_conf["off_payload"],
+        "device": {
+            "manufacturer": "MQTT GPIO",
+            "identifiers": ["mqtt-gpio", device_id],
+            "name": "MQTT GPIO"
+        }
+    }
+
+    client.publish(
+        "%s/%s/%s/%s/config" % ("homeassistant", "binary_sensor", device_id, sensor_name),
+        payload=json.dumps(sensor_config),
+        retain=True,
+    )
+
+
+def hass_annonce_digital_output(out_conf, topic_prefix, mqtt_config):
+    """
+    Announces digital output as switch to HomeAssistant.
+    :param out_conf: Output config
+    :type out_conf: dict
+    :return: None
+    :rtype: NoneType
+    """
+    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()  # TODO: Unify with MQTT Client ID
+    sensor_name = out_conf["name"]
+    sensor_config = {
+        "name": sensor_name,
+        "unique_id": "%s_%s_output_%s" % (device_id, out_conf["module"], sensor_name),
+        "state_topic": "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"]),
+        "command_topic": "%s/%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC),
+        "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
+        "payload_available": mqtt_config["status_payload_running"],
+        "payload_not_available": mqtt_config["status_payload_dead"],
+        "payload_on": out_conf["on_payload"],
+        "payload_off": out_conf["off_payload"],
+        "device": {
+            "manufacturer": "MQTT GPIO",
+            "identifiers": ["mqtt-gpio", device_id],
+            "name": "MQTT GPIO"
+        }
+    }
+
+    client.publish(
+        "%s/%s/%s/%s/config" % ("homeassistant", "switch", device_id, sensor_name),
+        payload=json.dumps(sensor_config),
+        retain=True,
+    )
+
+
 def main(args):
     global digital_outputs
     global client
@@ -667,6 +735,7 @@ def main(args):
     sensor_inputs = config["sensor_inputs"]
 
     client = init_mqtt(config["mqtt"], config["digital_outputs"])
+    topic_prefix = config["mqtt"]["topic_prefix"]
 
     # Install modules for GPIOs
     for gpio_config in config["gpio_modules"]:
@@ -700,10 +769,12 @@ def main(args):
 
     for in_conf in digital_inputs:
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
+        hass_annonce_digital_input(in_conf, topic_prefix, config["mqtt"])
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
+        hass_annonce_digital_output(out_conf, topic_prefix, config["mqtt"])
 
     for sens_conf in sensor_inputs:
         try:
@@ -729,7 +800,6 @@ def main(args):
 
     scheduler = Scheduler()
 
-    topic_prefix = config["mqtt"]["topic_prefix"]
     try:
         # Starting the sensor thread (if there are sensors configured)
         if sensor_inputs:
