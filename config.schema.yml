@@ -55,6 +55,15 @@ mqtt:
       type: string
       required: no
       default: dead
+    discovery:
+      type: boolean
+      required: no
+      default: no
+    discovery_prefix:
+      type: string
+      required: no
+      default: "homeassistant"
+      coerce: rstrip_slash
     tls:
       type: dict
       required: no

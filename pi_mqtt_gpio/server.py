@@ -359,10 +359,11 @@ def init_mqtt(config, digital_outputs):
                 status_topic, config["status_payload_running"], qos=1, retain=True
             )
             # HASS
-            for in_conf in digital_inputs:
-                hass_annonce_digital_input(in_conf, topic_prefix, config)
-            for out_conf in digital_outputs:
-                hass_annonce_digital_output(out_conf, topic_prefix, config)
+            if config["discovery"]:
+                for in_conf in digital_inputs:
+                    hass_announce_digital_input(in_conf, topic_prefix, config)
+                for out_conf in digital_outputs:
+                    hass_announce_digital_output(out_conf, topic_prefix, config)
         elif rc == 1:
             _LOG.fatal("Incorrect protocol version used to connect to MQTT broker.")
             sys.exit(1)
@@ -647,7 +648,7 @@ def gpio_interrupt_callback(module, pin):
     )
 
 
-def hass_annonce_digital_input(in_conf, topic_prefix, mqtt_config):
+def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
     """
     Announces digital input as binary_sensor to HomeAssistant.
     :param in_conf: Input config
@@ -674,13 +675,13 @@ def hass_annonce_digital_input(in_conf, topic_prefix, mqtt_config):
     }
 
     client.publish(
-        "%s/%s/%s/%s/config" % ("homeassistant", "binary_sensor", device_id, sensor_name),
+        "%s/%s/%s/%s/config" % (mqtt_config["discovery_prefix"], "binary_sensor", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
 
 
-def hass_annonce_digital_output(out_conf, topic_prefix, mqtt_config):
+def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
     """
     Announces digital output as switch to HomeAssistant.
     :param out_conf: Output config
@@ -708,7 +709,7 @@ def hass_annonce_digital_output(out_conf, topic_prefix, mqtt_config):
     }
 
     client.publish(
-        "%s/%s/%s/%s/config" % ("homeassistant", "switch", device_id, sensor_name),
+        "%s/%s/%s/%s/config" % (mqtt_config["discovery_prefix"], "switch", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
