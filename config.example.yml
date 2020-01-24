@@ -18,6 +18,11 @@ gpio_modules:
     module: stdio
     cleanup: no
 
+  - name: orangepi
+    module: orangepi
+    board: zero
+    mode: board
+
 sensor_modules:
   - name: lm75
     module: lm75
