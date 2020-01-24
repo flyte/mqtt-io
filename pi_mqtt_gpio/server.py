@@ -358,6 +358,11 @@ def init_mqtt(config, digital_outputs):
             client.publish(
                 status_topic, config["status_payload_running"], qos=1, retain=True
             )
+            # HASS
+            for in_conf in digital_inputs:
+                hass_annonce_digital_input(in_conf, topic_prefix, config)
+            for out_conf in digital_outputs:
+                hass_annonce_digital_output(out_conf, topic_prefix, config)
         elif rc == 1:
             _LOG.fatal("Incorrect protocol version used to connect to MQTT broker.")
             sys.exit(1)
@@ -710,6 +715,7 @@ def hass_annonce_digital_output(out_conf, topic_prefix, mqtt_config):
 
 
 def main(args):
+    global digital_inputs
     global digital_outputs
     global client
     global scheduler
@@ -769,12 +775,10 @@ def main(args):
 
     for in_conf in digital_inputs:
         initialise_digital_input(in_conf, GPIO_MODULES[in_conf["module"]])
-        hass_annonce_digital_input(in_conf, topic_prefix, config["mqtt"])
         LAST_STATES[in_conf["name"]] = None
 
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
-        hass_annonce_digital_output(out_conf, topic_prefix, config["mqtt"])
 
     for sens_conf in sensor_inputs:
         try:
