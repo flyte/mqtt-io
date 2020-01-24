@@ -15,8 +15,9 @@ CONFIG_SCHEMA = {
     },
     "mode": {
         "type": "string",
-        "required": False,
+        "required": True,
         "empty": False,
+        "default": "bcm",
         "allowed": ALLOWED_MODES + list(map(str.upper, ALLOWED_MODES))
     }
 }
@@ -44,7 +45,7 @@ class GPIO(GenericGPIO):
         }
 
         board = config["board"].upper()
-        mode = config.get("mode", "bcm").upper()
+        mode = config["mode"].upper()
         if not hasattr(gpio, board):
             raise AssertionError("%s board not found" % board)
         gpio.setboard(getattr(gpio, board))
