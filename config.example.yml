@@ -37,6 +37,15 @@ digital_inputs:
     off_payload: "OFF"
     pullup: no
     pulldown: yes
+    
+  - name: button_left
+    module: raspberrypi
+    pin: 23
+    interrupt_payload: "trigger"
+    pullup: no
+    pulldown: yes
+    interrupt: falling
+    bouncetime: 200
 
 digital_outputs:
   - name: bell
@@ -62,4 +71,3 @@ sensor_inputs:
     module: ds18b22
     interval: 10
     digits: 2
-

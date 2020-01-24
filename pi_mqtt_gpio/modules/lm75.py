@@ -1,7 +1,8 @@
 from pi_mqtt_gpio.modules import GenericSensor
 
 
-"""REQUIREMENTS = ("smbus",)"""
+REQUIREMENTS = ("smbus",)
+
 CONFIG_SCHEMA = {
     "i2c_bus_num": {"type": "integer", "required": True, "empty": False},
     "chip_addr": {"type": "integer", "required": True, "empty": False},

@@ -155,12 +155,16 @@ digital_inputs:
         empty: no
       on_payload:
         type: string
-        required: yes
-        empty: no
+        required: no
+        default: "ON"
       off_payload:
         type: string
-        required: yes
-        empty: no
+        required: no
+        default: "OFF"
+      interrupt_payload:
+        type: string
+        required: no
+        default: "INT"
       pullup:
         type: boolean
         required: no
@@ -169,6 +173,20 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      interrupt:
+        type: string
+        required: no
+        default: none
+        allowed:
+          - rising
+          - falling
+          - both
+          - none
+      bouncetime:
+        type: integer
+        required: no
+        default: 100
+        min: 1
       retain:
         type: boolean
         required: no
@@ -211,14 +229,14 @@ digital_outputs:
         allowed:
           - high
           - low
+      timed_set_ms:
+        type: integer
+        required: no
+        empty: yes
       retain:
         type: boolean
         required: no
         default: no
-      timed_set_ms:
-        type: integer
-        required: no
-        min: 1
 
 sensor_inputs:
   type: list

@@ -1,6 +1,7 @@
 import abc
 
 from enum import Enum
+from time import sleep
 
 
 BASE_SCHEMA = {
@@ -21,6 +22,12 @@ class PinPullup(Enum):
     DOWN = 2
 
 
+class InterruptEdge(Enum):
+    RISING = 0
+    FALLING = 1
+    BOTH = 2
+
+
 class GenericGPIO(object):
     """
     Abstracts a generic GPIO interface to be implemented by the modules in this
@@ -28,10 +35,15 @@ class GenericGPIO(object):
     """
 
     __metaclass__ = abc.ABCMeta
+    GPIO_INTERRUPT_CALLBACK_LOOKUP = {}
 
     @abc.abstractmethod
     def setup_pin(self, pin, direction, pullup, pin_config):
         pass
+
+    # may be overloaded, if module supports interrupts
+    def setup_interrupt(self, handle, pin, edge, callback, bouncetime):
+        raise(NotImplementedError)
 
     @abc.abstractmethod
     def set_pin(self, pin, value):
@@ -40,6 +52,15 @@ class GenericGPIO(object):
     @abc.abstractmethod
     def get_pin(self, pin):
         pass
+
+    def interrupt_callback(self, pin):
+        """
+        This function should not be overloaded, but be registered in the ISR
+        of the module triggering the interrupt
+        """
+        callback = self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("callback")
+        handle = self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin].get("handle")
+        callback(handle, pin)
 
     def cleanup(self):
         """

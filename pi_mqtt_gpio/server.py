@@ -17,7 +17,8 @@ import paho.mqtt.client as mqtt
 import cerberus
 
 from pi_mqtt_gpio import CONFIG_SCHEMA
-from pi_mqtt_gpio.modules import PinPullup, PinDirection, BASE_SCHEMA
+from pi_mqtt_gpio.modules import PinPullup, PinDirection, InterruptEdge, \
+                                 BASE_SCHEMA
 from pi_mqtt_gpio.scheduler import Scheduler, Task
 
 
@@ -36,6 +37,7 @@ GPIO_CONFIGS = {}  # storage for gpios
 SENSOR_CONFIGS = {}  # storage for sensors
 SENSOR_INPUT_CONFIGS = {}  # storage for sensor input configs
 LAST_STATES = {}
+GPIO_INTERRUPT_LOOKUP = {}
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
@@ -44,7 +46,6 @@ INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
 _LOG = logging.getLogger("mqtt_gpio")
-
 
 class CannotInstallModuleRequirements(Exception):
     pass
@@ -115,9 +116,11 @@ def output_by_name(output_name):
     _LOG.warning("No output found with name of %r", output_name)
 
 
-def set_pin(output_config, value):
+def set_pin(topic_prefix, output_config, value):
     """
     Sets the output pin to a new value and publishes it on MQTT.
+    :param topic_prefix: the name of the topic, the pin is published
+    :type topic_prefix: string
     :param output_config: The output configuration
     :type output_config: dict
     :param value: The new value to set it to
@@ -142,9 +145,11 @@ def set_pin(output_config, value):
     )
 
 
-def handle_set(msg):
+def handle_set(topic_prefix, msg):
     """
     Handles an incoming 'set' MQTT message.
+    :param topic_prefix: the name of the topic, the pin is published
+    :type topic_prefix: string
     :param msg: The incoming MQTT message
     :type msg: paho.mqtt.client.MQTTMessage
     :return: None
@@ -163,14 +168,15 @@ def handle_set(msg):
             output_config["off_payload"],
         )
         return
+
     value = payload == output_config["on_payload"]
-    set_pin(output_config, value)
+    set_pin(topic_prefix, output_config, value)
 
     try:
         ms = output_config["timed_set_ms"]
     except KeyError:
         return
-    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, output_config, not value))
+    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value))
     _LOG.info(
         "Scheduled output %r to change back to %r after %r ms.",
         output_config["name"],
@@ -179,9 +185,11 @@ def handle_set(msg):
     )
 
 
-def handle_set_ms(msg, value):
+def handle_set_ms(topic_prefix, msg, value):
     """
     Handles an incoming 'set_<on/off>_ms' MQTT message.
+    :param topic_prefix: the name of the topic
+    :type topic_prefix: string
     :param msg: The incoming MQTT message
     :type msg: paho.mqtt.client.MQTTMessage
     :param value: The value to set the output to
@@ -199,8 +207,8 @@ def handle_set_ms(msg, value):
     if output_config is None:
         return
 
-    set_pin(output_config, value)
-    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, output_config, not value))
+    set_pin(topic_prefix, output_config, value)
+    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value))
     _LOG.info(
         "Scheduled output %r to change back to %r after %r ms.",
         output_config["name"],
@@ -221,7 +229,7 @@ def install_missing_requirements(module):
     """
     reqs = getattr(module, "REQUIREMENTS", [])
     if not reqs:
-        _LOG.info("Module %r has no extra requirements to install." % module)
+        _LOG.info("Module %r has no extra requirements to install.", module)
         return
     import pkg_resources
 
@@ -247,7 +255,7 @@ def output_name_from_topic(topic, topic_prefix, suffix):
     Return the name of the output which the topic is setting.
     :param topic: String such as 'mytopicprefix/output/tv_lamp/set'
     :type topic: str
-    :param topic_prefix: Prefix of our topics
+    :param topic_prefix: Prefix of our topicsclient,
     :type topic_prefix: str
     :param suffix: The suffix of the topic such as "set" or "set_ms"
     :type suffix: str
@@ -271,6 +279,7 @@ def init_mqtt(config, digital_outputs):
     :return: Connected and initialised MQTT client
     :rtype: paho.mqtt.client.Client
     """
+    global topic_prefix
     topic_prefix = config["topic_prefix"]
     protocol = mqtt.MQTTv311
     if config["protocol"] == "3.1":
@@ -379,11 +388,11 @@ def init_mqtt(config, digital_outputs):
         try:
             _LOG.info("Received message on topic %r: %r", msg.topic, msg.payload)
             if msg.topic.endswith("/%s" % SET_TOPIC):
-                handle_set(msg)
+                handle_set(topic_prefix, msg)
             elif msg.topic.endswith("/%s" % SET_ON_MS_TOPIC):
-                handle_set_ms(msg, True)
+                handle_set_ms(topic_prefix, msg, True)
             elif msg.topic.endswith("/%s" % SET_OFF_MS_TOPIC):
-                handle_set_ms(msg, False)
+                handle_set_ms(topic_prefix, msg, False)
             else:
                 _LOG.warning("Unhandled topic %r.", msg.topic)
         except InvalidPayload as exc:
@@ -450,12 +459,50 @@ def initialise_digital_input(in_conf, gpio):
     :return: None
     :rtype: NoneType
     """
+    pin = in_conf["pin"]
     pud = None
     if in_conf["pullup"]:
         pud = PinPullup.UP
     elif in_conf["pulldown"]:
         pud = PinPullup.DOWN
-    gpio.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+
+    gpio.setup_pin(pin, PinDirection.INPUT, pud, in_conf)
+
+    # try to initialize interrupt, if available
+    if in_conf["interrupt"] != "none":
+        try:
+            edge = {
+                "rising": InterruptEdge.RISING,
+                "falling": InterruptEdge.FALLING,
+                "both": InterruptEdge.BOTH
+            }[in_conf["interrupt"]]
+        except KeyError as exc:
+            _LOG.error(
+                "initialise_digital_input: config value(%s) for 'interrupt' \
+                 invalid in  entry '%s'",
+                in_conf["interrupt"],
+                in_conf["name"]
+            )
+
+        try:
+            bouncetime = in_conf["bouncetime"]
+            module = in_conf["module"]
+            gpio.setup_interrupt(
+                module, pin, edge, gpio_interrupt_callback, bouncetime)
+
+            # store for callback function handling
+            if not GPIO_INTERRUPT_LOOKUP.get(module):
+                GPIO_INTERRUPT_LOOKUP[module] = {}
+            if not GPIO_INTERRUPT_LOOKUP[module].get(pin):
+                GPIO_INTERRUPT_LOOKUP[module][pin] = in_conf
+        except NotImplementedError as exc:
+            _LOG.error(
+                "initialise_digital_input: interrupt not implemented for \
+                 input(%s) on module(%s): %s",
+                in_conf["name"],
+                in_conf["module"],
+                exc
+            )
 
 
 def initialise_digital_output(out_conf, gpio):
@@ -495,8 +542,8 @@ def validate_sensor_input_config(sens_conf):
 def initialise_sensor_input(sens_conf, sensor):
     """
     Initialises sensor input.
-    :param in_conf: Sensor config
-    :type in_conf: dict
+    :param sens_conf: Sensor config
+    :type sens_conf: dict
     :param sensor: Instance of GenericSensor to use
     :type sensor: pi_mqtt_gpio.modules.GenericSensor
     :return: None
@@ -569,15 +616,37 @@ def sensor_timer_thread(SENSOR_MODULES, sensor_inputs, topic_prefix):
                     )
 
         # schedule next call
-
         next_call = next_call + cycle_time  # every cycle_time sec
         sleep(max(0, next_call - time()))
 
 
-if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("config")
-    args = p.parse_args()
+def gpio_interrupt_callback(module, pin):
+    try:
+        in_conf = GPIO_INTERRUPT_LOOKUP[module][pin]
+    except KeyError as exc:
+        _LOG.error(
+            "gpio_interrupt_callback: no interrupt configured \
+            for pin '%s' on module %s: %s",
+            pin,
+            module,
+            exc
+        )
+    _LOG.info("Interrupt: Input %r triggered", in_conf["name"])
+    
+    # publish the interrupt trigger
+    client.publish(
+        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+        payload=in_conf["interrupt_payload"],
+        retain=in_conf["retain"],
+    )
+
+
+def main(args):
+    global digital_outputs
+    global client
+    global scheduler
+    
+    _LOG.info("Startup")
 
     with open(args.config) as f:
         config = yaml.safe_load(f)
@@ -587,6 +656,10 @@ if __name__ == "__main__":
         sys.exit(1)
     config = validator.normalized(config)
 
+    # Remove all handlers associated with the root logger object.
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    # and load the new config from the config file
     logging.config.dictConfig(config["logging"])
 
     digital_inputs = config["digital_inputs"]
@@ -610,7 +683,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
     # Install modules for Sensors
-    for sensor_config in config["sensor_modules"]:
+    for sensor_config in config.get("sensor_modules", {}):
         SENSOR_CONFIGS[sensor_config["name"]] = sensor_config
         try:
             SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(
@@ -675,27 +748,28 @@ if __name__ == "__main__":
 
         while True:
             for in_conf in digital_inputs:
-                gpio = GPIO_MODULES[in_conf["module"]]
-                state = bool(gpio.get_pin(in_conf["pin"]))
-                sleep(0.01)
-                if bool(gpio.get_pin(in_conf["pin"])) != state:
-                    continue
-                if state != LAST_STATES[in_conf["name"]]:
-                    _LOG.info("Input %r state changed to %r", in_conf["name"], state)
-                    client.publish(
-                        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
-                        payload=(
-                            in_conf["on_payload"] if state else in_conf["off_payload"]
-                        ),
-                        retain=in_conf["retain"],
-                    )
-                    LAST_STATES[in_conf["name"]] = state
+                # only read pins, that are not configured as interrupt. Read interrupts once at startup (startup_read)
+                if (in_conf["interrupt"] == "none"):
+                    gpio = GPIO_MODULES[in_conf["module"]]
+                    state = bool(gpio.get_pin(in_conf["pin"]))
+                    sleep(0.01)
+                    if bool(gpio.get_pin(in_conf["pin"])) != state:
+                        continue
+                    if state != LAST_STATES[in_conf["name"]]:
+                        _LOG.info("Polling: Input %r state changed to %r", in_conf["name"], state)
+                        client.publish(
+                            "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+                            payload=(
+                                in_conf["on_payload"] if state else in_conf["off_payload"]
+                            ),
+                            retain=in_conf["retain"],
+                        )
+                        LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
             sleep(0.01)
     except KeyboardInterrupt:
         print("")
     finally:
-
         client.publish(
             "%s/%s" % (topic_prefix, config["mqtt"]["status_topic"]),
             config["mqtt"]["status_payload_stopped"],
@@ -715,3 +789,12 @@ if __name__ == "__main__":
                 gpio.cleanup()
             except Exception:
                 _LOG.exception("Unable to execute cleanup routine for module %r:", name)
+
+
+if __name__ == "__main__": 
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s (%(levelname)s): %(message)s')
+
+    p = argparse.ArgumentParser()
+    p.add_argument("config")
+    args = p.parse_args()
+    main(args)
