@@ -165,7 +165,7 @@ class MqttGpio:
             await self.mqtt.publish(
                 "%s/%s/%s"
                 % (self.config["mqtt"]["topic_prefix"], SENSOR_TOPIC, event.sensor_name),
-                event.value.encode("utf8"),
+                str(event.value).encode("utf8"),
             )
 
         self.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
@@ -180,7 +180,7 @@ class MqttGpio:
                     value = await sensor_module.async_get_value()
                     if value is not None:
                         value = round(value, sens_conf["digits"])
-                    self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
+                        self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
                     await asyncio.sleep(sens_conf["interval"])
 
             self.unawaited_tasks.append(self.loop.create_task(poll_sensor()))
