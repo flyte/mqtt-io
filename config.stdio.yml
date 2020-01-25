@@ -1,16 +1,16 @@
 mqtt:
   host: test.mosquitto.org
-  # port: 1883
-  port: 8884
+  port: 1883
+#  port: 8884
   user: ""
   password: ""
   topic_prefix: mqtt_gpio
   protocol: 3.1.1
-  tls:
-    enabled: yes
-    ca_file: mosquitto.org.crt
-    certfile: client.crt
-    keyfile: client.key
+#  tls:
+#    enabled: yes
+#    ca_file: mosquitto.org.crt
+#    certfile: client.crt
+#    keyfile: client.key
 
 gpio_modules:
   - name: stdio

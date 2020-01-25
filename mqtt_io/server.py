@@ -10,7 +10,7 @@ from hbmqtt.mqtt.constants import QOS_1
 
 from .config import validate_and_normalise_config
 from .events import EventBus
-from .io import digital_input_poller, DigitalInputChangedEvent
+from .io import digital_input_poller, DigitalInputChangedEvent, SensorReadEvent
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
@@ -23,6 +23,7 @@ SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
 SET_OFF_MS_TOPIC = "set_off_ms"
 OUTPUT_TOPIC = "output"
+SENSOR_TOPIC = "sensor"
 
 MODULE_IMPORT_PATH = "mqtt_io.modules"
 MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
@@ -144,6 +145,32 @@ class MqttGpio:
 
                 self.unawaited_tasks.append(self.loop.create_task(output_loop()))
 
+    def _init_sensor_inputs(self):
+        self.sensor_input_configs = {x["name"]: x for x in self.config["sensor_inputs"]}
+
+        async def publish_sensor_callback(event):
+            await self.mqtt.publish(
+                "%s/%s/%s"
+                % (self.config["mqtt"]["topic_prefix"], SENSOR_TOPIC, event.sensor_name),
+                event.value.encode("utf8"),
+            )
+
+        self.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
+
+        for sens_conf in self.config["sensor_inputs"]:
+            sensor_module = self.sensor_modules[sens_conf["module"]]
+            sensor_module.setup_sensor(sens_conf)
+
+            async def poll_sensor():
+                while True:
+                    value = round(
+                        await sensor_module.async_get_value(), sens_conf["digits"]
+                    )
+                    self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
+                    await asyncio.sleep(sens_conf["interval"])
+
+            self.unawaited_tasks.append(self.loop.create_task(poll_sensor()))
+
     async def _init_mqtt(self):
         config = self.config["mqtt"]
         topic_prefix = config["topic_prefix"]
@@ -188,41 +215,45 @@ class MqttGpio:
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]
 
-        if any(
+        if not any(
             topic.endswith("/%s" % x)
             for x in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC)
         ):
-            try:
-                output_name = output_name_from_topic(topic, topic_prefix)
-            except ValueError as e:
-                _LOG.warning("Unable to parse topic: %s", e)
-                return
-            output_config = self.digital_output_configs[output_name]
-            module = self.gpio_modules[output_config["module"]]
-            if topic.endswith("/%s" % SET_TOPIC):
-                # This is a message to set a digital output to a given value
-                self.module_output_queues[output_config["module"]].put_nowait(
-                    (module, output_config, payload)
-                )
-            else:
-                value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
-                if output_config["inverted"]:
-                    value = not value
+            _LOG.debug(
+                "Ignoring message to topic '%s' which doesn't end with '/set' etc.", topic
+            )
+            return
+        try:
+            output_name = output_name_from_topic(topic, topic_prefix)
+        except ValueError as e:
+            _LOG.warning("Unable to parse topic: %s", e)
+            return
+        output_config = self.digital_output_configs[output_name]
+        module = self.gpio_modules[output_config["module"]]
+        if topic.endswith("/%s" % SET_TOPIC):
+            # This is a message to set a digital output to a given value
+            self.module_output_queues[output_config["module"]].put_nowait(
+                (module, output_config, payload)
+            )
+        else:
+            value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
+            if output_config["inverted"]:
+                value = not value
 
-                async def set_ms():
-                    try:
-                        secs = float(payload) / 1000
-                    except ValueError:
-                        _LOG.warning(
-                            "Unable to parse ms value as float from payload %r", payload
-                        )
-                        return
-                    await module.async_set_pin(output_config["pin"], value)
-                    await asyncio.sleep(secs)
-                    await module.async_set_pin(output_config["pin"], not value)
+            async def set_ms():
+                try:
+                    secs = float(payload) / 1000
+                except ValueError:
+                    _LOG.warning(
+                        "Unable to parse ms value as float from payload %r", payload
+                    )
+                    return
+                await module.async_set_pin(output_config["pin"], value)
+                await asyncio.sleep(secs)
+                await module.async_set_pin(output_config["pin"], not value)
 
-                task = self.loop.create_task(set_ms())
-                self.unawaited_tasks.append(task)
+            task = self.loop.create_task(set_ms())
+            self.unawaited_tasks.append(task)
 
     # Tasks
 
@@ -263,6 +294,7 @@ class MqttGpio:
         self._init_gpio_modules()
         self._init_digital_inputs()
         self._init_digital_outputs()
+        self._init_sensor_inputs()
 
         # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
         # This is where we add any other async tasks that we want to run, such as polling
