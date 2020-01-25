@@ -252,3 +252,8 @@ sensor_inputs:
         required: no
         default: 2
         min: 0
+
+logging:
+  type: dict
+  default: {}
+  allow_unknown: yes

@@ -1,7 +1,7 @@
 mqtt:
   host: test.mosquitto.org
   port: 1883
-#  port: 8884
+  #  port: 8884
   user: ""
   password: ""
   topic_prefix: mqtt_gpio
@@ -31,3 +31,21 @@ digital_outputs:
     pin: 20
     on_payload: "ON"
     off_payload: "OFF"
+
+logging:
+  version: 1
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      level: INFO
+  formatters:
+    default:
+      format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+  loggers:
+    mqtt_io:
+      level: INFO
+      handlers:
+        - console
+      propagate: yes

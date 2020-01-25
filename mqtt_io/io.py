@@ -5,8 +5,6 @@ from collections import namedtuple
 import logging
 
 _LOG = logging.getLogger(__name__)
-_LOG.addHandler(logging.StreamHandler())
-_LOG.setLevel(logging.DEBUG)
 
 DigitalInputChangedEvent = namedtuple(
     "DigitalInputChangedEvent", ("input_name", "from_value", "to_value")

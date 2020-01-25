@@ -42,8 +42,6 @@ INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
 _LOG = logging.getLogger(__name__)
-_LOG.addHandler(logging.StreamHandler())
-_LOG.setLevel(logging.DEBUG)
 
 
 class CannotInstallModuleRequirements(Exception):

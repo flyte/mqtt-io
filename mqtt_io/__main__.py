@@ -1,3 +1,4 @@
+import logging.config
 import argparse
 import sys
 
@@ -17,6 +18,9 @@ def main():
     except ConfigValidationFailed as e:
         print(str(e), file=sys.stderr)
         sys.exit(1)
+
+    if config["logging"]:
+        logging.config.dictConfig(config["logging"])
 
     mqtt_gpio = MqttGpio(config)
     mqtt_gpio.run()

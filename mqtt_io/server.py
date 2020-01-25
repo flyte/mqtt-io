@@ -19,8 +19,6 @@ from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
 
 _LOG = logging.getLogger(__name__)
-_LOG.addHandler(logging.StreamHandler())
-_LOG.setLevel(logging.DEBUG)
 
 SET_TOPIC = "set"
 SET_ON_MS_TOPIC = "set_on_ms"
