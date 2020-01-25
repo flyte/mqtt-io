@@ -116,6 +116,9 @@ class MqttGpio:
             #         await asyncio.sleep(0.1)
 
             # Set up MQTT publish callback for input event
+            # BUG: Reported defects -@flyte at 25/01/2020, 02:58:21
+            # This callback should only be subscribed once, and handle all of the
+            # different input changed events.
             async def publish_callback(event):
                 val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
                 await self.mqtt.publish(
@@ -174,9 +177,9 @@ class MqttGpio:
 
             async def poll_sensor():
                 while True:
-                    value = round(
-                        await sensor_module.async_get_value(), sens_conf["digits"]
-                    )
+                    value = await sensor_module.async_get_value()
+                    if value is not None:
+                        value = round(value, sens_conf["digits"])
                     self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
                     await asyncio.sleep(sens_conf["interval"])
 
