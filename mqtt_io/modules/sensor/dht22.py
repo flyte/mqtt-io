@@ -43,6 +43,7 @@ class Sensor(GenericSensor):
 
         self.pin = config["pin"]
         self.sensor = DHTsensor
+        self.config = config
 
     def setup_sensor(self):
         pass  # nothing to do here
