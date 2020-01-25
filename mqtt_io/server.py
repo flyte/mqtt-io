@@ -324,6 +324,21 @@ class MqttGpio:
                     return_exceptions=True,
                 )
             )
+        finally:
+            for gpio_module in self.gpio_modules:
+                try:
+                    gpio_module.cleanup()
+                except Exception:
+                    _LOG.exception(
+                        "Exception while cleaning up gpio module %s", gpio_module
+                    )
+            for sens_module in self.sensor_modules:
+                try:
+                    sens_module.cleanup()
+                except Exception:
+                    _LOG.exception(
+                        "Exception while cleaning up sensor module %s", sens_module
+                    )
 
 
 def output_name_from_topic(topic, prefix):
