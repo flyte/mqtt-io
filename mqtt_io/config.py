@@ -72,9 +72,9 @@ def validate_and_normalise_config(config, schema):
     """
     validator = ConfigValidator(schema)
     if not validator.validate(config):
-        msg = "Config did not validate:\n%s" % yaml.dump(validator.errors)
-        _LOG.error(msg)
-        raise ConfigValidationFailed(msg)
+        raise ConfigValidationFailed(
+            "Config did not validate:\n%s" % yaml.dump(validator.errors)
+        )
     return validator.normalized(config)
 
 
