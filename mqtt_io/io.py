@@ -21,6 +21,9 @@ async def digital_input_poller(event_bus, module, input_config):
     while True:
         value = await module.async_get_pin(input_config["pin"])
         if value != last_value:
+            _LOG.info(
+                "Digital input '%s' value changed to %s", input_config["name"], value
+            )
             event_bus.fire(
                 DigitalInputChangedEvent(input_config["name"], last_value, value)
             )
