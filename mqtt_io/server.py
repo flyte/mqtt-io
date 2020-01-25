@@ -177,7 +177,7 @@ class MqttGpio:
 
             async def poll_sensor():
                 while True:
-                    value = await sensor_module.async_get_value()
+                    value = await sensor_module.async_get_value(sens_conf)
                     if value is not None:
                         value = round(value, sens_conf["digits"])
                         self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))

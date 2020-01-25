@@ -49,11 +49,11 @@ class Sensor(GenericSensor):
     def setup_sensor(self):
         pass  # nothing to do here
 
-    def get_value(self):
+    def get_value(self, sens_conf):
         """get the temperature or humidity value from the sensor"""
         humidity, temperature = self.sensor.read_retry(self.sensor_type, self.pin)
-        if self.config["type"] == "temperature" and temperature is not None:
+        if sens_conf["type"] == "temperature" and temperature is not None:
             return temperature
-        if self.config["type"] == "humidity" and humidity is not None:
+        if sens_conf["type"] == "humidity" and humidity is not None:
             return humidity
         return None

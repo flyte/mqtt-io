@@ -16,7 +16,7 @@ class GenericSensor:
         pass
 
     @abc.abstractmethod
-    def get_value(self):
+    def get_value(self, sens_conf):
         pass
 
     def cleanup(self):
@@ -25,9 +25,9 @@ class GenericSensor:
         """
         pass
 
-    async def async_get_value(self):
+    async def async_get_value(self, sens_conf):
         """
         Use a ThreadPoolExecutor to call the module's synchronous get_value function.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_value)
+        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_value, sens_conf)
