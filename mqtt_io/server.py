@@ -29,7 +29,7 @@ MODULE_IMPORT_PATH = "mqtt_io.modules"
 MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
 
 
-def _init_gpio_module(module_config, module_type):
+def _init_module(module_config, module_type):
     module = import_module(
         "%s.%s.%s" % (MODULE_IMPORT_PATH, module_type, module_config["module"])
     )
@@ -56,9 +56,12 @@ class MqttGpio:
     def __init__(self, config):
         self.config = config
         self.gpio_configs = {}
+        self.sensor_configs = {}
         self.digital_input_configs = {}
         self.digital_output_configs = {}
+        self.sensor_input_configs = {}
         self.gpio_modules = {}
+        self.sensor_modules = {}
         self.module_output_queues = {}
 
         self.loop = asyncio.get_event_loop()
@@ -72,9 +75,13 @@ class MqttGpio:
         self.gpio_configs = {x["name"]: x for x in self.config["gpio_modules"]}
         self.gpio_modules = {}
         for gpio_config in self.config["gpio_modules"]:
-            self.gpio_modules[gpio_config["name"]] = _init_gpio_module(
-                gpio_config, "gpio"
-            )
+            self.gpio_modules[gpio_config["name"]] = _init_module(gpio_config, "gpio")
+
+    def _init_sensor_modules(self):
+        self.sensor_configs = {x["name"]: x for x in self.config["sensor_modules"]}
+        self.sensor_modules = {}
+        for sens_config in self.config["sensor_modules"]:
+            self.sensor_modules[sens_config["name"]] = _init_module(sens_config, "sensor")
 
     def _init_digital_inputs(self):
         self.digital_input_configs = {x["name"]: x for x in self.config["digital_inputs"]}
@@ -292,6 +299,7 @@ class MqttGpio:
         self.loop.run_until_complete(self._init_mqtt())
 
         self._init_gpio_modules()
+        self._init_sensor_modules()
         self._init_digital_inputs()
         self._init_digital_outputs()
         self._init_sensor_inputs()
