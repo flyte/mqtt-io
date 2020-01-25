@@ -228,6 +228,7 @@ sensor_inputs:
   default: []
   schema:
     type: dict
+    allow_unknown: yes
     schema:
       name:
         type: string
