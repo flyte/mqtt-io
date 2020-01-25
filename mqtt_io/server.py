@@ -88,8 +88,18 @@ class MqttGpio:
 
     def _init_digital_inputs(self):
         self.digital_input_configs = {x["name"]: x for x in self.config["digital_inputs"]}
-        # IDEA: Possible implementations -@flyte at 07/04/2019, 15:34:39
-        # Could this be done asynchronously?
+
+        # Set up MQTT publish callback for input event
+        async def publish_callback(event):
+            in_conf = self.digital_input_configs[event.input_name]
+            val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
+            await self.mqtt.publish(
+                "%s/input/%s" % (self.config["mqtt"]["topic_prefix"], event.input_name),
+                val.encode("utf8"),
+            )
+
+        self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
+
         for in_conf in self.config["digital_inputs"]:
             pud = None
             if in_conf["pullup"]:
@@ -98,36 +108,6 @@ class MqttGpio:
                 pud = PinPUD.DOWN
             module = self.gpio_modules[in_conf["module"]]
             module.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
-
-            # async def input_loop():
-            #     """
-            #     Polls an input to check for changes.
-            #     """
-            #     last_value = None
-            #     while True:
-            #         value = await module.async_get_pin(in_conf["pin"])
-            #         if value != last_value:
-            #             await self.mqtt.publish(
-            #                 "%s/input/%s"
-            #                 % (self.config["mqtt"]["topic_prefix"], in_conf["name"]),
-            #                 in_conf["on_payload"] if value else in_conf["off_payload"],
-            #             )
-            #         last_value = value
-            #         await asyncio.sleep(0.1)
-
-            # Set up MQTT publish callback for input event
-            # BUG: Reported defects -@flyte at 25/01/2020, 02:58:21
-            # This callback should only be subscribed once, and handle all of the
-            # different input changed events.
-            async def publish_callback(event):
-                val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
-                await self.mqtt.publish(
-                    "%s/input/%s"
-                    % (self.config["mqtt"]["topic_prefix"], in_conf["name"]),
-                    val.encode("utf8"),
-                )
-
-            self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
 
             # Start poller task
             self.unawaited_tasks.append(
@@ -175,10 +155,8 @@ class MqttGpio:
             validate_and_normalise_sensor_input_config(sens_conf, sensor_module)
             sensor_module.setup_sensor()
 
+            # Use default args to the function to get around the late binding closures
             async def poll_sensor(sensor_module=sensor_module, sens_conf=sens_conf):
-                # BUG: Reported defects -@flyte at 25/01/2020, 03:17:26
-                # Apparently sens_conf gets mutated, or this context doesn't stick around
-                # so the poll_sensor() task ends up polling the same sensor_conf each time.
                 while True:
                     value = await sensor_module.async_get_value(sens_conf)
                     if value is not None:
