@@ -202,8 +202,9 @@ class MqttGpio:
             )
 
         self.mqtt = MQTTClient(client_id=client_id, config=client_config, loop=self.loop)
+        _LOG.info("Connected to MQTT")
         await self.mqtt.connect(uri, **connect_kwargs)
-        for out_conf in self.digital_output_configs:
+        for out_conf in self.digital_output_configs.values():
             for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
                 topic = "%s/%s/%s/%s" % (
                     topic_prefix,
@@ -270,9 +271,9 @@ class MqttGpio:
                 _LOG.info("Received message on topic %r: %r", topic, payload)
                 self._handle_mqtt_msg(topic, payload)
         finally:
-            print("\nDisconnecting from MQTT...")
+            _LOG.info("Disconnecting from MQTT...")
             await self.mqtt.disconnect()
-            print("MQTT disconnected")
+            _LOG.info("MQTT disconnected")
 
     async def remove_finished_tasks(self):
         while True:
@@ -292,13 +293,16 @@ class MqttGpio:
     # Main entry point
 
     def run(self):
+        self._init_gpio_modules()
+        # Init the outputs before MQTT so we have some topics to subscribe to
+        self._init_digital_outputs()
+
         # Get connected to the MQTT server
         self.loop.run_until_complete(self._init_mqtt())
 
-        self._init_gpio_modules()
+        # Init the inputs after MQTT so we can start publishing right away
         self._init_sensor_modules()
         self._init_digital_inputs()
-        self._init_digital_outputs()
         self._init_sensor_inputs()
 
         # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
