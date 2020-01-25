@@ -30,6 +30,10 @@ mqtt:
       required: no
       default: ""
       coerce: rstrip_slash
+    clean_session:
+      type: boolean
+      required: no
+      default: false
     protocol:
       type: string
       required: no

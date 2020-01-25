@@ -180,7 +180,7 @@ class MqttGpio:
         uri += "%s:%s" % (config["host"], config["port"])
 
         client_config = {}
-        connect_kwargs = dict(cleansession=False)
+        connect_kwargs = dict(cleansession=config["clean_session"])
         if tls_enabled:
             tls_config = config["tls"]
             if tls_config.get("certfile") and tls_config.get("keyfile"):
