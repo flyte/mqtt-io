@@ -3,7 +3,7 @@ import logging
 
 _LOG = logging.getLogger(__name__)
 _LOG.addHandler(logging.StreamHandler())
-_LOG.setLevel(logging.DEBUG)
+_LOG.setLevel(logging.INFO)
 
 
 class Event:
