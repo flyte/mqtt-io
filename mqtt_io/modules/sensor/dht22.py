@@ -11,21 +11,22 @@ CONFIG_SCHEMA = {
         allowed=ALLOWED_TYPES + list(map(str.upper, ALLOWED_TYPES)),
     ),
 }
-SENSOR_SCHEMA = {
-    "type": dict(
-        type="string",
-        required=False,
-        empty=False,
-        default="temperature",
-        allowed=["temperature", "humidity"],
-    )
-}
 
 
 class Sensor(GenericSensor):
     """
     Implementation of Sensor class for the DHT22 temperature sensor.
     """
+
+    SENSOR_SCHEMA = {
+        "type": dict(
+            type="string",
+            required=False,
+            empty=False,
+            default="temperature",
+            allowed=["temperature", "humidity"],
+        )
+    }
 
     def __init__(self, config):
         import Adafruit_DHT as DHTsensor
