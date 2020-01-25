@@ -203,7 +203,16 @@ class MqttGpio:
 
         self.mqtt = MQTTClient(client_id=client_id, config=client_config, loop=self.loop)
         await self.mqtt.connect(uri, **connect_kwargs)
-        await self.mqtt.subscribe([("%s/#" % topic_prefix, QOS_1)])
+        for out_conf in self.digital_output_configs:
+            for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
+                topic = "%s/%s/%s/%s" % (
+                    topic_prefix,
+                    OUTPUT_TOPIC,
+                    out_conf["name"],
+                    suffix,
+                )
+                await self.mqtt.subscribe([(topic, QOS_1)])
+                _LOG.info("Subscribed to topic: %r", topic)
 
     # Runtime methods
 
