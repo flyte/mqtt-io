@@ -8,7 +8,10 @@ from importlib import import_module
 from hbmqtt.client import ClientException, MQTTClient
 from hbmqtt.mqtt.constants import QOS_1
 
-from .config import validate_and_normalise_config
+from .config import (
+    validate_and_normalise_config,
+    validate_and_normalise_sensor_input_config,
+)
 from .events import EventBus
 from .io import digital_input_poller, DigitalInputChangedEvent, SensorReadEvent
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
@@ -166,6 +169,7 @@ class MqttGpio:
 
         for sens_conf in self.config["sensor_inputs"]:
             sensor_module = self.sensor_modules[sens_conf["module"]]
+            validate_and_normalise_sensor_input_config(sens_conf, sensor_module)
             sensor_module.setup_sensor(sens_conf)
 
             async def poll_sensor():
