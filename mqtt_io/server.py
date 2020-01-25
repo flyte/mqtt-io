@@ -201,10 +201,17 @@ class MqttGpio:
                     cadata=tls_config.get("ca_data"),
                 )
             )
+        client_config["will"] = dict(
+            retain=True,
+            topic="%s/%s" % (topic_prefix, config["status_topic"]),
+            message=config["status_payload_dead"].encode("utf8"),
+            qos=1,
+        )
 
         self.mqtt = MQTTClient(client_id=client_id, config=client_config, loop=self.loop)
-        _LOG.info("Connected to MQTT")
+        _LOG.info("Connecting to MQTT...")
         await self.mqtt.connect(uri, **connect_kwargs)
+        _LOG.info("Connected to MQTT")
         for out_conf in self.digital_output_configs.values():
             for suffix in (SET_TOPIC, SET_ON_MS_TOPIC, SET_OFF_MS_TOPIC):
                 topic = "%s/%s/%s/%s" % (
@@ -215,6 +222,13 @@ class MqttGpio:
                 )
                 await self.mqtt.subscribe([(topic, QOS_1)])
                 _LOG.info("Subscribed to topic: %r", topic)
+
+        await self.mqtt.publish(
+            "%s/%s" % (topic_prefix, config["status_topic"]),
+            config["status_payload_running"].encode("utf8"),
+            qos=1,
+            retain=True,
+        )
 
     # Runtime methods
 
@@ -272,6 +286,16 @@ class MqttGpio:
                 _LOG.info("Received message on topic %r: %r", topic, payload)
                 self._handle_mqtt_msg(topic, payload)
         finally:
+            await self.mqtt.publish(
+                "%s/%s"
+                % (
+                    self.config["mqtt"]["topic_prefix"],
+                    self.config["mqtt"]["status_topic"],
+                ),
+                self.config["mqtt"]["status_payload_stopped"].encode("utf8"),
+                qos=1,
+                retain=True,
+            )
             _LOG.info("Disconnecting from MQTT...")
             await self.mqtt.disconnect()
             _LOG.info("MQTT disconnected")
