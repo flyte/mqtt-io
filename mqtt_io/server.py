@@ -159,6 +159,9 @@ class MqttGpio:
                     value = await sensor_module.async_get_value(sens_conf)
                     if value is not None:
                         value = round(value, sens_conf["digits"])
+                        _LOG.info(
+                            "Read sensor '%s' value of %s", sens_conf["name"], value
+                        )
                         self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
                     await asyncio.sleep(sens_conf["interval"])
 
