@@ -93,5 +93,6 @@ def validate_and_normalise_sensor_input_config(config, module):
     schema = _get_main_schema()
     sensor_input_schema = schema["sensor_inputs"]["schema"]["schema"].copy()
     sensor_input_schema.update(getattr(module, "SENSOR_SCHEMA", {}))
+    _LOG.info("sensor_input_schema: %s", sensor_input_schema)
     return validate_and_normalise_config(config, sensor_input_schema)
 
