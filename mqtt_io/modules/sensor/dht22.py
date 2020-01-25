@@ -1,4 +1,4 @@
-from pi_mqtt_gpio.modules import GenericSensor
+from . import GenericSensor
 
 REQUIREMENTS = ("Adafruit_DHT",)
 ALLOWED_TYPES = ["dht11", "dht22", "am2302"]

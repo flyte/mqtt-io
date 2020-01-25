@@ -1,4 +1,4 @@
-from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
+from . import GenericGPIO, PinDirection, PinPUD
 
 
 REQUIREMENTS = ("RPi.GPIO",)
@@ -20,9 +20,9 @@ class GPIO(GenericGPIO):
         DIRECTIONS = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
 
         PULLUPS = {
-            PinPullup.OFF: gpio.PUD_OFF,
-            PinPullup.UP: gpio.PUD_UP,
-            PinPullup.DOWN: gpio.PUD_DOWN,
+            PinPUD.OFF: gpio.PUD_OFF,
+            PinPUD.UP: gpio.PUD_UP,
+            PinPUD.DOWN: gpio.PUD_DOWN,
         }
 
         gpio.setmode(gpio.BCM)
@@ -31,7 +31,7 @@ class GPIO(GenericGPIO):
         direction = DIRECTIONS[direction]
 
         if pullup is None:
-            pullup = PULLUPS[PinPullup.OFF]
+            pullup = PULLUPS[PinPUD.OFF]
         else:
             pullup = PULLUPS[pullup]
 
