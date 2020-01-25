@@ -318,14 +318,14 @@ class MqttGpio:
                 )
             )
         finally:
-            for gpio_module in self.gpio_modules:
+            for gpio_module in self.gpio_modules.values():
                 try:
                     gpio_module.cleanup()
                 except Exception:
                     _LOG.exception(
                         "Exception while cleaning up gpio module %s", gpio_module
                     )
-            for sens_module in self.sensor_modules:
+            for sens_module in self.sensor_modules.values():
                 try:
                     sens_module.cleanup()
                 except Exception:
