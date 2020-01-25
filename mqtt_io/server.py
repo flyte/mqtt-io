@@ -175,7 +175,10 @@ class MqttGpio:
             validate_and_normalise_sensor_input_config(sens_conf, sensor_module)
             sensor_module.setup_sensor()
 
-            async def poll_sensor():
+            async def poll_sensor(sensor_module=sensor_module, sens_conf=sens_conf):
+                # BUG: Reported defects -@flyte at 25/01/2020, 03:17:26
+                # Apparently sens_conf gets mutated, or this context doesn't stick around
+                # so the poll_sensor() task ends up polling the same sensor_conf each time.
                 while True:
                     value = await sensor_module.async_get_value(sens_conf)
                     if value is not None:
