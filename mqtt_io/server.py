@@ -172,7 +172,7 @@ class MqttGpio:
         for sens_conf in self.config["sensor_inputs"]:
             sensor_module = self.sensor_modules[sens_conf["module"]]
             validate_and_normalise_sensor_input_config(sens_conf, sensor_module)
-            sensor_module.setup_sensor()
+            sensor_module.setup_sensor(sens_conf)
 
             # Use default args to the function to get around the late binding closures
             async def poll_sensor(sensor_module=sensor_module, sens_conf=sens_conf):
