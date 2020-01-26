@@ -221,6 +221,10 @@ digital_outputs:
         allowed:
           - high
           - low
+      publish_initial:
+        type: boolean
+        required: no
+        default: no
       retain:
         type: boolean
         required: no

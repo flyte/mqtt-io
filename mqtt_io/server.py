@@ -133,6 +133,9 @@ class MqttGpio:
             self.gpio_modules[out_conf["module"]].setup_pin(
                 out_conf["pin"], PinDirection.OUTPUT, None, out_conf
             )
+            # TODO: Tasks pending completion -@flyte at 26/01/2020, 16:43:03
+            # If out_conf["publish_initial"] then publish what this has been set to.
+
             # Create queues for each module with an output
             if out_conf["module"] not in self.module_output_queues:
                 queue = asyncio.Queue()
@@ -236,6 +239,19 @@ class MqttGpio:
             qos=1,
             retain=True,
         )
+        # Publish initial values of outputs if desired
+        for out_conf in self.digital_output_configs.values():
+            if not out_conf["publish_initial"]:
+                continue
+            value = out_conf["initial"] == "high"
+            payload = (
+                out_conf["on_payload"]
+                if value != out_conf["inverted"]
+                else out_conf["off_payload"]
+            )
+            await self.mqtt.publish(
+                "%s/output/%s" % (topic_prefix, out_conf["name"]), payload
+            )
 
     # Runtime methods
 
@@ -290,6 +306,7 @@ class MqttGpio:
                     "%s/output/%s" % (topic_prefix, output_config["name"]),
                     publish_payload.encode("utf8"),
                     qos=1,
+                    retain=output_config["retain"],
                 )
                 await asyncio.sleep(secs)
                 _LOG.info(
@@ -308,6 +325,7 @@ class MqttGpio:
                     "%s/output/%s" % (topic_prefix, output_config["name"]),
                     publish_payload.encode("utf8"),
                     qos=1,
+                    retain=output_config["retain"],
                 )
 
             task = self.loop.create_task(set_ms())
@@ -373,6 +391,7 @@ class MqttGpio:
                 % (self.config["mqtt"]["topic_prefix"], output_config["name"]),
                 payload.encode("utf8"),
                 qos=1,
+                retain=output_config["retain"],
             )
 
     # Main entry point
