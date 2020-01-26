@@ -250,7 +250,10 @@ class MqttGpio:
                 else out_conf["off_payload"]
             )
             await self.mqtt.publish(
-                "%s/output/%s" % (topic_prefix, out_conf["name"]), payload
+                "%s/output/%s" % (topic_prefix, out_conf["name"]),
+                payload.encode("utf8"),
+                qos=1,
+                retain=out_conf["retain"],
             )
 
     # Runtime methods
