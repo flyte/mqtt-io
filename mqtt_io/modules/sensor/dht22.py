@@ -46,9 +46,6 @@ class Sensor(GenericSensor):
         self.sensor = DHTsensor
         self.config = config
 
-    def setup_sensor(self):
-        pass  # nothing to do here
-
     def get_value(self, sens_conf):
         """get the temperature or humidity value from the sensor"""
         humidity, temperature = self.sensor.read_retry(self.sensor_type, self.pin)
