@@ -5,6 +5,7 @@ mqtt:
   user: ""
   password: ""
   topic_prefix: mqtt_gpio
+  clean_session: yes
   protocol: 3.1.1
 #  tls:
 #    enabled: yes
@@ -38,14 +39,14 @@ logging:
     console:
       class: logging.StreamHandler
       formatter: default
-      level: INFO
+      level: DEBUG
   formatters:
     default:
       format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
       datefmt: "%Y-%m-%d %H:%M:%S"
   loggers:
     mqtt_io:
-      level: INFO
+      level: DEBUG
       handlers:
         - console
       propagate: yes

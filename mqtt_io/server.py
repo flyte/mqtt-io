@@ -1,3 +1,4 @@
+import signal as signals
 import asyncio
 import logging
 import re
@@ -66,6 +67,7 @@ class MqttGpio:
         self.module_output_queues = {}
 
         self.loop = asyncio.get_event_loop()
+        self.tasks = []
         self.unawaited_tasks = []
 
         self.event_bus = EventBus(self.loop)
@@ -318,6 +320,10 @@ class MqttGpio:
     # Main entry point
 
     def run(self):
+        for s in (signals.SIGHUP, signals.SIGTERM, signals.SIGINT):
+            self.loop.add_signal_handler(
+                s, lambda s=s: self.loop.create_task(self.shutdown(s))
+            )
         self._init_gpio_modules()
         # Init the outputs before MQTT so we have some topics to subscribe to
         self._init_digital_outputs()
@@ -330,22 +336,14 @@ class MqttGpio:
         self._init_digital_inputs()
         self._init_sensor_inputs()
 
-        # IDEA: Possible implementations -@flyte at 26/05/2019, 16:04:46
         # This is where we add any other async tasks that we want to run, such as polling
         # inputs, sensor loops etc.
-        tasks = asyncio.gather(self._mqtt_rx_loop(), self.remove_finished_tasks())
+        coros = [self._mqtt_rx_loop(), self.remove_finished_tasks()]
+        self.tasks = [self.loop.create_task(c) for c in coros]
         try:
-            self.loop.run_until_complete(tasks)
-        except KeyboardInterrupt:
-            tasks.cancel()
-            for task in list(self.mqtt.client_tasks) + self.unawaited_tasks:
-                task.cancel()
-            self.loop.run_until_complete(
-                asyncio.gather(
-                    *(self.unawaited_tasks + [tasks] + list(self.mqtt.client_tasks)),
-                    return_exceptions=True,
-                )
-            )
+            self.loop.run_forever()
+        except asyncio.CancelledError:
+            _LOG.debug("Got asyncio.CancelledError from main loop runner.")
         finally:
             for gpio_module in self.gpio_modules.values():
                 try:
@@ -361,6 +359,38 @@ class MqttGpio:
                     _LOG.exception(
                         "Exception while cleaning up sensor module %s", sens_module
                     )
+        _LOG.debug("run() complete")
+
+    async def shutdown(self, signal):
+        _LOG.warning("Received exit signal %s", signal.name)
+
+        # Cancel our main task first so we don't mess the MQTT library's connection
+        for t in self.tasks:
+            t.cancel()
+        _LOG.info("Waiting for main task to complete...")
+        all_done = False
+        while not all_done:
+            all_done = all(t.done() for t in self.tasks)
+            await asyncio.sleep(0.1)
+
+        current_task = asyncio.Task.current_task()
+        tasks = [
+            t
+            for t in asyncio.Task.all_tasks(loop=self.loop)
+            if not t.done() and t is not current_task
+        ]
+        _LOG.info("Cancelling %s remaining tasks", len(tasks))
+        for t in tasks:
+            t.cancel()
+        _LOG.info("Waiting for %s remaining tasks to complete...", len(tasks))
+        _LOG.debug(tasks)
+        all_done = False
+        while not all_done:
+            all_done = all(t.done() for t in tasks)
+            await asyncio.sleep(0.1)
+        _LOG.debug("Tasks all finished. Stopping loop...")
+        self.loop.stop()
+        _LOG.debug("Loop stopped")
 
 
 def output_name_from_topic(topic, prefix):
