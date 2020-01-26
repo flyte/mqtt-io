@@ -45,22 +45,8 @@ def _init_module(module_config, module_type):
     return getattr(module, MODULE_CLASS_NAMES[module_type])(module_config)
 
 
-async def set_output(module, output_config, payload):
-    pin = output_config["pin"]
-    if payload == output_config["on_payload"]:
-        await module.async_set_pin(pin, not output_config["inverted"])
-    elif payload == output_config["off_payload"]:
-        await module.async_set_pin(pin, output_config["inverted"])
-    else:
-        raise InvalidPayload(
-            "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed."
-            % (
-                payload,
-                output_config["name"],
-                output_config["on_payload"],
-                output_config["off_payload"],
-            )
-        )
+async def set_output(module, output_config, value):
+    await module.async_set_pin(output_config["pin"], value != output_config["inverted"])
 
 
 def output_name_from_topic(topic, prefix):
@@ -145,25 +131,10 @@ class MqttGpio:
                 queue = asyncio.Queue()
                 self.module_output_queues[out_conf["module"]] = queue
 
-                # Create loops which handle new entries on the queue
-                async def output_loop(queue=queue):
-                    while True:
-                        module, output_config, payload = await queue.get()
-                        try:
-                            await set_output(module, output_config, payload)
-                            await self.mqtt.publish(
-                                "%s/output/%s"
-                                % (
-                                    self.config["mqtt"]["topic_prefix"],
-                                    output_config["name"],
-                                ),
-                                payload.encode("utf8"),
-                                qos=1,
-                            )
-                        except InvalidPayload as e:
-                            _LOG.warning(e)
-
-                self.unawaited_tasks.append(self.loop.create_task(output_loop()))
+                # Use partial to avoid late binding closure
+                self.unawaited_tasks.append(
+                    self.loop.create_task(partial(self.digital_output_loop, queue)())
+                )
 
     def _init_sensor_inputs(self):
         self.sensor_input_configs = {x["name"]: x for x in self.config["sensor_inputs"]}
@@ -286,7 +257,7 @@ class MqttGpio:
             )
         else:
             desired_value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
-            value = not desired_value if output_config["inverted"] else desired_value
+            value = desired_value != output_config["inverted"]
 
             async def set_ms():
                 try:
@@ -302,7 +273,7 @@ class MqttGpio:
                     value,
                     secs,
                 )
-                await module.async_set_pin(output_config["pin"], value)
+                await set_output(module, output_config, desired_value)
                 publish_payload = (
                     output_config["on_payload"]
                     if desired_value
@@ -320,7 +291,7 @@ class MqttGpio:
                     not value,
                     secs,
                 )
-                await module.async_set_pin(output_config["pin"], not value)
+                await set_output(module, output_config, not desired_value)
                 publish_payload = (
                     output_config["off_payload"]
                     if desired_value
@@ -373,6 +344,26 @@ class MqttGpio:
                     _LOG.exception("Exception in task: %r:", task)
             self.unawaited_tasks = list(
                 filter(lambda x: not x.done(), self.unawaited_tasks)
+            )
+
+    async def digital_output_loop(self, queue):
+        while True:
+            module, output_config, payload = await queue.get()
+            if payload not in (output_config["on_payload"], output_config["off_payload"]):
+                _LOG.warning(
+                    "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed.",
+                    payload,
+                    output_config["name"],
+                    output_config["on_payload"],
+                    output_config["off_payload"],
+                )
+                continue
+            await set_output(module, output_config, payload)
+            await self.mqtt.publish(
+                "%s/output/%s"
+                % (self.config["mqtt"]["topic_prefix"], output_config["name"]),
+                payload.encode("utf8"),
+                qos=1,
             )
 
     # Main entry point
