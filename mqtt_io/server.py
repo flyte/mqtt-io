@@ -270,9 +270,9 @@ class MqttGpio:
                     )
                     return
                 _LOG.info(
-                    "Setting output '%s' to %r for %s second(s)",
+                    "Turning output '%s' %s for %s second(s)",
                     output_config["name"],
-                    value,
+                    "on" if desired_value else "off",
                     secs,
                 )
                 await set_output(module, output_config, desired_value)
@@ -288,9 +288,9 @@ class MqttGpio:
                 )
                 await asyncio.sleep(secs)
                 _LOG.info(
-                    "Setting output '%s' to %r after %s second(s) elapsed",
+                    "Turning output '%s' to %s after %s second(s) elapsed",
                     output_config["name"],
-                    not value,
+                    "off" if desired_value else "on",
                     secs,
                 )
                 await set_output(module, output_config, not desired_value)
