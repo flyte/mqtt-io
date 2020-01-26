@@ -46,8 +46,9 @@ def _init_module(module_config, module_type):
 
 
 async def set_output(module, output_config, value):
-    await module.async_set_pin(output_config["pin"], value != output_config["inverted"])
-    _LOG.info("Set output '%s' to %s", output_config["name"], value)
+    set_value = value != output_config["inverted"]
+    await module.async_set_pin(output_config["pin"], set_value)
+    _LOG.info("Output '%s' set to %s", output_config["name"], set_value)
 
 
 def output_name_from_topic(topic, prefix):
