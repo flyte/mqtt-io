@@ -45,11 +45,11 @@ def _init_module(module_config, module_type):
     return getattr(module, MODULE_CLASS_NAMES[module_type])(module_config)
 
 
-async def set_output(module, output_config, value):
+async def set_digital_output(module, output_config, value):
     set_value = value != output_config["inverted"]
     await module.async_set_pin(output_config["pin"], set_value)
     _LOG.info(
-        "Output '%s' set to %s (%s)",
+        "Digital output '%s' set to %s (%s)",
         output_config["name"],
         set_value,
         "on" if value else "off",
@@ -299,7 +299,7 @@ class MqttGpio:
                     "on" if desired_value else "off",
                     secs,
                 )
-                await set_output(module, output_config, desired_value)
+                await set_digital_output(module, output_config, desired_value)
                 publish_payload = (
                     output_config["on_payload"]
                     if desired_value
@@ -318,7 +318,7 @@ class MqttGpio:
                     "off" if desired_value else "on",
                     secs,
                 )
-                await set_output(module, output_config, not desired_value)
+                await set_digital_output(module, output_config, not desired_value)
                 publish_payload = (
                     output_config["off_payload"]
                     if desired_value
@@ -386,7 +386,7 @@ class MqttGpio:
                     output_config["off_payload"],
                 )
                 continue
-            await set_output(
+            await set_digital_output(
                 module, output_config, payload == output_config["on_payload"]
             )
             await self.mqtt.publish(
