@@ -338,12 +338,12 @@ class MqttGpio:
 
         # This is where we add any other async tasks that we want to run, such as polling
         # inputs, sensor loops etc.
-        coros = [self._mqtt_rx_loop(), self.remove_finished_tasks()]
-        self.tasks = [self.loop.create_task(c) for c in coros]
+        self.tasks = [
+            self.loop.create_task(coro)
+            for coro in (self._mqtt_rx_loop(), self.remove_finished_tasks())
+        ]
         try:
             self.loop.run_forever()
-        except asyncio.CancelledError:
-            _LOG.debug("Got asyncio.CancelledError from main loop runner.")
         finally:
             for gpio_module in self.gpio_modules.values():
                 try:
@@ -391,6 +391,8 @@ class MqttGpio:
         _LOG.debug("Tasks all finished. Stopping loop...")
         self.loop.stop()
         _LOG.debug("Loop stopped")
+        self.loop.close()
+        _LOG.debug("Loop closed")
 
 
 def output_name_from_topic(topic, prefix):
