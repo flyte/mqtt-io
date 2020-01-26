@@ -32,20 +32,21 @@ digital_outputs:
     pin: 20
     on_payload: "ON"
     off_payload: "OFF"
-# logging:
-#   version: 1
-#   handlers:
-#     console:
-#       class: logging.StreamHandler
-#       formatter: default
-#       level: DEBUG
-#   formatters:
-#     default:
-#       format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
-#       datefmt: "%Y-%m-%d %H:%M:%S"
-#   loggers:
-#     mqtt_io:
-#       level: DEBUG
-#       handlers:
-#         - console
-#       propagate: yes
+
+logging:
+  version: 1
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      level: DEBUG
+  formatters:
+    default:
+      format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+  loggers:
+    mqtt_io:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes

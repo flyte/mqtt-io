@@ -63,6 +63,13 @@ async def set_output(module, output_config, payload):
         )
 
 
+def output_name_from_topic(topic, prefix):
+    match = re.match("^{}/{}/(.+?)/.+$".format(prefix, OUTPUT_TOPIC), topic)
+    if match is None:
+        raise ValueError("Topic %r does not adhere to expected structure" % topic)
+    return match.group(1)
+
+
 class MqttGpio:
     def __init__(self, config):
         self.config = config
@@ -353,7 +360,7 @@ class MqttGpio:
             await self.mqtt.disconnect()
             _LOG.info("MQTT disconnected")
 
-    async def remove_finished_tasks(self):
+    async def _remove_finished_tasks(self):
         while True:
             await asyncio.sleep(1)
             finished_tasks = [x for x in self.unawaited_tasks if x.done()]
@@ -391,7 +398,7 @@ class MqttGpio:
         # inputs, sensor loops etc.
         self.tasks = [
             self.loop.create_task(coro)
-            for coro in (self._mqtt_rx_loop(), self.remove_finished_tasks())
+            for coro in (self._mqtt_rx_loop(), self._remove_finished_tasks())
         ]
         try:
             self.loop.run_forever()
@@ -443,10 +450,3 @@ class MqttGpio:
         _LOG.debug("Tasks all finished. Stopping loop...")
         self.loop.stop()
         _LOG.debug("Loop stopped")
-
-
-def output_name_from_topic(topic, prefix):
-    match = re.match("^{}/{}/(.+?)/.+$".format(prefix, OUTPUT_TOPIC), topic)
-    if match is None:
-        raise ValueError("Topic %r does not adhere to expected structure" % topic)
-    return match.group(1)
