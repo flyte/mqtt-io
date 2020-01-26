@@ -48,7 +48,12 @@ def _init_module(module_config, module_type):
 async def set_output(module, output_config, value):
     set_value = value != output_config["inverted"]
     await module.async_set_pin(output_config["pin"], set_value)
-    _LOG.info("Output '%s' set to %s", output_config["name"], set_value)
+    _LOG.info(
+        "Output '%s' set to %s (%s)",
+        output_config["name"],
+        set_value,
+        "on" if value else "off",
+    )
 
 
 def output_name_from_topic(topic, prefix):
@@ -288,7 +293,7 @@ class MqttGpio:
                 )
                 await asyncio.sleep(secs)
                 _LOG.info(
-                    "Turning output '%s' to %s after %s second(s) elapsed",
+                    "Turning output '%s' %s after %s second(s) elapsed",
                     output_config["name"],
                     "off" if desired_value else "on",
                     secs,
