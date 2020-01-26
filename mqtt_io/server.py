@@ -345,6 +345,8 @@ class MqttGpio:
         try:
             self.loop.run_forever()
         finally:
+            self.loop.close()
+            _LOG.debug("Loop closed")
             for gpio_module in self.gpio_modules.values():
                 try:
                     gpio_module.cleanup()
@@ -391,8 +393,6 @@ class MqttGpio:
         _LOG.debug("Tasks all finished. Stopping loop...")
         self.loop.stop()
         _LOG.debug("Loop stopped")
-        self.loop.close()
-        _LOG.debug("Loop closed")
 
 
 def output_name_from_topic(topic, prefix):
