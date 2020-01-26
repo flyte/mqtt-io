@@ -1,7 +1,7 @@
-import signal as signals
 import asyncio
 import logging
 import re
+import signal as signals
 from functools import partial, partialmethod
 from hashlib import sha1
 from importlib import import_module
@@ -14,7 +14,7 @@ from .config import (
     validate_and_normalise_sensor_input_config,
 )
 from .events import EventBus
-from .io import digital_input_poller, DigitalInputChangedEvent, SensorReadEvent
+from .io import DigitalInputChangedEvent, SensorReadEvent, digital_input_poller
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
