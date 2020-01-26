@@ -129,8 +129,6 @@ class MqttGpio:
         self.digital_output_configs = {
             x["name"]: x for x in self.config["digital_outputs"]
         }
-        # IDEA: Possible implementations -@flyte at 07/04/2019, 15:34:54
-        # Could this be done asynchronously?
         for out_conf in self.config["digital_outputs"]:
             self.gpio_modules[out_conf["module"]].setup_pin(
                 out_conf["pin"], PinDirection.OUTPUT, None, out_conf
@@ -148,7 +146,10 @@ class MqttGpio:
                             await set_output(module, output_config, payload)
                             await self.mqtt.publish(
                                 "%s/output/%s"
-                                % (self.config["mqtt"]["topic_prefix"], out_conf["name"]),
+                                % (
+                                    self.config["mqtt"]["topic_prefix"],
+                                    output_config["name"],
+                                ),
                                 payload.encode("utf8"),
                                 qos=1,
                             )
