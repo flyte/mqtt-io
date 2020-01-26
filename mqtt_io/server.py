@@ -385,7 +385,6 @@ class MqttGpio:
         for t in tasks:
             t.cancel()
         _LOG.info("Waiting for %s remaining tasks to complete...", len(tasks))
-        _LOG.debug(tasks)
         all_done = False
         while not all_done:
             all_done = all(t.done() for t in tasks)
