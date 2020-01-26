@@ -4,3 +4,7 @@ class ConfigValidationFailed(Exception):
 
 class CannotInstallModuleRequirements(Exception):
     pass
+
+
+class InvalidPayload(Exception):
+    pass

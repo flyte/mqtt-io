@@ -14,6 +14,7 @@ from .config import (
     validate_and_normalise_sensor_input_config,
 )
 from .events import EventBus
+from .exceptions import InvalidPayload
 from .io import DigitalInputChangedEvent, SensorReadEvent, digital_input_poller
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
@@ -51,7 +52,15 @@ async def set_output(module, output_config, payload):
     elif payload == output_config["off_payload"]:
         await module.async_set_pin(pin, False)
     else:
-        _LOG.warning("Payload received did not match 'on' or 'off' payloads: %r", payload)
+        raise InvalidPayload(
+            "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed."
+            % (
+                payload,
+                output_config["name"],
+                output_config["on_payload"],
+                output_config["off_payload"],
+            )
+        )
 
 
 class MqttGpio:
@@ -132,9 +141,19 @@ class MqttGpio:
                 self.module_output_queues[out_conf["module"]] = queue
 
                 # Create loops which handle new entries on the queue
-                async def output_loop():
+                async def output_loop(queue=queue):
                     while True:
-                        await set_output(*await queue.get())
+                        module, output_config, payload = await queue.get()
+                        try:
+                            await set_output(module, output_config, payload)
+                            await self.mqtt.publish(
+                                "%s/output/%s"
+                                % (self.config["mqtt"]["topic_prefix"], out_conf["name"]),
+                                payload.encode("utf8"),
+                                qos=1,
+                            )
+                        except InvalidPayload as e:
+                            _LOG.warning(e)
 
                 self.unawaited_tasks.append(self.loop.create_task(output_loop()))
 
@@ -258,9 +277,8 @@ class MqttGpio:
                 (module, output_config, payload)
             )
         else:
-            value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
-            if output_config["inverted"]:
-                value = not value
+            desired_value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
+            value = not desired_value if output_config["inverted"] else desired_value
 
             async def set_ms():
                 try:
@@ -270,9 +288,41 @@ class MqttGpio:
                         "Unable to parse ms value as float from payload %r", payload
                     )
                     return
+                _LOG.info(
+                    "Setting output '%s' to %r for %s second(s)",
+                    output_config["name"],
+                    value,
+                    secs,
+                )
                 await module.async_set_pin(output_config["pin"], value)
+                publish_payload = (
+                    output_config["on_payload"]
+                    if desired_value
+                    else output_config["off_payload"]
+                )
+                await self.mqtt.publish(
+                    "%s/output/%s" % (topic_prefix, output_config["name"]),
+                    publish_payload.encode("utf8"),
+                    qos=1,
+                )
                 await asyncio.sleep(secs)
+                _LOG.info(
+                    "Setting output '%s' to %r after %s second(s) elapsed",
+                    output_config["name"],
+                    not value,
+                    secs,
+                )
                 await module.async_set_pin(output_config["pin"], not value)
+                publish_payload = (
+                    output_config["off_payload"]
+                    if desired_value
+                    else output_config["on_payload"]
+                )
+                await self.mqtt.publish(
+                    "%s/output/%s" % (topic_prefix, output_config["name"]),
+                    publish_payload.encode("utf8"),
+                    qos=1,
+                )
 
             task = self.loop.create_task(set_ms())
             self.unawaited_tasks.append(task)
