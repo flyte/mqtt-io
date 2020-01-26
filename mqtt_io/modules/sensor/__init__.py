@@ -12,11 +12,10 @@ class GenericSensor:
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
-    def setup_sensor(self):
+    def get_value(self, sens_conf):
         pass
 
-    @abc.abstractmethod
-    def get_value(self, sens_conf):
+    def setup_sensor(self, sens_conf):
         pass
 
     def cleanup(self):
