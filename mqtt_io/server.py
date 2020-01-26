@@ -359,7 +359,9 @@ class MqttGpio:
                     output_config["off_payload"],
                 )
                 continue
-            await set_output(module, output_config, payload)
+            await set_output(
+                module, output_config, payload == output_config["on_payload"]
+            )
             await self.mqtt.publish(
                 "%s/output/%s"
                 % (self.config["mqtt"]["topic_prefix"], output_config["name"]),
