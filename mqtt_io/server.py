@@ -48,9 +48,9 @@ def _init_module(module_config, module_type):
 async def set_output(module, output_config, payload):
     pin = output_config["pin"]
     if payload == output_config["on_payload"]:
-        await module.async_set_pin(pin, True)
+        await module.async_set_pin(pin, not output_config["inverted"])
     elif payload == output_config["off_payload"]:
-        await module.async_set_pin(pin, False)
+        await module.async_set_pin(pin, output_config["inverted"])
     else:
         raise InvalidPayload(
             "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed."

@@ -27,6 +27,9 @@ class GPIO(GenericGPIO):
     def setup_pin(self, pin, direction, pullup, pin_config):
         if direction == PinDirection.INPUT and pullup is not None:
             self.io.port[pin] = PULLUPS[pullup]
+        # FIXME: Needing refactor or cleanup -@flyte at 26/01/2020, 15:48:43
+        # Modules shouldn't know about config. We should have a specific API
+        # for setup_pin etc. including 'initial', or using kwargs if necessary.
         initial = pin_config.get("initial")
         if initial is not None:
             if initial == "high":
