@@ -259,5 +259,21 @@ sensor_inputs:
 
 logging:
   type: dict
-  default: {}
   allow_unknown: yes
+  default:
+    version: 1
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: default
+        level: INFO
+    formatters:
+      default:
+        format: "%(asctime)s %(name)s [%(levelname)s] %(message)s"
+        datefmt: "%Y-%m-%d %H:%M:%S"
+    loggers:
+      mqtt_io:
+        level: INFO
+        handlers:
+          - console
+        propagate: yes
