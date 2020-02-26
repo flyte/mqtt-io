@@ -1,6 +1,7 @@
 import yaml
 
-CONFIG_SCHEMA = yaml.safe_load("""
+CONFIG_SCHEMA = yaml.safe_load(
+    """
 mqtt:
   type: dict
   required: yes
@@ -67,6 +68,10 @@ mqtt:
       required: no
       default: "homeassistant"
       coerce: rstrip_slash
+    discovery_name:
+      type: string
+      required: no
+      default: "MQTT GPIO"
     tls:
       type: dict
       required: no
@@ -302,4 +307,6 @@ logging:
         handlers: [console]
         propagate: yes
 
-""")
+"""
+)
+

@@ -18,8 +18,7 @@ import paho.mqtt.client as mqtt
 import cerberus
 
 from pi_mqtt_gpio import CONFIG_SCHEMA
-from pi_mqtt_gpio.modules import PinPullup, PinDirection, InterruptEdge, \
-                                 BASE_SCHEMA
+from pi_mqtt_gpio.modules import PinPullup, PinDirection, InterruptEdge, BASE_SCHEMA
 from pi_mqtt_gpio.scheduler import Scheduler, Task
 
 
@@ -47,6 +46,7 @@ INPUT_TOPIC = "input"
 SENSOR_TOPIC = "sensor"
 
 _LOG = logging.getLogger("mqtt_gpio")
+
 
 class CannotInstallModuleRequirements(Exception):
     pass
@@ -177,7 +177,9 @@ def handle_set(topic_prefix, msg):
         ms = output_config["timed_set_ms"]
     except KeyError:
         return
-    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value))
+    scheduler.add_task(
+        Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value)
+    )
     _LOG.info(
         "Scheduled output %r to change back to %r after %r ms.",
         output_config["name"],
@@ -209,7 +211,9 @@ def handle_set_ms(topic_prefix, msg, value):
         return
 
     set_pin(topic_prefix, output_config, value)
-    scheduler.add_task(Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value))
+    scheduler.add_task(
+        Task(time() + ms / 1000.0, set_pin, topic_prefix, output_config, not value)
+    )
     _LOG.info(
         "Scheduled output %r to change back to %r after %r ms.",
         output_config["name"],
@@ -302,9 +306,7 @@ def init_mqtt(config, digital_outputs):
     client.will_set(
         status_topic, payload=config["status_payload_dead"], qos=1, retain=True
     )
-    _LOG.debug(
-        "Last will set on %r as %r.", status_topic, config["status_payload_dead"]
-    )
+    _LOG.debug("Last will set on %r as %r.", status_topic, config["status_payload_dead"])
 
     # Set TLS options
     tls_enabled = config.get("tls", {}).get("enabled")
@@ -481,21 +483,20 @@ def initialise_digital_input(in_conf, gpio):
             edge = {
                 "rising": InterruptEdge.RISING,
                 "falling": InterruptEdge.FALLING,
-                "both": InterruptEdge.BOTH
+                "both": InterruptEdge.BOTH,
             }[in_conf["interrupt"]]
         except KeyError as exc:
             _LOG.error(
                 "initialise_digital_input: config value(%s) for 'interrupt' \
                  invalid in  entry '%s'",
                 in_conf["interrupt"],
-                in_conf["name"]
+                in_conf["name"],
             )
 
         try:
             bouncetime = in_conf["bouncetime"]
             module = in_conf["module"]
-            gpio.setup_interrupt(
-                module, pin, edge, gpio_interrupt_callback, bouncetime)
+            gpio.setup_interrupt(module, pin, edge, gpio_interrupt_callback, bouncetime)
 
             # store for callback function handling
             if not GPIO_INTERRUPT_LOOKUP.get(module):
@@ -508,7 +509,7 @@ def initialise_digital_input(in_conf, gpio):
                  input(%s) on module(%s): %s",
                 in_conf["name"],
                 in_conf["module"],
-                exc
+                exc,
             )
 
 
@@ -636,10 +637,10 @@ def gpio_interrupt_callback(module, pin):
             for pin '%s' on module %s: %s",
             pin,
             module,
-            exc
+            exc,
         )
     _LOG.info("Interrupt: Input %r triggered", in_conf["name"])
-    
+
     # publish the interrupt trigger
     client.publish(
         "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
@@ -656,7 +657,9 @@ def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
     :return: None
     :rtype: NoneType
     """
-    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]  # TODO: Unify with MQTT Client ID
+    device_id = (
+        "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]
+    )  # TODO: Unify with MQTT Client ID
     sensor_name = in_conf["name"]
     sensor_config = {
         "name": sensor_name,
@@ -670,12 +673,13 @@ def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
         "device": {
             "manufacturer": "MQTT GPIO",
             "identifiers": ["mqtt-gpio", device_id],
-            "name": "MQTT GPIO"
-        }
+            "name": mqtt_config["discovery_name"],
+        },
     }
 
     client.publish(
-        "%s/%s/%s/%s/config" % (mqtt_config["discovery_prefix"], "binary_sensor", device_id, sensor_name),
+        "%s/%s/%s/%s/config"
+        % (mqtt_config["discovery_prefix"], "binary_sensor", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
@@ -689,13 +693,16 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
     :return: None
     :rtype: NoneType
     """
-    device_id = "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]  # TODO: Unify with MQTT Client ID
+    device_id = (
+        "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]
+    )  # TODO: Unify with MQTT Client ID
     sensor_name = out_conf["name"]
     sensor_config = {
         "name": sensor_name,
         "unique_id": "%s_%s_output_%s" % (device_id, out_conf["module"], sensor_name),
         "state_topic": "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"]),
-        "command_topic": "%s/%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC),
+        "command_topic": "%s/%s/%s/%s"
+        % (topic_prefix, OUTPUT_TOPIC, out_conf["name"], SET_TOPIC),
         "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
         "payload_available": mqtt_config["status_payload_running"],
         "payload_not_available": mqtt_config["status_payload_dead"],
@@ -704,12 +711,13 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
         "device": {
             "manufacturer": "MQTT GPIO",
             "identifiers": ["mqtt-gpio", device_id],
-            "name": "MQTT GPIO"
-        }
+            "name": mqtt_config["discovery_name"],
+        },
     }
 
     client.publish(
-        "%s/%s/%s/%s/config" % (mqtt_config["discovery_prefix"], "switch", device_id, sensor_name),
+        "%s/%s/%s/%s/config"
+        % (mqtt_config["discovery_prefix"], "switch", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
@@ -720,7 +728,7 @@ def main(args):
     global digital_outputs
     global client
     global scheduler
-    
+
     _LOG.info("Startup")
 
     with open(args.config) as f:
@@ -762,9 +770,7 @@ def main(args):
     for sensor_config in config.get("sensor_modules", {}):
         SENSOR_CONFIGS[sensor_config["name"]] = sensor_config
         try:
-            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(
-                sensor_config
-            )
+            SENSOR_MODULES[sensor_config["name"]] = configure_sensor_module(sensor_config)
         except ModuleConfigInvalid as exc:
             _LOG.error(
                 "Config for %r module named %r did not validate:\n%s",
@@ -824,14 +830,18 @@ def main(args):
         while True:
             for in_conf in digital_inputs:
                 # only read pins, that are not configured as interrupt. Read interrupts once at startup (startup_read)
-                if (in_conf["interrupt"] == "none"):
+                if in_conf["interrupt"] == "none":
                     gpio = GPIO_MODULES[in_conf["module"]]
                     state = bool(gpio.get_pin(in_conf["pin"]))
                     sleep(0.01)
                     if bool(gpio.get_pin(in_conf["pin"])) != state:
                         continue
                     if state != LAST_STATES[in_conf["name"]]:
-                        _LOG.info("Polling: Input %r state changed to %r", in_conf["name"], state)
+                        _LOG.info(
+                            "Polling: Input %r state changed to %r",
+                            in_conf["name"],
+                            state,
+                        )
                         client.publish(
                             "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
                             payload=(
@@ -866,8 +876,10 @@ def main(args):
                 _LOG.exception("Unable to execute cleanup routine for module %r:", name)
 
 
-if __name__ == "__main__": 
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(name)s (%(levelname)s): %(message)s')
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.DEBUG, format="%(asctime)s %(name)s (%(levelname)s): %(message)s"
+    )
 
     p = argparse.ArgumentParser()
     p.add_argument("config")

@@ -64,6 +64,10 @@ mqtt:
       required: no
       default: "homeassistant"
       coerce: rstrip_slash
+    discovery_name:
+      type: string
+      required: no
+      default: "MQTT GPIO"
     tls:
       type: dict
       required: no
