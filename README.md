@@ -21,7 +21,7 @@ Sensors
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
-- HC-SR04 ultrasonic distance sensor
+- HC-SR04 ultrasonic distance sensor (`hcsr04`)
 
 Installation
 ------------
