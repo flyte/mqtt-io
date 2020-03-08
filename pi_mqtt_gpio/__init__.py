@@ -178,6 +178,10 @@ digital_inputs:
         type: string
         required: no
         default: "OFF"
+      inverted:
+        type: boolean
+        required: no
+        default: no
       interrupt_payload:
         type: string
         required: no

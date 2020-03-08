@@ -146,6 +146,20 @@ def set_pin(topic_prefix, output_config, value):
     )
 
 
+def get_pin(in_conf, module):
+    """
+    Gets a pin using a GPIO module. Inverts the state if set in config."
+    :param in_conf: The input config
+    :type in_conf: dict
+    :param module: The GPIO module
+    :type module: modules.GenericGPIO
+    :return: The value of the pin, inverted if desired
+    :rtype: bool
+    """
+    state = bool(module.get_pin(in_conf["pin"]))
+    return state != in_conf["inverted"]
+
+
 def handle_set(topic_prefix, msg):
     """
     Handles an incoming 'set' MQTT message.
@@ -829,27 +843,27 @@ def main(args):
 
         while True:
             for in_conf in digital_inputs:
-                # only read pins, that are not configured as interrupt. Read interrupts once at startup (startup_read)
-                if in_conf["interrupt"] == "none":
-                    gpio = GPIO_MODULES[in_conf["module"]]
-                    state = bool(gpio.get_pin(in_conf["pin"]))
-                    sleep(0.01)
-                    if bool(gpio.get_pin(in_conf["pin"])) != state:
-                        continue
-                    if state != LAST_STATES[in_conf["name"]]:
-                        _LOG.info(
-                            "Polling: Input %r state changed to %r",
-                            in_conf["name"],
-                            state,
-                        )
-                        client.publish(
-                            "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
-                            payload=(
-                                in_conf["on_payload"] if state else in_conf["off_payload"]
-                            ),
-                            retain=in_conf["retain"],
-                        )
-                        LAST_STATES[in_conf["name"]] = state
+                # Only read pins that are not configured as interrupt.
+                # Read interrupts once at startup (startup_read)
+                if in_conf["interrupt"] != "none":
+                    continue
+                gpio = GPIO_MODULES[in_conf["module"]]
+                state = get_pin(in_conf, gpio)
+                sleep(0.01)
+                if get_pin(in_conf, gpio) != state:
+                    continue
+                if state != LAST_STATES[in_conf["name"]]:
+                    _LOG.info(
+                        "Polling: Input %r state changed to %r", in_conf["name"], state,
+                    )
+                    client.publish(
+                        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+                        payload=(
+                            in_conf["on_payload"] if state else in_conf["off_payload"]
+                        ),
+                        retain=in_conf["retain"],
+                    )
+                    LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
             sleep(0.01)
     except KeyboardInterrupt:

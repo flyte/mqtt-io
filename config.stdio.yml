@@ -18,6 +18,7 @@ digital_inputs:
     off_payload: "OFF"
     pullup: yes
     pulldown: no
+    inverted: yes
 
 digital_outputs:
   - name: bell
