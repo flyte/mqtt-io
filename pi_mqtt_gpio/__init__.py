@@ -148,6 +148,11 @@ sensor_modules:
         type: boolean
         required: no
         default: yes
+      chip:
+        type: string
+        required: no
+        default: "/dev/gpiochip0"
+        empty: no
 
 stream_modules:
   type: list
