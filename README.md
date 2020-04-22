@@ -189,6 +189,9 @@ stream_modules:
     module: streamserial
     device: /dev/ttyS0
     baud: 115200
+    bytesize: 8 # Number of data bits in word. Can be: 5,6,7,8
+    parity: none # Parity can be one of none,odd,even,mark,space
+    stopbits: 1 # Number of stop bits. Can be: 1,1.5,2
     cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
 
 stream_reads:
