@@ -90,3 +90,28 @@ class GenericSensor(object):
         Called when closing the program to handle any cleanup operations.
         """
         pass
+
+class GenericStream(object):
+    """
+    Abstracts a generic stream interface to be implemented
+    by the modules in this directory.
+    """
+    __metaclass__ = abc.ABCMeta
+
+    @abc.abstractmethod
+    def setup_stream(self, config):
+        pass
+
+    @abc.abstractmethod
+    def read(self, config):
+        pass
+
+    @abc.abstractmethod
+    def write(self, config, data):
+        pass
+
+    def cleanup(self):
+        """
+        Called when closing the program to handle any cleanup operations.
+        """
+        pass

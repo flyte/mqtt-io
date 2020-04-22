@@ -149,6 +149,27 @@ sensor_modules:
         required: no
         default: yes
 
+stream_modules:
+  type: list
+  required: no
+  default: []
+  schema:
+    type: dict
+    allow_unknown: yes
+    schema:
+      name:
+        type: string
+        required: yes
+        empty: no
+      module:
+        type: string
+        required: yes
+        empty: no
+      cleanup:
+        type: boolean
+        required: no
+        default: yes
+
 digital_inputs:
   type: list
   required: no
@@ -289,6 +310,49 @@ sensor_inputs:
         required: no
         default: 2
         min: 0
+
+stream_reads:
+  type: list
+  required: no
+  default: []
+  schema:
+    type: dict
+    allow_unknown: yes
+    schema:
+      name:
+        type: string
+        required: yes
+        empty: no
+      module:
+        type: string
+        required: yes
+        empty: no
+      retain:
+        type: boolean
+        required: no
+        default: no
+      interval:
+        type: float
+        required: no
+        default: 60
+        min: 0.01
+
+stream_writes:
+  type: list
+  required: no
+  default: []
+  schema:
+    type: dict
+    allow_unknown: yes
+    schema:
+      name:
+        type: string
+        required: yes
+        empty: no
+      module:
+        type: string
+        required: yes
+        empty: no
 
 logging:
   type: dict
