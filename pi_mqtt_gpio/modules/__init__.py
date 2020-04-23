@@ -8,6 +8,7 @@ BASE_SCHEMA = {
     "name": {"required": True, "empty": False},
     "module": {"required": True, "empty": False},
     "cleanup": {"required": False, "type": "boolean", "default": True},
+    "chip": {"required": False, "type": "string", "default": "/dev/gpiochip0"},
 }
 
 

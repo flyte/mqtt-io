@@ -127,6 +127,10 @@ gpio_modules:
         type: boolean
         required: no
         default: yes
+      chip:
+        type: string
+        required: no
+        default: "/dev/gpiochip0"
 
 sensor_modules:
   type: list

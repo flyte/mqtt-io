@@ -22,7 +22,7 @@ class GPIO(GenericGPIO):
         import gpiod as gpio
 
         self.io = gpio
-        self.chip = config.chip
+        self.chip = gpio.chip(config["chip"])
         self.pins = {}
         self.watchers = {}
 
