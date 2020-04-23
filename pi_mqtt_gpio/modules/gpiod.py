@@ -40,7 +40,7 @@ class GPIO(GenericGPIO):
         }
 
     def setup_pin(self, pin, direction, pullup, pin_config):
-        direction = DIRECTIONS[direction]
+        line_direction = DIRECTIONS[direction]
         offset = pin
 
         if pullup is None:
@@ -53,6 +53,7 @@ class GPIO(GenericGPIO):
 
         config = self.io.line_request()
         config.consumer = 'pi-mqtt-gpio'
+        config.request_type = line_direction
 
         pin.request(config)
         self.pins[offset] = pin
