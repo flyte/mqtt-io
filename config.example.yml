@@ -23,6 +23,10 @@ gpio_modules:
     board: zero
     mode: board
 
+  - name: gpiochip0
+    module: gpiod
+    chip: /dev/gpiochip0
+
 sensor_modules:
   - name: lm75
     module: lm75
