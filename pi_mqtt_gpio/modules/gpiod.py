@@ -1,6 +1,7 @@
 from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, \
                                  InterruptEdge
-import asyncio
+
+from threading import Thread
 
 REQUIREMENTS = ("gpiod",)
 
@@ -22,8 +23,7 @@ class GPIO(GenericGPIO):
         self.io = gpio
         self.chip = config.chip
         self.pins = {}
-        self.loop = asyncio.get_event_loop()
-        self.loop.run_forever()
+        self.watchers = {}
 
         DIRECTIONS = {PinDirection.INPUT: gpio.line_request.DIRECTION_INPUT, PinDirection.OUTPUT: gpio.line_request.DIRECTION_OUTPUT}
 
@@ -74,8 +74,11 @@ class GPIO(GenericGPIO):
         config = self.io.line_request()
         config.consumer = 'pi-mqtt-gpio'
         config.request_type = edge
+        
+        t = Thread(target=self._event_detect, args=(pin,self.interrupt_callback,))
+        t.start()
 
-        self.loop.create_task(self._add_event_detect(pin, self.interrupt_callback))
+        self.watchers[offset] = t
         self.GPIO_INTERRUPT_CALLBACK_LOOKUP[offset] = {"handle": handle,
                                                     "callback": callback}
 
@@ -90,7 +93,7 @@ class GPIO(GenericGPIO):
     def cleanup(self):
         pass
 
-    async def _add_event_detect(self, pin, callback):
+    def _event_detect(self, pin, callback):
         while True:
             if pin.event_wait():
                 callback()
