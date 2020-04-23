@@ -28,12 +28,6 @@ class GPIO(GenericGPIO):
 
         DIRECTIONS = {PinDirection.INPUT: gpio.line_request.DIRECTION_INPUT, PinDirection.OUTPUT: gpio.line_request.DIRECTION_OUTPUT}
 
-        PULLUPS = {
-            PinPullup.OFF: gpio.line.BIAS_DISABLE,
-            PinPullup.UP: gpio.line.BIAS_PULL_UP,
-            PinPullup.DOWN: gpio.line.BIAS_PULL_DOWN,
-        }
-
         INTERRUPT = {
             InterruptEdge.RISING: gpio.line_request.EVENT_RISING_EDGE,
             InterruptEdge.FALLING: gpio.line_request.EVENT_FALLING_EDGE,
@@ -55,7 +49,6 @@ class GPIO(GenericGPIO):
         # yet part of python3-gpiod.
 
         pin = self.chip.get_line(offset)
-        pin.bias = pullup
 
         config = self.io.line_request()
         config.consumer = 'pi-mqtt-gpio'
