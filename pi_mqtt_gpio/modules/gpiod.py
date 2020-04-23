@@ -52,8 +52,7 @@ class GPIO(GenericGPIO):
         pin.bias = pullup
 
         config = self.io.line_request()
-        config.consumer = 'pin' + offset
-        config.request_type = direction
+        config.consumer = 'pi-mqtt-gpio'
 
         pin.request(config)
         self.pins[offset] = pin
@@ -73,7 +72,7 @@ class GPIO(GenericGPIO):
         pin = self.chip.get_line(offset)
 
         config = self.io.line_request()
-        config.consumer = 'pin' + offset
+        config.consumer = 'pi-mqtt-gpio'
         config.request_type = edge
 
         self.loop.create_task(self._add_event_detect(pin, self.interrupt_callback))
