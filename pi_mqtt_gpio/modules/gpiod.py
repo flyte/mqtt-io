@@ -3,6 +3,7 @@ from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, \
 
 from threading import Thread
 
+# Requires libgpiod-devel, libgpiod
 REQUIREMENTS = ("gpiod",)
 
 DIRECTIONS = None
@@ -13,7 +14,7 @@ GPIO_INTERRUPT_CALLBACK_LOOKUP = {}
 
 class GPIO(GenericGPIO):
     """
-    Implementation of GPIO class for Raspberry Pi native GPIO.
+    Implementation of GPIO class for libgpiod (linux kernel >= 4.8).
     """
 
     def __init__(self, config):
@@ -40,13 +41,18 @@ class GPIO(GenericGPIO):
         }
 
     def setup_pin(self, pin, direction, pullup, pin_config):
+        """
+        setup a pin as either input or output.
+        pin:        offset to use the gpio line
+        direction:  input or output
+        pullup:     pullup settings are not supported
+        """
         line_direction = DIRECTIONS[direction]
         offset = pin
 
-        if pullup is None:
-            pullup = PULLUPS[PinPullup.OFF]
-        else:
-            pullup = PULLUPS[pullup]
+        # Pullup settings are called bias in libgpiod and are only
+        # available since Linux Kernel 5.5. They are as of now not 
+        # yet part of python3-gpiod.
 
         pin = self.chip.get_line(offset)
         pin.bias = pullup
