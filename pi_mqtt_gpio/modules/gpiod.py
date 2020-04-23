@@ -88,8 +88,7 @@ class GPIO(GenericGPIO):
         return self.pins[offset].get_value()
 
     def cleanup(self):
-        self.loop.stop()
-        self.io.chip_deleter(self.chip)
+        pass
 
     async def _add_event_detect(self, pin, callback):
         while True:
