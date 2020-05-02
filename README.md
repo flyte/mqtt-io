@@ -13,6 +13,7 @@ GPIO Modules
 - PCF8574 IO chip (`pcf8574`)
 - PiFaceDigital 2 IO board (`piface2`)
 - Beaglebone GPIO (`beaglebone`)
+- Sunxi Linux GPIO Cubieboard A10 A20, OlinuXino (sunxi)
 
 Sensors
 -------
@@ -174,6 +175,24 @@ gpio_modules:
     board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
     mode: board
 ```
+
+### Sunxi boards
+
+You need to specify what SunxiLinux board you use
+
+```yaml
+gpio_modules:
+  - name: sunxi
+    module: sunxi
+```
+
+Pin Numbering: Pins have name like PG(9), using this formula: (position of letter in alphabet - 1) * 32 + pin number, the pin number is (7-1)*32+9 = 201
+Before using pin (Armbian 5.8), it is necessary to run_
+
+```bash
+# echo 201 > /sys/class/gpio/export 
+```
+
 
 #### SSL/TLS
 
