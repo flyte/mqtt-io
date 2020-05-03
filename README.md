@@ -178,7 +178,9 @@ gpio_modules:
 
 ### Sunxi boards
 
-You need to specify what SunxiLinux board you use
+Requirement: https://github.com/rubitwa/pySUNXI
+
+You need to specify sunxi on yaml file
 
 ```yaml
 gpio_modules:
@@ -187,12 +189,19 @@ gpio_modules:
 ```
 
 Pin Numbering: Pins have name like PG(9), using this formula: (position of letter in alphabet - 1) * 32 + pin number, the pin number is (7-1)*32+9 = 201
-Before using pin (Armbian 5.8), it is necessary to run_
+Before using pin (Armbian 5.8), it is necessary to run:
 
 ```bash
 # echo 201 > /sys/class/gpio/export 
 ```
 
+Test:
+
+```bash
+mosquitto_pub -q 1 -t 'pimqttgpio/mydevice/output/bell/set' -m 'ON'
+```
+
+NOTE: pySUNXI works only with root priviliges
 
 #### SSL/TLS
 
