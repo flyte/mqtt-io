@@ -188,12 +188,7 @@ gpio_modules:
     module: sunxi
 ```
 
-Pin Numbering: Pins have name like PG(9), using this formula: (position of letter in alphabet - 1) * 32 + pin number, the pin number is (7-1)*32+9 = 201
-Before using pin (Armbian 5.8), it is necessary to run:
-
-```bash
-# echo 201 > /sys/class/gpio/export 
-```
+Pin Numbering: Pins have name like PG(9), using this formula: (position of letter in alphabet - 1) * 32 + pin number, the pin number of PH(9) is (7-1)*32+9 = 201
 
 Test:
 
@@ -201,7 +196,7 @@ Test:
 mosquitto_pub -q 1 -t 'pimqttgpio/mydevice/output/bell/set' -m 'ON'
 ```
 
-NOTE: pySUNXI works only with root priviliges
+NOTE: pySUNXI works only with root privileges
 
 #### SSL/TLS
 
