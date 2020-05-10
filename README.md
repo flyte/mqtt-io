@@ -162,6 +162,36 @@ sensor_inputs:
     module: ds18b22
     interval: 60
     digits: 2
+
+
+sensor_modules:
+  - name: bme280
+    module: bme280
+    i2c_bus_num: 2 
+    chip_addr: 0x76
+    cleanup: no
+
+sensor_inputs:
+  - name: bme280_temperature
+    module: bme280
+    interval: 60
+    type: temperature
+    
+  - name: bme280_humidity
+    module: bme280
+    interval: 60
+    type: humidity
+    
+  - name: bme280_preassure
+    module: bme280
+    interval: 60
+    type: preassure
+    
+logging:
+
+
+
+
 ```
 
 ### OrangePi boards
