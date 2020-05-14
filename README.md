@@ -13,6 +13,7 @@ GPIO Modules
 - PCF8574 IO chip (`pcf8574`)
 - PiFaceDigital 2 IO board (`piface2`)
 - Beaglebone GPIO (`beaglebone`)
+- Sunxi Linux GPIO Cubieboard A10 A20, OlinuXino (sunxi)
 
 Sensors
 -------
@@ -21,6 +22,7 @@ Sensors
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
+- BME280 i2c temperature/humidity/pressure sensor (`bme280`)
 
 Installation
 ------------
@@ -161,6 +163,36 @@ sensor_inputs:
     module: ds18b22
     interval: 60
     digits: 2
+
+
+sensor_modules:
+  - name: bme280
+    module: bme280
+    i2c_bus_num: 2 
+    chip_addr: 0x76
+    cleanup: no
+
+sensor_inputs:
+  - name: bme280_temperature
+    module: bme280
+    interval: 60
+    type: temperature
+    
+  - name: bme280_humidity
+    module: bme280
+    interval: 60
+    type: humidity
+    
+  - name: bme280_preassure
+    module: bme280
+    interval: 60
+    type: preassure
+    
+logging:
+
+
+
+
 ```
 
 ### OrangePi boards
@@ -174,6 +206,28 @@ gpio_modules:
     board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
     mode: board
 ```
+
+### Sunxi boards
+
+Requirement: https://github.com/rubitwa/pySUNXI
+
+You need to specify sunxi on yaml file
+
+```yaml
+gpio_modules:
+  - name: sunxi
+    module: sunxi
+```
+
+Pin Numbering: Pins have name like PG(9), using this formula: (position of letter in alphabet - 1) * 32 + pin number, the pin number of PH(9) is (7-1)*32+9 = 201
+
+Test:
+
+```bash
+mosquitto_pub -q 1 -t 'pimqttgpio/mydevice/output/bell/set' -m 'ON'
+```
+
+NOTE: pySUNXI works only with root privileges
 
 #### SSL/TLS
 
