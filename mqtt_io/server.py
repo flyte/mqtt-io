@@ -33,6 +33,13 @@ MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
 
 
 def _init_module(module_config, module_type):
+    """
+    Initialise a GPIO module by:
+    - Importing it
+    - Validating its config
+    - Installing any missing requirements for it
+    - Instantiating its class
+    """
     module = import_module(
         "%s.%s.%s" % (MODULE_IMPORT_PATH, module_type, module_config["module"])
     )
@@ -46,6 +53,10 @@ def _init_module(module_config, module_type):
 
 
 async def set_digital_output(module, output_config, value):
+    """
+    Set a digital output, taking into account whether it's configured
+    to be inverted.
+    """
     set_value = value != output_config["inverted"]
     await module.async_set_pin(output_config["pin"], set_value)
     _LOG.info(
