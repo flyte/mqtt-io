@@ -331,6 +331,9 @@ stream_reads:
         type: boolean
         required: no
         default: no
+      encoding:
+        type: string
+        required: no
       interval:
         type: float
         required: no
