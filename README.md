@@ -113,56 +113,21 @@ sensor_modules:
     chip_addr: 0x48
     cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
 
-sensor_inputs:
-  - name: temperature
-    module: lm75
-    interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-
-sensor_modules:
   - name: dht22
     module: dht22
     type: AM2302 # can be  DHT11, DHT22 or AM2302
     pin: 4
 
-sensor_inputs:
-  - name: dht22_temperature 
-    module: dht22
-    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-    type: temperature # Can be temperature or humidity
-
-  - name: dht22_humidity 
-    module: dht22
-    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-    type: humidity # Can be temperature or humidity   
-
-sensor_modules:
   - name: bh1750
     module: bh1750
     i2c_bus_num: 1
     chip_addr: 0x23
 
-sensor_inputs:
-  - name: bh1750_lux
-    module: bh1750
-    interval: 10
-    digits: 2
-    
-sensor_modules:
   - name: ds18b22
     module: ds18b
     type: DS18S20
     address: 000803702e49
 
-sensor_inputs:
-  - name: ds18b22
-    module: ds18b22
-    interval: 60
-    digits: 2
-
-sensor_modules:
   - name: hcsr04
     module: hcsr04
     pin_echo: 27
@@ -170,6 +135,33 @@ sensor_modules:
     burst: 10  # number of measurements for output of distance value in [cm]
 
 sensor_inputs:
+  - name: temperature
+    module: lm75
+    interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+
+- name: dht22_temperature 
+    module: dht22
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    type: temperature # Can be temperature or humidity
+
+- name: dht22_humidity 
+    module: dht22
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    type: humidity # Can be temperature or humidity   
+
+- name: bh1750_lux
+    module: bh1750
+    interval: 10
+    digits: 2
+
+- name: ds18b22
+    module: ds18b22
+    interval: 60
+    digits: 2
+
   - name: distance
     module: hcsr04
     interval: 10  # measurement every 10s
