@@ -21,6 +21,7 @@ Sensors
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
+- HC-SR04 ultrasonic distance sensor (`hcsr04`)
 
 Installation
 ------------
@@ -117,7 +118,6 @@ sensor_inputs:
     module: lm75
     interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
-    
 
 sensor_modules:
   - name: dht22
@@ -131,7 +131,7 @@ sensor_inputs:
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
     type: temperature # Can be temperature or humidity
-      
+
   - name: dht22_humidity 
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
@@ -161,6 +161,19 @@ sensor_inputs:
     module: ds18b22
     interval: 60
     digits: 2
+
+sensor_modules:
+  - name: hcsr04
+    module: hcsr04
+    pin_echo: 27
+    pin_trigger: 17
+    burst: 10  # number of measurements for output of distance value in [cm]
+
+sensor_inputs:
+  - name: distance
+    module: hcsr04
+    interval: 10  # measurement every 10s
+    digits: 1
 ```
 
 ### OrangePi boards
