@@ -24,10 +24,8 @@ Sensors
 
 Installation
 ------------
-first, install gpio bindig if you haven't it yet:
-`sudo apt-get install python3-rpi.gpio`
 
-`pip install pi-mqtt-gpio`
+`pip install RPi.GPIO pi-mqtt-gpio`
 
 Execution
 ---------
