@@ -1,5 +1,4 @@
-from __future__ import print_function
-
+import logging
 from pi_mqtt_gpio.modules import GenericStream
 
 REQUIREMENTS = ("pyserial",)
@@ -26,8 +25,8 @@ class Stream(GenericStream):
 
         import serial
 
-        #print("__init__(config=%r)" % config)
-
+    	_LOG.debug("__init__(config=%r)", config)
+	
         BYTESIZE = {
            5: serial.FIVEBITS,
            6: serial.SIXBITS,
@@ -69,8 +68,7 @@ class Stream(GenericStream):
             self.ser = PORTS_USED[config['device']]
 
     def setup_stream(self, config):
-        #print("setup_stream(config=%r)" % config)
-        pass
+    	_LOG.debug("setup_stream(config=%r)", config)
 
     def read(self, config):
         if (self.ser.inWaiting() <= 0):
@@ -78,11 +76,11 @@ class Stream(GenericStream):
         data = self.ser.read(self.ser.inWaiting()).decode('string_escape')
         if (config.get('encoding')):
             data = data.encode(config['encoding'])
-        #print("read(config=%r) = %s" % (config, data))
+    	_LOG.debug("read(config=%r, data=%s)", config, data)
         return data
 
     def write(self, config, data):
-        #print("write(config=%r, data=%s)" % (config,data))
+    	_LOG.debug("write(config=%r,  data=%s)", config, data)
         self.ser.write(data)
         pass
 
