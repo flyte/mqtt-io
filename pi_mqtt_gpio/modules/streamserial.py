@@ -15,6 +15,8 @@ BYTESIZE = None
 PARITY = None
 STOPBITS = None
 
+_LOG = logging.getLogger("mqtt_gpio")
+
 class Stream(GenericStream):
     """
     Implementation of stream class for outputting to STDIO.
