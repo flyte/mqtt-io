@@ -26,7 +26,7 @@ class Stream(GenericStream):
 
         import serial
 
-        print("__init__(config=%r)" % config)
+        #print("__init__(config=%r)" % config)
 
         BYTESIZE = {
            5: serial.FIVEBITS,
@@ -69,7 +69,7 @@ class Stream(GenericStream):
             self.ser = PORTS_USED[config['device']]
 
     def setup_stream(self, config):
-        print("setup_stream(config=%r)" % config)
+        #print("setup_stream(config=%r)" % config)
         pass
 
     def read(self, config):
@@ -78,11 +78,11 @@ class Stream(GenericStream):
         data = self.ser.read(self.ser.inWaiting()).decode('string_escape')
         if (config.get('encoding')):
             data = data.encode(config['encoding'])
-        print("read(config=%r) = %s" % (config, data))
+        #print("read(config=%r) = %s" % (config, data))
         return data
 
     def write(self, config, data):
-        print("write(config=%r, data=%s)" % (config,data))
+        #print("write(config=%r, data=%s)" % (config,data))
         self.ser.write(data)
         pass
 
