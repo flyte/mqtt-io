@@ -356,18 +356,28 @@ mqtt:
 
 the status messages will appear on topic `home/office/status`.
 
-### Multiple Instances
+### MQTT Client ID
 
-If you have more than one device in your network they will have the same client ID and therefore kick each other off of your MQTT broker. To solve this you can specify `client_id`, like this:
+The MQTT client ID identifies your instance of pi-mqtt-gpio with your MQTT broker. It allows the broker to keep track of the state of your instance so that it can resume when it reconnects. This means that the ID _must_ be unique for each instance that connects to the MQTT broker.
+
+Since the MQTT client ID for each instance of pi-mqtt-gpio is based on the `topic_prefix` supplied in config (#24), having multiple instances share the same `topic_prefix` will require you to set a different `client_id` for each:
+
+#### Device 1
 
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
-  client_id: pimqttpgio_1
-  topic_prefix: pimqttgpio/mydevice
+  client_id: pi-mqtt-gpio-device1
+  topic_prefix: home/office
+```
+
+#### Device 2
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  client_id: pi-mqtt-gpio-device2
+  topic_prefix: home/office
 ```
 
 ### Logging
