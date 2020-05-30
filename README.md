@@ -3,7 +3,7 @@ PI MQTT GPIO
 
 [![Gitter](https://badges.gitter.im/mqtt-io/community.svg)](https://gitter.im/mqtt-io/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-Expose the Raspberry Pi GPIO pins, external IO modules and I2C sensors to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics. The I2C sensors will be read periodically and publish their values. 
+Expose the Raspberry Pi GPIO pins, external IO modules, streams and I2C sensors to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values. 
 
 GPIO Modules
 ------------
@@ -22,6 +22,11 @@ Sensors
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
+
+Streams
+-------
+
+- Serial port (`streamserial`)
 
 Installation
 ------------
@@ -166,6 +171,51 @@ sensor_inputs:
     module: hcsr04
     interval: 10  # measurement every 10s
     digits: 1
+```
+
+### Streams
+
+Transmit data by publishing to the `home/stream/<stream write name>` topic. In the following example, this would be `home/stream/serialtx`.
+
+Receive data from a stream by subscribing to the `home/stream/<stream read name>` topic. In the following example, this would be `home/stream/serialrx`.
+
+The stream data is parsed using Python's `string_escape` to allow the transfer of control characters.
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  user: ""
+  password: ""
+  topic_prefix: home
+
+stream_modules:
+  - name: serialcomms
+    module: streamserial
+    device: /dev/ttyS0
+    baud: 115200
+    bytesize: 8 # Number of data bits in word. Can be: 5,6,7,8
+    parity: none # Parity can be one of none,odd,even,mark,space
+    stopbits: 1 # Number of stop bits. Can be: 1,1.5,2
+    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
+
+stream_reads:
+  - name: serialrx
+    module: serialcomms
+    interval: 0.25 # Stream read polling interval in seconds
+
+stream_writes:
+  - name: serialtx
+    module: serialcomms
+```
+
+Testing example:
+
+```bash
+# -N disables printing extra new line on each subscription
+mosquitto_sub -h <broker url> -t <topic prefix>/stream/serialrx -N
+
+mosquitto_pub -h <broker url> -t <topic prefix>/stream/serialtx -m "testing123\r\n"
 ```
 
 ### OrangePi boards
