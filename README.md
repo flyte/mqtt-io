@@ -306,6 +306,20 @@ mqtt:
 
 the status messages will appear on topic `home/office/status`.
 
+### Multiple Instances
+
+If you have more than one device in your network they will have the same client ID and therefore kick each other off of your MQTT broker. To solve this you can specify `client_id`, like this:
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  user: ""
+  password: ""
+  client_id: pimqttpgio_1
+  topic_prefix: pimqttgpio/mydevice
+```
+
 ### Logging
 
 Logging may be configured by including a `logging` section in your `config.yml`. The standard Python logging system is used, so configuration questions should be answered by looking at [the Python logging howto](https://docs.python.org/3/howto/logging.html).
