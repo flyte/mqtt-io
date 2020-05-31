@@ -1,0 +1,11 @@
+version: "2"
+services:
+  mqtt-gpio:
+    image: flyte/mqtt-gpio:latest
+    privileged: true
+    container_name: mqtt-gpio
+    environment:
+      - MEM_LIMIT=100M #optional
+    volumes:
+      - /home/pi/pi-mqtt-gpio/config.yml:/config.yml
+    restart: unless-stopped
