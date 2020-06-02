@@ -183,10 +183,10 @@ sensor_inputs:
     interval: 60
     type: humidity
     
-  - name: bme280_preassure
+  - name: bme280_pressure
     module: bme280
     interval: 60
-    type: preassure
+    type: pressure
     
 logging:
 
