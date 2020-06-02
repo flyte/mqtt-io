@@ -16,13 +16,13 @@ SENSOR_SCHEMA = {
         required=False,
         empty=False,
         default="temperature",
-        allowed=["temperature", "humidity", "preassure"],
+        allowed=["temperature", "humidity", "pressure"],
     ),
 }
 
 class Sensor(GenericSensor):
     """
-    Implementation of Sensor class for the LM75 temperature sensor.
+    Implementation of Sensor class for the BME280 Temperature, Pressure, Humidity.
     """
 
     def __init__(self, config):
@@ -42,7 +42,7 @@ class Sensor(GenericSensor):
         return True  # nothing to do here
 
     def get_value(self, config):
-        """get the temperature or humidity value from the sensor"""
+        """get the temperature or humidity or  value from the sensor"""
         if (self.time.time()-self.lastMeas>2):
             print("READING BME280")
             try:
@@ -57,5 +57,5 @@ class Sensor(GenericSensor):
             return self.bmedata.temperature
         if config["type"] == "humidity":
             return self.bmedata.humidity
-        if config["type"] == "preassure":
+        if config["type"] == "pressure":
             return self.bmedata.pressure
