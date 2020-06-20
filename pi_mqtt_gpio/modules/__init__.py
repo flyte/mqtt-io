@@ -43,7 +43,7 @@ class GenericGPIO(object):
 
     # may be overloaded, if module supports interrupts
     def setup_interrupt(self, handle, pin, edge, callback, bouncetime):
-        raise(NotImplementedError)
+        raise (NotImplementedError)
 
     @abc.abstractmethod
     def set_pin(self, pin, value):
@@ -91,11 +91,13 @@ class GenericSensor(object):
         """
         pass
 
+
 class GenericStream(object):
     """
     Abstracts a generic stream interface to be implemented
     by the modules in this directory.
     """
+
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod

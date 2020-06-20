@@ -3,6 +3,7 @@ import pytest
 
 from pi_mqtt_gpio import server
 
+
 @mock.patch("pkg_resources.WorkingSet")
 def test_imr_no_attribute(mock_ws):
     """

@@ -164,6 +164,7 @@ def set_pin(topic_prefix, output_config, value):
         payload=payload,
     )
 
+
 def stream_write_output(topic_prefix, stream_write_config, data):
     """
     Writes data to stream
@@ -177,13 +178,14 @@ def stream_write_output(topic_prefix, stream_write_config, data):
     :rtype: NoneType
     """
     sw = STREAM_MODULES[stream_write_config["module"]]
-    sw.write(stream_write_config["name"],  data.encode("utf-8"))
+    sw.write(stream_write_config["name"], data.encode("utf-8"))
     _LOG.info(
         "Write %r %r write %s",
         stream_write_config["module"],
         stream_write_config["name"],
         data,
     )
+
 
 def get_pin(in_conf, module):
     """
@@ -274,6 +276,7 @@ def handle_set_ms(topic_prefix, msg, value):
         ms,
     )
 
+
 def handle_raw(topic_prefix, msg):
     """
     Handles an incoming raw MQTT message.
@@ -290,6 +293,7 @@ def handle_raw(topic_prefix, msg):
         return
     payload = msg.payload.decode("string_escape")
     stream_write_output(topic_prefix, stream_write_config, payload)
+
 
 def install_missing_requirements(module):
     """
@@ -340,8 +344,9 @@ def type_from_topic(topic, topic_prefix):
     lindex = len("%s/" % topic_prefix)
     s = topic[lindex:]
     # Get remaining fields, the first one is the type
-    fields = s.split('/')
+    fields = s.split("/")
     return fields[0]
+
 
 def output_name_from_topic(topic, topic_prefix, suffix):
     """
@@ -374,6 +379,7 @@ def stream_write_name_from_topic(topic, topic_prefix):
     """
     lindex = len("%s/%s/" % (topic_prefix, STREAM_TOPIC))
     return topic[lindex:]
+
 
 def init_mqtt(config, digital_outputs, stream_writes):
     """
@@ -462,10 +468,10 @@ def init_mqtt(config, digital_outputs, stream_writes):
                     _LOG.info("Subscribed to topic: %r", topic)
             for stream_write_conf in stream_writes:
                 topic = "%s/%s/%s" % (
-                        topic_prefix,
-                        STREAM_TOPIC,
-                        stream_write_conf["name"],
-                    )
+                    topic_prefix,
+                    STREAM_TOPIC,
+                    stream_write_conf["name"],
+                )
                 client.subscribe(topic, qos=1)
                 _LOG.info("Subscribed to topic: %r", topic)
             client.publish(
@@ -476,7 +482,7 @@ def init_mqtt(config, digital_outputs, stream_writes):
                 for in_conf in digital_inputs:
                     hass_announce_digital_input(in_conf, topic_prefix, config)
                 for out_conf in digital_outputs:
-                    hass_announce_digital_output(out_conf, topic_prefix, config)        
+                    hass_announce_digital_output(out_conf, topic_prefix, config)
         elif rc == 1:
             _LOG.fatal("Incorrect protocol version used to connect to MQTT broker.")
             sys.exit(1)
@@ -507,7 +513,12 @@ def init_mqtt(config, digital_outputs, stream_writes):
         """
         try:
             topic_type = type_from_topic(msg.topic, topic_prefix)
-            _LOG.info("Received message on topic %r type: %r: %r", msg.topic, topic_type, msg.payload)
+            _LOG.info(
+                "Received message on topic %r type: %r: %r",
+                msg.topic,
+                topic_type,
+                msg.payload,
+            )
             if topic_type == OUTPUT_TOPIC:
                 if msg.topic.endswith("/%s" % SET_TOPIC):
                     handle_set(topic_prefix, msg)
@@ -1158,7 +1169,7 @@ def main(args):
                     continue
                 if state != LAST_STATES[in_conf["name"]]:
                     _LOG.info(
-                        "Polling: Input %r state changed to %r", in_conf["name"], state,
+                        "Polling: Input %r state changed to %r", in_conf["name"], state
                     )
                     client.publish(
                         "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
