@@ -43,7 +43,7 @@ class GenericGPIO(object):
 
     # may be overloaded, if module supports interrupts
     def setup_interrupt(self, handle, pin, edge, callback, bouncetime):
-        raise (NotImplementedError)
+        raise NotImplementedError()
 
     @abc.abstractmethod
     def set_pin(self, pin, value):
@@ -90,7 +90,6 @@ class GenericSensor(object):
         Called when closing the program to handle any cleanup operations.
         """
         pass
-
 
 class GenericStream(object):
     """
