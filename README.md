@@ -22,6 +22,7 @@ Sensors
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
+- MCP3008 Analog Digital Converter (`mcp3008`)
 
 Streams
 -------
@@ -206,6 +207,9 @@ sensor_modules:
     pin_echo: 27
     pin_trigger: 17
     burst: 10  # number of measurements for output of distance value in [cm]
+    
+  - name: mcp3008_sensor
+    module: mcp3008
 
 sensor_inputs:
   - name: lm75_temperature
@@ -239,6 +243,11 @@ sensor_inputs:
     module: hcsr04_sensor
     interval: 10  # measurement every 10s
     digits: 1
+    
+  - name: mcp3008_voltage
+    module: mcp3008_sensor
+    interval: 300  # measurement every 5min
+    channel: CH4 # measure on CH4 of MCP3008
 ```
 
 ### Streams
