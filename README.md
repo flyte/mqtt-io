@@ -22,7 +22,7 @@ Sensors
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
-- MCP3008 Analog Digital Converter (`mcp3008`)
+- MCP3008 analog digital converter (`mcp3008`)
 
 Streams
 -------
