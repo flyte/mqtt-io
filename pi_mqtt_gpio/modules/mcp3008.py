@@ -1,7 +1,7 @@
 from pi_mqtt_gpio.modules import GenericSensor
 
 
-REQUIREMENTS = ("spidev","mcp3008",)
+REQUIREMENTS = ("spidev",)
 
 SENSOR_SCHEMA = {
     "channel": dict(
@@ -20,41 +20,39 @@ class Sensor(GenericSensor):
     """
 
     def __init__(self, config):
-        import mcp3008
+        import spidev
 
         """init the mcp on SPI CE0"""
-        self.adc = mcp3008.MCP3008()
-        
+        self.spi = spidev.SpiDev()
+        self.spi.open(0,0)
+
         self.channels = {
-          "CH0": mcp3008.CH0,
-          "CH1": mcp3008.CH1,
-          "CH2": mcp3008.CH2,
-          "CH3": mcp3008.CH3,
-          "CH4": mcp3008.CH4,
-          "CH5": mcp3008.CH5,
-          "CH6": mcp3008.CH6,
-          "CH7": mcp3008.CH7,
-          "DF0": mcp3008.DF0,
-          "DF1": mcp3008.DF1,
-          "DF2": mcp3008.DF2,
-          "DF3": mcp3008.DF3,
-          "DF4": mcp3008.DF4,
-          "DF5": mcp3008.DF5,
-          "DF6": mcp3008.DF6,
-          "DF7": mcp3008.DF7
-    }
+          "CH0": 0,
+          "CH1": 1,
+          "CH2": 2,
+          "CH3": 3,
+          "CH4": 4,
+          "CH5": 5,
+          "CH6": 6,
+          "CH7": 7
+        }
 
     def setup_sensor(self, config):
         return True  # nothing to do here
+
+    def read_spi(self, channel):
+       adc = self.spi.xfer2([1,(8+channel)<<4,0])
+       data = ((adc[1]&3) << 8) + adc[2]
+       return dat
 
     def get_value(self, config):
         """get the analog value from the adc for the configured channel"""
         channel = self.channels.get(config.channel, "invalid")
         if channel == "invalid":
             raise Exception("Channel '" + config.channel + "' not found!")
-        value = self.adc.read([channel])
+        value = self.read_spi(channel)
         return value
 
     def cleanup(self):
         """close the adc, to proper shut down the spi bus"""
-        self.adc.close()
+        #self.adc.close()
