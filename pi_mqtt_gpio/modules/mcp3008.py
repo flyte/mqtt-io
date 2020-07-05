@@ -49,7 +49,7 @@ class Sensor(GenericSensor):
         _LOG.warning("MCP3008: Reading from channel %r", channel)
         if channel == "invalid":
             raise Exception("Channel '" + config["channel"] + "' not found!")
-        value = self.mcp.read_adc(i)
+        value = self.mcp.read_adc(channel)
         _LOG.warning("MCP3008: value %d", value)
         return value
 
