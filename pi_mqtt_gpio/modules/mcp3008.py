@@ -1,7 +1,7 @@
 from pi_mqtt_gpio.modules import GenericSensor
 import logging
 
-REQUIREMENTS = ("adafruit-mcp3008, Adafruit_GPIO",)
+REQUIREMENTS = ("adafruit-mcp3008","Adafruit_GPIO",)
 
 SENSOR_SCHEMA = {
     "channel": dict(
