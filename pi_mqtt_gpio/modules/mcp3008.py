@@ -21,8 +21,8 @@ class Sensor(GenericSensor):
     Implementation of MCP3008 ADC sensor.
     """
     def __init__(self, config):
-        import Adafruit_GPIO.SPI as SPI
         import Adafruit_MCP3008
+        import Adafruit_GPIO.SPI as SPI
 
         """init the mcp on SPI CE0"""
         SPI_PORT   = 0
