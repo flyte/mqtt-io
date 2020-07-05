@@ -43,11 +43,11 @@ class Sensor(GenericSensor):
         return True  # nothing to do here
 
     def read_spi(self, channel):
-       adc = self.spi.xfer2([1,(8+channel)<<4,0])
+        adc = self.spi.xfer2([1,(8+channel)<<4,0])
         _LOG.warning("MCP3008: adc %s", bytes(adc).hex())
-       data = ((adc[1]&3) << 8) + adc[2]
+        data = ((adc[1]&3) << 8) + adc[2]
         _LOG.warning("MCP3008: data %d", data)
-       return data
+        return data
 
     def get_value(self, config):
         """get the analog value from the adc for the configured channel"""
