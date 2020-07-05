@@ -43,13 +43,13 @@ class Sensor(GenericSensor):
     def read_spi(self, channel):
        adc = self.spi.xfer2([1,(8+channel)<<4,0])
        data = ((adc[1]&3) << 8) + adc[2]
-       return dat
+       return data
 
     def get_value(self, config):
         """get the analog value from the adc for the configured channel"""
-        channel = self.channels.get(config.channel, "invalid")
+        channel = self.channels.get(config["channel"], "invalid")
         if channel == "invalid":
-            raise Exception("Channel '" + config.channel + "' not found!")
+            raise Exception("Channel '" + config["channel"] + "' not found!")
         value = self.read_spi(channel)
         return value
 
