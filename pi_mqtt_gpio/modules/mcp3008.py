@@ -1,7 +1,7 @@
 from pi_mqtt_gpio.modules import GenericSensor
 import logging
 
-REQUIREMENTS = ("spidev",)
+REQUIREMENTS = ("adafruit-mcp3008, Adafruit_GPIO",)
 
 SENSOR_SCHEMA = {
     "channel": dict(
@@ -20,13 +20,14 @@ class Sensor(GenericSensor):
     """
     Implementation of MCP3008 ADC sensor.
     """
-
     def __init__(self, config):
-        import spidev
+        import Adafruit_GPIO.SPI as SPI
+        import Adafruit_MCP3008
 
         """init the mcp on SPI CE0"""
-        self.spi = spidev.SpiDev()
-        self.spi.open(0,0)
+        SPI_PORT   = 0
+        SPI_DEVICE = 0
+        self.mcp = Adafruit_MCP3008.MCP3008(spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE))
 
         self.channels = {
           "CH0": 0,
@@ -42,20 +43,13 @@ class Sensor(GenericSensor):
     def setup_sensor(self, config):
         return True  # nothing to do here
 
-    def read_spi(self, channel):
-        adc = self.spi.xfer2([1,(8+channel)<<4,0])
-        _LOG.warning("MCP3008: adc %s", bytes(adc).hex())
-        data = ((adc[1]&3) << 8) + adc[2]
-        _LOG.warning("MCP3008: data %d", data)
-        return data
-
     def get_value(self, config):
         """get the analog value from the adc for the configured channel"""
         channel = self.channels.get(config["channel"], "invalid")
         _LOG.warning("MCP3008: Reading from channel %r", channel)
         if channel == "invalid":
             raise Exception("Channel '" + config["channel"] + "' not found!")
-        value = self.read_spi(channel)
+        value = self.mcp.read_adc(i)
         _LOG.warning("MCP3008: value %d", value)
         return value
 
