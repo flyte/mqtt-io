@@ -145,25 +145,25 @@ sensor_inputs:
     interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
 
-- name: dht22_temperature 
+  - name: dht22_temperature 
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
     type: temperature # Can be temperature or humidity
 
-- name: dht22_humidity 
+  - name: dht22_humidity 
     module: dht22
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
     type: humidity # Can be temperature or humidity   
 
-- name: bh1750_lux
+  - name: bh1750_lux
     module: bh1750
     interval: 10
     digits: 2
 
-- name: ds18b22
-    module: ds18b22
+  - name: ds18b22
+    module: ds18b
     interval: 60
     digits: 2
 
