@@ -1,11 +1,20 @@
 from pi_mqtt_gpio.modules import GenericSensor
 
-
 REQUIREMENTS = ("adafruit-circuitpython-ahtx0",)
+SENSOR_SCHEMA = {
+    "type": dict(
+        type="string",
+        required=False,
+        empty=False,
+        default="temperature",
+        allowed=["temperature", "humidity"],
+    )
+}
+
 
 class Sensor(GenericSensor):
     """
-    Implementation of GPIO class for Beaglebone native GPIO.
+    Implementation of Sensor class for aht20.
     """
 
     def __init__(self, config):
@@ -28,4 +37,3 @@ class Sensor(GenericSensor):
         if config["type"] == "humidity" and humidity is not None:
             return humidity
         return None
-
