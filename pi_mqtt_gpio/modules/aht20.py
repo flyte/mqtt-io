@@ -31,7 +31,7 @@ class Sensor(GenericSensor):
     def get_value(self, config):
         """get the temperature value from the sensor"""
         temperature = self.sensor.temperature
-        humidity = self.sensor.humidity
+        humidity = self.sensor.relative_humidity
         if config["type"] == "temperature" and temperature is not None:
             return temperature
         if config["type"] == "humidity" and humidity is not None:
