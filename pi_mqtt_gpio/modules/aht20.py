@@ -22,7 +22,7 @@ class Sensor(GenericSensor):
         import busio
         import adafruit_ahtx0
 
-        self.i2c = busio.I2C(board.SCL, board.SDA)
+        i2c = busio.I2C(board.SCL, board.SDA)
         self.sensor = adafruit_ahtx0.AHTx0(i2c)
 
     def setup_sensor(self, config):
