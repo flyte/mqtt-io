@@ -310,6 +310,9 @@ sensor_inputs:
         required: no
         default: 2
         min: 0
+      unit_of_measurement:
+        type: string
+        required: no
 
 stream_reads:
   type: list
