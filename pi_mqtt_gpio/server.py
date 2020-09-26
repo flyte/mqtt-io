@@ -1011,6 +1011,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
         "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
         "payload_available": mqtt_config["status_payload_running"],
         "payload_not_available": mqtt_config["status_payload_dead"],
+        "expire_after": 2 * int(in_conf.get("interval", "60")) + 5,
         "device": {
             "manufacturer": "MQTT GPIO",
             "identifiers": ["mqtt-gpio", device_id],
