@@ -189,6 +189,7 @@ digital_inputs:
         type:
           - string
           - integer
+          - list
         required: yes
         empty: no
       on_payload:
@@ -251,6 +252,7 @@ digital_outputs:
         type:
           - string
           - integer
+          - list
         required: yes
         empty: no
       on_payload:
