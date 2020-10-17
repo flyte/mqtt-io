@@ -22,6 +22,7 @@ Sensors
 - BH1750 light level sensor (`bh1750`)
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
+- MCP3008 analog digital converter (`mcp3008`)
 
 Streams
 -------
@@ -99,171 +100,6 @@ digital_inputs:
     pullup: yes
     pulldown: no
 ```
-### Sensors
-
-Receive updates on the value of a sensor by subscribing to the `home/sensor/<sensor input name>` topic. In the following example, this would be `home/sensor/temperature`:
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
-  topic_prefix: home
-
-sensor_modules:
-  - name: lm75
-    module: lm75
-    i2c_bus_num: 1
-    chip_addr: 0x48
-    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
-
-  - name: dht22
-    module: dht22
-    type: AM2302 # can be  DHT11, DHT22 or AM2302
-    pin: 4
-
-  - name: bh1750
-    module: bh1750
-    i2c_bus_num: 1
-    chip_addr: 0x23
-
-  - name: ds18b22
-    module: ds18b
-    type: DS18S20
-    address: 000803702e49
-
-  - name: hcsr04
-    module: hcsr04
-    pin_echo: 27
-    pin_trigger: 17
-    burst: 10  # number of measurements for output of distance value in [cm]
-
-sensor_inputs:
-  - name: temperature
-    module: lm75
-    interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-
-- name: dht22_temperature 
-    module: dht22
-    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-    type: temperature # Can be temperature or humidity
-
-- name: dht22_humidity 
-    module: dht22
-    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-    type: humidity # Can be temperature or humidity   
-
-- name: bh1750_lux
-    module: bh1750
-    interval: 10
-    digits: 2
-
-- name: ds18b22
-    module: ds18b22
-    interval: 60
-    digits: 2
-
-  - name: distance
-    module: hcsr04
-    interval: 10  # measurement every 10s
-    digits: 1
-```
-
-### Streams
-
-Transmit data by publishing to the `home/stream/<stream write name>` topic. In the following example, this would be `home/stream/serialtx`.
-
-Receive data from a stream by subscribing to the `home/stream/<stream read name>` topic. In the following example, this would be `home/stream/serialrx`.
-
-The stream data is parsed using Python's `string_escape` to allow the transfer of control characters.
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
-  topic_prefix: home
-
-stream_modules:
-  - name: serialcomms
-    module: streamserial
-    device: /dev/ttyS0
-    baud: 115200
-    bytesize: 8 # Number of data bits in word. Can be: 5,6,7,8
-    parity: none # Parity can be one of none,odd,even,mark,space
-    stopbits: 1 # Number of stop bits. Can be: 1,1.5,2
-    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
-
-stream_reads:
-  - name: serialrx
-    module: serialcomms
-    interval: 0.25 # Stream read polling interval in seconds
-
-stream_writes:
-  - name: serialtx
-    module: serialcomms
-```
-
-Testing example:
-
-```bash
-# -N disables printing extra new line on each subscription
-mosquitto_sub -h <broker url> -t <topic prefix>/stream/serialrx -N
-
-mosquitto_pub -h <broker url> -t <topic prefix>/stream/serialtx -m "testing123\r\n"
-```
-
-### OrangePi boards
-
-You need to specify what OrangePi board you use
-
-```yaml
-gpio_modules:
-  - name: orangepi
-    module: orangepi
-    board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
-    mode: board
-```
-
-#### SSL/TLS
-
-You may want to connect to a remote server, in which case it's a good idea to use an encrypted connection. If the server supports this, then you can supply the relevant config values for the [tls_set()](https://github.com/eclipse/paho.mqtt.python#tls_set) command.
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 8883
-  tls:
-    enabled: yes
-```
-
-You may need to supply a trusted CA certificate, as instructed on https://test.mosquitto.org/.
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 8883
-  tls:
-    enabled: yes
-    ca_certs: mosquitto.org.crt
-```
-
-Or you might want to use SSL/TLS but not verify the server's certificate (not recommended).
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 8883
-  tls:
-    enabled: yes
-    cert_reqs: CERT_NONE
-    insecure: yes
-```
 
 #### Temporary Set
 
@@ -332,7 +168,182 @@ digital_outputs:
     off_payload: "OFF"
 ```
 
-### MQTT Status Topic
+### Sensors
+
+Receive updates on the value of a sensor by subscribing to the `home/sensor/<sensor input name>` topic. In the following example, this would be `home/sensor/temperature`:
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  user: ""
+  password: ""
+  topic_prefix: home
+
+sensor_modules:
+  - name: lm75_sensor
+    module: lm75
+    i2c_bus_num: 1
+    chip_addr: 0x48
+    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
+
+  - name: dht22_sensor
+    module: dht22
+    type: AM2302 # can be  DHT11, DHT22 or AM2302
+    pin: 4
+
+  - name: bh1750_sensor
+    module: bh1750
+    i2c_bus_num: 1
+    chip_addr: 0x23
+
+  - name: ds18b22_sensor
+    module: ds18b
+    type: DS18S20
+    address: 000803702e49
+
+  - name: hcsr04_sensor
+    module: hcsr04
+    pin_echo: 27
+    pin_trigger: 17
+    burst: 10  # number of measurements for output of distance value in [cm]
+    
+  - name: mcp3008_sensor
+    module: mcp3008
+
+sensor_inputs:
+  - name: lm75_temperature
+    module: lm75_sensor
+    interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+
+- name: dht22_temperature 
+    module: dht22_sensor
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    type: temperature # Can be temperature or humidity
+
+- name: dht22_humidity 
+    module: dht22_sensor
+    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to be round
+    type: humidity # Can be temperature or humidity   
+
+- name: bh1750_lux
+    module: bh1750_sensor
+    interval: 10
+    digits: 2
+
+- name: ds18b22_temperature
+    module: ds18b22_sensor
+    interval: 60
+    digits: 2
+
+  - name: hcsr04_distance
+    module: hcsr04_sensor
+    interval: 10  # measurement every 10s
+    digits: 1
+    
+  - name: mcp3008_voltage
+    module: mcp3008_sensor
+    interval: 300  # measurement every 5min
+    channel: CH4 # measure on CH4 of MCP3008
+```
+
+### Streams
+
+Transmit data by publishing to the `home/stream/<stream write name>` topic. In the following example, this would be `home/stream/serialtx`.
+
+Receive data from a stream by subscribing to the `home/stream/<stream read name>` topic. In the following example, this would be `home/stream/serialrx`.
+
+The stream data is parsed using Python's `string_escape` to allow the transfer of control characters.
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  user: ""
+  password: ""
+  topic_prefix: home
+
+stream_modules:
+  - name: serialcomms
+    module: streamserial
+    device: /dev/ttyS0
+    baud: 115200
+    bytesize: 8 # Number of data bits in word. Can be: 5,6,7,8
+    parity: none # Parity can be one of none,odd,even,mark,space
+    stopbits: 1 # Number of stop bits. Can be: 1,1.5,2
+    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
+
+stream_reads:
+  - name: serialrx
+    module: serialcomms
+    interval: 0.25 # Stream read polling interval in seconds
+
+stream_writes:
+  - name: serialtx
+    module: serialcomms
+```
+
+Testing example:
+
+```bash
+# -N disables printing extra new line on each subscription
+mosquitto_sub -h <broker url> -t <topic prefix>/stream/serialrx -N
+
+mosquitto_pub -h <broker url> -t <topic prefix>/stream/serialtx -m "testing123\r\n"
+```
+
+### OrangePi boards
+
+You need to specify what OrangePi board you use
+
+```yaml
+gpio_modules:
+  - name: orangepi
+    module: orangepi
+    board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
+    mode: board
+```
+### MQTT configuration
+
+#### SSL/TLS
+
+You may want to connect to a remote server, in which case it's a good idea to use an encrypted connection. If the server supports this, then you can supply the relevant config values for the [tls_set()](https://github.com/eclipse/paho.mqtt.python#tls_set) command.
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 8883
+  tls:
+    enabled: yes
+```
+
+You may need to supply a trusted CA certificate, as instructed on https://test.mosquitto.org/.
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 8883
+  tls:
+    enabled: yes
+    ca_certs: mosquitto.org.crt
+```
+
+Or you might want to use SSL/TLS but not verify the server's certificate (not recommended).
+
+```yaml
+mqtt:
+  host: test.mosquitto.org
+  port: 8883
+  tls:
+    enabled: yes
+    cert_reqs: CERT_NONE
+    insecure: yes
+```
+
+#### MQTT Status Topic
 
 MQTT supports a "last will and testament" (LWT) feature which means the server will publish to a configured topic with a message of your choosing if it loses connection to the client unexpectedly. Using this feature, this project can be configured to publish to a status topic as depicted in the following example config:
 
@@ -356,13 +367,13 @@ mqtt:
 
 the status messages will appear on topic `home/office/status`.
 
-### MQTT Client ID
+#### MQTT Client ID
 
 The MQTT client ID identifies your instance of pi-mqtt-gpio with your MQTT broker. It allows the broker to keep track of the state of your instance so that it can resume when it reconnects. This means that the ID _must_ be unique for each instance that connects to the MQTT broker.
 
 Since the MQTT client ID for each instance of pi-mqtt-gpio is based on the `topic_prefix` supplied in config (#24), having multiple instances share the same `topic_prefix` will require you to set a different `client_id` for each:
 
-#### Device 1
+##### Device 1
 
 ```yaml
 mqtt:
@@ -371,7 +382,7 @@ mqtt:
   topic_prefix: home/office
 ```
 
-#### Device 2
+##### Device 2
 
 ```yaml
 mqtt:
