@@ -63,7 +63,7 @@ gpio_modules:
 digital_outputs:
   - name: lights
     module: raspberrypi
-    pin: 21
+    pin: 21 # This is specified as the GPIO.BCM standard, not GPIO.BOARD
     on_payload: "ON"
     off_payload: "OFF"
     initial: low  # This optional value controls the initial state of the pin before receipt of any messages from MQTT. Valid options are 'low' and 'high'.
