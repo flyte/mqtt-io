@@ -91,6 +91,7 @@ class GenericSensor(object):
         """
         pass
 
+
 class GenericStream(object):
     """
     Abstracts a generic stream interface to be implemented
