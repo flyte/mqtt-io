@@ -275,6 +275,10 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      publish_initial:
+        type: boolean
+        required: no
+        default: no
 
 sensor_inputs:
   type: list
@@ -306,6 +310,9 @@ sensor_inputs:
         required: no
         default: 2
         min: 0
+      unit_of_measurement:
+        type: string
+        required: no
 
 stream_reads:
   type: list

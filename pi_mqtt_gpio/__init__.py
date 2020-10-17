@@ -279,6 +279,10 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      publish_initial:
+        type: boolean
+        required: no
+        default: no
 
 sensor_inputs:
   type: list
