@@ -1,6 +1,13 @@
+v0.5.2 - 2020-10-17
+===================
+- Update PyYAML to a version that doesn't suffer from CVE-2020-1747 vulnerability.
+- Add 'stream' IO.
+
+---
+
 v0.3.1 - 2019-03-10
 ===================
-- Pin safe version of PyYAML in requirements
+- Pin safe version of PyYAML in requirements.
 
 v0.3.0 - 2019-03-10
 ===================
