@@ -320,7 +320,7 @@ def install_missing_requirements(module):
         from subprocess import check_call, CalledProcessError
 
         try:
-            check_call(["/usr/bin/env", "pip", "install"] + pkgs_required)
+            check_call([sys.executable, "-m", "pip", "install"] + pkgs_required)
         except CalledProcessError as err:
             raise CannotInstallModuleRequirements(
                 "Unable to install packages for module %r (%s): %s"
