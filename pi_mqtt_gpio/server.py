@@ -483,6 +483,8 @@ def init_mqtt(config, digital_outputs, stream_writes):
                     hass_announce_digital_input(in_conf, topic_prefix, config)
                 for out_conf in digital_outputs:
                     hass_announce_digital_output(out_conf, topic_prefix, config)
+                for in_conf in sensor_inputs:
+                    hass_announce_sensor_input(in_conf, topic_prefix, config)
         elif rc == 1:
             _LOG.fatal("Incorrect protocol version used to connect to MQTT broker.")
             sys.exit(1)
@@ -990,9 +992,47 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
     )
 
 
+def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
+    """
+    Announces digital output as sensor to HomeAssistant.
+    :param in_conf: Input config
+    :type in_conf: dict
+    :return: None
+    :rtype: NoneType
+    """
+    device_id = (
+        "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]
+    )  # TODO: Unify with MQTT Client ID
+    sensor_name = in_conf["name"]
+    sensor_config = {
+        "name": sensor_name,
+        "unique_id": "%s_%s_output_%s" % (device_id, in_conf["module"], sensor_name),
+        "state_topic": "%s/%s/%s" % (topic_prefix, SENSOR_TOPIC, in_conf["name"]),
+        "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
+        "payload_available": mqtt_config["status_payload_running"],
+        "payload_not_available": mqtt_config["status_payload_dead"],
+        "expire_after": 2 * int(in_conf.get("interval", "60")) + 5,
+        "device": {
+            "manufacturer": "MQTT GPIO",
+            "identifiers": ["mqtt-gpio", device_id],
+            "name": mqtt_config["discovery_name"],
+        },
+    }
+    if "unit_of_measurement" in in_conf:
+        sensor_config["unit_of_measurement"] = in_conf["unit_of_measurement"]
+
+    client.publish(
+        "%s/%s/%s/%s/config"
+        % (mqtt_config["discovery_prefix"], "sensor", device_id, sensor_name),
+        payload=json.dumps(sensor_config),
+        retain=True,
+    )
+
+
 def main(args):
     global digital_inputs
     global digital_outputs
+    global sensor_inputs
     global stream_writes
     global client
     global scheduler
