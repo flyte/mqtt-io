@@ -26,3 +26,5 @@ digital_outputs:
     pin: 20
     on_payload: "ON"
     off_payload: "OFF"
+    publish_initial: yes
+    initial: high
