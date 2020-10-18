@@ -31,4 +31,3 @@ async def digital_input_poller(event_bus, module, input_config):
         # TODO: Tasks pending completion -@flyte at 29/05/2019, 01:02:50
         # Make this delay configurable in input_config
         await asyncio.sleep(0.1)
-

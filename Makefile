@@ -1,9 +1,5 @@
-schema:
-	python setup.py insert_schema
-	$(MAKE) black
-
 black:
-	black -l 90 pi_mqtt_gpio
+	black -l 90 mqtt_io
 
 packages: clean schema sdist wheel2 wheel3
 
