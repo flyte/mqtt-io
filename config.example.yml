@@ -18,11 +18,21 @@ gpio_modules:
     module: stdio
     cleanup: no
 
+  - name: orangepi
+    module: orangepi
+    board: zero
+    mode: board
+
 sensor_modules:
   - name: lm75
     module: lm75
     i2c_bus_num: 1
     chip_addr: 0x48
+
+  - name: ds18b22
+    module: ds18b
+    type: DS18S20
+    address: 000803702e49
 
 digital_inputs:
   - name: button
@@ -32,6 +42,15 @@ digital_inputs:
     off_payload: "OFF"
     pullup: no
     pulldown: yes
+    
+  - name: button_left
+    module: raspberrypi
+    pin: 23
+    interrupt_payload: "trigger"
+    pullup: no
+    pulldown: yes
+    interrupt: falling
+    bouncetime: 200
 
 digital_outputs:
   - name: bell
@@ -48,8 +67,12 @@ digital_outputs:
     off_payload: "OFF"
 
 sensor_inputs:
-  - name: temperature
+  - name: temp_lm75
     module: lm75
     interval: 15
     digits: 4
 
+  - name: temp_dsb18
+    module: ds18b22
+    interval: 10
+    digits: 2

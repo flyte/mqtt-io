@@ -15,9 +15,9 @@ jobs:
       stage: test
       script: tox -e py27
 
-    - python: 3.4
+    - python: 3.6
       stage: test
-      script: tox -e py34
+      script: tox -e py36
 
     - stage: publish
       script: skip
@@ -33,7 +33,7 @@ jobs:
         distributions: bdist_wheel
 
     - stage: publish
-      python: 3.4
+      python: 3.6
       script: skip
       deploy:
         provider: pypi

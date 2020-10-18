@@ -1,6 +1,23 @@
+v0.5.3 - 2020-10-17
+===================
+- Add PCF8575 support. #121
+- Add MCP3008 sensor support. #115
+- Add AHT20 sensor support. #122
+- Add BME280 sensor support. #132
+- Install requirements using current Python executable. #134
+- Add sensors to HASS discovery. #133
+- Add option to publish output value on startup. #125
+
+v0.5.2 - 2020-10-17
+===================
+- Update PyYAML to a version that doesn't suffer from CVE-2020-1747 vulnerability.
+- Add 'stream' IO.
+
+---
+
 v0.3.1 - 2019-03-10
 ===================
-- Pin safe version of PyYAML in requirements
+- Pin safe version of PyYAML in requirements.
 
 v0.3.0 - 2019-03-10
 ===================

@@ -49,6 +49,7 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+pytests.xml
 
 # Translations
 *.mo
@@ -95,3 +96,7 @@ ENV/
 
 #Kate
 *.kate-swp
+
+# User's Config File
+config.yml
+

@@ -1,7 +1,8 @@
 from pi_mqtt_gpio.modules import GenericSensor
 
 
-"""REQUIREMENTS = ("smbus",)"""
+REQUIREMENTS = ("smbus",)
+
 CONFIG_SCHEMA = {
     "i2c_bus_num": {"type": "integer", "required": True, "empty": False},
     "chip_addr": {"type": "integer", "required": True, "empty": False},
@@ -24,7 +25,7 @@ class Sensor(GenericSensor):
     def setup_sensor(self, config):
         return True  # nothing to do here
 
-    def get_value(self, sensor):
+    def get_value(self, config):
         """get the temperature value from the sensor"""
         value = self.bus.read_word_data(self.address, LM75_TEMP_REGISTER) & 0xFFFF
         value = ((value << 8) & 0xFF00) + (value >> 8)
