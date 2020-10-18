@@ -1,7 +1,6 @@
 PI MQTT GPIO
 ============
-
-[![Gitter](https://badges.gitter.im/mqtt-io/community.svg)](https://gitter.im/mqtt-io/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![Discord](https://img.shields.io/discord/713749043662290974.svg?label=Chat%20on%20Discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/gWyV9W4)
 
 Expose the Raspberry Pi GPIO pins, external IO modules, streams and I2C sensors to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values. 
 
