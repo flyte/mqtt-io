@@ -1110,15 +1110,6 @@ def main(args):
 
     for out_conf in digital_outputs:
         initialise_digital_output(out_conf, GPIO_MODULES[out_conf["module"]])
-        # If configured to do so, publish the initial states of the outputs
-        initial_setting = out_conf.get("initial")
-        if initial_setting is not None and out_conf.get("publish_initial", False):
-            payload = out_conf["on_payload" if initial_setting else "off_payload"]
-            client.publish(
-                "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"]),
-                retain=out_conf["retain"],
-                payload=payload,
-            )
 
     for sens_conf in sensor_inputs:
         try:
@@ -1171,6 +1162,17 @@ def main(args):
         _LOG.fatal("Unable to connect to MQTT server: %s" % err)
         sys.exit(1)
     client.loop_start()
+
+    for out_conf in digital_outputs:
+        # If configured to do so, publish the initial states of the outputs
+        initial_setting = out_conf.get("initial")
+        if initial_setting is not None and out_conf.get("publish_initial", False):
+            payload = out_conf["on_payload" if initial_setting else "off_payload"]
+            client.publish(
+                "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"]),
+                retain=out_conf["retain"],
+                payload=payload,
+            )
 
     scheduler = Scheduler()
 
