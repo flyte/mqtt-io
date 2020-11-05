@@ -30,8 +30,7 @@ class Sensor(GenericSensor):
         import time
         import board
         import busio
-        import adafruit_ads1x15.ads1015 as ADS
-        from adafruit_ads1x15.analog_in import AnalogIn
+        import adafruit_ads1x15.ads1115 as ADS
 
         # Create the I2C bus
         i2c = busio.I2C(board.SCL, board.SDA)
@@ -51,6 +50,7 @@ class Sensor(GenericSensor):
 
     def get_value(self, config):
         """get the analog value from the adc for the configured channel"""
+        from adafruit_ads1x15.analog_in import AnalogIn
         channel = self.channels.get(config["channel"], "invalid")
         _LOG.warning("MCP3008: Reading from channel %r", channel)
         if channel == "invalid":
