@@ -74,10 +74,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class MCP230XX:
-    def __init__(self, chip, smbus, i2cAddress, regScheme="16bit"):
+    def __init__(self, chip, i2cNr, i2cAddress, regScheme="16bit"):
+
+        import smbus
 
         self.chip = chip
-        self.bus = smbus
+        self.bus = smbus.SMBus(i2cNr)
         self.i2cAddress = i2cAddress
 
         if self.chip == "MCP23008":
