@@ -23,6 +23,7 @@ Sensors
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
 - MCP3008 analog digital converter (`mcp3008`)
+- ADS1115 analog digital converter (`ads1115`)
 
 Streams
 -------
@@ -212,30 +213,33 @@ sensor_modules:
   - name: mcp3008_sensor
     module: mcp3008
 
+  - name: ads1115_sensor
+    module: ads1115
+
 sensor_inputs:
   - name: lm75_temperature
     module: lm75_sensor
     interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
 
-- name: dht22_temperature 
+  - name: dht22_temperature 
     module: dht22_sensor
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
     type: temperature # Can be temperature or humidity
 
-- name: dht22_humidity 
+  - name: dht22_humidity 
     module: dht22_sensor
     interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
     digits: 4 # number of digits to be round
     type: humidity # Can be temperature or humidity   
 
-- name: bh1750_lux
+  - name: bh1750_lux
     module: bh1750_sensor
     interval: 10
     digits: 2
 
-- name: ds18b22_temperature
+  - name: ds18b22_temperature
     module: ds18b22_sensor
     interval: 60
     digits: 2
@@ -249,6 +253,11 @@ sensor_inputs:
     module: mcp3008_sensor
     interval: 300  # measurement every 5min
     channel: CH4 # measure on CH4 of MCP3008
+
+  - name: ads1115_voltage
+    module: ads1115_sensor
+    interval: 150  # measurement every 5min
+    channel: CH0 # measure on CH0 of ADS1115
 ```
 
 ### Streams
