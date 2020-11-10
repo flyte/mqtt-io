@@ -126,6 +126,9 @@ digital_inputs:
     bouncetime: 200
 ```
 
+Also, you can use interrupt_payload: "ON" in pair with interrupt_payload_reset: "OFF" for HomeAssistant. 
+E.g. motion sensors could be integrated more seamlessly like that.
+
 ### Modules
 
 The IO modules are pluggable and multiple may be used at once. For example, if you have a Raspberry PI with some GPIO pins in use and also a PCF8574 IO expander on the I2C bus, you'd list two modules in the `gpio_modules` section and set up the inputs and outputs accordingly:
