@@ -918,6 +918,14 @@ def gpio_interrupt_callback(module, pin):
         payload=in_conf["interrupt_payload"],
         retain=in_conf["retain"],
     )
+    # publish reset payload of the interrupt trigger
+    # For example, HomeAssistant motion sensor should send clear signal (OFF) after motion one (ON)
+    if in_conf["interrupt_payload_reset"]:
+        client.publish(
+            "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+            payload=in_conf["interrupt_payload_reset"],
+            retain=in_conf["retain"],
+        )
 
 
 def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):

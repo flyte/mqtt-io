@@ -253,6 +253,11 @@ mosquitto_sub -h <broker url> -t <topic prefix>/stream/serialrx -N
 mosquitto_pub -h <broker url> -t <topic prefix>/stream/serialtx -m "testing123\r\n"
 ```
 
+Also, you can use `interrupt_payload: "ON"` in pair with `interrupt_payload_reset: "OFF"` for HomeAssistant. 
+
+E.g. motion sensors could be integrated more seamlessly like that.
+
+
 ### OrangePi boards
 
 You need to specify what OrangePi board you use
