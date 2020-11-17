@@ -47,7 +47,7 @@ class SchemaCommand(Command):
 
 setup(
     name="pi_mqtt_gpio",
-    version="0.5.2",
+    version="0.5.2-irq-reset",
     cmdclass={"insert_schema": SchemaCommand},
     packages=find_packages(
         exclude=[
