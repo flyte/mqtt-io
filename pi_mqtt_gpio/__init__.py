@@ -207,6 +207,10 @@ digital_inputs:
         type: string
         required: no
         default: "INT"
+      interrupt_payload_reset:
+        type: string
+        required: no
+        default: "INT"
       pullup:
         type: boolean
         required: no
