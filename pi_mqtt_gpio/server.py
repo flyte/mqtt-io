@@ -1157,7 +1157,7 @@ def main(args):
         initialise_stream(stream_conf, STREAM_MODULES[stream_conf["module"]])
 
     try:
-        client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
+        client.connect(config["mqtt"]["host"], config["mqtt"]["port"], config["mqtt"]["keepalive"])
     except socket.error as err:
         _LOG.fatal("Unable to connect to MQTT server: %s" % err)
         sys.exit(1)
