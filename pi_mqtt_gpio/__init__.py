@@ -232,7 +232,16 @@ digital_inputs:
       retain:
         type: boolean
         required: no
-        default: no
+        default: no  
+      last_polled_time:
+        type: datetime
+        required: no
+        default: 2020-12-28 14:48:36.401444      
+      interval:
+        type: integer
+        required: no        
+        default: 200
+        min: 1
 
 digital_outputs:
   type: list

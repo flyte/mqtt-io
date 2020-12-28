@@ -16,6 +16,7 @@ from functools import reduce
 
 import paho.mqtt.client as mqtt
 import cerberus
+import datetime
 
 from pi_mqtt_gpio import CONFIG_SCHEMA
 from pi_mqtt_gpio.modules import PinPullup, PinDirection, InterruptEdge, BASE_SCHEMA
@@ -1211,23 +1212,7 @@ def main(args):
             for in_conf in digital_inputs:
                 # Only read pins that are not configured as interrupt.
                 # Read interrupts once at startup (startup_read)
-                if in_conf["interrupt"] != "none":
-                    continue
-                gpio = GPIO_MODULES[in_conf["module"]]
-                state = get_pin(in_conf, gpio)
-                sleep(0.01)
-                if get_pin(in_conf, gpio) != state:
-                    continue
-                if state != LAST_STATES[in_conf["name"]]:
-                    _LOG.info(
-                        "Polling: Input %r state changed to %r", in_conf["name"], state
-                    )
-                    client.publish(
-                        "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
-                        payload=(
-                            in_conf["on_payload"] if state else in_conf["off_payload"]
                         ),
-                        retain=in_conf["retain"],
                     )
                     LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
