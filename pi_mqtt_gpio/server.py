@@ -1212,11 +1212,31 @@ def main(args):
             for in_conf in digital_inputs:
                 # Only read pins that are not configured as interrupt.
                 # Read interrupts once at startup (startup_read)
-                        ),
-                    )
-                    LAST_STATES[in_conf["name"]] = state
+                TIMEDIFF = datetime.datetime.now() - in_conf["last_polled_time"]
+                if (TIMEDIFF.total_seconds() * 1000) > in_conf["interval"]:
+                    in_conf["last_polled_time"] = datetime.datetime.now()
+                    # only read pins, that are not configured as interrupt. Read interrupts once at startup (startup_read)
+                    if in_conf["interrupt"] == "none":
+                        gpio = GPIO_MODULES[in_conf["module"]]                        
+                        state = gpio.get_pin(in_conf["pin"])
+                        #if bool(gpio.get_pin(in_conf["pin"])) != state:
+                        #    continue
+                        if state != LAST_STATES[in_conf["name"]]:
+                            _LOG.info(
+                                "Polling: Input %r state changed to %r",
+                                in_conf["name"],
+                                state,
+                            )
+                            client.publish(
+                                "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
+                                payload=(
+                                    in_conf["on_payload"] if state else in_conf["off_payload"]
+                                ),
+                                retain=in_conf["retain"],
+                            )
+                            LAST_STATES[in_conf["name"]] = state
             scheduler.loop()
-            sleep(0.01)
+            sleep(0.001)
     except KeyboardInterrupt:
         print("")
     finally:
