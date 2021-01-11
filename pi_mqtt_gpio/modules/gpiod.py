@@ -33,7 +33,6 @@ class GPIO(GenericGPIO):
         self.io = gpio
         self.chip = gpio.chip(config["chip"])
         self.pins = {}
-        self.watchers = {}
 
         DIRECTIONS = {PinDirection.INPUT: gpio.line_request.DIRECTION_INPUT, PinDirection.OUTPUT: gpio.line_request.DIRECTION_OUTPUT}
 
@@ -79,13 +78,12 @@ class GPIO(GenericGPIO):
         config = self.io.line_request()
         config.consumer = 'pi-mqtt-gpio'
         config.request_type = INTERRUPT[edge]
-        
-        t = GpioThread(chip=self.chip, offset=pin, config=config, 
-                callback=callback, bouncetime=bouncetime)
+
+        t = GpioThread(chip=self.chip, offset=pin, config=config,
+                callback=self.interrupt_callback, bouncetime=bouncetime)
         t.start()
 
-        self.watchers[offset] = t
-        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[offset] = {"handle": t.handle,
+        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin] = {"handle": handle,
                                                     "callback": callback}
 
     def set_pin(self, pin, value):
@@ -103,9 +101,10 @@ class GpioThread(threading.Thread):
     def __init__(self, chip, offset, config, callback, bouncetime):
         super().__init__()
         self.daemon = True
-        self._queue = queue.Queue()
 
-        self.pin = chip.get_line(offset)
+        self.offset = offset
+        self.pin = chip.get_line(self.offset)
+        self.pin.release()
         self.pin.request(config)
         self.callback = callback
         self.bouncetime = timedelta(microseconds=bouncetime)
@@ -113,23 +112,9 @@ class GpioThread(threading.Thread):
     def run(self):
         previous_event_time = datetime.now()
         while True:
-            if self.pin.event_wait():
+            if self.pin.event_wait(timedelta(seconds=10)):
                 event = self.pin.event_read()
+                event.timestamp = datetime.now()
                 if event.timestamp - previous_event_time > self.bouncetime:
                     previous_event_time = event.timestamp
-
-                    ret = self.callback()
-                    self._queue.put(
-                        {
-                            "type": event.event_type,
-                            "time": event.timestamp,
-                            "result": ret,
-                        }
-                    )
-
-    @property
-    def handle(self):
-        if self._queue.empty():
-            return None
-
-        return self._queue.get()
+                    self.callback(self.offset)
