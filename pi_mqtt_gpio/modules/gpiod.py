@@ -49,21 +49,18 @@ class GPIO(GenericGPIO):
         direction:  input or output
         pullup:     pullup settings are not supported
         """
-        line_direction = DIRECTIONS[direction]
-        offset = pin
-
         # Pullup settings are called bias in libgpiod and are only
         # available since Linux Kernel 5.5. They are as of now not 
         # yet part of python3-gpiod.
 
-        pin = self.chip.get_line(offset)
+        line = self.chip.get_line(pin)
 
         config = self.io.line_request()
         config.consumer = 'pi-mqtt-gpio'
-        config.request_type = line_direction
+        config.request_type = DIRECTIONS[direction]
 
-        pin.request(config)
-        self.pins[offset] = pin
+        line.request(config)
+        self.pins[pin] = line
 
     def setup_interrupt(self, handle, pin, edge, callback, bouncetime=100):
         """
