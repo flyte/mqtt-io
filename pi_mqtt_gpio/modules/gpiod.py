@@ -1,7 +1,9 @@
 from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, \
                                  InterruptEdge
 
-from threading import Thread
+import threading
+import queue
+from datetime import datetime, timedelta
 
 # Requires libgpiod-devel, libgpiod
 REQUIREMENTS = ("gpiod",)
@@ -18,7 +20,6 @@ DIRECTIONS = None
 PULLUPS = None
 INTERRUPT = None
 GPIO_INTERRUPT_CALLBACK_LOOKUP = {}
-
 
 class GPIO(GenericGPIO):
     """
@@ -74,20 +75,17 @@ class GPIO(GenericGPIO):
         callback:   the callback function to be called, when interrupt occurs
         bouncetime: minimum time between two interrupts
         """
-        edge = INTERRUPT[edge]
-        offset = pin
-
-        pin = self.chip.get_line(offset)
 
         config = self.io.line_request()
         config.consumer = 'pi-mqtt-gpio'
-        config.request_type = edge
+        config.request_type = INTERRUPT[edge]
         
-        t = Thread(target=self._event_detect, args=(pin,self.interrupt_callback,))
+        t = GpioThread(chip=self.chip, offset=pin, config=config, 
+                callback=callback, bouncetime=bouncetime)
         t.start()
 
         self.watchers[offset] = t
-        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[offset] = {"handle": handle,
+        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[offset] = {"handle": t.handle,
                                                     "callback": callback}
 
     def set_pin(self, pin, value):
@@ -101,7 +99,37 @@ class GPIO(GenericGPIO):
     def cleanup(self):
         pass
 
-    def _event_detect(self, pin, callback):
+class GpioThread(threading.Thread):
+    def __init__(self, chip, offset, config, callback, bouncetime):
+        super().__init__()
+        self.daemon = True
+        self._queue = queue.Queue()
+
+        self.pin = chip.get_line(offset)
+        self.pin.request(config)
+        self.callback = callback
+        self.bouncetime = timedelta(microseconds=bouncetime)
+
+    def run(self):
+        previous_event_time = datetime.now()
         while True:
-            if pin.event_wait():
-                callback()
+            if self.pin.event_wait():
+                event = self.pin.event_read()
+                if event.timestamp - previous_event_time > self.bouncetime:
+                    previous_event_time = event.timestamp
+
+                    ret = self.callback()
+                    self._queue.put(
+                        {
+                            "type": event.event_type,
+                            "time": event.timestamp,
+                            "result": ret,
+                        }
+                    )
+
+    @property
+    def handle(self):
+        if self._queue.empty():
+            return None
+
+        return self._queue.get()
