@@ -66,28 +66,6 @@ class GPIO(GenericGPIO):
         pin.request(config)
         self.pins[offset] = pin
 
-    def setup_interrupt(self, handle, pin, edge, callback, bouncetime=100):
-        """
-        install interrupt callback function
-        handle:     is returned in the callback function as identification
-        pin:        gpio to watch for interrupts
-        edge:       triggering edge: RISING, FALLING or BOTH
-        callback:   the callback function to be called, when interrupt occurs
-        bouncetime: minimum time between two interrupts
-        """
-
-        config = self.io.line_request()
-        config.consumer = 'pi-mqtt-gpio'
-        config.request_type = INTERRUPT[edge]
-        
-        t = GpioThread(chip=self.chip, offset=pin, config=config, 
-                callback=callback, bouncetime=bouncetime)
-        t.start()
-
-        self.watchers[offset] = t
-        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[offset] = {"handle": t.handle,
-                                                    "callback": callback}
-
     def set_pin(self, pin, value):
         offset = pin
         self.pins[offset].set_value(value)
@@ -98,38 +76,3 @@ class GPIO(GenericGPIO):
 
     def cleanup(self):
         pass
-
-class GpioThread(threading.Thread):
-    def __init__(self, chip, offset, config, callback, bouncetime):
-        super().__init__()
-        self.daemon = True
-        self._queue = queue.Queue()
-
-        self.pin = chip.get_line(offset)
-        self.pin.request(config)
-        self.callback = callback
-        self.bouncetime = timedelta(microseconds=bouncetime)
-
-    def run(self):
-        previous_event_time = datetime.now()
-        while True:
-            if self.pin.event_wait():
-                event = self.pin.event_read()
-                if event.timestamp - previous_event_time > self.bouncetime:
-                    previous_event_time = event.timestamp
-
-                    ret = self.callback()
-                    self._queue.put(
-                        {
-                            "type": event.event_type,
-                            "time": event.timestamp,
-                            "result": ret,
-                        }
-                    )
-
-    @property
-    def handle(self):
-        if self._queue.empty():
-            return None
-
-        return self._queue.get()
