@@ -6,6 +6,14 @@ from threading import Thread
 # Requires libgpiod-devel, libgpiod
 REQUIREMENTS = ("gpiod",)
 
+CONFIG_SCHEMA = {
+    "chip": {
+        "type": "string",
+        "required": False,
+        "default": "/dev/gpiochip0"
+    }
+}
+
 DIRECTIONS = None
 PULLUPS = None
 INTERRUPT = None
