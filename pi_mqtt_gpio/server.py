@@ -967,7 +967,7 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
     )  # TODO: Unify with MQTT Client ID
     sensor_name = out_conf["name"]
     sensor_config = {
-        "name": sensor_name,
+        "name": out_conf.get("display_name", None) or sensor_name,
         "unique_id": "%s_%s_output_%s" % (device_id, out_conf["module"], sensor_name),
         "state_topic": "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"]),
         "command_topic": "%s/%s/%s/%s"
@@ -1005,7 +1005,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
     )  # TODO: Unify with MQTT Client ID
     sensor_name = in_conf["name"]
     sensor_config = {
-        "name": sensor_name,
+        "name": out_conf.get("display_name", None) or sensor_name,
         "unique_id": "%s_%s_output_%s" % (device_id, in_conf["module"], sensor_name),
         "state_topic": "%s/%s/%s" % (topic_prefix, SENSOR_TOPIC, in_conf["name"]),
         "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),

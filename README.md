@@ -403,6 +403,17 @@ mqtt:
   discovery_name: "device1" # optional
 ```
 
+The optional value `display_name` can be used to set an human readable name that will be displayed instead of the technical name `name`:
+
+```yaml
+sensor_inputs:
+  - name: lm75_temperature
+    display_name: LM75 Temperature # optional
+    module: lm75_sensor
+    interval: 15
+    digits: 4
+```
+
 ### Logging
 
 Logging may be configured by including a `logging` section in your `config.yml`. The standard Python logging system is used, so configuration questions should be answered by looking at [the Python logging howto](https://docs.python.org/3/howto/logging.html).

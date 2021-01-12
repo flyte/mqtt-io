@@ -181,6 +181,10 @@ digital_inputs:
         type: string
         required: yes
         empty: no
+      display_name:
+        type: string
+        required: no
+        empty: no
       module:
         type: string
         required: yes
@@ -244,6 +248,10 @@ digital_outputs:
       name:
         type: string
         required: yes
+      display_name:
+        type: string
+        required: no
+        empty: no
       module:
         type: string
         required: yes
@@ -295,6 +303,10 @@ sensor_inputs:
       name:
         type: string
         required: yes
+        empty: no
+      display_name:
+        type: string
+        required: no
         empty: no
       module:
         type: string
