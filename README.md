@@ -392,6 +392,17 @@ mqtt:
   topic_prefix: home/office
 ```
 
+#### HomeAssistant discovery
+
+Metadata of all `sensor_inputs`, `digital_inputs` and `digital_outputs` can be published via HomeAssistant config messages to be discovered by a HomeAssistant instance that is listening on the same MQTT broker:
+
+```yaml
+mqtt:
+  discovery: yes
+  discovery_prefix: "homeassistant" # optional
+  discovery_name: "device1" # optional
+```
+
 ### Logging
 
 Logging may be configured by including a `logging` section in your `config.yml`. The standard Python logging system is used, so configuration questions should be answered by looking at [the Python logging howto](https://docs.python.org/3/howto/logging.html).
