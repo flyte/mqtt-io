@@ -13,10 +13,10 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - run: pip install pytest mock -r requirements.txt
-      - run: make schema
       - run: pip install black
         if: matrix.python-version != '2.7'
+      - run: pip install pytest mock -r requirements.txt
+      - run: make schema
       - run: make black
         if: matrix.python-version != '2.7'
       - run: PYTHONPATH=$GITHUB_WORKSPACE py.test -m "not hw_raspberrypi and not mqtt"
