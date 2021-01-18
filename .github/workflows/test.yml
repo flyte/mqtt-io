@@ -3,11 +3,16 @@ on: push
 
 jobs:
   test:
-    name: Run tests with tox
+    name: Run tests
     runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        python-version: ["2.7", "3.6"]
     steps:
       - uses: actions/checkout@v2
-
-      - name: Run tox
-        uses: docker://python:3.6
-        run: tox -e py36
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install black pytest mock
+      - run: make schema
+      - run: py.test -m "not hw_raspberrypi and not mqtt"
