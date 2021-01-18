@@ -7,7 +7,7 @@ stages:
     if: tag =~ ^\d+\.\d+\.\d+$
 
 install:
-  - pip install tox
+  - pip install tox black
 
 jobs:
   include:
