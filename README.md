@@ -13,6 +13,7 @@ GPIO Modules
 - PCF8575 IO chip (`pcf8575`)
 - PiFaceDigital 2 IO board (`piface2`)
 - Beaglebone GPIO (`beaglebone`)
+- Linux Kernel 4.8+ libgpiod (`gpiod`)
 
 Sensors
 -------
