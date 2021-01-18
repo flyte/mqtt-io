@@ -15,4 +15,4 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install black pytest mock -r requirements.txt
       - run: make schema
-      - run: PYTHONPATH=${{ GITHUB_WORKSPACE }} py.test -m "not hw_raspberrypi and not mqtt"
+      - run: PYTHONPATH=$GITHUB_WORKSPACE py.test -m "not hw_raspberrypi and not mqtt"
