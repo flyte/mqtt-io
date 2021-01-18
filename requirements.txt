@@ -1,3 +1,4 @@
 paho-mqtt
 PyYAML>=5.3.1
+enum34
 cerberus
