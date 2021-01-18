@@ -9,7 +9,6 @@ import threading
 from functools import reduce
 from hashlib import sha1
 from importlib import import_module
-from math import gcd
 from time import sleep, time
 
 import cerberus
@@ -19,6 +18,11 @@ import yaml
 from pi_mqtt_gpio import CONFIG_SCHEMA
 from pi_mqtt_gpio.modules import BASE_SCHEMA, InterruptEdge, PinDirection, PinPullup
 from pi_mqtt_gpio.scheduler import Scheduler, Task
+
+try:
+    from math import gcd
+except ImportError:
+    from fractions import gcd
 
 LOG_LEVEL_MAP = {
     mqtt.MQTT_LOG_INFO: logging.INFO,
