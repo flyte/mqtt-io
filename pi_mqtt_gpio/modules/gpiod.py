@@ -1,5 +1,4 @@
-from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, \
-                                 InterruptEdge
+from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, InterruptEdge
 
 import threading
 import queue
@@ -9,17 +8,14 @@ from datetime import datetime, timedelta
 REQUIREMENTS = ("gpiod",)
 
 CONFIG_SCHEMA = {
-    "chip": {
-        "type": "string",
-        "required": False,
-        "default": "/dev/gpiochip0"
-    }
+    "chip": {"type": "string", "required": False, "default": "/dev/gpiochip0"}
 }
 
 DIRECTIONS = None
 PULLUPS = None
 INTERRUPT = None
 GPIO_INTERRUPT_CALLBACK_LOOKUP = {}
+
 
 class GPIO(GenericGPIO):
     """
@@ -34,12 +30,15 @@ class GPIO(GenericGPIO):
         self.chip = gpio.chip(config["chip"])
         self.pins = {}
 
-        DIRECTIONS = {PinDirection.INPUT: gpio.line_request.DIRECTION_INPUT, PinDirection.OUTPUT: gpio.line_request.DIRECTION_OUTPUT}
+        DIRECTIONS = {
+            PinDirection.INPUT: gpio.line_request.DIRECTION_INPUT,
+            PinDirection.OUTPUT: gpio.line_request.DIRECTION_OUTPUT,
+        }
 
         INTERRUPT = {
             InterruptEdge.RISING: gpio.line_request.EVENT_RISING_EDGE,
             InterruptEdge.FALLING: gpio.line_request.EVENT_FALLING_EDGE,
-            InterruptEdge.BOTH: gpio.line_request.EVENT_BOTH_EDGES
+            InterruptEdge.BOTH: gpio.line_request.EVENT_BOTH_EDGES,
         }
 
     def setup_pin(self, pin, direction, pullup, pin_config):
@@ -50,13 +49,13 @@ class GPIO(GenericGPIO):
         pullup:     pullup settings are not supported
         """
         # Pullup settings are called bias in libgpiod and are only
-        # available since Linux Kernel 5.5. They are as of now not 
+        # available since Linux Kernel 5.5. They are as of now not
         # yet part of python3-gpiod.
 
         line = self.chip.get_line(pin)
 
         config = self.io.line_request()
-        config.consumer = 'pi-mqtt-gpio'
+        config.consumer = "pi-mqtt-gpio"
         config.request_type = DIRECTIONS[direction]
 
         line.request(config)
@@ -73,15 +72,22 @@ class GPIO(GenericGPIO):
         """
 
         config = self.io.line_request()
-        config.consumer = 'pi-mqtt-gpio'
+        config.consumer = "pi-mqtt-gpio"
         config.request_type = INTERRUPT[edge]
 
-        t = GpioThread(chip=self.chip, offset=pin, config=config,
-                callback=self.interrupt_callback, bouncetime=bouncetime)
+        t = GpioThread(
+            chip=self.chip,
+            offset=pin,
+            config=config,
+            callback=self.interrupt_callback,
+            bouncetime=bouncetime,
+        )
         t.start()
 
-        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin] = {"handle": handle,
-                                                    "callback": callback}
+        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin] = {
+            "handle": handle,
+            "callback": callback,
+        }
 
     def set_pin(self, pin, value):
         offset = pin
@@ -93,6 +99,7 @@ class GPIO(GenericGPIO):
 
     def cleanup(self):
         pass
+
 
 class GpioThread(threading.Thread):
     def __init__(self, chip, offset, config, callback, bouncetime):

@@ -7,7 +7,7 @@ from time import sleep
 BASE_SCHEMA = {
     "name": {"required": True, "empty": False},
     "module": {"required": True, "empty": False},
-    "cleanup": {"required": False, "type": "boolean", "default": True}
+    "cleanup": {"required": False, "type": "boolean", "default": True},
 }
 
 
