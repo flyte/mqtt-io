@@ -37,9 +37,9 @@ jobs:
       - run: make black
         if: matrix.python-version != '2.7'
       - run: pip install build
-      - run: build --wheel --outdir dist/ .
+      - run: python -m build --wheel --outdir dist/ .
         if: matrix.python-version == '2.7'
-      - run: build --sdist --wheel --outdir dist/ .
+      - run: python -m build --sdist --wheel --outdir dist/ .
         if: matrix.python-version == '3.6'
       - uses: pypa/gh-action-pypi-publish@master
         with:
