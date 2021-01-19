@@ -21,7 +21,7 @@ jobs:
         if: matrix.python-version != '2.7'
       - run: PYTHONPATH=$GITHUB_WORKSPACE py.test -m "not hw_raspberrypi and not mqtt"
   publish:
-    name: Publish to PyPI
+    name: Publish to PyPI if tagged
     runs-on: ubuntu-18.04
     needs: test
     strategy:
