@@ -4,7 +4,7 @@
 
 Exposes general purpose IO (GPIO), hardware sensors and serial devices to an MQTT server, enabling remote monitoring and control. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values.
 
-Visit the [GitHub Wiki](/flyte/pi-mqtt-gpio/wiki/Home) for more detailed information.
+Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for more detailed information.
 
 ## Supported Hardware
 
