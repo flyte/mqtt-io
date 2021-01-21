@@ -1,7 +1,10 @@
-MQTT IO
+# MQTT IO
+
 [![Discord](https://img.shields.io/discord/713749043662290974.svg?label=Chat%20on%20Discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/gWyV9W4)
 
-Exposes general purpose IO (GPIO), hardware sensors and serial devices to an MQTT server, enabling remote monitoring and control. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values. 
+Exposes general purpose IO (GPIO), hardware sensors and serial devices to an MQTT server, enabling remote monitoring and control. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values.
+
+Visit the [GitHub Wiki](/flyte/pi-mqtt-gpio/wiki/Home) for more detailed information.
 
 ## Supported Hardware
 
