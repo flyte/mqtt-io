@@ -1,11 +1,11 @@
-PI MQTT GPIO
-============
+MQTT IO
 [![Discord](https://img.shields.io/discord/713749043662290974.svg?label=Chat%20on%20Discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/gWyV9W4)
 
-Expose the Raspberry Pi GPIO pins, external IO modules, streams and I2C sensors to an MQTT server. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values. 
+Exposes general purpose IO (GPIO), hardware sensors and serial devices to an MQTT server, enabling remote monitoring and control. This allows pins to be read and switched by reading or writing messages to MQTT topics. The streams and I2C sensors will be read periodically and publish their values. 
 
-GPIO Modules
-------------
+## Supported Hardware
+
+### GPIO Modules
 
 - Raspberry Pi GPIO (`raspberrypi`)
 - Orange Pi GPIO (`orangepi`)
@@ -15,8 +15,7 @@ GPIO Modules
 - Beaglebone GPIO (`beaglebone`)
 - Linux Kernel 4.8+ libgpiod (`gpiod`)
 
-Sensors
--------
+### Sensors
 
 - LM75 i2c temperature sensor (`lm75`)
 - DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
@@ -25,24 +24,25 @@ Sensors
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
 - MCP3008 analog digital converter (`mcp3008`)
 
-Streams
--------
+### Streams
 
 - Serial port (`streamserial`)
 
-Installation
-------------
+## Installation
 
 `pip install pi-mqtt-gpio`
 
-Execution
----------
+## Execution
+
 `python -m pi_mqtt_gpio.server config.yml`
 
-Configuration
--------------
+## Configuration
 
 Configuration is handled by a YAML file which is passed as an argument to the server on startup.
+
+[Full configuration documentation](https://github.com/flyte/pi-mqtt-gpio/wiki/Configuration) is available on the GitHub Wiki.
+
+The following are some example configurations.
 
 ### Pins
 
@@ -51,31 +51,20 @@ With the following example config, switch pin 21 on by publishing to the `home/k
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
   topic_prefix: home/kitchen
 
 gpio_modules:
-  - name: raspberrypi
+  - name: pi_gpio
     module: raspberrypi
 
 digital_outputs:
   - name: lights
-    module: raspberrypi
+    module: pi_gpio
     pin: 21 # This is specified as the GPIO.BCM standard, not GPIO.BOARD
-    on_payload: "ON"
-    off_payload: "OFF"
-    initial: low  # This optional value controls the initial state of the pin before receipt of any messages from MQTT. Valid options are 'low' and 'high'.
-    retain: yes # This option value controls if the message is retained. Default is no.
-    publish_initial: yes # Publish the initial value of the output on startup. Default is no.
 
   - name: fan
-    module: raspberrypi
+    module: pi_gpio
     pin: 22
-    inverted: yes  # This pin may control an open-collector output which is "on" when the output is "low".
-    on_payload: "ON"
-    off_payload: "OFF"
 ```
 
 Or to receive updates on the status of an input pin, subscribe to the `home/input/doorbell` topic:
@@ -83,48 +72,16 @@ Or to receive updates on the status of an input pin, subscribe to the `home/inpu
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
   topic_prefix: home
 
 gpio_modules:
-  - name: raspberrypi
+  - name: pi_gpio
     module: raspberrypi
-    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
 
 digital_inputs:
   - name: doorbell
-    module: raspberrypi
+    module: pi_gpio
     pin: 22
-    on_payload: "ON"
-    off_payload: "OFF"
-    pullup: yes
-    pulldown: no
-```
-
-#### Temporary Set
-
-You may want to set the output to a given value for a certain amount of time. This can be done using the `/set_on_ms` and `/set_off_ms` topics. If an output is already set to that value, it will stay that value for the given amount of milliseconds and then switch to the opposite.
-
-For example, to set an output named `light` on for one second, publish `1000` as the payload to the `myprefix/output/light/set_on_ms` topic.
-
-If you want to force an output to always set to on/off for a configured amount of time, you can add `timed_set_ms` to your output config. This will mean that if you send "ON" to `myprefix/output/light/set`, then it will turn the light on for however many milliseconds are configured in `timed_set_ms` and then turn it off again. Whether the light is on already or not, sending "ON" will make the light eventually turn off after `timed_set_ms` milliseconds. This also works inversely with sending "OFF", which will turn the light off, then on after `timed_set_ms` milliseconds, so don't expect this to always keep your devices set to on/off.
-
-#### Interrupts
-
-Interrupts may be used for inputs instead of polling for raspberry modules. Specify `interrupt` and a strategy `rising`, `falling` or `both` to switch from polling to interrupt mode. The `bouncetime` is default `100ms` but may be changed (at least 1ms). The interrupt trigger will send a configurable `interrupt_payload` (default: `"INT"`) and not the current value of the pin: reading the current pin value in the ISR, returned 'old' values. Reading again in the ISR after 100ms gave 'changed' value, but waiting in ISR is not a good solution. So only a trigger message is transmitted on each ISR trigger.
-
-```yaml
-digital_inputs:
-  - name: button_left
-    module: raspberrypi
-    pin: 23
-    interrupt_payload: "trigger"
-    pullup: no
-    pulldown: yes
-    interrupt: falling
-    bouncetime: 200
 ```
 
 ### Modules
@@ -134,40 +91,27 @@ The IO modules are pluggable and multiple may be used at once. For example, if y
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
   topic_prefix: pimqttgpio/mydevice
 
 gpio_modules:
-  - name: raspberrypi
+  - name: pi_gpio
     module: raspberrypi
 
-  - name: pcf8574
+  - name: pcf_expander1
     module: pcf8574
     i2c_bus_num: 1
     chip_addr: 0x20
 
-  - name: orangepi
-    module: orangepi
-    board: r1
-    mode: board
-
 digital_inputs:
   - name: button
-    module: raspberrypi
+    module: pi_gpio
     pin: 21  # This device is connected to pin 21 of the Raspberry PI GPIO
-    on_payload: "ON"
-    off_payload: "OFF"
-    pullup: no
-    pulldown: yes
+    pullup: yes
 
 digital_outputs:
   - name: bell
-    module: pcf8574
+    module: pcf_expander1
     pin: 2  # This device is connected to pin 2 of the PCF8574 IO expander
-    on_payload: "ON"
-    off_payload: "OFF"
 ```
 
 ### Sensors
@@ -177,9 +121,6 @@ Receive updates on the value of a sensor by subscribing to the `home/sensor/<sen
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
   topic_prefix: home
 
 sensor_modules:
@@ -187,11 +128,10 @@ sensor_modules:
     module: lm75
     i2c_bus_num: 1
     chip_addr: 0x48
-    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
 
   - name: dht22_sensor
     module: dht22
-    type: AM2302 # can be  DHT11, DHT22 or AM2302
+    type: AM2302
     pin: 4
 
   - name: bh1750_sensor
@@ -216,56 +156,53 @@ sensor_modules:
 sensor_inputs:
   - name: lm75_temperature
     module: lm75_sensor
-    interval: 15 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
+    interval: 15 # interval in seconds that a value is read from the sensor and a update is published
+    digits: 4 # number of digits to round the value by
 
-- name: dht22_temperature 
+  - name: dht22_temperature 
     module: dht22_sensor
-    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-    type: temperature # Can be temperature or humidity
+    interval: 10
+    digits: 4
+    type: temperature # can be temperature or humidity
 
-- name: dht22_humidity 
+  - name: dht22_humidity 
     module: dht22_sensor
-    interval: 10 #interval in seconds, that a value is read from the sensor and a update is published
-    digits: 4 # number of digits to be round
-    type: humidity # Can be temperature or humidity   
+    interval: 10
+    digits: 4
+    type: humidity
 
-- name: bh1750_lux
+  - name: bh1750_lux
     module: bh1750_sensor
     interval: 10
     digits: 2
 
-- name: ds18b22_temperature
+  - name: ds18b22_temperature
     module: ds18b22_sensor
     interval: 60
     digits: 2
 
   - name: hcsr04_distance
     module: hcsr04_sensor
-    interval: 10  # measurement every 10s
+    interval: 10  # take a measurement every 10s
     digits: 1
-    
+
   - name: mcp3008_voltage
     module: mcp3008_sensor
-    interval: 300  # measurement every 5min
+    interval: 300
     channel: CH4 # measure on CH4 of MCP3008
 ```
 
 ### Streams
 
-Transmit data by publishing to the `home/stream/<stream write name>` topic. In the following example, this would be `home/stream/serialtx`.
+Transmit data by publishing to the `home/stream/<stream_write_name>` topic. In the following example, this would be `home/stream/serialtx`.
 
-Receive data from a stream by subscribing to the `home/stream/<stream read name>` topic. In the following example, this would be `home/stream/serialrx`.
+Receive data from a stream by subscribing to the `home/stream/<stream_read_name>` topic. In the following example, this would be `home/stream/serialrx`.
 
 The stream data is parsed using Python's `string_escape` to allow the transfer of control characters.
 
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
   topic_prefix: home
 
 stream_modules:
@@ -308,118 +245,8 @@ gpio_modules:
     board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
     mode: board
 ```
-### MQTT configuration
 
-#### SSL/TLS
-
-You may want to connect to a remote server, in which case it's a good idea to use an encrypted connection. If the server supports this, then you can supply the relevant config values for the [tls_set()](https://github.com/eclipse/paho.mqtt.python#tls_set) command.
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 8883
-  tls:
-    enabled: yes
-```
-
-You may need to supply a trusted CA certificate, as instructed on https://test.mosquitto.org/.
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 8883
-  tls:
-    enabled: yes
-    ca_certs: mosquitto.org.crt
-```
-
-Or you might want to use SSL/TLS but not verify the server's certificate (not recommended).
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  port: 8883
-  tls:
-    enabled: yes
-    cert_reqs: CERT_NONE
-    insecure: yes
-```
-
-#### MQTT Status Topic
-
-MQTT supports a "last will and testament" (LWT) feature which means the server will publish to a configured topic with a message of your choosing if it loses connection to the client unexpectedly. Using this feature, this project can be configured to publish to a status topic as depicted in the following example config:
-
-```yaml
-mqtt:
-  ...
-  status_topic: status
-  status_payload_running: running
-  status_payload_stopped: stopped
-  status_payload_dead: dead
-```
-
-These are in fact the default values should the configuration not be provided, but they can be changed to whatever is desired. The `status_topic` will be appended to the configured `topic_prefix`, if any. For example, with the following config:
-
-```yaml
-mqtt:
-  ...
-  topic_prefix: home/office
-  status_topic: status
-```
-
-the status messages will appear on topic `home/office/status`.
-
-#### MQTT Client ID
-
-The MQTT client ID identifies your instance of pi-mqtt-gpio with your MQTT broker. It allows the broker to keep track of the state of your instance so that it can resume when it reconnects. This means that the ID _must_ be unique for each instance that connects to the MQTT broker.
-
-Since the MQTT client ID for each instance of pi-mqtt-gpio is based on the `topic_prefix` supplied in config (#24), having multiple instances share the same `topic_prefix` will require you to set a different `client_id` for each:
-
-##### Device 1
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  client_id: pi-mqtt-gpio-device1
-  topic_prefix: home/office
-```
-
-##### Device 2
-
-```yaml
-mqtt:
-  host: test.mosquitto.org
-  client_id: pi-mqtt-gpio-device2
-  topic_prefix: home/office
-```
-
-### Logging
-
-Logging may be configured by including a `logging` section in your `config.yml`. The standard Python logging system is used, so configuration questions should be answered by looking at [the Python logging howto](https://docs.python.org/3/howto/logging.html).
-
-The default config is set as follows. If you wish to change this, copy and paste this section into your `config.yml` and change whichever parts you'd like.
-
-```yaml
-logging:
-  version: 1
-  formatters:
-    simple:
-      format: "%(asctime)s %(name)s (%(levelname)s): %(message)s"
-  handlers:
-    console:
-      class: logging.StreamHandler
-      level: DEBUG
-      formatter: simple
-      stream: ext://sys.stdout
-  loggers:
-    mqtt_gpio:
-      level: INFO
-      handlers: [console]
-      propagate: yes
-```
-
-Serving Suggestion
-------------------
+## Serving Suggestion
 
 This project is not tied to any specific deployment method, but one recommended way is to use `virtualenv` and `supervisor`. This will launch the project at boot time and handle restarting and log file rotation. It's quite simple to set up:
 
@@ -465,8 +292,9 @@ sudo supervisorctl status
 
 Check the [supervisor docs](http://supervisord.org/running.html#supervisorctl-command-line-options) for more `supervisorctl` commands.
 
-Docker
-------
+## Docker
+
+_Current state: experimental and unmaintained_
 
 Two images have been created for Docker. One using the x86_64 architecture (for Intel and AMD CPUs) and one for the ARM architecture (for Raspberry Pi etc.). The tags of the images are therefore `flyte/mqtt-gpio:x86_64` and `flyte/mqtt-gpio:armv7l`. These are the outputs of `uname -m` on the two platforms they've been built on. For the following examples I'll assume you're running on Raspberry Pi.
 
