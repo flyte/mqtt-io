@@ -10,8 +10,6 @@ tox = "*"
 pylint = "*"
 
 [packages]
-paho-mqtt = "*"
-enum34 = "*"
 PyYAML = ">=5.3.1"
 Cerberus = "*"
 hbmqtt = "*"

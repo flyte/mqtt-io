@@ -2,11 +2,11 @@ import asyncio
 import logging
 import re
 import signal as signals
-from functools import partial, partialmethod
+from functools import partial
 from hashlib import sha1
 from importlib import import_module
 
-from hbmqtt.client import ClientException, MQTTClient
+from hbmqtt.client import MQTTClient
 from hbmqtt.mqtt.constants import QOS_1
 
 from .config import (
@@ -14,7 +14,6 @@ from .config import (
     validate_and_normalise_sensor_input_config,
 )
 from .events import EventBus
-from .exceptions import InvalidPayload
 from .io import DigitalInputChangedEvent, SensorReadEvent, digital_input_poller
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
@@ -91,6 +90,7 @@ class MqttGpio:
         self.unawaited_tasks = []
 
         self.event_bus = EventBus(self.loop)
+        self.mqtt = None
 
     # Init methods
 
