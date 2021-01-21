@@ -6,6 +6,22 @@ Exposes general purpose IO (GPIO), hardware sensors and serial devices to an MQT
 
 Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for more detailed information.
 
+- [MQTT IO](#mqtt-io)
+  - [Supported Hardware](#supported-hardware)
+    - [GPIO Modules](#gpio-modules)
+    - [Sensors](#sensors)
+    - [Streams](#streams)
+  - [Installation](#installation)
+  - [Execution](#execution)
+  - [Configuration](#configuration)
+    - [Pins](#pins)
+    - [Modules](#modules)
+    - [Sensors](#sensors-1)
+    - [Streams](#streams-1)
+    - [OrangePi boards](#orangepi-boards)
+  - [Serving Suggestion](#serving-suggestion)
+  - [Docker](#docker)
+
 ## Supported Hardware
 
 ### GPIO Modules
