@@ -310,7 +310,7 @@ class MqttGpio:
                     "on" if desired_value else "off",
                     secs,
                 )
-                await set_digital_output(module, output_config, desired_value)
+                await set_digital_output(module, output_config, value)
                 publish_payload = (
                     output_config["on_payload"]
                     if desired_value
@@ -329,7 +329,7 @@ class MqttGpio:
                     "off" if desired_value else "on",
                     secs,
                 )
-                await set_digital_output(module, output_config, not desired_value)
+                await set_digital_output(module, output_config, not value)
                 publish_payload = (
                     output_config["off_payload"]
                     if desired_value
