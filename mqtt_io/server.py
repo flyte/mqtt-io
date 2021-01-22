@@ -294,7 +294,8 @@ class MqttGpio:
             )
         else:
             desired_value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
-            value = desired_value != output_config["inverted"]
+            # This is handled by set_digital_output anyway
+            # value = desired_value != output_config["inverted"]
 
             async def set_ms():
                 try:
@@ -310,7 +311,7 @@ class MqttGpio:
                     "on" if desired_value else "off",
                     secs,
                 )
-                await set_digital_output(module, output_config, value)
+                await set_digital_output(module, output_config, desired_value)
                 publish_payload = (
                     output_config["on_payload"]
                     if desired_value
@@ -329,7 +330,7 @@ class MqttGpio:
                     "off" if desired_value else "on",
                     secs,
                 )
-                await set_digital_output(module, output_config, not value)
+                await set_digital_output(module, output_config, not desired_value)
                 publish_payload = (
                     output_config["off_payload"]
                     if desired_value
