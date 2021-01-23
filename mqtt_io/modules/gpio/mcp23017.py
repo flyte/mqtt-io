@@ -25,7 +25,7 @@ class GPIO(GenericGPIO):
 
         DIRECTIONS = {
             PinDirection.INPUT: digitalio.Direction.INPUT,
-            PinDirection.OUTPUT: digitalio.Diretion.OUTPUT,
+            PinDirection.OUTPUT: digitalio.Direction.OUTPUT,
         }
         # Pulldowns are not supported on MCP23017
         PULLUPS = {
