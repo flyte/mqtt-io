@@ -14,7 +14,12 @@ from .config import (
     validate_and_normalise_sensor_input_config,
 )
 from .events import EventBus
-from .io import DigitalInputChangedEvent, SensorReadEvent, digital_input_poller
+from .io import (
+    DigitalInputChangedEvent,
+    DigitalOutputChangedEvent,
+    SensorReadEvent,
+    digital_input_poller,
+)
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
@@ -49,21 +54,6 @@ def _init_module(module_config, module_type):
     module_config = validate_and_normalise_config(module_config, module_schema)
     install_missing_requirements(module)
     return getattr(module, MODULE_CLASS_NAMES[module_type])(module_config)
-
-
-async def set_digital_output(module, output_config, value):
-    """
-    Set a digital output, taking into account whether it's configured
-    to be inverted.
-    """
-    set_value = value != output_config["inverted"]
-    await module.async_set_pin(output_config["pin"], set_value)
-    _LOG.info(
-        "Digital output '%s' set to %s (%s)",
-        output_config["name"],
-        set_value,
-        "on" if value else "off",
-    )
 
 
 def output_name_from_topic(topic, prefix):
@@ -140,12 +130,24 @@ class MqttGpio:
         self.digital_output_configs = {
             x["name"]: x for x in self.config["digital_outputs"]
         }
+
+        # Set up MQTT publish callback for output event
+        async def publish_callback(event):
+            out_conf = self.digital_output_configs[event.output_name]
+            val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
+            await self.mqtt.publish(
+                "%s/output/%s" % (self.config["mqtt"]["topic_prefix"], event.output_name),
+                val.encode("utf8"),
+                qos=1,
+                retain=out_conf["retain"],
+            )
+
+        self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
+
         for out_conf in self.config["digital_outputs"]:
             self.gpio_modules[out_conf["module"]].setup_pin(
                 out_conf["pin"], PinDirection.OUTPUT, None, out_conf
             )
-            # TODO: Tasks pending completion -@flyte at 26/01/2020, 16:43:03
-            # If out_conf["publish_initial"] then publish what this has been set to.
 
             # Create queues for each module with an output
             if out_conf["module"] not in self.module_output_queues:
@@ -293,11 +295,15 @@ class MqttGpio:
                 (module, output_config, payload)
             )
         else:
+            # This must be a set_on_ms or set_off_ms topic
             desired_value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
-            # This is handled by set_digital_output anyway
-            # value = desired_value != output_config["inverted"]
 
             async def set_ms():
+                """
+                Create this task to directly set the outputs, as we don't want to tie up
+                the set_digital_output loop. Creating a bespoke task for the job is the
+                simplest and most effective way of leveraging the asyncio framework.
+                """
                 try:
                     secs = float(payload) / 1000
                 except ValueError:
@@ -311,18 +317,7 @@ class MqttGpio:
                     "on" if desired_value else "off",
                     secs,
                 )
-                await set_digital_output(module, output_config, desired_value)
-                publish_payload = (
-                    output_config["on_payload"]
-                    if desired_value
-                    else output_config["off_payload"]
-                )
-                await self.mqtt.publish(
-                    "%s/output/%s" % (topic_prefix, output_config["name"]),
-                    publish_payload.encode("utf8"),
-                    qos=1,
-                    retain=output_config["retain"],
-                )
+                await self.set_digital_output(module, output_config, desired_value)
                 await asyncio.sleep(secs)
                 _LOG.info(
                     "Turning output '%s' %s after %s second(s) elapsed",
@@ -330,21 +325,25 @@ class MqttGpio:
                     "off" if desired_value else "on",
                     secs,
                 )
-                await set_digital_output(module, output_config, not desired_value)
-                publish_payload = (
-                    output_config["off_payload"]
-                    if desired_value
-                    else output_config["on_payload"]
-                )
-                await self.mqtt.publish(
-                    "%s/output/%s" % (topic_prefix, output_config["name"]),
-                    publish_payload.encode("utf8"),
-                    qos=1,
-                    retain=output_config["retain"],
-                )
+                await self.set_digital_output(module, output_config, not desired_value)
 
             task = self.loop.create_task(set_ms())
             self.unawaited_tasks.append(task)
+
+    async def set_digital_output(self, module, output_config, value):
+        """
+        Set a digital output, taking into account whether it's configured
+        to be inverted.
+        """
+        set_value = value != output_config["inverted"]
+        await module.async_set_pin(output_config["pin"], set_value)
+        _LOG.info(
+            "Digital output '%s' set to %s (%s)",
+            output_config["name"],
+            set_value,
+            "on" if value else "off",
+        )
+        self.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], set_value))
 
     # Tasks
 
@@ -380,13 +379,23 @@ class MqttGpio:
             for task in finished_tasks:
                 try:
                     await task
-                except Exception as e:
+                except Exception as e:  # pylint: disable=broad-except
                     _LOG.exception("Exception in task: %r:", task)
             self.unawaited_tasks = list(
                 filter(lambda x: not x.done(), self.unawaited_tasks)
             )
 
     async def digital_output_loop(self, queue):
+        """
+        Handle digital output MQTT messages for a specific GPIO module.
+        An instance of this loop will be created for each individual GPIO module so that
+        when messages come in via MQTT, we don't have to wait for some other module's
+        action to complete before carrying out this one.
+
+        It may seem like we should use this loop to handle /set_on_ms and /set_off_ms
+        messages, but it's actually better that we don't, since any timed stuff would
+        hold up /set messages that need to take place immediately.
+        """
         while True:
             module, output_config, payload = await queue.get()
             if payload not in (output_config["on_payload"], output_config["off_payload"]):
@@ -398,15 +407,8 @@ class MqttGpio:
                     output_config["off_payload"],
                 )
                 continue
-            await set_digital_output(
+            await self.set_digital_output(
                 module, output_config, payload == output_config["on_payload"]
-            )
-            await self.mqtt.publish(
-                "%s/output/%s"
-                % (self.config["mqtt"]["topic_prefix"], output_config["name"]),
-                payload.encode("utf8"),
-                qos=1,
-                retain=output_config["retain"],
             )
 
     # Main entry point
