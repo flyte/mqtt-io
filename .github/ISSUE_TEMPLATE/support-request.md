@@ -2,7 +2,7 @@
 name: Support request
 about: Need help setting up, configuring, or otherwise using the software
 title: ''
-labels: support, needs triage
+labels: needs triage, support
 assignees: ''
 
 ---
