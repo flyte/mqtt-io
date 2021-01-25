@@ -407,12 +407,14 @@ class MqttGpio:
                     output_config["off_payload"],
                 )
                 continue
+
             value = payload == output_config["on_payload"]
             await self.set_digital_output(module, output_config, value)
+
             try:
                 ms = output_config["timed_set_ms"]
             except KeyError:
-                return
+                continue
 
             async def reset_timer():
                 """
