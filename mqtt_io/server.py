@@ -419,6 +419,14 @@ class MqttGpio:
                 Reset the output to the opposite value after x ms.
                 """
                 await asyncio.sleep(ms / 1000.0)
+                _LOG.info(
+                    (
+                        "Setting digital output '%s' back to its previous value after "
+                        "configured 'timed_set_ms' delay of %sms"
+                    ),
+                    output_config["name"],
+                    ms,
+                )
                 await self.set_digital_output(module, output_config, not value)
 
             task = self.loop.create_task(reset_timer())
