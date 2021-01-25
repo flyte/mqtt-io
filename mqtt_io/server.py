@@ -358,7 +358,7 @@ class MqttGpio:
             set_value,
             "on" if value else "off",
         )
-        self.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], set_value))
+        self.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], value))
 
     # Tasks
 
