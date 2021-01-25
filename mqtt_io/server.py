@@ -407,9 +407,22 @@ class MqttGpio:
                     output_config["off_payload"],
                 )
                 continue
-            await self.set_digital_output(
-                module, output_config, payload == output_config["on_payload"]
-            )
+            value = payload == output_config["on_payload"]
+            await self.set_digital_output(module, output_config, value)
+            try:
+                ms = output_config["timed_set_ms"]
+            except KeyError:
+                return
+
+            async def reset_timer():
+                """
+                Reset the output to the opposite value after x ms.
+                """
+                await asyncio.sleep(ms / 1000.0)
+                await self.set_digital_output(module, output_config, not value)
+
+            task = self.loop.create_task(reset_timer())
+            self.unawaited_tasks.append(task)
 
     # Main entry point
 
