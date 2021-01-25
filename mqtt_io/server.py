@@ -212,7 +212,9 @@ class MqttGpio:
             uri += "%s:%s@" % (config["user"], config["password"])
         uri += "%s:%s" % (config["host"], config["port"])
 
-        client_config = {}
+        client_config = dict(
+            keep_alive=config["keepalive"],
+        )
         connect_kwargs = dict(cleansession=config["clean_session"])
         if tls_enabled:
             tls_config = config["tls"]
