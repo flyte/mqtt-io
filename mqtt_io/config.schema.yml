@@ -71,7 +71,7 @@ mqtt:
     discovery_name:
       type: string
       required: no
-      default: "MQTT GPIO"
+      default: "MQTT IO"
     tls:
       type: dict
       required: no
