@@ -7,6 +7,7 @@ mqtt:
   topic_prefix: mqtt_gpio
   clean_session: yes
   protocol: 3.1.1
+  discovery: yes
 #  tls:
 #    enabled: yes
 #    ca_file: mosquitto.org.crt

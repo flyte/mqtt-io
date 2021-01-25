@@ -13,7 +13,22 @@ from .config import (
     validate_and_normalise_config,
     validate_and_normalise_sensor_input_config,
 )
+from .constants import (
+    INPUT_TOPIC,
+    MODULE_CLASS_NAMES,
+    MODULE_IMPORT_PATH,
+    OUTPUT_TOPIC,
+    SENSOR_TOPIC,
+    SET_OFF_MS_TOPIC,
+    SET_ON_MS_TOPIC,
+    SET_TOPIC,
+)
 from .events import EventBus
+from .home_assistant import (
+    hass_announce_digital_input,
+    hass_announce_digital_output,
+    hass_announce_sensor_input,
+)
 from .io import (
     DigitalInputChangedEvent,
     DigitalOutputChangedEvent,
@@ -25,15 +40,6 @@ from .modules import install_missing_requirements
 from .modules.gpio import PinDirection, PinPUD
 
 _LOG = logging.getLogger(__name__)
-
-SET_TOPIC = "set"
-SET_ON_MS_TOPIC = "set_on_ms"
-SET_OFF_MS_TOPIC = "set_off_ms"
-OUTPUT_TOPIC = "output"
-SENSOR_TOPIC = "sensor"
-
-MODULE_IMPORT_PATH = "mqtt_io.modules"
-MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor")
 
 
 def _init_module(module_config, module_type):
@@ -104,7 +110,8 @@ class MqttGpio:
             in_conf = self.digital_input_configs[event.input_name]
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
             await self.mqtt.publish(
-                "%s/input/%s" % (self.config["mqtt"]["topic_prefix"], event.input_name),
+                "%s/%s/%s"
+                % (self.config["mqtt"]["topic_prefix"], INPUT_TOPIC, event.input_name),
                 val.encode("utf8"),
             )
 
@@ -196,7 +203,7 @@ class MqttGpio:
 
         client_id = config["client_id"]
         if not client_id:
-            client_id = "mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
+            client_id = "mqtt-io-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
 
         tls_enabled = config.get("tls", {}).get("enabled")
 
@@ -268,6 +275,14 @@ class MqttGpio:
                 qos=1,
                 retain=out_conf["retain"],
             )
+        # Publish Home Assistant Discovery messages if desired
+        if config["discovery"]:
+            for in_conf in self.digital_input_configs.values():
+                await hass_announce_digital_input(in_conf, config, self.mqtt)
+            for out_conf in self.digital_output_configs.values():
+                await hass_announce_digital_output(out_conf, config, self.mqtt)
+            for sens_conf in self.sensor_configs.values():
+                await hass_announce_sensor_input(sens_conf, config, self.mqtt)
 
     # Runtime methods
 
