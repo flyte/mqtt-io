@@ -131,11 +131,11 @@ class MqttIo:
                     )
                 )
             else:
-                    edge = {
-                        "rising": InterruptEdge.RISING,
-                        "falling": InterruptEdge.FALLING,
-                        "both": InterruptEdge.BOTH,
-                    }[in_conf["interrupt"]]
+                edge = {
+                    "rising": InterruptEdge.RISING,
+                    "falling": InterruptEdge.FALLING,
+                    "both": InterruptEdge.BOTH,
+                }[in_conf["interrupt"]]
                 if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
                     # If it's a software callback interrupt, then supply
                     # partial(self.interrupt_callback, module, in_conf["pin"])
