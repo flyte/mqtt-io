@@ -59,6 +59,10 @@ class GPIO(GenericGPIO):
             mcp_pin.switch_to_input(pull=PULLUPS[pullup])
 
     def setup_interrupt(self, pin, edge, in_conf):
+        # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:14:16
+        # Make this a wrapper task on GenericGPIO
+        self.interrupt_edges[pin] = edge
+
         if edge == InterruptEdge.BOTH:
             # Set this pin to interrupt when it changes from its previous value
             self.io.interrupt_configuration &= ~(1 << pin)
