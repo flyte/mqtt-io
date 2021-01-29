@@ -116,14 +116,21 @@ class GenericGPIO(object):
     def remote_interrupt_for(self, pin):
         return self.pin_configs[pin].get("interrupt_for", {})
 
-    async def get_int_pins(self):
+    def get_int_pins(self):
         """
         If the chip has a register that logs which pins caused the last interrupt,
         then we read it here and return the list of pins.
         """
         raise NotImplementedError()
 
-    async def get_captured_int_pin_values(self, pins=None):
+    async def async_get_int_pins(self):
+        """
+        Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_int_pins)
+
+    def get_captured_int_pin_values(self, pins=None):
         """
         If the chip has a register that logs the values of the pins at the point of
         the last interrupt, then we read it here and return a dict.
@@ -157,7 +164,7 @@ class GenericGPIO(object):
         # Make sure that validation sets the `interrupt_for` list as minimum 1 value
         pins = set(pins)
         if self.INTERRUPT_SUPPORT & InterruptSupport.FLAG_REGISTER:
-            int_pins = set(await self.get_int_pins())
+            int_pins = set(await self.async_get_int_pins())
             pins = pins.intersection(int_pins)
             if not pins:
                 _LOG.warning(

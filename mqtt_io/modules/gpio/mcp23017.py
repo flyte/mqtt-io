@@ -18,9 +18,9 @@ class GPIO(GenericGPIO):
     Pin numbers 0 - 15.
     """
 
+    # | InterruptSupport.CAPTURE_REGISTER
     INTERRUPT_SUPPORT = (
         InterruptSupport.FLAG_REGISTER
-        | InterruptSupport.CAPTURE_REGISTER
         | InterruptSupport.INTERRUPT_PIN
         | InterruptSupport.SET_TRIGGERS
     )
@@ -81,3 +81,6 @@ class GPIO(GenericGPIO):
 
     def get_pin(self, pin):
         return self.io.get_pin(pin).value
+
+    def get_int_pins(self):
+        return self.io.int_flag
