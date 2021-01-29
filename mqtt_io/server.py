@@ -319,7 +319,7 @@ class MqttIo:
                 )
             _LOG.debug(
                 "Interrupt is for pins: '%s'",
-                "', '".join(remote_modules_and_pins.values()),
+                "', '".join(remote_interrupt_for_pin_names),
             )
 
             for remote_module, pins in remote_modules_and_pins.items():
