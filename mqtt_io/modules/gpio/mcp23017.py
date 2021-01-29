@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 
+import logging
+
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+
+_LOG = logging.getLogger(__name__)
 
 REQUIREMENTS = ("adafruit_circuitpython_mcp230xx",)
 CONFIG_SCHEMA = {
@@ -63,6 +67,9 @@ class GPIO(GenericGPIO):
         # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:14:16
         # Make this a wrapper task on GenericGPIO
         self.interrupt_edges[pin] = edge
+        _LOG.debug(
+            "MCP23017 module %s IOCON: %s", self.config["name"], bin(self.io.io_control)
+        )
 
         if edge == InterruptEdge.BOTH:
             # Set this pin to interrupt when it changes from its previous value
