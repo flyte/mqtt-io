@@ -57,7 +57,7 @@ class GPIO(GenericGPIO):
         )
         self.interrupt_edges[pin] = edge
 
-    def get_interrupt_value(self, pin, *args, **kwargs)
+    def get_interrupt_value(self, pin, *args, **kwargs):
         edge = self.interrupt_edges[pin]
         if edge == InterruptEdge.BOTH:
             # Polling the pin for its value is a bit crap, but I can't find any alternative
