@@ -1,8 +1,8 @@
 import asyncio
-import concurrent.futures.Future
 import logging
 import re
 import signal as signals
+from concurrent.futures import Future as ConcurrentFuture
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from hashlib import sha1
@@ -440,7 +440,7 @@ class MqttIo:
             if not finished_tasks:
                 continue
             for task in finished_tasks:
-                if isinstance(task, concurrent.futures.Future):
+                if isinstance(task, ConcurrentFuture):
                     task = self.loop.run_in_executor(ThreadPoolExecutor(), task)
                 try:
                     await task
