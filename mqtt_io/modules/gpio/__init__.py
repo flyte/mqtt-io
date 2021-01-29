@@ -177,7 +177,7 @@ class GenericGPIO(object):
                     int_pins,
                     pins,
                 )
-                return
+                return {}
 
         if self.INTERRUPT_SUPPORT & InterruptSupport.CAPTURE_REGISTER:
             pin_values = await self.get_captured_int_pin_values(pins=pins)
