@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from . import GenericGPIO, InterruptEdge, PinDirection, PinPUD
+from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 REQUIREMENTS = ("adafruit_circuitpython_mcp230xx",)
 CONFIG_SCHEMA = {
@@ -17,6 +17,13 @@ class GPIO(GenericGPIO):
 
     Pin numbers 0 - 15.
     """
+
+    INTERRUPT_SUPPORT = (
+        InterruptSupport.FLAG_REGISTER
+        | InterruptSupport.CAPTURE_REGISTER
+        | InterruptSupport.INTERRUPT_PIN
+        | InterruptSupport.SET_TRIGGERS
+    )
 
     def setup_module(self):
         global DIRECTIONS, PULLUPS

@@ -7,13 +7,14 @@ REQUIREMENTS = ("RPi.GPIO",)
 DIRECTIONS = None
 PULLUPS = None
 INTERRUPT = None
-INTERRUPT_SUPPORT = InterruptSupport.SOFTWARE_CALLBACK
 
 
 class GPIO(GenericGPIO):
     """
     Implementation of GPIO class for Raspberry Pi native GPIO.
     """
+
+    INTERRUPT_SUPPORT = InterruptSupport.SOFTWARE_CALLBACK
 
     def setup_module(self):
         global DIRECTIONS, PULLUPS, INTERRUPT
