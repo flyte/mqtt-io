@@ -175,7 +175,7 @@ class GenericGPIO(object):
                     ),
                     self,
                     int_pins,
-                    matching_pins,
+                    pins,
                 )
                 return {}
         else:
