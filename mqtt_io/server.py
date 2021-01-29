@@ -447,7 +447,8 @@ class MqttIo:
                 continue
             for task in finished_tasks:
                 if isinstance(task, ConcurrentFuture):
-                    task = self.loop.run_in_executor(ThreadPoolExecutor(), task)
+                    # task = self.loop.run_in_executor(ThreadPoolExecutor(), task)
+                    task = asyncio.wrap_future(task)
                 try:
                     await task
                 except Exception as e:  # pylint: disable=broad-except
