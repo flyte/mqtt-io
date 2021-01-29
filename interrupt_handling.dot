@@ -1,0 +1,121 @@
+digraph {
+    label = <
+<font point-size="42">Interrupt Handling</font><br />
+<font point-size="22">For GPIO libraries with software interrupt callbacks,<br />and how they handle being an interrupt for other modules</font>
+>;
+    labelloc = "t";
+
+    node[shape=box, style=rounded]
+        mcp_gpio_input [label="MCP input pin logic level changes"];
+        mcp_int_output [label="MCP interrupt output pin logic level changes"];
+        pi_gpio_input [label="Pi input pin logic level changes"];
+        pi_int_callback [label="Pi interrupt callback is triggered"];
+
+    subgraph cluster_is_remote_int {
+        label = <<font point-size="22">GenericGPIO.is_remote_interrupt()</font>>
+        node [shape=diamond]
+            q_is_remote_int [label="Configured as interrupt for other module's pin(s)?"];
+    }
+
+    subgraph cluster_server_handle_remote_int {
+        label = <<font point-size="22">server.handle_remote_interrupt(pin_name)</font>>
+        node [shape=box, style=rounded]
+            get_all_interrupt_for_pins [label="Get list of pin names that this pin_name is an interrupt for"]
+            organise_into_modules [label="Organise pins by module"]
+            make_funcs_to_get_pin_vals_and_fire_event [label="Make async closure functions to call get_int_pin_values(pins)\non each module and fire events if/when the values are received"]
+            add_the_functions_to_task_loop [label="Add these functions to the task loop"];
+        subgraph cluster_handle_remote_int_closure_func {
+            node [shape=box, style=rounded]
+                call_modules_to_get_int_values [label="Call get_int_pin_values(pins) on the module"];
+                fire_digital_input_changed_event [label="If values have changed, fire DigitalInputChangedEvent", style=striped];
+        }
+    }
+
+    subgraph cluster_module_int_callback {
+        label = <
+<font point-size="22">gpio_module.interrupt_callback()</font>
+<br />Deals with whatever args the library gives to int callbacks and
+<br />calls the pin's stored callback function with (module, pin, value)
+>
+        node [shape=box, style=rounded]
+            module_int_callback [label="Gets called by module's software\ncallback with whichever args supplied"];
+            get_int_pin_value [label="Get the value for this pin at time\nof interrupt if possible, else now"];
+            call_stored_callback [label="Return stored interrupt callback (in list) as\npartial with (module, pin, value) supplied", style="striped"];
+    }
+
+    subgraph cluster_get_int_pin_values {
+        label = <<font point-size="22">GenericGPIO.get_int_pin_values(pins)</font>>;
+
+        node[shape=diamond]
+            q_can_identify_pin [label="Can identify which pin caused the interrupt?\n(InterruptSupport.FLAG_REGISTER)"];
+            q_can_capture_pin_val [label="Can get captured pin interrupt value?\n(InterruptSupport.CAPTURE_REGISTER)"];
+            q_which_edge [label="Which edge(s) were these interrupt(s) configured for?"];
+            q_any_pins_changed [label="Pin(s) value changed?"]
+
+        node[shape=box, style=rounded]
+            check_all_possible_pins [label="Check all pins on this module that\ncould have triggered the interrupt"]
+            poll_pin [label="Poll the pin for its current value"];
+            get_flagged_pins [label=<
+<b>gpio_module.get_int_pins()</b><br />
+Get flagged interrupt pins
+>]
+            capture_pin_value [label=<
+<b>gpio_module.get_captured_int_pin_values(pins)</b><br />
+Get captured pin value at time of interrupt
+>]
+            pin_value_high [label="Pin's value is 'high'"]
+            pin_value_low [label="Pin's value is 'low'"]
+            return_pin_values [label="Return pin numbers and their values", style="striped"];
+            do_nothing [label="Return empty list?\nTODO: Make this behaviour configurable", style="striped"]
+
+    }
+
+    mcp_gpio_input ->
+    mcp_int_output ->
+    pi_gpio_input ->
+    pi_int_callback ->
+    module_int_callback ->
+    q_is_remote_int;
+
+    q_is_remote_int -> get_all_interrupt_for_pins [label="Yes"];
+    
+    get_all_interrupt_for_pins ->
+    organise_into_modules ->
+    make_funcs_to_get_pin_vals_and_fire_event ->
+    add_the_functions_to_task_loop ->
+    call_modules_to_get_int_values ->
+    q_can_identify_pin;
+
+    q_is_remote_int -> get_int_pin_value [label="No"];
+    get_int_pin_value -> call_stored_callback;
+
+    # GenericGPIO.get_int_pin_values()
+    q_can_identify_pin -> get_flagged_pins [label="Yes"];
+    q_can_identify_pin -> check_all_possible_pins [label="No"];
+
+    get_flagged_pins -> q_can_capture_pin_val;
+    check_all_possible_pins -> q_can_capture_pin_val;
+
+    q_any_pins_changed -> return_pin_values [label="Yes"];
+    q_any_pins_changed -> do_nothing [label="No"];
+
+    q_can_capture_pin_val -> capture_pin_value [label="Yes"];
+    q_can_capture_pin_val -> q_which_edge [label="No"];
+
+    capture_pin_value -> return_pin_values;
+
+    q_which_edge -> pin_value_high [label="Rising"];
+    q_which_edge -> pin_value_low [label="Falling"];
+    q_which_edge -> poll_pin [label="Both"];
+    poll_pin -> q_any_pins_changed;
+
+    pin_value_high -> return_pin_values;
+    pin_value_low -> return_pin_values;
+    # END GenericGPIO.get_int_pin_values()
+
+    return_pin_values -> fire_digital_input_changed_event;
+
+    # Do we want to call the callback, even though this could be the wrong value?
+    # The alternative is to only call the callback if it's changed.
+    # Perhaps this should be a config option?
+}
