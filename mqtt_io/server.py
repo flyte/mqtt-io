@@ -302,19 +302,25 @@ class MqttIo:
     # Runtime methods
 
     def interrupt_callback(self, module, pin, *args, **kwargs):
+        pin_name = module.pin_configs[pin]["name"]
+        _LOG.info("Handling interrupt callback on pin '%s'", pin_name)
         remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
         if not remote_interrupt_for_pin_names:
+            _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
             value = module.get_interrupt_value(pin, *args, **kwargs)
-            pin_name = module.pin_configs[pin]["name"]
             self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
         else:
             remote_modules_and_pins = {}
-            for pin_name in remote_interrupt_for_pin_names:
-                in_conf = self.digital_input_configs[pin_name]
+            for remote_pin_name in remote_interrupt_for_pin_names:
+                in_conf = self.digital_input_configs[remote_pin_name]
                 remote_module = self.gpio_modules[in_conf["module"]]
                 remote_modules_and_pins.setdefault(remote_module, []).append(
                     in_conf["pin"]
                 )
+            _LOG.debug(
+                "Interrupt is for pins: '%s'",
+                "', '".join(remote_modules_and_pins.values()),
+            )
 
             for remote_module, pins in remote_modules_and_pins.items():
 
@@ -324,9 +330,9 @@ class MqttIo:
                     for pin, value in await remote_module.get_interrupt_values_remote(
                         pins
                     ).items():
-                        pin_name = remote_module.pin_configs[pin]["name"]
+                        remote_pin_name = remote_module.pin_configs[pin]["name"]
                         self.event_bus.fire(
-                            DigitalInputChangedEvent(pin_name, None, value)
+                            DigitalInputChangedEvent(remote_pin_name, None, value)
                         )
 
                 task = asyncio.run_coroutine_threadsafe(
