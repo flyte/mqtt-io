@@ -1,6 +1,9 @@
+import logging
 from functools import partial
 
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+
+_LOG = logging.getLogger(__name__)
 
 REQUIREMENTS = ("RPi.GPIO",)
 
@@ -50,6 +53,9 @@ class GPIO(GenericGPIO):
 
     def setup_interrupt(self, pin, edge, callback, in_conf):
         edge = INTERRUPT[edge]
+        _LOG.debug(
+            "Added interrupt to Raspberry Pi pin '%s' with callback '%s'", pin, callback
+        )
         self.io.add_event_detect(
             pin,
             edge,

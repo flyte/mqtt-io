@@ -451,7 +451,7 @@ class MqttIo:
                     task = asyncio.wrap_future(task)
                 try:
                     await task
-                except Exception as e:  # pylint: disable=broad-except
+                except Exception:  # pylint: disable=broad-except
                     _LOG.exception("Exception in task: %r:", task)
             self.unawaited_tasks = list(
                 filter(lambda x: not x.done(), self.unawaited_tasks)
