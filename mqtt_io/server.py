@@ -1,7 +1,9 @@
 import asyncio
+import concurrent.futures.Future
 import logging
 import re
 import signal as signals
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from hashlib import sha1
 from importlib import import_module
@@ -129,11 +131,11 @@ class MqttIo:
                     )
                 )
             else:
-                edge = {
-                    "rising": InterruptEdge.RISING,
-                    "falling": InterruptEdge.FALLING,
-                    "both": InterruptEdge.BOTH,
-                }[in_conf["interrupt"]]
+                    edge = {
+                        "rising": InterruptEdge.RISING,
+                        "falling": InterruptEdge.FALLING,
+                        "both": InterruptEdge.BOTH,
+                    }[in_conf["interrupt"]]
                 if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
                     # If it's a software callback interrupt, then supply
                     # partial(self.interrupt_callback, module, in_conf["pin"])
@@ -438,6 +440,8 @@ class MqttIo:
             if not finished_tasks:
                 continue
             for task in finished_tasks:
+                if isinstance(task, concurrent.futures.Future):
+                    task = self.loop.run_in_executor(ThreadPoolExecutor(), task)
                 try:
                     await task
                 except Exception as e:  # pylint: disable=broad-except
