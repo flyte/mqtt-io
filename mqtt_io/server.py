@@ -327,9 +327,10 @@ class MqttIo:
                 async def handle_remote_interrupt_task(
                     remote_module=remote_module, pins=pins
                 ):
-                    for pin, value in await remote_module.get_interrupt_values_remote(
+                    interrupt_values = await remote_module.get_interrupt_values_remote(
                         pins
-                    ).items():
+                    )
+                    for pin, value in interrupt_values.items():
                         remote_pin_name = remote_module.pin_configs[pin]["name"]
                         self.event_bus.fire(
                             DigitalInputChangedEvent(remote_pin_name, None, value)
