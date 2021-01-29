@@ -1,5 +1,6 @@
-import types
+import asyncio
 import logging
+import types
 
 _LOG = logging.getLogger(__name__)
 
@@ -27,7 +28,8 @@ class EventBus:
             return
 
         for listener in listeners:
-            self._loop.create_task(listener(event))
+            asyncio.run_coroutine_threadsafe(listener(event), self._loop)
+            # self._loop.create_task(listener(event))
 
     def subscribe(self, event_class, callback):
         if not isinstance(event_class, type):

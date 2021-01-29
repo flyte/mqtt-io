@@ -11,40 +11,40 @@ digraph {
         pi_gpio_input [label="Pi input pin logic level changes"];
         pi_int_callback [label="Pi interrupt callback is triggered"];
 
-    subgraph cluster_is_remote_int {
-        label = <<font point-size="22">GenericGPIO.is_remote_interrupt()</font>>
+    # server.MqttIo
+    subgraph cluster_main_int_callback {
+        label = <<font point-size="22">MqttIo.interrupt_callback()</font>>
+
         node [shape=diamond]
             q_is_remote_int [label="Configured as interrupt for other module's pin(s)?"];
-    }
 
-    subgraph cluster_server_handle_remote_int {
-        label = <<font point-size="22">server.handle_remote_interrupt(pin_name)</font>>
         node [shape=box, style=rounded]
+            main_int_callback [label="Gets called by module's software\ncallback with whichever args supplied"];
+            fire_digital_input_changed_event_main [label="Fire DigitalInputChangedEvent", style="striped"];
             get_all_interrupt_for_pins [label="Get list of pin names that this pin_name is an interrupt for"]
             organise_into_modules [label="Organise pins by module"]
-            make_funcs_to_get_pin_vals_and_fire_event [label="Make async closure functions to call get_int_pin_values(pins)\non each module and fire events if/when the values are received"]
-            add_the_functions_to_task_loop [label="Add these functions to the task loop"];
+            make_funcs_to_get_pin_vals_and_fire_event [label="Make async closure functions to call get_interrupt_values_remote(pins)\non each module and fire events if/when the values are received"]
+            add_the_functions_to_task_loop [label="Add these functions to the task loop\nusing asyncio.run_coroutine_threadsafe()"];
+
         subgraph cluster_handle_remote_int_closure_func {
+            label = <<font point-size="22">handle_remote_interrupt_task()</font>>
             node [shape=box, style=rounded]
-                call_modules_to_get_int_values [label="Call get_int_pin_values(pins) on the module"];
-                fire_digital_input_changed_event [label="If values have changed, fire DigitalInputChangedEvent", style=striped];
+                call_modules_to_get_int_values [label="Call get_interrupt_values_remote(pins) on the module"];
+                fire_digital_input_changed_event_closure [label="Fire DigitalInputChangedEvent", style=striped];
         }
     }
+    # END server.MqttIO
 
-    subgraph cluster_module_int_callback {
-        label = <
-<font point-size="22">gpio_module.interrupt_callback()</font>
-<br />Deals with whatever args the library gives to int callbacks and
-<br />calls the pin's stored callback function with (module, pin, value)
->
+    # modules.gpio.GenericGPIO
+    subgraph cluster_remote_interrupt_for {
+        label = <<font point-size="22">GenericGPIO.remote_interrupt_for(pin)</font>>
+        
         node [shape=box, style=rounded]
-            module_int_callback [label="Gets called by module's software\ncallback with whichever args supplied"];
-            get_int_pin_value [label="Get the value for this pin at time\nof interrupt if possible, else now"];
-            call_stored_callback [label="Return stored interrupt callback (in list) as\npartial with (module, pin, value) supplied", style="striped"];
+            get_interrupt_for_config [label="Return list of modules and pins that this pin is an interrupt for"];
     }
 
     subgraph cluster_get_int_pin_values {
-        label = <<font point-size="22">GenericGPIO.get_int_pin_values(pins)</font>>;
+        label = <<font point-size="22">GenericGPIO.get_interrupt_values_remote(pins)</font>>;
 
         node[shape=diamond]
             q_can_identify_pin [label="Can identify which pin caused the interrupt?\n(InterruptSupport.FLAG_REGISTER)"];
@@ -69,13 +69,26 @@ Get captured pin value at time of interrupt
             do_nothing [label="Return empty list?\nTODO: Make this behaviour configurable", style="striped"]
 
     }
+    # END modules.gpio.GenericGPIO
+
+    # modules.gpio.<module>.GPIO
+    subgraph cluster_module_get_interrupt_value {
+        label = <<font point-size="22">[module].GPIO.get_interrupt_value(pin)</font>>
+
+        node [shape=box, style=rounded]
+            get_interrupt_value [label="Get value of pin that caused the interrupt"];
+    }
+    # END modules.gpio.<module>.GPIO
 
     mcp_gpio_input ->
     mcp_int_output ->
     pi_gpio_input ->
     pi_int_callback ->
-    module_int_callback ->
-    q_is_remote_int;
+    main_int_callback;
+
+    main_int_callback -> get_interrupt_for_config [dir="both"];
+
+    main_int_callback -> q_is_remote_int;
 
     q_is_remote_int -> get_all_interrupt_for_pins [label="Yes"];
     
@@ -86,8 +99,8 @@ Get captured pin value at time of interrupt
     call_modules_to_get_int_values ->
     q_can_identify_pin;
 
-    q_is_remote_int -> get_int_pin_value [label="No"];
-    get_int_pin_value -> call_stored_callback;
+    q_is_remote_int -> get_interrupt_value [label="No"];
+    get_interrupt_value -> fire_digital_input_changed_event_main;
 
     # GenericGPIO.get_int_pin_values()
     q_can_identify_pin -> get_flagged_pins [label="Yes"];
@@ -113,7 +126,7 @@ Get captured pin value at time of interrupt
     pin_value_low -> return_pin_values;
     # END GenericGPIO.get_int_pin_values()
 
-    return_pin_values -> fire_digital_input_changed_event;
+    return_pin_values -> fire_digital_input_changed_event_closure;
 
     # Do we want to call the callback, even though this could be the wrong value?
     # The alternative is to only call the callback if it's changed.

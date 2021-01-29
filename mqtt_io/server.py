@@ -37,7 +37,7 @@ from .io import (
 )
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
-from .modules.gpio import PinDirection, PinPUD
+from .modules.gpio import InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 _LOG = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ def output_name_from_topic(topic, prefix):
     return match.group(1)
 
 
-class MqttGpio:
+class MqttIo:
     def __init__(self, config):
         self.config = config
         self.gpio_configs = {}
@@ -126,12 +126,30 @@ class MqttGpio:
             module = self.gpio_modules[in_conf["module"]]
             module.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
 
-            # Start poller task
-            self.unawaited_tasks.append(
-                self.loop.create_task(
-                    digital_input_poller(self.event_bus, module, in_conf)
+            if not in_conf.get("interrupt"):
+                # Start poller task
+                self.unawaited_tasks.append(
+                    self.loop.create_task(
+                        digital_input_poller(self.event_bus, module, in_conf)
+                    )
                 )
-            )
+            else:
+                if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
+                    # If it's a software callback interrupt, then supply
+                    # partial(self.interrupt_callback, module, in_conf["pin"])
+                    # as the callback.
+                    # NOTE: Needs discussion or investigation -@flyte at 29/01/2021, 12:19:39
+                    # Do we have to include self?
+                    callback = partial(self.interrupt_callback, module, in_conf["pin"])
+                    edge = {
+                        "rising": InterruptEdge.RISING,
+                        "falling": InterruptEdge.FALLING,
+                        "both": InterruptEdge.BOTH,
+                    }[in_conf["interrupt"]]
+                    module.setup_interrupt(in_conf["pin"], edge, callback, in_conf)
+                else:
+                    # Else, just call module.setup_interrupt() without a callback
+                    module.setup_interrupt(in_conf["pin"], edge, in_conf)
 
     def _init_digital_outputs(self):
         self.digital_output_configs = {
@@ -287,6 +305,31 @@ class MqttGpio:
                 await hass_announce_sensor_input(sens_conf, config, self.mqtt)
 
     # Runtime methods
+
+    def interrupt_callback(self, module, pin, *args, **kwargs):
+        remote_interrupts = module.remote_interrupt_for(pin)
+        if not remote_interrupts:
+            value = module.get_interrupt_value(pin, *args, **kwargs)
+            pin_name = module.pin_configs[pin]["name"]
+            self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
+        else:
+            for remote_module, pins in remote_interrupts.items():
+
+                async def handle_remote_interrupt_task(
+                    remote_module=remote_module, pins=pins
+                ):
+                    for pin, value in await remote_module.get_interrupt_values_remote(
+                        pins
+                    ).items():
+                        pin_name = module.pin_configs[pin]["name"]
+                        self.event_bus.fire(
+                            DigitalInputChangedEvent(pin_name, None, value)
+                        )
+
+                task = asyncio.run_coroutine_threadsafe(
+                    handle_remote_interrupt_task(), self.loop
+                )
+                self.unawaited_tasks.append(task)
 
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]

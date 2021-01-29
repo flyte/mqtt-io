@@ -4,7 +4,7 @@ import sys
 
 from .config import load_main_config
 from .exceptions import ConfigValidationFailed
-from .server import MqttGpio
+from .server import MqttIo
 
 
 def main():
@@ -22,7 +22,7 @@ def main():
     if config["logging"]:
         logging.config.dictConfig(config["logging"])
 
-    mqtt_gpio = MqttGpio(config)
+    mqtt_gpio = MqttIo(config)
     mqtt_gpio.run()
 
 
