@@ -62,17 +62,17 @@ class GenericGPIO(object):
         self.io = None
         self.interrupt_edges = {}
 
-        self.setup_module(config)
+        self.setup_module()
 
     def __init_subclass__(cls):
         cls.setup_pin = GenericGPIO.setup_pin_wrapper(cls.setup_pin)
 
     @abc.abstractmethod
-    def setup_module(self, config):
+    def setup_module(self):
         pass
 
     @abc.abstractmethod
-    def setup_pin(self, pin_config):
+    def setup_pin(self, pin, direction, pullup, **pin_config):
         pass
 
     @abc.abstractmethod
@@ -92,13 +92,24 @@ class GenericGPIO(object):
     @staticmethod
     def setup_pin_wrapper(setup_pin):
         """
-        Wrap setup_pin so that we can ensure pin_config is stored.
+        Wrap setup_pin so that we can ensure pin_config is stored, and set some useful
+        variables.
         """
 
         @wraps(setup_pin)
-        def wrapper(self, pin_config):
+        def wrapper(self, direction, pin_config):
             self.pin_configs[pin_config["pin"]] = pin_config
-            return setup_pin(self, **pin_config)
+            pud = None
+            if pin_config.get("pullup"):
+                pud = PinPUD.UP
+            elif pin_config.get("pulldown"):
+                pud = PinPUD.DOWN
+            for key in ("direction", "pullup", "pulldown"):
+                try:
+                    del pin_config[key]
+                except KeyError:
+                    continue
+            return setup_pin(self, direction=direction, pullup=pud, **pin_config)
 
         return wrapper
 

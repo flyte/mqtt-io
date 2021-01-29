@@ -19,6 +19,10 @@ gpio_modules:
     module: stdio
 
 digital_inputs:
+  - name: test
+    module: stdio
+    pin: 22
+
   - name: button
     module: stdio
     pin: 21
@@ -27,6 +31,8 @@ digital_inputs:
     pullup: yes
     pulldown: no
     inverted: yes
+    interrupt_for:
+      - test
 
 digital_outputs:
   - name: bell

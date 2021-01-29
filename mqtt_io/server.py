@@ -118,13 +118,8 @@ class MqttIo:
         self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
 
         for in_conf in self.config["digital_inputs"]:
-            pud = None
-            if in_conf["pullup"]:
-                pud = PinPUD.UP
-            elif in_conf["pulldown"]:
-                pud = PinPUD.DOWN
             module = self.gpio_modules[in_conf["module"]]
-            module.setup_pin(in_conf["pin"], PinDirection.INPUT, pud, in_conf)
+            module.setup_pin(PinDirection.INPUT, in_conf)
 
             if not in_conf.get("interrupt"):
                 # Start poller task
@@ -170,9 +165,7 @@ class MqttIo:
         self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
 
         for out_conf in self.config["digital_outputs"]:
-            self.gpio_modules[out_conf["module"]].setup_pin(
-                out_conf["pin"], PinDirection.OUTPUT, None, out_conf
-            )
+            self.gpio_modules[out_conf["module"]].setup_pin(PinDirection.OUTPUT, out_conf)
 
             # Create queues for each module with an output
             if out_conf["module"] not in self.module_output_queues:
@@ -307,13 +300,21 @@ class MqttIo:
     # Runtime methods
 
     def interrupt_callback(self, module, pin, *args, **kwargs):
-        remote_interrupts = module.remote_interrupt_for(pin)
-        if not remote_interrupts:
+        remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
+        if not remote_interrupt_for_pin_names:
             value = module.get_interrupt_value(pin, *args, **kwargs)
             pin_name = module.pin_configs[pin]["name"]
             self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
         else:
-            for remote_module, pins in remote_interrupts.items():
+            remote_modules_and_pins = {}
+            for pin_name in remote_interrupt_for_pin_names:
+                in_conf = self.digital_input_configs[pin_name]
+                remote_module = self.gpio_modules[in_conf["module"]]
+                remote_modules_and_pins.setdefault(remote_module, []).append(
+                    in_conf["pin"]
+                )
+
+            for remote_module, pins in remote_modules_and_pins.items():
 
                 async def handle_remote_interrupt_task(
                     remote_module=remote_module, pins=pins
@@ -321,7 +322,7 @@ class MqttIo:
                     for pin, value in await remote_module.get_interrupt_values_remote(
                         pins
                     ).items():
-                        pin_name = module.pin_configs[pin]["name"]
+                        pin_name = remote_module.pin_configs[pin]["name"]
                         self.event_bus.fire(
                             DigitalInputChangedEvent(pin_name, None, value)
                         )

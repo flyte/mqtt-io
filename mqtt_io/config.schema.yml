@@ -231,12 +231,14 @@ digital_inputs:
       interrupt:
         type: string
         required: no
-        default: none
         allowed:
           - rising
           - falling
           - both
-          - none
+      interrupt_for:
+        type: list
+        required: no
+        minlength: 1
       bouncetime:
         type: integer
         required: no
