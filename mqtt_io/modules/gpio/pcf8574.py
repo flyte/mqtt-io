@@ -17,20 +17,16 @@ class GPIO(GenericGPIO):
     Implementation of GPIO class for the PCF8574 IO expander chip.
     """
 
-    def __init__(self, config):
+    def setup_module(self):
         global PULLUPS
         PULLUPS = {PinPUD.UP: True, PinPUD.DOWN: False}
         from pcf8574 import PCF8574
 
-        self.io = PCF8574(config["i2c_bus_num"], config["chip_addr"])
+        self.io = PCF8574(self.config["i2c_bus_num"], self.config["chip_addr"])
 
-    def setup_pin(self, pin, direction, pullup, pin_config):
+    def setup_pin(self, pin, direction, pullup, initial=None, **kwargs):
         if direction == PinDirection.INPUT and pullup is not None:
             self.io.port[pin] = PULLUPS[pullup]
-        # FIXME: Needing refactor or cleanup -@flyte at 26/01/2020, 15:48:43
-        # Modules shouldn't know about config. We should have a specific API
-        # for setup_pin etc. including 'initial', or using kwargs if necessary.
-        initial = pin_config.get("initial")
         if initial is not None:
             if initial == "high":
                 self.set_pin(pin, True)
