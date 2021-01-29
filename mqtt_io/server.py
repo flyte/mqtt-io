@@ -129,6 +129,11 @@ class MqttIo:
                     )
                 )
             else:
+                edge = {
+                    "rising": InterruptEdge.RISING,
+                    "falling": InterruptEdge.FALLING,
+                    "both": InterruptEdge.BOTH,
+                }[in_conf["interrupt"]]
                 if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
                     # If it's a software callback interrupt, then supply
                     # partial(self.interrupt_callback, module, in_conf["pin"])
@@ -136,11 +141,6 @@ class MqttIo:
                     # NOTE: Needs discussion or investigation -@flyte at 29/01/2021, 12:19:39
                     # Do we have to include self?
                     callback = partial(self.interrupt_callback, module, in_conf["pin"])
-                    edge = {
-                        "rising": InterruptEdge.RISING,
-                        "falling": InterruptEdge.FALLING,
-                        "both": InterruptEdge.BOTH,
-                    }[in_conf["interrupt"]]
                     module.setup_interrupt(in_conf["pin"], edge, callback, in_conf)
                 else:
                     # Else, just call module.setup_interrupt() without a callback
