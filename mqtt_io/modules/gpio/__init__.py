@@ -165,8 +165,8 @@ class GenericGPIO(object):
         pins = set(pins)
         if self.INTERRUPT_SUPPORT & InterruptSupport.FLAG_REGISTER:
             int_pins = set(await self.async_get_int_pins())
-            pins = pins.intersection(int_pins)
-            if not pins:
+            matching_pins = pins.intersection(int_pins)
+            if not matching_pins:
                 _LOG.warning(
                     (
                         "An interrupt was triggered for %s but none of the interrupting "
@@ -175,15 +175,17 @@ class GenericGPIO(object):
                     ),
                     self,
                     int_pins,
-                    pins,
+                    matching_pins,
                 )
                 return {}
+        else:
+            matching_pins = pins
 
         if self.INTERRUPT_SUPPORT & InterruptSupport.CAPTURE_REGISTER:
-            pin_values = await self.get_captured_int_pin_values(pins=pins)
+            pin_values = await self.get_captured_int_pin_values(pins=matching_pins)
         else:
             pin_values = {}
-            for pin in pins:
+            for pin in matching_pins:
                 try:
                     # TODO: Tasks pending completion -@flyte at 27/01/2021, 18:30:20
                     # Make sure interrupt_edges is added when setup_interrupt() is called
