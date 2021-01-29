@@ -47,6 +47,7 @@ class GPIO(GenericGPIO):
         self.io = mcp23017.MCP23017(
             i2c, address=self.config.get("chip_addr", mcp23017._MCP23017_ADDRESS)
         )
+        self.io.clear_ints()
 
     def setup_pin(self, pin, direction, pullup=None, initial="low", **kwargs):
         mcp_pin = self.io.get_pin(pin)
