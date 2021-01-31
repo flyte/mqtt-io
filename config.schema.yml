@@ -195,10 +195,12 @@ digital_inputs:
       on_payload:
         type: string
         required: no
+        empty: no
         default: "ON"
       off_payload:
         type: string
         required: no
+        empty: no
         default: "OFF"
       inverted:
         type: boolean
