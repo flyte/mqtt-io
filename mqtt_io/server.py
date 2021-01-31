@@ -362,6 +362,10 @@ class MqttIo:
                         finally:
                             interrupt_lock.release()
                         continue
+                _LOG.debug(
+                    "Digital input poller firing DigitalInputChangedEvent for '%s'",
+                    in_conf["name"],
+                )
                 self.event_bus.fire(
                     DigitalInputChangedEvent(in_conf["name"], last_value, value)
                 )
