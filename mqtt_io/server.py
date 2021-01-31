@@ -412,6 +412,8 @@ class MqttIo:
                         DigitalInputChangedEvent(remote_pin_name, None, value)
                     )
 
+            remote_interrupt_tasks.append(handle_remote_interrupt_task)
+
         async def await_remote_interrupts():
             try:
                 await asyncio.gather(*remote_interrupt_tasks)
