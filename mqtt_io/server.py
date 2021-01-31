@@ -352,6 +352,11 @@ class MqttIo:
                             )
                             return
                         try:
+                            _LOG.debug(
+                                "Polled value of %s on '%s' triggered remote interrupt",
+                                value,
+                                in_conf["name"],
+                            )
                             return self.handle_remote_interrupt(interrupt_for)
                         finally:
                             interrupt_lock.release()
@@ -380,6 +385,7 @@ class MqttIo:
                 )
                 return
             try:
+                _LOG.debug("Interrupt on '%s' triggered remote interrupt.", pin_name)
                 return self.handle_remote_interrupt(remote_interrupt_for_pin_names)
             finally:
                 interrupt_lock.release()
