@@ -332,36 +332,37 @@ class MqttIo:
                     )
                 elif interrupt and interrupt_for:
                     last_value = value
-                    if any(
+                    if not any(
                         (
                             interrupt == "rising" and value,
                             interrupt == "falling" and not value,
                             interrupt == "both",
                         )
                     ):
-                        interrupt_lock = self.interrupt_locks.setdefault(
-                            in_conf["name"], threading.Lock()
-                        )
-                        if not interrupt_lock.acquire(blocking=False):
-                            _LOG.debug(
-                                (
-                                    "Polled an interrupt value on pin '%s', but we're "
-                                    "not triggering the remote interrupt because we're "
-                                    "already handling it."
-                                ),
-                                in_conf["name"],
-                            )
-                            continue
-                        try:
-                            _LOG.debug(
-                                "Polled value of %s on '%s' triggered remote interrupt",
-                                value,
-                                in_conf["name"],
-                            )
-                            self.handle_remote_interrupt(interrupt_for)
-                        finally:
-                            interrupt_lock.release()
                         continue
+                    interrupt_lock = self.interrupt_locks.setdefault(
+                        in_conf["name"], threading.Lock()
+                    )
+                    if not interrupt_lock.acquire(blocking=False):
+                        _LOG.debug(
+                            (
+                                "Polled an interrupt value on pin '%s', but we're "
+                                "not triggering the remote interrupt because we're "
+                                "already handling it."
+                            ),
+                            in_conf["name"],
+                        )
+                        continue
+                    try:
+                        _LOG.debug(
+                            "Polled value of %s on '%s' triggered remote interrupt",
+                            value,
+                            in_conf["name"],
+                        )
+                        self.handle_remote_interrupt(interrupt_for)
+                    finally:
+                        interrupt_lock.release()
+                    continue
                 _LOG.debug(
                     "Digital input poller firing DigitalInputChangedEvent for '%s'",
                     in_conf["name"],
