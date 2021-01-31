@@ -347,15 +347,12 @@ class MqttIo:
                     in_conf["name"],
                 )
                 continue
-            try:
-                _LOG.debug(
-                    "Polled value of %s on '%s' triggered remote interrupt",
-                    value,
-                    in_conf["name"],
-                )
-                self.handle_remote_interrupt(interrupt_for)
-            finally:
-                interrupt_lock.release()
+            _LOG.debug(
+                "Polled value of %s on '%s' triggered remote interrupt",
+                value,
+                in_conf["name"],
+            )
+            self.handle_remote_interrupt(interrupt_for, interrupt_lock)
             # TODO: Tasks pending completion -@flyte at 29/05/2019, 01:02:50
             # Make this delay configurable in in_conf
             await asyncio.sleep(0.1)
@@ -378,15 +375,17 @@ class MqttIo:
 
             if remote_interrupt_for_pin_names:
                 _LOG.debug("Interrupt on '%s' triggered remote interrupt.", pin_name)
-                return self.handle_remote_interrupt(remote_interrupt_for_pin_names)
-
+                return self.handle_remote_interrupt(
+                    remote_interrupt_for_pin_names, interrupt_lock
+                )
             _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
             value = module.get_interrupt_value(pin, *args, **kwargs)
             self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
         finally:
-            interrupt_lock.release()
+            if not remote_interrupt_for_pin_names:
+                interrupt_lock.release()
 
-    def handle_remote_interrupt(self, pin_names):
+    def handle_remote_interrupt(self, pin_names, interrupt_lock):
         # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:14:44
         # Lock this interrupt
         # IDEA: Possible implementations -@flyte at 30/01/2021, 16:09:35
@@ -400,6 +399,7 @@ class MqttIo:
             remote_module = self.gpio_modules[in_conf["module"]]
             remote_modules_and_pins.setdefault(remote_module, []).append(in_conf["pin"])
 
+        remote_interrupt_tasks = []
         for remote_module, pins in remote_modules_and_pins.items():
 
             async def handle_remote_interrupt_task(
@@ -412,10 +412,14 @@ class MqttIo:
                         DigitalInputChangedEvent(remote_pin_name, None, value)
                     )
 
-            task = asyncio.run_coroutine_threadsafe(
-                handle_remote_interrupt_task(), self.loop
-            )
-            self.unawaited_tasks.append(task)
+        async def await_remote_interrupts():
+            try:
+                await asyncio.gather(*remote_interrupt_tasks)
+            finally:
+                interrupt_lock.release()
+
+        task = asyncio.run_coroutine_threadsafe(await_remote_interrupts(), self.loop)
+        self.unawaited_tasks.append(task)
         # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:15:12
         # Unlock this interrupt
 
