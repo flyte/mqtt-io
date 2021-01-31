@@ -331,6 +331,7 @@ class MqttIo:
                         in_conf["name"],
                     )
                 elif interrupt and interrupt_for:
+                    last_value = value
                     if any(
                         (
                             interrupt == "rising" and value,
@@ -350,16 +351,17 @@ class MqttIo:
                                 ),
                                 in_conf["name"],
                             )
-                            return
+                            continue
                         try:
                             _LOG.debug(
                                 "Polled value of %s on '%s' triggered remote interrupt",
                                 value,
                                 in_conf["name"],
                             )
-                            return self.handle_remote_interrupt(interrupt_for)
+                            self.handle_remote_interrupt(interrupt_for)
                         finally:
                             interrupt_lock.release()
+                        continue
                 self.event_bus.fire(
                     DigitalInputChangedEvent(in_conf["name"], last_value, value)
                 )
