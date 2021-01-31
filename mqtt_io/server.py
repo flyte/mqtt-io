@@ -356,36 +356,35 @@ class MqttIo:
                 self.handle_remote_interrupt(interrupt_for)
             finally:
                 interrupt_lock.release()
-            continue
             # TODO: Tasks pending completion -@flyte at 29/05/2019, 01:02:50
             # Make this delay configurable in in_conf
             await asyncio.sleep(0.1)
 
     def interrupt_callback(self, module, pin, *args, **kwargs):
         pin_name = module.pin_configs[pin]["name"]
-        _LOG.info("Handling interrupt callback on pin '%s'", pin_name)
-        remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
+        interrupt_lock = self.interrupt_locks[pin_name]
+        if not interrupt_lock.acquire(blocking=False):
+            _LOG.debug(
+                (
+                    "Ignoring interrupt on pin '%s' because we're already busy "
+                    "processing one."
+                ),
+                pin_name,
+            )
+            return
+        try:
+            _LOG.info("Handling interrupt callback on pin '%s'", pin_name)
+            remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
 
-        if remote_interrupt_for_pin_names:
-            interrupt_lock = self.interrupt_locks[pin_name]
-            if not interrupt_lock.acquire(blocking=False):
-                _LOG.debug(
-                    (
-                        "Ignoring interrupt on pin '%s' because we're already busy "
-                        "processing its remote interrupt."
-                    ),
-                    pin_name,
-                )
-                return
-            try:
+            if remote_interrupt_for_pin_names:
                 _LOG.debug("Interrupt on '%s' triggered remote interrupt.", pin_name)
                 return self.handle_remote_interrupt(remote_interrupt_for_pin_names)
-            finally:
-                interrupt_lock.release()
 
-        _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
-        value = module.get_interrupt_value(pin, *args, **kwargs)
-        self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
+            _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
+            value = module.get_interrupt_value(pin, *args, **kwargs)
+            self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
+        finally:
+            interrupt_lock.release()
 
     def handle_remote_interrupt(self, pin_names):
         # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:14:44
