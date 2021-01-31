@@ -67,6 +67,9 @@ class GPIO(GenericGPIO):
         # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:14:16
         # Make this a wrapper task on GenericGPIO
         self.interrupt_edges[pin] = edge
+
+        # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:42:23
+        # Add ODR and INTPOL values of the IOCON register to the config for this module
         _LOG.debug(
             "MCP23017 module %s IOCON: %s", self.config["name"], bin(self.io.io_control)
         )

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import re
 import signal as signals
+import threading
 from concurrent.futures import Future as ConcurrentFuture
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
@@ -35,7 +36,6 @@ from .io import (
     DigitalInputChangedEvent,
     DigitalOutputChangedEvent,
     SensorReadEvent,
-    digital_input_poller,
 )
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
@@ -89,6 +89,7 @@ class MqttIo:
 
         self.event_bus = EventBus(self.loop)
         self.mqtt = None
+        self.interrupt_locks = {}
 
     # Init methods
 
@@ -123,30 +124,37 @@ class MqttIo:
             module = self.gpio_modules[in_conf["module"]]
             module.setup_pin(PinDirection.INPUT, in_conf)
 
-            if not in_conf.get("interrupt"):
-                # Start poller task
+            interrupt = in_conf.get("interrupt")
+            interrupt_for = in_conf.get("interrupt_for")
+
+            # Only start the poller task if this _isn't_ set up with an interrupt, or if
+            # it _is_ an interrupt, but it's used for triggering remote interrupts.
+            # TODO: Tasks pending completion -@flyte at 31/01/2021, 11:01:56
+            # Make this configurable?
+            if interrupt is None or interrupt_for:
                 self.unawaited_tasks.append(
-                    self.loop.create_task(
-                        digital_input_poller(self.event_bus, module, in_conf)
-                    )
+                    self.loop.create_task(self.digital_input_poller(module, in_conf))
                 )
+
+            if interrupt is None:
+                return
+
+            edge = {
+                "rising": InterruptEdge.RISING,
+                "falling": InterruptEdge.FALLING,
+                "both": InterruptEdge.BOTH,
+            }[interrupt]
+            if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
+                # If it's a software callback interrupt, then supply
+                # partial(self.interrupt_callback, module, in_conf["pin"])
+                # as the callback.
+                # NOTE: Needs discussion or investigation -@flyte at 29/01/2021, 12:19:39
+                # Do we have to include self?
+                callback = partial(self.interrupt_callback, module, in_conf["pin"])
+                module.setup_interrupt(in_conf["pin"], edge, callback, in_conf)
             else:
-                edge = {
-                    "rising": InterruptEdge.RISING,
-                    "falling": InterruptEdge.FALLING,
-                    "both": InterruptEdge.BOTH,
-                }[in_conf["interrupt"]]
-                if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
-                    # If it's a software callback interrupt, then supply
-                    # partial(self.interrupt_callback, module, in_conf["pin"])
-                    # as the callback.
-                    # NOTE: Needs discussion or investigation -@flyte at 29/01/2021, 12:19:39
-                    # Do we have to include self?
-                    callback = partial(self.interrupt_callback, module, in_conf["pin"])
-                    module.setup_interrupt(in_conf["pin"], edge, callback, in_conf)
-                else:
-                    # Else, just call module.setup_interrupt() without a callback
-                    module.setup_interrupt(in_conf["pin"], edge, in_conf)
+                # Else, just call module.setup_interrupt() without a callback
+                module.setup_interrupt(in_conf["pin"], edge, in_conf)
 
     def _init_digital_outputs(self):
         self.digital_output_configs = {
@@ -301,45 +309,117 @@ class MqttIo:
 
     # Runtime methods
 
+    async def digital_input_poller(self, module, in_conf):
+        last_value = None
+        while True:
+            value = await module.async_get_pin(in_conf["pin"])
+            if value != last_value:
+                _LOG.info(
+                    "Digital input '%s' value changed to %s", in_conf["name"], value
+                )
+                # If the value is now the same as the 'interrupt' value (falling, rising)
+                # and we're a remote interrupt then just trigger the remote interrupt
+                interrupt = in_conf.get("interrupt")
+                interrupt_for = in_conf.get("interrupt_for")
+                if interrupt and not interrupt_for:
+                    _LOG.warning(
+                        (
+                            "Digital input poller for pin '%s' has polled a new value, "
+                            "but the pin is configured as an interrupt, and lists "
+                            "nothing in interrupt_for. This shouldn't happen!"
+                        ),
+                        in_conf["name"],
+                    )
+                elif interrupt and interrupt_for:
+                    if any(
+                        (
+                            interrupt == "rising" and value,
+                            interrupt == "falling" and not value,
+                            interrupt == "both",
+                        )
+                    ):
+                        interrupt_lock = self.interrupt_locks.setdefault(
+                            in_conf["name"], threading.Lock()
+                        )
+                        if not interrupt_lock.acquire(blocking=False):
+                            _LOG.debug(
+                                (
+                                    "Polled an interrupt value on pin '%s', but we're "
+                                    "not triggering the remote interrupt because we're "
+                                    "already handling it."
+                                ),
+                                in_conf["name"],
+                            )
+                            return
+                        try:
+                            return self.handle_remote_interrupt(interrupt_for)
+                        finally:
+                            interrupt_lock.release()
+                self.event_bus.fire(
+                    DigitalInputChangedEvent(in_conf["name"], last_value, value)
+                )
+                last_value = value
+            # TODO: Tasks pending completion -@flyte at 29/05/2019, 01:02:50
+            # Make this delay configurable in in_conf
+            await asyncio.sleep(0.1)
+
     def interrupt_callback(self, module, pin, *args, **kwargs):
         pin_name = module.pin_configs[pin]["name"]
         _LOG.info("Handling interrupt callback on pin '%s'", pin_name)
         remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
-        if not remote_interrupt_for_pin_names:
-            _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
-            value = module.get_interrupt_value(pin, *args, **kwargs)
-            self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
-        else:
-            remote_modules_and_pins = {}
-            for remote_pin_name in remote_interrupt_for_pin_names:
-                in_conf = self.digital_input_configs[remote_pin_name]
-                remote_module = self.gpio_modules[in_conf["module"]]
-                remote_modules_and_pins.setdefault(remote_module, []).append(
-                    in_conf["pin"]
+
+        if remote_interrupt_for_pin_names:
+            interrupt_lock = self.interrupt_locks.setdefault(pin_name, threading.Lock())
+            if not interrupt_lock.acquire(blocking=False):
+                _LOG.debug(
+                    (
+                        "Ignoring interrupt on pin '%s' because we're already busy "
+                        "processing its remote interrupt."
+                    ),
+                    pin_name,
                 )
-            _LOG.debug(
-                "Interrupt is for pins: '%s'",
-                "', '".join(remote_interrupt_for_pin_names),
-            )
+                return
+            try:
+                return self.handle_remote_interrupt(remote_interrupt_for_pin_names)
+            finally:
+                interrupt_lock.release()
 
-            for remote_module, pins in remote_modules_and_pins.items():
+        _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
+        value = module.get_interrupt_value(pin, *args, **kwargs)
+        self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
 
-                async def handle_remote_interrupt_task(
-                    remote_module=remote_module, pins=pins
-                ):
-                    interrupt_values = await remote_module.get_interrupt_values_remote(
-                        pins
+    def handle_remote_interrupt(self, pin_names):
+        # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:14:44
+        # Lock this interrupt
+        # IDEA: Possible implementations -@flyte at 30/01/2021, 16:09:35
+        # Does the interrupt_for module say that its interrupt pin will be held low
+        # until the interrupt register is read, or does it just pulse its interrupt
+        # pin?
+        _LOG.debug("Interrupt is for pins: '%s'", "', '".join(pin_names))
+        remote_modules_and_pins = {}
+        for remote_pin_name in pin_names:
+            in_conf = self.digital_input_configs[remote_pin_name]
+            remote_module = self.gpio_modules[in_conf["module"]]
+            remote_modules_and_pins.setdefault(remote_module, []).append(in_conf["pin"])
+
+        for remote_module, pins in remote_modules_and_pins.items():
+
+            async def handle_remote_interrupt_task(
+                remote_module=remote_module, pins=pins
+            ):
+                interrupt_values = await remote_module.get_interrupt_values_remote(pins)
+                for pin, value in interrupt_values.items():
+                    remote_pin_name = remote_module.pin_configs[pin]["name"]
+                    self.event_bus.fire(
+                        DigitalInputChangedEvent(remote_pin_name, None, value)
                     )
-                    for pin, value in interrupt_values.items():
-                        remote_pin_name = remote_module.pin_configs[pin]["name"]
-                        self.event_bus.fire(
-                            DigitalInputChangedEvent(remote_pin_name, None, value)
-                        )
 
-                task = asyncio.run_coroutine_threadsafe(
-                    handle_remote_interrupt_task(), self.loop
-                )
-                self.unawaited_tasks.append(task)
+            task = asyncio.run_coroutine_threadsafe(
+                handle_remote_interrupt_task(), self.loop
+            )
+            self.unawaited_tasks.append(task)
+        # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:15:12
+        # Unlock this interrupt
 
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]
