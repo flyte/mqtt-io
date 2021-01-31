@@ -317,60 +317,49 @@ class MqttIo:
                 _LOG.info(
                     "Digital input '%s' value changed to %s", in_conf["name"], value
                 )
-                # If the value is now the same as the 'interrupt' value (falling, rising)
-                # and we're a remote interrupt then just trigger the remote interrupt
-                interrupt = in_conf.get("interrupt")
-                interrupt_for = in_conf.get("interrupt_for")
-                if interrupt and not interrupt_for:
-                    _LOG.warning(
-                        (
-                            "Digital input poller for pin '%s' has polled a new value, "
-                            "but the pin is configured as an interrupt, and lists "
-                            "nothing in interrupt_for. This shouldn't happen!"
-                        ),
-                        in_conf["name"],
-                    )
-                elif interrupt and interrupt_for:
-                    last_value = value
-                    if not any(
-                        (
-                            interrupt == "rising" and value,
-                            interrupt == "falling" and not value,
-                            interrupt == "both",
-                        )
-                    ):
-                        continue
-                    interrupt_lock = self.interrupt_locks.setdefault(
-                        in_conf["name"], threading.Lock()
-                    )
-                    if not interrupt_lock.acquire(blocking=False):
-                        _LOG.debug(
-                            (
-                                "Polled an interrupt value on pin '%s', but we're "
-                                "not triggering the remote interrupt because we're "
-                                "already handling it."
-                            ),
-                            in_conf["name"],
-                        )
-                        continue
-                    try:
-                        _LOG.debug(
-                            "Polled value of %s on '%s' triggered remote interrupt",
-                            value,
-                            in_conf["name"],
-                        )
-                        self.handle_remote_interrupt(interrupt_for)
-                    finally:
-                        interrupt_lock.release()
-                    continue
-                _LOG.debug(
-                    "Digital input poller firing DigitalInputChangedEvent for '%s'",
-                    in_conf["name"],
-                )
                 self.event_bus.fire(
                     DigitalInputChangedEvent(in_conf["name"], last_value, value)
                 )
                 last_value = value
+            # If the value is now the same as the 'interrupt' value (falling, rising)
+            # and we're a remote interrupt then just trigger the remote interrupt
+            interrupt = in_conf.get("interrupt")
+            interrupt_for = in_conf.get("interrupt_for")
+            if not interrupt or not interrupt_for:
+                continue
+            if not any(
+                (
+                    interrupt == "rising" and value,
+                    interrupt == "falling" and not value,
+                    # Doesn't work for 'both' because there's no one 'triggered' state
+                    # to check if we're stuck in.
+                    # interrupt == "both",
+                )
+            ):
+                continue
+            interrupt_lock = self.interrupt_locks.setdefault(
+                in_conf["name"], threading.Lock()
+            )
+            if not interrupt_lock.acquire(blocking=False):
+                _LOG.debug(
+                    (
+                        "Polled an interrupt value on pin '%s', but we're "
+                        "not triggering the remote interrupt because we're "
+                        "already handling it."
+                    ),
+                    in_conf["name"],
+                )
+                continue
+            try:
+                _LOG.debug(
+                    "Polled value of %s on '%s' triggered remote interrupt",
+                    value,
+                    in_conf["name"],
+                )
+                self.handle_remote_interrupt(interrupt_for)
+            finally:
+                interrupt_lock.release()
+            continue
             # TODO: Tasks pending completion -@flyte at 29/05/2019, 01:02:50
             # Make this delay configurable in in_conf
             await asyncio.sleep(0.1)
