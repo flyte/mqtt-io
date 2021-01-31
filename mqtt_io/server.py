@@ -145,11 +145,10 @@ class MqttIo:
                 "both": InterruptEdge.BOTH,
             }[interrupt]
             if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
+                self.interrupt_locks[in_conf["name"]] = threading.Lock()
                 # If it's a software callback interrupt, then supply
                 # partial(self.interrupt_callback, module, in_conf["pin"])
                 # as the callback.
-                # NOTE: Needs discussion or investigation -@flyte at 29/01/2021, 12:19:39
-                # Do we have to include self?
                 callback = partial(self.interrupt_callback, module, in_conf["pin"])
                 module.setup_interrupt(in_conf["pin"], edge, callback, in_conf)
             else:
@@ -337,9 +336,7 @@ class MqttIo:
                 )
             ):
                 continue
-            interrupt_lock = self.interrupt_locks.setdefault(
-                in_conf["name"], threading.Lock()
-            )
+            interrupt_lock = self.interrupt_locks[in_conf["name"]]
             if not interrupt_lock.acquire(blocking=False):
                 _LOG.debug(
                     (
@@ -370,7 +367,7 @@ class MqttIo:
         remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
 
         if remote_interrupt_for_pin_names:
-            interrupt_lock = self.interrupt_locks.setdefault(pin_name, threading.Lock())
+            interrupt_lock = self.interrupt_locks[pin_name]
             if not interrupt_lock.acquire(blocking=False):
                 _LOG.debug(
                     (
