@@ -1,5 +1,6 @@
-v0.5.3 - 2020-10-17
+v0.5.3 - 2021-01-18
 ===================
+- Add gpiod support. #98
 - Add PCF8575 support. #121
 - Add MCP3008 sensor support. #115
 - Add AHT20 sensor support. #122
