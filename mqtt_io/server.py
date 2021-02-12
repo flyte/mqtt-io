@@ -375,6 +375,7 @@ class MqttIo:
                 pin_name,
             )
             return
+        remote_interrupt_for_pin_names = {}
         try:
             _LOG.info("Handling interrupt callback on pin '%s'", pin_name)
             remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
@@ -428,8 +429,6 @@ class MqttIo:
 
         task = asyncio.run_coroutine_threadsafe(await_remote_interrupts(), self.loop)
         self.unawaited_tasks.append(task)
-        # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:15:12
-        # Unlock this interrupt
 
     def _handle_mqtt_msg(self, topic, payload):
         topic_prefix = self.config["mqtt"]["topic_prefix"]
