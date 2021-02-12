@@ -137,7 +137,7 @@ class MqttIo:
                 )
 
             if interrupt is None:
-                return
+                continue
 
             edge = {
                 "rising": InterruptEdge.RISING,
@@ -361,7 +361,13 @@ class MqttIo:
         pin_name = module.pin_configs[pin]["name"]
         interrupt_lock = self.interrupt_locks[pin_name]
         if not interrupt_lock.acquire(blocking=False):
-            _LOG.debug(
+            # This will only happen when the pin is configured with interrupt_for, as we
+            # release the lock locally otherwise.
+            # Hopefully it won't happen at all, but if we miss this interrupt then
+            # the poller will notice that the interrupt is triggered and it'll trigger
+            # the handling of the remote interrupt anyway, once this lock has been
+            # released when the remote interrupt handling tasks have all finished.
+            _LOG.warning(
                 (
                     "Ignoring interrupt on pin '%s' because we're already busy "
                     "processing one."
