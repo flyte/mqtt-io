@@ -25,6 +25,7 @@ digraph {
             ignore_interrupt [label="Ignore this interrupt", style=striped];
             fire_digital_input_changed_event_main [label="Fire DigitalInputChangedEvent", style="striped"];
             get_all_interrupt_for_pins [label="Get list of pin names that this pin_name is an interrupt for"]
+            get_interrupt_value [label="Get value of pin that caused the interrupt\nusing [module].GPIO.get_interrupt_value(pin)"];
     }
 
     subgraph cluster_handle_remote_int {
@@ -80,15 +81,6 @@ Get captured pin value at time of interrupt
 
     }
     # END modules.gpio.GenericGPIO
-
-    # modules.gpio.<module>.GPIO
-    subgraph cluster_module_get_interrupt_value {
-        label = <<font point-size="22">[module].GPIO.get_interrupt_value(pin)</font>>
-
-        node [shape=box, style=rounded]
-            get_interrupt_value [label="Get value of pin that caused the interrupt"];
-    }
-    # END modules.gpio.<module>.GPIO
 
     mcp_gpio_input ->
     mcp_int_output ->
