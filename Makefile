@@ -21,3 +21,7 @@ clean:
 upload: packages
 	twine upload dist/*
 	$(MAKE) clean
+
+graphs:
+	dot -Tsvg -O interrupt_handling.dot
+	dot -Tsvg -O interrupt_callbacks.dot
