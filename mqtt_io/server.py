@@ -65,6 +65,9 @@ def _init_module(module_config, module_type):
 
 
 def output_name_from_topic(topic, prefix):
+    """
+    Parses an MQTT topic and returns the name of the output that the message relates to.
+    """
     match = re.match("^{}/{}/(.+?)/.+$".format(prefix, OUTPUT_TOPIC), topic)
     if match is None:
         raise ValueError("Topic %r does not adhere to expected structure" % topic)
@@ -106,9 +109,20 @@ class MqttIo:
             self.sensor_modules[sens_config["name"]] = _init_module(sens_config, "sensor")
 
     def _init_digital_inputs(self):
+        """
+        Initialise all of the digital inputs by doing the following:
+        - Create a
+        For each of the inputs:
+        - Set up the self.digital_input_configs dict
+        - Call the module's setup_pin() method
+        - Optionally start an async task that continuously polls the input for changes
+        - Optionally call the module's setup_interrupt() method, with a software callback
+          if it's supported.
+        """
         self.digital_input_configs = {x["name"]: x for x in self.config["digital_inputs"]}
 
-        # Set up MQTT publish callback for input event
+        # Set up MQTT publish callback for input event.
+        # Needs to be a function, not a method, hence the closure function.
         async def publish_callback(event):
             in_conf = self.digital_input_configs[event.input_name]
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]

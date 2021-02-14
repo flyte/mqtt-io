@@ -28,10 +28,10 @@ class Sensor(GenericSensor):
         )
     }
 
-    def __init__(self, config):
+    def setup_sensor(self):
         import Adafruit_DHT as DHTsensor
 
-        sensor_type = config["type"].lower()
+        sensor_type = self.config["type"].lower()
 
         if sensor_type == "dht22":
             self.sensor_type = DHTsensor.DHT22
@@ -42,9 +42,8 @@ class Sensor(GenericSensor):
         else:
             raise Exception("Supported sensor types: DHT22, DHT11, AM2302")
 
-        self.pin = config["pin"]
+        self.pin = self.config["pin"]
         self.sensor = DHTsensor
-        self.config = config
 
     def get_value(self, sens_conf):
         """get the temperature or humidity value from the sensor"""

@@ -46,7 +46,7 @@ class InterruptSupport(Flag):
     SET_TRIGGERS = auto()
 
 
-class GenericGPIO(object):
+class GenericGPIO:
     """
     Abstracts a generic GPIO interface to be implemented by the modules in this
     directory.
@@ -61,11 +61,10 @@ class GenericGPIO(object):
         self.pin_configs = {}
         self.io = None
         self.interrupt_edges = {}
-
         self.setup_module()
 
     def __init_subclass__(cls):
-        cls.setup_pin = GenericGPIO.setup_pin_wrapper(cls.setup_pin)
+        cls.setup_pin = GenericGPIO._setup_pin_wrapper(cls.setup_pin)
 
     @abc.abstractmethod
     def setup_module(self):
@@ -90,7 +89,7 @@ class GenericGPIO(object):
         pass
 
     @staticmethod
-    def setup_pin_wrapper(setup_pin):
+    def _setup_pin_wrapper(setup_pin):
         """
         Wrap setup_pin so that we can ensure pin_config is stored, and set some useful
         variables.
@@ -114,7 +113,10 @@ class GenericGPIO(object):
         return wrapper
 
     def remote_interrupt_for(self, pin):
-        return self.pin_configs[pin].get("interrupt_for", {})
+        """
+        Return the list of pin names that this pin is a remote interrupt for.
+        """
+        return self.pin_configs[pin].get("interrupt_for", [])
 
     def get_int_pins(self):
         """
