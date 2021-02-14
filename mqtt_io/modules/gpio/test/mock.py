@@ -8,9 +8,9 @@ CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
 
 class GPIO(GenericGPIO):
     INTERRUPT_SUPPORT = (
-        InterruptSupport.SOFTWARE_CALLBACK,
-        InterruptSupport.FLAG_REGISTER,
-        InterruptSupport.CAPTURE_REGISTER,
+        InterruptSupport.SOFTWARE_CALLBACK
+        | InterruptSupport.FLAG_REGISTER
+        | InterruptSupport.CAPTURE_REGISTER
     )
 
     def __init__(self, *args, **kwargs):

@@ -1,8 +1,18 @@
 import asyncio
 import logging
 import types
+from collections import namedtuple
 
 _LOG = logging.getLogger(__name__)
+
+
+DigitalInputChangedEvent = namedtuple(
+    "DigitalInputChangedEvent", ("input_name", "from_value", "to_value")
+)
+DigitalOutputChangedEvent = namedtuple(
+    "DigitalOutputChangedEvent", ("output_name", "to_value")
+)
+SensorReadEvent = namedtuple("SensorReadEvent", ("sensor_name", "value"))
 
 
 class Event:

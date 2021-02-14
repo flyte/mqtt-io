@@ -26,16 +26,16 @@ from .constants import (
     SET_ON_MS_TOPIC,
     SET_TOPIC,
 )
-from .events import EventBus
+from .events import (
+    DigitalInputChangedEvent,
+    DigitalOutputChangedEvent,
+    EventBus,
+    SensorReadEvent,
+)
 from .home_assistant import (
     hass_announce_digital_input,
     hass_announce_digital_output,
     hass_announce_sensor_input,
-)
-from .io import (
-    DigitalInputChangedEvent,
-    DigitalOutputChangedEvent,
-    SensorReadEvent,
 )
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
@@ -111,7 +111,7 @@ class MqttIo:
     def _init_digital_inputs(self):
         """
         Initialise all of the digital inputs by doing the following:
-        - Create a
+        - Create a closure function to publish an MQTT message on DigitalInputchangedEvent
         For each of the inputs:
         - Set up the self.digital_input_configs dict
         - Call the module's setup_pin() method
