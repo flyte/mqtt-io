@@ -5,8 +5,7 @@ mqtt:
     host:
       type: string
       empty: no
-      required: no
-      default: localhost
+      required: yes
     port:
       type: integer
       min: 1
