@@ -1,6 +1,7 @@
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
+from typing import Any, Dict
 
 import cerberus
 import yaml
@@ -86,7 +87,9 @@ def get_main_schema():
     return yaml.safe_load(open(schema_path))
 
 
-def validate_and_normalise_config(config, schema):
+def validate_and_normalise_config(
+    config: Dict[str, Any], schema: Dict[str, Any]
+) -> Dict[str, Any]:
     """
     Validate the config dict based on the config schema.
     :param config: The supplied configuration

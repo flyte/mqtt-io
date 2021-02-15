@@ -4,8 +4,12 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, Flag, auto
 from functools import wraps
+from typing import Any, Callable, Dict, List, Optional, Union
 
 _LOG = logging.getLogger(__name__)
+
+
+PinType = Union[str, int]
 
 
 class PinDirection(Enum):
@@ -71,7 +75,13 @@ class GenericGPIO:
         pass
 
     @abc.abstractmethod
-    def setup_pin(self, pin, direction, pullup, **pin_config):
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: Optional[PinPUD] = None,
+        **pin_config: Dict[str, Any]
+    ):
         pass
 
     @abc.abstractmethod
@@ -82,35 +92,38 @@ class GenericGPIO:
     def get_pin(self, pin):
         pass
 
+    def setup_interrupt(
+        self,
+        pin: PinType,
+        edge: InterruptEdge,
+        in_conf: Dict[str, Any],
+        callback: Optional[Callable[[List[Any], Dict[Any, Any]], None]] = None,
+    ):
+        pass
+
     def cleanup(self):
         """
         Called when closing the program to handle any cleanup operations.
         """
         pass
 
-    @staticmethod
-    def _setup_pin_wrapper(setup_pin):
+    def setup_pin_internal(self, direction: PinDirection, pin_config: Dict[str, Any]):
         """
-        Wrap setup_pin so that we can ensure pin_config is stored, and set some useful
-        variables.
+        Called internally to setup a pin just by supplying config. Calls setup_pin()
+        that's been implemented by the GPIO module.
         """
-
-        @wraps(setup_pin)
-        def wrapper(self, direction, pin_config):
-            self.pin_configs[pin_config["pin"]] = pin_config
-            pud = None
-            if pin_config.get("pullup"):
-                pud = PinPUD.UP
-            elif pin_config.get("pulldown"):
-                pud = PinPUD.DOWN
-            for key in ("direction", "pullup", "pulldown"):
-                try:
-                    del pin_config[key]
-                except KeyError:
-                    continue
-            return setup_pin(self, direction=direction, pullup=pud, **pin_config)
-
-        return wrapper
+        self.pin_configs[pin_config["pin"]] = pin_config
+        pud = None
+        if pin_config.get("pullup"):
+            pud = PinPUD.UP
+        elif pin_config.get("pulldown"):
+            pud = PinPUD.DOWN
+        for key in ("direction", "pullup", "pulldown"):
+            try:
+                del pin_config[key]
+            except KeyError:
+                continue
+        return self.setup_pin(direction=direction, pullup=pud, **pin_config)
 
     def remote_interrupt_for(self, pin):
         """

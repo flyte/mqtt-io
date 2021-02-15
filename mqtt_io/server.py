@@ -4,13 +4,14 @@ import re
 import signal as signals
 import threading
 from concurrent.futures import Future as ConcurrentFuture
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from hashlib import sha1
 from importlib import import_module
+from typing import Any, Dict, List, Tuple, Type, Union, overload
 
 from hbmqtt.client import MQTTClient
 from hbmqtt.mqtt.constants import QOS_1
+from typing_extensions import Literal
 
 from .config import (
     validate_and_normalise_config,
@@ -29,6 +30,7 @@ from .constants import (
 from .events import (
     DigitalInputChangedEvent,
     DigitalOutputChangedEvent,
+    Event,
     EventBus,
     SensorReadEvent,
 )
@@ -39,12 +41,29 @@ from .home_assistant import (
 )
 from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
-from .modules.gpio import InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
+from .modules.sensor import GenericSensor
 
 _LOG = logging.getLogger(__name__)
 
 
-def _init_module(module_config, module_type):
+@overload
+def _init_module(
+    module_config: Dict[str, Dict[str, Any]], module_type: Literal["gpio"]
+) -> GenericGPIO:
+    ...
+
+
+@overload
+def _init_module(
+    module_config: Dict[str, Dict[str, Any]], module_type: Literal["sensor"]
+) -> GenericSensor:
+    ...
+
+
+def _init_module(
+    module_config: Dict[str, Dict[str, Any]], module_type: str
+) -> Union[GenericGPIO, GenericSensor]:
     """
     Initialise a GPIO module by:
     - Importing it
@@ -61,10 +80,13 @@ def _init_module(module_config, module_type):
     module_schema.update(getattr(module, "CONFIG_SCHEMA", {}))
     module_config = validate_and_normalise_config(module_config, module_schema)
     install_missing_requirements(module)
-    return getattr(module, MODULE_CLASS_NAMES[module_type])(module_config)
+    module_class: Union[Type[GenericGPIO], Type[GenericSensor]] = getattr(
+        module, MODULE_CLASS_NAMES[module_type]
+    )
+    return module_class(module_config)
 
 
-def output_name_from_topic(topic, prefix):
+def output_name_from_topic(topic: str, prefix: str) -> str:
     """
     Parses an MQTT topic and returns the name of the output that the message relates to.
     """
@@ -75,40 +97,42 @@ def output_name_from_topic(topic, prefix):
 
 
 class MqttIo:
-    def __init__(self, config):
+    def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
-        self.gpio_configs = {}
-        self.sensor_configs = {}
-        self.digital_input_configs = {}
-        self.digital_output_configs = {}
-        self.sensor_input_configs = {}
-        self.gpio_modules = {}
-        self.sensor_modules = {}
-        self.module_output_queues = {}
+        self.gpio_configs: Dict[str, Dict[str, Any]] = {}
+        self.sensor_configs: Dict[str, Dict[str, Any]] = {}
+        self.digital_input_configs: Dict[str, Dict[str, Any]] = {}
+        self.digital_output_configs: Dict[str, Dict[str, Any]] = {}
+        self.sensor_input_configs: Dict[str, Dict[str, Any]] = {}
+        self.gpio_modules: Dict[str, GenericGPIO] = {}
+        self.sensor_modules: Dict[str, GenericSensor] = {}
+        self.module_output_queues = (
+            {}
+        )  # type: Dict[GenericGPIO, asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]]
 
         self.loop = asyncio.get_event_loop()
-        self.tasks = []
-        self.unawaited_tasks = []
+        self.tasks: List[asyncio.Task[Any]] = []
+        self.unawaited_tasks: List[asyncio.Task[Any]] = []
 
         self.event_bus = EventBus(self.loop)
-        self.mqtt = None
-        self.interrupt_locks = {}
+        self.mqtt: MQTTClient = None
+        self.interrupt_locks: Dict[str, threading.Lock] = {}
 
     # Init methods
 
-    def _init_gpio_modules(self):
+    def _init_gpio_modules(self) -> None:
         self.gpio_configs = {x["name"]: x for x in self.config["gpio_modules"]}
         self.gpio_modules = {}
         for gpio_config in self.config["gpio_modules"]:
             self.gpio_modules[gpio_config["name"]] = _init_module(gpio_config, "gpio")
 
-    def _init_sensor_modules(self):
+    def _init_sensor_modules(self) -> None:
         self.sensor_configs = {x["name"]: x for x in self.config["sensor_modules"]}
         self.sensor_modules = {}
         for sens_config in self.config["sensor_modules"]:
             self.sensor_modules[sens_config["name"]] = _init_module(sens_config, "sensor")
 
-    def _init_digital_inputs(self):
+    def _init_digital_inputs(self) -> None:
         """
         Initialise all of the digital inputs by doing the following:
         - Create a closure function to publish an MQTT message on DigitalInputchangedEvent
@@ -123,7 +147,7 @@ class MqttIo:
 
         # Set up MQTT publish callback for input event.
         # Needs to be a function, not a method, hence the closure function.
-        async def publish_callback(event):
+        async def publish_callback(event: DigitalInputChangedEvent) -> None:
             in_conf = self.digital_input_configs[event.input_name]
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
             await self.mqtt.publish(
@@ -136,7 +160,10 @@ class MqttIo:
 
         for in_conf in self.config["digital_inputs"]:
             module = self.gpio_modules[in_conf["module"]]
-            module.setup_pin(PinDirection.INPUT, in_conf)
+
+            # setup_pin() is wrapped in __init_subclass__ to have different args, so
+            # ignore the type to avoid confusing mypy
+            module.setup_pin(PinDirection.INPUT, in_conf)  # type: ignore
 
             interrupt = in_conf.get("interrupt")
             interrupt_for = in_conf.get("interrupt_for")
@@ -158,24 +185,22 @@ class MqttIo:
                 "falling": InterruptEdge.FALLING,
                 "both": InterruptEdge.BOTH,
             }[interrupt]
+            callback = None
             if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
                 self.interrupt_locks[in_conf["name"]] = threading.Lock()
                 # If it's a software callback interrupt, then supply
                 # partial(self.interrupt_callback, module, in_conf["pin"])
                 # as the callback.
                 callback = partial(self.interrupt_callback, module, in_conf["pin"])
-                module.setup_interrupt(in_conf["pin"], edge, callback, in_conf)
-            else:
-                # Else, just call module.setup_interrupt() without a callback
-                module.setup_interrupt(in_conf["pin"], edge, in_conf)
+            module.setup_interrupt(in_conf["pin"], edge, in_conf, callback=callback)
 
-    def _init_digital_outputs(self):
+    def _init_digital_outputs(self) -> None:
         self.digital_output_configs = {
             x["name"]: x for x in self.config["digital_outputs"]
         }
 
         # Set up MQTT publish callback for output event
-        async def publish_callback(event):
+        async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
             await self.mqtt.publish(
@@ -188,11 +213,15 @@ class MqttIo:
         self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
 
         for out_conf in self.config["digital_outputs"]:
-            self.gpio_modules[out_conf["module"]].setup_pin(PinDirection.OUTPUT, out_conf)
+            self.gpio_modules[out_conf["module"]].setup_pin_internal(
+                PinDirection.OUTPUT, out_conf
+            )
 
             # Create queues for each module with an output
             if out_conf["module"] not in self.module_output_queues:
-                queue = asyncio.Queue()
+                queue = (
+                    asyncio.Queue()
+                )  # type: asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]
                 self.module_output_queues[out_conf["module"]] = queue
 
                 # Use partial to avoid late binding closure
@@ -200,7 +229,7 @@ class MqttIo:
                     self.loop.create_task(partial(self.digital_output_loop, queue)())
                 )
 
-    def _init_sensor_inputs(self):
+    def _init_sensor_inputs(self) -> None:
         self.sensor_input_configs = {x["name"]: x for x in self.config["sensor_inputs"]}
 
         async def publish_sensor_callback(event):
@@ -322,7 +351,9 @@ class MqttIo:
 
     # Runtime methods
 
-    async def digital_input_poller(self, module, in_conf):
+    async def digital_input_poller(
+        self, module: GenericGPIO, in_conf: Dict[str, Any]
+    ) -> None:
         last_value = None
         while True:
             value = await module.async_get_pin(in_conf["pin"])

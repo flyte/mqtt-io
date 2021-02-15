@@ -1,4 +1,5 @@
 import logging
+from typing import ModuleType
 
 from ..exceptions import CannotInstallModuleRequirements
 
@@ -11,7 +12,7 @@ BASE_SCHEMA = {
 }
 
 
-def install_missing_requirements(module):
+def install_missing_requirements(module: ModuleType) -> None:
     """
     Some of the modules require external packages to be installed. This gets
     the list from the `REQUIREMENTS` module attribute and attempts to
@@ -33,7 +34,7 @@ def install_missing_requirements(module):
         if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
             pkgs_required.append(req)
     if pkgs_required:
-        from subprocess import check_call, CalledProcessError
+        from subprocess import CalledProcessError, check_call
 
         try:
             check_call(["/usr/bin/env", "pip", "install"] + pkgs_required)

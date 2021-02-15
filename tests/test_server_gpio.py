@@ -20,17 +20,6 @@ def prepare_config(yaml_config: str) -> dict:
 
 
 @pytest.fixture
-def mqttio_minimal() -> MqttIo:
-    config = prepare_config(
-        """
-mqtt:
-    host: localhost
-"""
-    )
-    return MqttIo(config)
-
-
-@pytest.fixture
 def mqttio_mock_gpio_module() -> MqttIo:
     config = prepare_config(
         """

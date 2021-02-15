@@ -1,30 +1,43 @@
 import asyncio
 import logging
-import types
-from collections import namedtuple
+from abc import ABC
+from dataclasses import dataclass
+from types import FunctionType
+from typing import Any, Awaitable, Callable, Dict, List, Type
 
 _LOG = logging.getLogger(__name__)
 
 
-DigitalInputChangedEvent = namedtuple(
-    "DigitalInputChangedEvent", ("input_name", "from_value", "to_value")
-)
-DigitalOutputChangedEvent = namedtuple(
-    "DigitalOutputChangedEvent", ("output_name", "to_value")
-)
-SensorReadEvent = namedtuple("SensorReadEvent", ("sensor_name", "value"))
-
-
-class Event:
+@dataclass
+class Event(ABC):
     pass
 
 
-class EventBus:
-    def __init__(self, loop):
-        self._loop = loop
-        self._listeners = {}
+@dataclass
+class DigitalInputChangedEvent(Event):
+    input_name: str
+    from_value: bool
+    to_value: bool
 
-    def fire(self, event):
+
+@dataclass
+class DigitalOutputChangedEvent(Event):
+    output_name: str
+    to_value: bool
+
+
+@dataclass
+class SensorReadEvent(Event):
+    sensor_name: str
+    value: Any
+
+
+class EventBus:
+    def __init__(self, loop: asyncio.AbstractEventLoop):
+        self._loop = loop
+        self._listeners: Dict[Type[Event], List[Callable[[Any], Awaitable[None]]]] = {}
+
+    def fire(self, event: Event) -> None:
         event_class = type(event)
         try:
             listeners = self._listeners[event_class]
@@ -41,22 +54,25 @@ class EventBus:
             asyncio.run_coroutine_threadsafe(listener(event), self._loop)
             # self._loop.create_task(listener(event))
 
-    def subscribe(self, event_class, callback):
+    def subscribe(
+        self,
+        event_class: Type[Event],
+        callback: Callable[[Any], Awaitable[None]],
+    ) -> Callable[[], None]:
         if not isinstance(event_class, type):
             raise TypeError(
                 "event_class must be of type 'type'. Got type %s." % type(event_class)
             )
-        if not isinstance(callback, types.FunctionType):
+        if not isinstance(callback, FunctionType):
             raise TypeError(
-                "callback must be of type 'types.FunctionType'. Got type %s."
-                % type(callback)
+                "callback must be of type 'FunctionType'. Got type %s." % type(callback)
             )
         if event_class in self._listeners:
             self._listeners[event_class].append(callback)
         else:
             self._listeners[event_class] = [callback]
 
-        def remove_listener():
+        def remove_listener() -> None:
             self._listeners[event_class].remove(callback)
 
         return remove_listener
