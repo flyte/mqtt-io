@@ -7,7 +7,7 @@ from .exceptions import ConfigValidationFailed
 from .server import MqttIo
 
 
-def main():
+def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("config")
     args = p.parse_args()
