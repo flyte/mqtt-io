@@ -196,7 +196,11 @@ class MqttIo:
                 # partial(self.interrupt_callback, module, in_conf["pin"])
                 # as the callback.
                 callback = partial(self.interrupt_callback, module, in_conf["pin"])
-            module.setup_interrupt(in_conf["pin"], edge, in_conf, callback=callback)
+                module.setup_interrupt_callback(
+                    in_conf["pin"], edge, in_conf, callback=callback
+                )
+            else:
+                module.setup_interrupt(in_conf["pin"], edge, in_conf)
 
     def _init_digital_outputs(self) -> None:
         self.digital_output_configs = {

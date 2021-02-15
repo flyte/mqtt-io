@@ -1,15 +1,16 @@
 import logging
-from functools import partial
+from typing import Any, Callable, Dict, List, Optional
 
+from ...types import ConfigType, PinType
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 _LOG = logging.getLogger(__name__)
 
 REQUIREMENTS = ("RPi.GPIO",)
 
-DIRECTIONS = None
-PULLUPS = None
-INTERRUPT = None
+DIRECTIONS: Dict[PinDirection, Any] = {}
+PULLUPS: Dict[PinPUD, Any] = {}
+INTERRUPT: Dict[InterruptEdge, Any] = {}
 
 
 class GPIO(GenericGPIO):
@@ -19,9 +20,10 @@ class GPIO(GenericGPIO):
 
     INTERRUPT_SUPPORT = InterruptSupport.SOFTWARE_CALLBACK
 
-    def setup_module(self):
+    def setup_module(self) -> None:
+        # pylint: disable=global-statement,import-outside-toplevel
         global DIRECTIONS, PULLUPS, INTERRUPT
-        import RPi.GPIO as gpio
+        import RPi.GPIO as gpio  # type: ignore
 
         self.io = gpio
         DIRECTIONS = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
@@ -40,7 +42,14 @@ class GPIO(GenericGPIO):
 
         gpio.setmode(gpio.BCM)
 
-    def setup_pin(self, pin, direction, pullup=None, initial=None, **kwargs):
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: Optional[PinPUD] = None,
+        initial: Optional[str] = None,
+        **pin_config: ConfigType
+    ) -> None:
         direction = DIRECTIONS[direction]
 
         if pullup is None:
@@ -48,10 +57,16 @@ class GPIO(GenericGPIO):
         else:
             pullup = PULLUPS[pullup]
 
-        initial = {None: -1, "low": 0, "high": 1}[initial]
-        self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
+        initial_int = {None: -1, "low": 0, "high": 1}[initial]
+        self.io.setup(pin, direction, pull_up_down=pullup, initial=initial_int)
 
-    def setup_interrupt(self, pin, edge, callback, in_conf):
+    def setup_interrupt_callback(
+        self,
+        pin: PinType,
+        edge: InterruptEdge,
+        in_conf: ConfigType,
+        callback: Callable[[List[Any], Dict[Any, Any]], None],
+    ) -> None:
         edge = INTERRUPT[edge]
         _LOG.debug(
             "Added interrupt to Raspberry Pi pin '%s' with callback '%s'", pin, callback
@@ -64,7 +79,9 @@ class GPIO(GenericGPIO):
         )
         self.interrupt_edges[pin] = edge
 
-    def get_interrupt_value(self, pin, *args, **kwargs):
+    def get_interrupt_value(
+        self, pin: PinType, *args: List[Any], **kwargs: Dict[Any, Any]
+    ) -> bool:
         edge = self.interrupt_edges[pin]
         if edge == InterruptEdge.BOTH:
             # Polling the pin for its value is a bit crap, but I can't find any alternative
@@ -74,11 +91,11 @@ class GPIO(GenericGPIO):
             value = edge == InterruptEdge.RISING
         return value
 
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         self.io.output(pin, value)
 
-    def get_pin(self, pin):
-        return self.io.input(pin)
+    def get_pin(self, pin: PinType) -> bool:
+        return bool(self.io.input(pin))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.io.cleanup()

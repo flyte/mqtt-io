@@ -76,6 +76,7 @@ class GenericGPIO:
         pin: PinType,
         direction: PinDirection,
         pullup: Optional[PinPUD] = None,
+        initial: Optional[str] = None,
         **pin_config: ConfigType
     ) -> None:
         pass
@@ -93,7 +94,15 @@ class GenericGPIO:
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Optional[Callable[[List[Any], Dict[Any, Any]], None]] = None,
+    ) -> None:
+        pass
+
+    def setup_interrupt_callback(
+        self,
+        pin: PinType,
+        edge: InterruptEdge,
+        in_conf: ConfigType,
+        callback: Callable[[List[Any], Dict[Any, Any]], None],
     ) -> None:
         pass
 
