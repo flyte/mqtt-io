@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 
 import logging
+from typing import Any, Dict, List, Optional, cast
 
+from ...exceptions import ConfigValidationFailed
+from ...types import ConfigType, PinType
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 _LOG = logging.getLogger(__name__)
@@ -11,8 +14,8 @@ CONFIG_SCHEMA = {
     "chip_addr": {"type": "integer", "required": False, "empty": False},
 }
 
-DIRECTIONS = None
-PULLUPS = None
+DIRECTIONS: Dict[PinDirection, Any] = {}
+PULLUPS: Dict[PinPUD, Any] = {}
 
 
 class GPIO(GenericGPIO):
@@ -29,12 +32,13 @@ class GPIO(GenericGPIO):
         | InterruptSupport.SET_TRIGGERS
     )
 
-    def setup_module(self):
+    def setup_module(self) -> None:
+        # pylint: disable=global-statement,import-outside-toplevel
         global DIRECTIONS, PULLUPS
-        import board
-        import busio
-        import digitalio
-        from adafruit_mcp230xx import mcp23017
+        import board  # type: ignore
+        import busio  # type: ignore
+        import digitalio  # type: ignore
+        from adafruit_mcp230xx import mcp23017  # type: ignore
 
         i2c = busio.I2C(board.SCL, board.SDA)
         DIRECTIONS = {
@@ -44,7 +48,7 @@ class GPIO(GenericGPIO):
         # Pulldowns are not supported on MCP23017
         PULLUPS = {
             PinPUD.UP: digitalio.Pull.UP,
-            None: None,
+            PinPUD.OFF: None,
         }
 
         # Use the "protected" constant for the default address
@@ -53,17 +57,27 @@ class GPIO(GenericGPIO):
         )
         self.io.clear_ints()
 
-    def setup_pin(self, pin, direction, pullup=None, initial="low", **kwargs):
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: PinPUD,
+        pin_config: ConfigType,
+        initial: Optional[str] = None,
+    ) -> None:
+        if not isinstance(pin, int):
+            raise ConfigValidationFailed("MCP23017 pins must be integers")
         mcp_pin = self.io.get_pin(pin)
-
-        # Set to True if 'high', False if 'low'
-        initial = initial == "high"
+        mcp_pin.direction = DIRECTIONS[direction]
         if direction == PinDirection.OUTPUT:
-            mcp_pin.switch_to_output(value=initial)
+            if initial is not None:
+                mcp_pin.value = initial == "high"
         else:
-            mcp_pin.switch_to_input(pull=PULLUPS[pullup])
+            mcp_pin.pull = PULLUPS[pullup]
 
-    def setup_interrupt(self, pin, edge, in_conf):
+    def setup_interrupt(
+        self, pin: PinType, edge: InterruptEdge, in_conf: ConfigType
+    ) -> None:
         # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:14:16
         # Make this a wrapper task on GenericGPIO
         self.interrupt_edges[pin] = edge
@@ -73,6 +87,8 @@ class GPIO(GenericGPIO):
         _LOG.debug(
             "MCP23017 module %s IOCON: %s", self.config["name"], bin(self.io.io_control)
         )
+
+        pin = cast(int, pin)
 
         if edge == InterruptEdge.BOTH:
             # Set this pin to interrupt when it changes from its previous value
@@ -91,11 +107,11 @@ class GPIO(GenericGPIO):
         # Enable the interrupt on this pin
         self.io.interrupt_enable |= 1 << pin
 
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         self.io.get_pin(pin).value = value
 
-    def get_pin(self, pin):
-        return self.io.get_pin(pin).value
+    def get_pin(self, pin: PinType) -> bool:
+        return bool(self.io.get_pin(pin).value)
 
-    def get_int_pins(self):
-        return self.io.int_flag
+    def get_int_pins(self) -> List[PinType]:
+        return cast(List[PinType], self.io.int_flag)

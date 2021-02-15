@@ -46,16 +46,12 @@ class GPIO(GenericGPIO):
         self,
         pin: PinType,
         direction: PinDirection,
-        pullup: Optional[PinPUD] = None,
+        pullup: PinPUD,
+        pin_config: ConfigType,
         initial: Optional[str] = None,
-        **pin_config: ConfigType
     ) -> None:
         direction = DIRECTIONS[direction]
-
-        if pullup is None:
-            pullup = PULLUPS[PinPUD.OFF]
-        else:
-            pullup = PULLUPS[pullup]
+        pullup = PULLUPS[pullup]
 
         initial_int = {None: -1, "low": 0, "high": 1}[initial]
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial_int)

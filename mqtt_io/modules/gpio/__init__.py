@@ -75,9 +75,9 @@ class GenericGPIO:
         self,
         pin: PinType,
         direction: PinDirection,
-        pullup: Optional[PinPUD] = None,
+        pullup: PinPUD,
+        pin_config: ConfigType,
         initial: Optional[str] = None,
-        **pin_config: ConfigType
     ) -> None:
         pass
 
@@ -117,8 +117,9 @@ class GenericGPIO:
         Called internally to setup a pin just by supplying config. Calls setup_pin()
         that's been implemented by the GPIO module.
         """
-        self.pin_configs[pin_config["pin"]] = pin_config
-        pud = None
+        pin: PinType = pin_config["pin"]
+        self.pin_configs[pin] = pin_config
+        pud = PinPUD.OFF
         if pin_config.get("pullup"):
             pud = PinPUD.UP
         elif pin_config.get("pulldown"):
@@ -128,7 +129,9 @@ class GenericGPIO:
                 del pin_config[key]
             except KeyError:
                 continue
-        return self.setup_pin(direction=direction, pullup=pud, **pin_config)
+        return self.setup_pin(
+            pin, direction, pud, pin_config=pin_config, initial=pin_config.get("initial")
+        )
 
     def remote_interrupt_for(self, pin: PinType) -> List[str]:
         """
