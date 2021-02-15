@@ -3,7 +3,7 @@ import logging
 from abc import ABC
 from dataclasses import dataclass
 from types import FunctionType
-from typing import Any, Awaitable, Callable, Dict, List, Type
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Type
 
 _LOG = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class Event(ABC):
 @dataclass
 class DigitalInputChangedEvent(Event):
     input_name: str
-    from_value: bool
+    from_value: Optional[bool]
     to_value: bool
 
 

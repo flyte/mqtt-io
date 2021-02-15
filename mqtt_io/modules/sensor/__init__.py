@@ -1,6 +1,9 @@
 import abc
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
+
+from ...types import ConfigType, SensorValueType
 
 
 class GenericSensor:
@@ -11,25 +14,25 @@ class GenericSensor:
 
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, config):
+    def __init__(self, config: ConfigType):
         self.config = config
-        self.sensor = None
+        self.sensor: Any = None
         self.setup_sensor(config)
 
     @abc.abstractmethod
-    def get_value(self, sens_conf):
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         pass
 
-    def setup_sensor(self, config):
+    def setup_sensor(self, config: ConfigType) -> None:
         pass
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Called when closing the program to handle any cleanup operations.
         """
         pass
 
-    async def async_get_value(self, sens_conf):
+    async def async_get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Use a ThreadPoolExecutor to call the module's synchronous get_value function.
         """

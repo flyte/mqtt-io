@@ -20,7 +20,7 @@ class GPIO(GenericGPIO):
     setup_module = Mock()
     setup_pin = Mock()
 
-    def setup_interrupt(self, pin, edge, callback, in_conf):
+    def setup_callback_interrupt(self, pin, edge, in_conf, callback):
         self.interrupt_edges[pin] = edge
         self.interrupt_callbacks[pin] = callback
 

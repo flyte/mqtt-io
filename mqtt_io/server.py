@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 import re
@@ -7,7 +9,7 @@ from concurrent.futures import Future as ConcurrentFuture
 from functools import partial
 from hashlib import sha1
 from importlib import import_module
-from typing import Any, Dict, List, Tuple, Type, Union, overload
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
 
 from hbmqtt.client import MQTTClient
 from hbmqtt.mqtt.constants import QOS_1
@@ -30,7 +32,6 @@ from .constants import (
 from .events import (
     DigitalInputChangedEvent,
     DigitalOutputChangedEvent,
-    Event,
     EventBus,
     SensorReadEvent,
 )
@@ -43,6 +44,7 @@ from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .modules.sensor import GenericSensor
+from .types import ConfigType, PinType
 
 _LOG = logging.getLogger(__name__)
 
@@ -111,8 +113,10 @@ class MqttIo:
         )  # type: Dict[GenericGPIO, asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]]
 
         self.loop = asyncio.get_event_loop()
-        self.tasks: List[asyncio.Task[Any]] = []
-        self.unawaited_tasks: List[asyncio.Task[Any]] = []
+        self.tasks = []  # type: List[asyncio.Future[Any]]
+        self.unawaited_tasks = (
+            []
+        )  # type: List[Union[asyncio.Future[Any], ConcurrentFuture[Any]]]
 
         self.event_bus = EventBus(self.loop)
         self.mqtt: MQTTClient = None
@@ -232,7 +236,7 @@ class MqttIo:
     def _init_sensor_inputs(self) -> None:
         self.sensor_input_configs = {x["name"]: x for x in self.config["sensor_inputs"]}
 
-        async def publish_sensor_callback(event):
+        async def publish_sensor_callback(event: SensorReadEvent) -> None:
             await self.mqtt.publish(
                 "%s/%s/%s"
                 % (self.config["mqtt"]["topic_prefix"], SENSOR_TOPIC, event.sensor_name),
@@ -247,7 +251,10 @@ class MqttIo:
             sensor_module.setup_sensor(sens_conf)
 
             # Use default args to the function to get around the late binding closures
-            async def poll_sensor(sensor_module=sensor_module, sens_conf=sens_conf):
+            async def poll_sensor(
+                sensor_module: GenericSensor = sensor_module,
+                sens_conf: ConfigType = sens_conf,
+            ) -> None:
                 while True:
                     value = await sensor_module.async_get_value(sens_conf)
                     if value is not None:
@@ -260,15 +267,15 @@ class MqttIo:
 
             self.unawaited_tasks.append(self.loop.create_task(poll_sensor()))
 
-    async def _init_mqtt(self):
-        config = self.config["mqtt"]
-        topic_prefix = config["topic_prefix"]
+    async def _init_mqtt(self) -> None:
+        config: ConfigType = self.config["mqtt"]
+        topic_prefix: str = config["topic_prefix"]
 
-        client_id = config["client_id"]
+        client_id: Optional[str] = config["client_id"]
         if not client_id:
             client_id = "mqtt-io-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
 
-        tls_enabled = config.get("tls", {}).get("enabled")
+        tls_enabled: bool = config.get("tls", {}).get("enabled")
 
         uri = "mqtt%s://" % ("s" if tls_enabled else "")
         if config["user"] and config["password"]:
@@ -402,7 +409,13 @@ class MqttIo:
             # Make this delay configurable in in_conf
             await asyncio.sleep(0.1)
 
-    def interrupt_callback(self, module, pin, *args, **kwargs):
+    def interrupt_callback(
+        self,
+        module: GenericGPIO,
+        pin: PinType,
+        *args: List[Any],
+        **kwargs: Dict[Any, Any]
+    ) -> None:
         pin_name = module.pin_configs[pin]["name"]
         interrupt_lock = self.interrupt_locks[pin_name]
         if not interrupt_lock.acquire(blocking=False):
@@ -420,7 +433,7 @@ class MqttIo:
                 pin_name,
             )
             return
-        remote_interrupt_for_pin_names = {}
+        remote_interrupt_for_pin_names: List[str] = []
         try:
             _LOG.info("Handling interrupt callback on pin '%s'", pin_name)
             remote_interrupt_for_pin_names = module.remote_interrupt_for(pin)
@@ -437,7 +450,9 @@ class MqttIo:
             if not remote_interrupt_for_pin_names:
                 interrupt_lock.release()
 
-    def handle_remote_interrupt(self, pin_names, interrupt_lock):
+    def handle_remote_interrupt(
+        self, pin_names: List[str], interrupt_lock: threading.Lock
+    ) -> None:
         # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:14:44
         # Lock this interrupt
         # IDEA: Possible implementations -@flyte at 30/01/2021, 16:09:35
@@ -445,7 +460,7 @@ class MqttIo:
         # until the interrupt register is read, or does it just pulse its interrupt
         # pin?
         _LOG.debug("Interrupt is for pins: '%s'", "', '".join(pin_names))
-        remote_modules_and_pins = {}
+        remote_modules_and_pins: Dict[GenericGPIO, List[PinType]] = {}
         for remote_pin_name in pin_names:
             in_conf = self.digital_input_configs[remote_pin_name]
             remote_module = self.gpio_modules[in_conf["module"]]
@@ -455,8 +470,8 @@ class MqttIo:
         for remote_module, pins in remote_modules_and_pins.items():
 
             async def handle_remote_interrupt_task(
-                remote_module=remote_module, pins=pins
-            ):
+                remote_module: GenericGPIO = remote_module, pins: List[PinType] = pins
+            ) -> None:
                 interrupt_values = await remote_module.get_interrupt_values_remote(pins)
                 for pin, value in interrupt_values.items():
                     remote_pin_name = remote_module.pin_configs[pin]["name"]
@@ -466,7 +481,7 @@ class MqttIo:
 
             remote_interrupt_tasks.append(handle_remote_interrupt_task())
 
-        async def await_remote_interrupts():
+        async def await_remote_interrupts() -> None:
             try:
                 await asyncio.gather(*remote_interrupt_tasks)
             finally:
@@ -475,8 +490,8 @@ class MqttIo:
         task = asyncio.run_coroutine_threadsafe(await_remote_interrupts(), self.loop)
         self.unawaited_tasks.append(task)
 
-    def _handle_mqtt_msg(self, topic, payload):
-        topic_prefix = self.config["mqtt"]["topic_prefix"]
+    def _handle_mqtt_msg(self, topic: str, payload: str) -> None:
+        topic_prefix: str = self.config["mqtt"]["topic_prefix"]
 
         if not any(
             topic.endswith("/%s" % x)
@@ -502,7 +517,7 @@ class MqttIo:
             # This must be a set_on_ms or set_off_ms topic
             desired_value = topic.endswith("/%s" % SET_ON_MS_TOPIC)
 
-            async def set_ms():
+            async def set_ms() -> None:
                 """
                 Create this task to directly set the outputs, as we don't want to tie up
                 the set_digital_output loop. Creating a bespoke task for the job is the
@@ -534,7 +549,9 @@ class MqttIo:
             task = self.loop.create_task(set_ms())
             self.unawaited_tasks.append(task)
 
-    async def set_digital_output(self, module, output_config, value):
+    async def set_digital_output(
+        self, module: GenericGPIO, output_config: ConfigType, value: bool
+    ) -> None:
         """
         Set a digital output, taking into account whether it's configured
         to be inverted.
@@ -551,7 +568,7 @@ class MqttIo:
 
     # Tasks
 
-    async def _mqtt_rx_loop(self):
+    async def _mqtt_rx_loop(self) -> None:
         try:
             while True:
                 msg = await self.mqtt.deliver_message()
@@ -574,7 +591,7 @@ class MqttIo:
             await self.mqtt.disconnect()
             _LOG.info("MQTT disconnected")
 
-    async def _remove_finished_tasks(self):
+    async def _remove_finished_tasks(self) -> None:
         while True:
             await asyncio.sleep(1)
             finished_tasks = [x for x in self.unawaited_tasks if x.done()]
@@ -592,7 +609,9 @@ class MqttIo:
                 filter(lambda x: not x.done(), self.unawaited_tasks)
             )
 
-    async def digital_output_loop(self, queue):
+    async def digital_output_loop(
+        self, queue: "asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]"
+    ) -> None:
         """
         Handle digital output MQTT messages for a specific GPIO module.
         An instance of this loop will be created for each individual GPIO module so that
@@ -623,7 +642,7 @@ class MqttIo:
             except KeyError:
                 continue
 
-            async def reset_timer():
+            async def reset_timer() -> None:
                 """
                 Reset the output to the opposite value after x ms.
                 """
@@ -643,7 +662,7 @@ class MqttIo:
 
     # Main entry point
 
-    def run(self):
+    def run(self) -> None:
         for s in (signals.SIGHUP, signals.SIGTERM, signals.SIGINT):
             self.loop.add_signal_handler(
                 s, lambda s=s: self.loop.create_task(self.shutdown(s))
@@ -674,20 +693,20 @@ class MqttIo:
             for gpio_module in self.gpio_modules.values():
                 try:
                     gpio_module.cleanup()
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     _LOG.exception(
                         "Exception while cleaning up gpio module %s", gpio_module
                     )
             for sens_module in self.sensor_modules.values():
                 try:
                     sens_module.cleanup()
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     _LOG.exception(
                         "Exception while cleaning up sensor module %s", sens_module
                     )
         _LOG.debug("run() complete")
 
-    async def shutdown(self, signal):
+    async def shutdown(self, signal: "signals.Signals") -> None:
         _LOG.warning("Received exit signal %s", signal.name)
 
         # Cancel our main task first so we don't mess the MQTT library's connection

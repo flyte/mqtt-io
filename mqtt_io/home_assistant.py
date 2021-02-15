@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 import json
 import logging
+from typing import TYPE_CHECKING
 
 from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_TOPIC
+from .types import ConfigType
+
+if TYPE_CHECKING:
+    from hbmqtt.client import MQTTClient
 
 _LOG = logging.getLogger(__name__)
 
 
-async def hass_announce_digital_input(in_conf, mqtt_config, mqtt_client):
+async def hass_announce_digital_input(
+    in_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: MQTTClient
+) -> None:
     """
     Announces digital input as binary_sensor to HomeAssistant.
     :param in_conf: Input config
@@ -50,7 +59,9 @@ async def hass_announce_digital_input(in_conf, mqtt_config, mqtt_client):
     )
 
 
-async def hass_announce_digital_output(out_conf, mqtt_config, mqtt_client):
+async def hass_announce_digital_output(
+    out_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: MQTTClient
+) -> None:
     """
     Announces digital output as switch to HomeAssistant.
     :param out_conf: Output config
@@ -92,7 +103,9 @@ async def hass_announce_digital_output(out_conf, mqtt_config, mqtt_client):
     )
 
 
-async def hass_announce_sensor_input(sens_conf, mqtt_config, mqtt_client):
+async def hass_announce_sensor_input(
+    sens_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: MQTTClient
+) -> None:
     """
     Announces digital output as sensor to HomeAssistant.
     :param sens_conf: Sensor config

@@ -1,5 +1,5 @@
 import logging
-from typing import ModuleType
+from types import ModuleType
 
 from ..exceptions import CannotInstallModuleRequirements
 

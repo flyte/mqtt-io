@@ -4,12 +4,11 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, Flag, auto
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Union
+
+from ...types import ConfigType, PinType
 
 _LOG = logging.getLogger(__name__)
-
-
-PinType = Union[str, int]
 
 
 class PinDirection(Enum):
@@ -60,18 +59,15 @@ class GenericGPIO:
 
     INTERRUPT_SUPPORT = InterruptSupport.NONE
 
-    def __init__(self, config):
+    def __init__(self, config: ConfigType):
         self.config = config
-        self.pin_configs = {}
-        self.io = None
-        self.interrupt_edges = {}
+        self.pin_configs: Dict[PinType, ConfigType] = {}
+        self.io: Any = None
+        self.interrupt_edges: Dict[PinType, InterruptEdge] = {}
         self.setup_module()
 
-    def __init_subclass__(cls):
-        cls.setup_pin = GenericGPIO._setup_pin_wrapper(cls.setup_pin)
-
     @abc.abstractmethod
-    def setup_module(self):
+    def setup_module(self) -> None:
         pass
 
     @abc.abstractmethod
@@ -80,34 +76,34 @@ class GenericGPIO:
         pin: PinType,
         direction: PinDirection,
         pullup: Optional[PinPUD] = None,
-        **pin_config: Dict[str, Any]
-    ):
+        **pin_config: ConfigType
+    ) -> None:
         pass
 
     @abc.abstractmethod
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         pass
 
     @abc.abstractmethod
-    def get_pin(self, pin):
+    def get_pin(self, pin: PinType) -> bool:
         pass
 
     def setup_interrupt(
         self,
         pin: PinType,
         edge: InterruptEdge,
-        in_conf: Dict[str, Any],
+        in_conf: ConfigType,
         callback: Optional[Callable[[List[Any], Dict[Any, Any]], None]] = None,
-    ):
+    ) -> None:
         pass
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Called when closing the program to handle any cleanup operations.
         """
         pass
 
-    def setup_pin_internal(self, direction: PinDirection, pin_config: Dict[str, Any]):
+    def setup_pin_internal(self, direction: PinDirection, pin_config: ConfigType) -> None:
         """
         Called internally to setup a pin just by supplying config. Calls setup_pin()
         that's been implemented by the GPIO module.
@@ -125,27 +121,29 @@ class GenericGPIO:
                 continue
         return self.setup_pin(direction=direction, pullup=pud, **pin_config)
 
-    def remote_interrupt_for(self, pin):
+    def remote_interrupt_for(self, pin: PinType) -> List[str]:
         """
         Return the list of pin names that this pin is a remote interrupt for.
         """
         return self.pin_configs[pin].get("interrupt_for", [])
 
-    def get_int_pins(self):
+    def get_int_pins(self) -> List[PinType]:
         """
         If the chip has a register that logs which pins caused the last interrupt,
         then we read it here and return the list of pins.
         """
         raise NotImplementedError()
 
-    async def async_get_int_pins(self):
+    async def async_get_int_pins(self) -> List[PinType]:
         """
         Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(ThreadPoolExecutor(), self.get_int_pins)
 
-    def get_captured_int_pin_values(self, pins=None):
+    def get_captured_int_pin_values(
+        self, pins: Optional[Iterable[PinType]] = None
+    ) -> Dict[PinType, bool]:
         """
         If the chip has a register that logs the values of the pins at the point of
         the last interrupt, then we read it here and return a dict.
@@ -155,21 +153,45 @@ class GenericGPIO:
         """
         raise NotImplementedError()
 
-    async def async_set_pin(self, pin, value):
+    async def async_get_captured_int_pin_values(
+        self, pins: Optional[Iterable[PinType]] = None
+    ) -> Dict[PinType, bool]:
+        """
+        Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(
+            ThreadPoolExecutor(), self.get_captured_int_pin_values, pins
+        )
+
+    async def async_set_pin(self, pin: PinType, value: bool) -> None:
         """
         Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(ThreadPoolExecutor(), self.set_pin, pin, value)
 
-    async def async_get_pin(self, pin):
+    async def async_get_pin(self, pin: PinType) -> bool:
         """
         Use a ThreadPoolExecutor to call the module's synchronous get_pin function.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(ThreadPoolExecutor(), self.get_pin, pin)
 
-    async def get_interrupt_values_remote(self, pins):
+    def get_interrupt_value(
+        self, pin: PinType, *args: List[Any], **kwargs: Dict[Any, Any]
+    ) -> bool:
+        """
+        Called on interrupt when this module's software callback was called, in order to
+        get a value for the pin that caused the interrupt. This could just involve polling
+        for the value, or looking it up in a register that captures the value at time of
+        interrupt.
+        """
+        pass
+
+    async def get_interrupt_values_remote(
+        self, pins: List[PinType]
+    ) -> Dict[PinType, bool]:
         """
         Called when another module's input pin was triggered by our module's interrupt
         pin's output changing. Takes a list of pins that can potentially trigger this
@@ -177,10 +199,10 @@ class GenericGPIO:
         """
         # TODO: Tasks pending completion -@flyte at 27/01/2021, 18:48:22
         # Make sure that validation sets the `interrupt_for` list as minimum 1 value
-        pins = set(pins)
+        pins_set = set(pins)
         if self.INTERRUPT_SUPPORT & InterruptSupport.FLAG_REGISTER:
             int_pins = set(await self.async_get_int_pins())
-            matching_pins = pins.intersection(int_pins)
+            matching_pins = pins_set.intersection(int_pins)
             if not matching_pins:
                 _LOG.warning(
                     (
@@ -194,10 +216,11 @@ class GenericGPIO:
                 )
                 return {}
         else:
-            matching_pins = pins
+            matching_pins = pins_set
 
+        pin_values: Dict[PinType, bool]
         if self.INTERRUPT_SUPPORT & InterruptSupport.CAPTURE_REGISTER:
-            pin_values = await self.get_captured_int_pin_values(pins=matching_pins)
+            pin_values = await self.async_get_captured_int_pin_values(pins=matching_pins)
         else:
             pin_values = {}
             for pin in matching_pins:

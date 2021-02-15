@@ -1,24 +1,30 @@
+from __future__ import annotations
+
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Union
 
 import cerberus
 import yaml
 
 from .exceptions import ConfigValidationFailed
+from .types import ConfigType
+
+if TYPE_CHECKING:
+    from .modules.sensor import GenericSensor
 
 _LOG = logging.getLogger(__name__)
 
 
-class ConfigValidator(cerberus.Validator):
+class ConfigValidator(cerberus.Validator):  # type: ignore # No stubs for Cerberus
     """
     Cerberus Validator containing function(s) for use with validating or
     coercing values relevant to the MQTT IO project.
     """
 
     @staticmethod
-    def _normalize_coerce_rstrip_slash(value):
+    def _normalize_coerce_rstrip_slash(value: str) -> str:
         """
         Strip forward slashes from the end of the string.
         :param value: String to strip forward slashes from
@@ -29,7 +35,7 @@ class ConfigValidator(cerberus.Validator):
         return value.rstrip("/")
 
     @staticmethod
-    def _normalize_coerce_tostring(value):
+    def _normalize_coerce_tostring(value: Any) -> str:
         """
         Convert value to string.
         :param value: Value to convert
@@ -39,7 +45,7 @@ class ConfigValidator(cerberus.Validator):
         return str(value)
 
 
-def get_duplicate_names(io_conf: list) -> list:
+def get_duplicate_names(io_conf: List[ConfigType]) -> List[str]:
     """
     Checks for any duplicated names in a list of dicts, such as the gpio_modules section
     of the config.
@@ -48,9 +54,11 @@ def get_duplicate_names(io_conf: list) -> list:
     return [name for name, count in counter.items() if count > 1]
 
 
-def validate_gpio_module_names(config, module_section, io_sections):
+def validate_gpio_module_names(
+    config: ConfigType, module_section: str, io_sections: Iterable[str]
+) -> Dict[str, Dict[str, str]]:
     module_names = {x["name"] for x in config.get(module_section, [])}
-    bad_configs = {}
+    bad_configs: Dict[str, Dict[str, str]] = {}
 
     for io_section in io_sections:
         for io_conf in config.get(io_section, []):
@@ -65,19 +73,17 @@ def validate_gpio_module_names(config, module_section, io_sections):
     return bad_configs
 
 
-def _read_config(path):
+def _read_config(path: str) -> Any:
     """
     Loads a yaml file from the file system and returns it as as dict.
     :param path: The filesystem path
-    :type path: str
     :return: The config
-    :rtype: dict
     """
     with open(path) as f:
         return yaml.safe_load(f)
 
 
-def get_main_schema():
+def get_main_schema() -> Any:
     """
     Load the main config schema from the yaml file packaged in the same dir as this file.
     :return: Config schema
@@ -87,9 +93,7 @@ def get_main_schema():
     return yaml.safe_load(open(schema_path))
 
 
-def validate_and_normalise_config(
-    config: Dict[str, Any], schema: Dict[str, Any]
-) -> Dict[str, Any]:
+def validate_and_normalise_config(config: Any, schema: Any) -> ConfigType:
     """
     Validate the config dict based on the config schema.
     :param config: The supplied configuration
@@ -104,8 +108,11 @@ def validate_and_normalise_config(
         raise ConfigValidationFailed(
             "Config did not validate:\n%s" % yaml.dump(validator.errors)
         )
-    config = validator.normalized(config)
+    validated_config: ConfigType = validator.normalized(config)
+    return validated_config
 
+
+def validate_main_config(config: ConfigType) -> ConfigType:
     unique_name_sections = (
         "gpio_modules",
         "sensor_modules",
@@ -151,18 +158,20 @@ def validate_and_normalise_config(
     return config
 
 
-def load_main_config(path):
+def load_main_config(path: str) -> ConfigType:
     """
     Read the main config file from the given path, validate it and return it normalised.
     :param path: The filesystem path
-    :type path: str
     :return: The config
-    :rtype: dict
     """
-    return validate_and_normalise_config(_read_config(path), get_main_schema())
+    config = validate_and_normalise_config(_read_config(path), get_main_schema())
+    config = validate_main_config(config)
+    return config
 
 
-def validate_and_normalise_sensor_input_config(config, module):
+def validate_and_normalise_sensor_input_config(
+    config: ConfigType, module: GenericSensor
+) -> ConfigType:
     schema = get_main_schema()
     sensor_input_schema = schema["sensor_inputs"]["schema"]["schema"].copy()
     sensor_input_schema.update(getattr(module, "SENSOR_SCHEMA", {}))
