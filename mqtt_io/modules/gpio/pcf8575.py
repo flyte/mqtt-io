@@ -1,7 +1,7 @@
-from __future__ import absolute_import
+from typing import Any, Callable, Dict, List, Optional, cast
 
-from . import GenericGPIO, PinDirection, PinPUD
-
+from ...types import ConfigType, PinType
+from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 REQUIREMENTS = ("pcf8575",)
 CONFIG_SCHEMA = {
@@ -9,7 +9,7 @@ CONFIG_SCHEMA = {
     "chip_addr": {"type": "integer", "required": True, "empty": False},
 }
 
-PULLUPS = None
+PULLUPS: Dict[PinPUD, Any] = {}
 
 
 class GPIO(GenericGPIO):
@@ -17,14 +17,22 @@ class GPIO(GenericGPIO):
     Implementation of GPIO class for the pcf8575 IO expander chip.
     """
 
-    def __init__(self, config):
+    def setup_module(self) -> None:
+        # pylint: disable=global-statement,import-outside-toplevel
         global PULLUPS
         PULLUPS = {PinPUD.UP: True, PinPUD.DOWN: False}
-        from pcf8575 import pcf8575
+        from pcf8575 import pcf8575  # type: ignore
 
-        self.io = pcf8575(config["i2c_bus_num"], config["chip_addr"])
+        self.io = pcf8575(self.config["i2c_bus_num"], self.config["chip_addr"])
 
-    def setup_pin(self, pin, direction, pullup, pin_config):
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: PinPUD,
+        pin_config: ConfigType,
+        initial: Optional[str] = None,
+    ) -> None:
         if direction == PinDirection.INPUT and pullup is not None:
             self.io.port[pin] = PULLUPS[pullup]
         initial = pin_config.get("initial")
@@ -34,8 +42,8 @@ class GPIO(GenericGPIO):
             elif initial == "low":
                 self.set_pin(pin, False)
 
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         self.io.port[pin] = value
 
-    def get_pin(self, pin):
-        return self.io.port[pin]
+    def get_pin(self, pin: PinType) -> bool:
+        return cast(bool, self.io.port[pin])

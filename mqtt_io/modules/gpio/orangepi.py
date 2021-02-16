@@ -1,4 +1,7 @@
-from . import GenericGPIO, PinDirection, PinPUD
+from typing import Any, Callable, Dict, List, Optional
+
+from ...types import ConfigType, PinType
+from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 ALLOWED_BOARDS = [
     "zero",
@@ -31,8 +34,8 @@ CONFIG_SCHEMA = {
     },
 }
 
-DIRECTIONS = None
-PULLUPS = None
+DIRECTIONS: Dict[PinDirection, Any] = {}
+PULLUPS: Dict[PinPUD, Any] = {}
 
 
 class GPIO(GenericGPIO):
@@ -40,9 +43,10 @@ class GPIO(GenericGPIO):
     Implementation of GPIO class for Orange Pi native GPIO.
     """
 
-    def __init__(self, config):
+    def setup_module(self) -> None:
+        # pylint: disable=global-statement,import-outside-toplevel
         global DIRECTIONS, PULLUPS
-        import OPi.GPIO as gpio
+        import OPi.GPIO as gpio  # type: ignore
 
         self.io = gpio
         DIRECTIONS = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
@@ -53,14 +57,21 @@ class GPIO(GenericGPIO):
             PinPUD.DOWN: gpio.PUD_DOWN,
         }
 
-        board = config["board"].upper()
-        mode = config["mode"].upper()
+        board = self.config["board"].upper()
+        mode = self.config["mode"].upper()
         if not hasattr(gpio, board):
             raise AssertionError("%s board not found" % board)
         gpio.setboard(getattr(gpio, board))
         gpio.setmode(getattr(gpio, mode))
 
-    def setup_pin(self, pin, direction, pullup, pin_config):
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: PinPUD,
+        pin_config: ConfigType,
+        initial: Optional[str] = None,
+    ) -> None:
         direction = DIRECTIONS[direction]
 
         if pullup is None:
@@ -68,17 +79,17 @@ class GPIO(GenericGPIO):
         else:
             pullup = PULLUPS[pullup]
 
-        initial = {None: -1, "low": 0, "high": 1}[pin_config.get("initial")]
+        initial_int = {None: -1, "low": 0, "high": 1}[initial]
         try:
-            self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
-        except ValueError as e:
-            raise IOError("channel %d setup failed" % pin) from e
+            self.io.setup(pin, direction, pull_up_down=pullup, initial=initial_int)
+        except ValueError as exc:
+            raise IOError(f"channel {pin} setup failed") from exc
 
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         self.io.output(pin, value)
 
-    def get_pin(self, pin):
-        return self.io.input(pin)
+    def get_pin(self, pin: PinType) -> bool:
+        return bool(self.io.input(pin))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.io.cleanup()
