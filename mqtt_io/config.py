@@ -3,9 +3,9 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List
 
-import cerberus
+import cerberus  # type: ignore
 import yaml
 
 from .exceptions import ConfigValidationFailed

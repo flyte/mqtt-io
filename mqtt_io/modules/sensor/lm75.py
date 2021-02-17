@@ -18,7 +18,7 @@ class Sensor(GenericSensor):
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel
-        from smbus2 import SMBus
+        from smbus2 import SMBus  # type: ignore[attr-defined]
 
         self.bus = SMBus(self.config["i2c_bus_num"])
         self.address = self.config["chip_addr"]

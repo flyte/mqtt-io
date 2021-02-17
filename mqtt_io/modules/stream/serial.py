@@ -39,7 +39,7 @@ CONFIG_SCHEMA = {
 class Stream(GenericStream):
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel
-        import serial
+        import serial  # type: ignore
 
         self.ser = serial.Serial(
             port=self.config["device"],

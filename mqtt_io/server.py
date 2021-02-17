@@ -11,8 +11,8 @@ from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
 
-from hbmqtt.client import MQTTClient
-from hbmqtt.mqtt.constants import QOS_1
+from hbmqtt.client import MQTTClient  # type: ignore
+from hbmqtt.mqtt.constants import QOS_1  # type: ignore
 from typing_extensions import Literal
 
 from .config import (

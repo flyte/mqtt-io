@@ -8,7 +8,7 @@ from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_TOPIC
 from .types import ConfigType
 
 if TYPE_CHECKING:
-    from hbmqtt.client import MQTTClient
+    from hbmqtt.client import MQTTClient  # type: ignore
 
 _LOG = logging.getLogger(__name__)
 
