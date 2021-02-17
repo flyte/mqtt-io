@@ -8,7 +8,8 @@ from . import GenericSensor
 REQUIREMENTS = ("RPi.GPIO",)
 
 # HC-SR04 ultrasonic sensor_inputs
-# for use at Raspberry Pi, the ECHO signal of the sensor must be reduced to 3.3V, since the sensor works with 5V!!
+# for use at Raspberry Pi, the ECHO signal of the sensor must be reduced to 3.3V, since
+# the sensor works with 5V!!
 # You can simply reduce with a 3.9kOhm and 6.8kOhm resistor voltage reduction
 #
 # further information at http://www.netzmafia.de/skripten/hardware/RasPi/Projekt-Ultraschall/
@@ -85,7 +86,7 @@ class HCSR04:
             time.sleep(0.05)
         if not measurements:
             raise RuntimeError(
-                "Unable to measure range on HCSR04 sensor '%s'" % self.name
+                "Unable to measure range on HC-SR04 sensor '%s'" % self.name
             )
         return mean(measurements)
 
@@ -97,10 +98,6 @@ class Sensor(GenericSensor):
         "burst": {"type": "integer", "required": True, "empty": False},
     }
 
-    def __init__(self, config: ConfigType):
-        super().__init__(config)
-        self.sensors: Dict[str, HCSR04] = {}
-
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel
         import RPi.GPIO as GPIO  # type: ignore
@@ -108,6 +105,7 @@ class Sensor(GenericSensor):
         # use BCM GPIO-references (instead of Pin-numbers)
         GPIO.setmode(GPIO.BCM)
         self.gpio = GPIO
+        self.sensors: Dict[str, HCSR04] = {}
 
     def setup_sensor(self, sens_conf: ConfigType) -> None:
         sensor = HCSR04(**sens_conf)

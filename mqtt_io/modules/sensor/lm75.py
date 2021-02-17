@@ -1,6 +1,7 @@
+from mqtt_io.types import ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("smbus",)
+REQUIREMENTS = ("smbus2",)
 
 CONFIG_SCHEMA = {
     "i2c_bus_num": {"type": "integer", "required": True, "empty": False},
@@ -15,18 +16,18 @@ class Sensor(GenericSensor):
     Implementation of Sensor class for the LM75 temperature sensor.
     """
 
-    def __init__(self, config):
-        import smbus
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        from smbus2 import SMBus
 
-        self.bus = smbus.SMBus(config["i2c_bus_num"])
-        self.address = config["chip_addr"]
+        self.bus = SMBus(self.config["i2c_bus_num"])
+        self.address = self.config["chip_addr"]
 
-    def get_value(self, sens_conf):
-        """get the temperature value from the sensor"""
-        value = self.bus.read_word_data(self.address, LM75_TEMP_REGISTER) & 0xFFFF
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
+        """
+        Get the temperature value from the sensor
+        """
+        value: int = self.bus.read_word_data(self.address, LM75_TEMP_REGISTER) & 0xFFFF
         value = ((value << 8) & 0xFF00) + (value >> 8)
-        return self.convert_to_celsius(value)
-
-    @staticmethod
-    def convert_to_celsius(value):
-        return (value / 32.0) / 8.0
+        celsius: float = (value / 32.0) / 8.0
+        return celsius
