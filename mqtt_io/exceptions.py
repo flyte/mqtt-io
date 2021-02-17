@@ -1,4 +1,12 @@
-class ConfigValidationFailed(Exception):
+class ConfigError(Exception):
+    pass
+
+
+class ConfigValidationFailed(ConfigError):
+    pass
+
+
+class RuntimeConfigError(ConfigError):
     pass
 
 

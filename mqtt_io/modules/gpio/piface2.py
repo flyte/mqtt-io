@@ -1,9 +1,9 @@
-from . import GenericGPIO
+from typing import Any, Callable, Dict, List, Optional
+
+from ...types import ConfigType, PinType
+from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 REQUIREMENTS = ("pifacedigitalio", "pifacecommon")
-
-DIRECTIONS = None
-PULLUPS = None
 
 
 class GPIO(GenericGPIO):
@@ -11,20 +11,28 @@ class GPIO(GenericGPIO):
     Implementation of GPIO class for PiFaceDigital IO board.
     """
 
-    def __init__(self, config):
-        import pifacedigitalio as pfdio
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        import pifacedigitalio as pfdio  # type: ignore
 
         pfdio.init()
         self.io = pfdio
 
-    def setup_pin(self, pin, direction, pullup, pin_config):
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: PinPUD,
+        pin_config: ConfigType,
+        initial: Optional[str] = None,
+    ) -> None:
         pass
 
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         self.io.digital_write(pin, value)
 
-    def get_pin(self, pin):
-        return self.io.digital_read(pin)
+    def get_pin(self, pin: PinType) -> bool:
+        return bool(self.io.digital_read(pin))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         self.io.deinit()

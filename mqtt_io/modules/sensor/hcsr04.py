@@ -1,6 +1,9 @@
-from . import GenericSensor
 import time
-import datetime
+from statistics import mean
+from typing import Any, Dict, List, Optional, cast
+
+from ...types import ConfigType, SensorValueType
+from . import GenericSensor
 
 REQUIREMENTS = ("RPi.GPIO",)
 
@@ -11,93 +14,107 @@ REQUIREMENTS = ("RPi.GPIO",)
 # further information at http://www.netzmafia.de/skripten/hardware/RasPi/Projekt-Ultraschall/
 # The code is based on the sample code of this webpage by Prof.Plate / University of Munich
 
-CONFIG_SCHEMA = {
-    "pin_echo": {"type": "integer", "required": True, "empty": False},
-    "pin_trigger": {"type": "integer", "required": True, "empty": False},
-    "burst": {"type": "integer", "required": True, "empty": False},
-}
 # duration trigger pulse
 PULSE = 0.00001
 # sonic speed/2
 SPEED_2 = 17015
 
 
-class Sensor(GenericSensor):
-    def __init__(self, config):
-        import RPi.GPIO as GPIO
+class HCSR04:
+    """
+    Separate class for the distance sensors themselves, since there may be more than one
+    attached to the Raspberry Pi's GPIO pins.
+    """
 
-        self.gpio = GPIO
-        self.pin_trigger = config["pin_trigger"]
-        self.pin_echo = config["pin_echo"]
-        self.burst = config["burst"]
+    def __init__(self, gpio: Any, name: str, pin_echo: int, pin_trigger: int, burst: int):
+        self.gpio = gpio
+        self.name = name
+        self.pin_echo = pin_echo
+        self.pin_trigger = pin_trigger
+        self.burst = burst
+        self.start: Optional[float] = None
+        self.distance: Optional[float] = None
 
-    def setup_sensor(self, config):
-        # use BCM GPIO-references (instead of Pin-numbers)
-        # and define GPIO-input/output
-        self.gpio.setmode(self.gpio.BCM)
         self.gpio.setup(self.pin_trigger, self.gpio.OUT)
         self.gpio.setup(self.pin_echo, self.gpio.IN)
         self.gpio.remove_event_detect(self.pin_echo)
         self.gpio.output(self.pin_trigger, False)
+
         # Setup-time for Sensor
         time.sleep(1)
+
         # create callback triggered by rising and falling edge
-        self.gpio.add_event_detect(self.pin_echo, self.gpio.BOTH, callback=self.measure)
+        def measure_callback(pin: int) -> None:
+            if self.gpio.input(self.pin_echo) == 1:
+                # Echo measuring begins
+                self.start = time.time()
+            elif self.start is not None:
+                # Echo measuring completed
+                delta = time.time() - self.start
+                self.distance = delta * SPEED_2
 
-        self.stop = 0
-        self.start = 0
-        self.distance = 0
+        self.gpio.add_event_detect(
+            self.pin_echo, self.gpio.BOTH, callback=measure_callback
+        )
 
-        return True
-
-    def get_value(self, config):
-        value = self.measure_range()
-        return value
-
-    def pulse(self):
+    def pulse(self) -> None:
         """
         Starts measurement
         """
+        self.start = None
+        self.distance = None
         # create trigger pulse
         self.gpio.output(self.pin_trigger, True)
         time.sleep(PULSE)
         self.gpio.output(self.pin_trigger, False)
-        self.stop = 0
-        self.start = 0
-        self.distance = 0
 
-    def measure(self, x):
-        """
-        Callback function for echo signal
-        """
-        if self.gpio.input(self.pin_echo) == 1:
-            # save time of rising echo signal
-            self.start = time.time()
-        else:
-            # falling edge, save time
-            self.stop = time.time()
-            # calculate time difference sending / receiving
-            delta = self.stop - self.start
-            # calculate distance by time and sonic speed
-            self.distance = delta * SPEED_2
-
-    def measure_range(self):
+    def measure_range(self) -> float:
         """
         Start measures and calculate average of BURST measurements
         """
-        values = []
-        ranges_sum = 0
-        for i in range(0, self.burst):
-            # start measurement
+        measurements: List[float] = []
+        for _ in range(self.burst):
             self.pulse()
-            # wait till end of measurement
-            time.sleep(0.040)
-            # save value in array and sum up
-            values.append(self.distance)
-            ranges_sum += values[i]
+            timeout = time.time() + 1
+            while self.distance is None:
+                if time.time() > timeout:
+                    break
+                time.sleep(0.04)
+            # There's no way that self.distance can be None now. Thanks, GIL!
+            measurements.append(cast(float, self.distance))
             time.sleep(0.05)
-        # return average
-        return ranges_sum / self.burst
+        if not measurements:
+            raise RuntimeError(
+                "Unable to measure range on HCSR04 sensor '%s'" % self.name
+            )
+        return mean(measurements)
 
-    def cleanup(self):
+
+class Sensor(GenericSensor):
+    SENSOR_CONFIG = {
+        "pin_echo": {"type": "integer", "required": True, "empty": False},
+        "pin_trigger": {"type": "integer", "required": True, "empty": False},
+        "burst": {"type": "integer", "required": True, "empty": False},
+    }
+
+    def __init__(self, config: ConfigType):
+        super().__init__(config)
+        self.sensors: Dict[str, HCSR04] = {}
+
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        import RPi.GPIO as GPIO  # type: ignore
+
+        # use BCM GPIO-references (instead of Pin-numbers)
+        GPIO.setmode(GPIO.BCM)
+        self.gpio = GPIO
+
+    def setup_sensor(self, sens_conf: ConfigType) -> None:
+        sensor = HCSR04(**sens_conf)
+        self.sensors[sensor.name] = sensor
+
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
+        return self.sensors[sens_conf["name"]].measure_range()
+
+    def cleanup(self) -> None:
         self.gpio.cleanup()

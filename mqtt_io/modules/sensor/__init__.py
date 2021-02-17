@@ -17,13 +17,16 @@ class GenericSensor:
     def __init__(self, config: ConfigType):
         self.config = config
         self.sensor: Any = None
-        self.setup_sensor(config)
+        self.setup_module()
 
     @abc.abstractmethod
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         pass
 
-    def setup_sensor(self, config: ConfigType) -> None:
+    def setup_module(self) -> None:
+        pass
+
+    def setup_sensor(self, sens_conf: ConfigType) -> None:
         pass
 
     def cleanup(self) -> None:

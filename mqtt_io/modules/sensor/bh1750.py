@@ -1,7 +1,8 @@
 """BH1750 Light Intensity Sensor."""
+from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("smbus",)
+REQUIREMENTS = ("smbus2",)
 
 CONFIG_SCHEMA = {
     "i2c_bus_num": {"type": "integer", "required": True, "empty": False},
@@ -31,17 +32,21 @@ ONE_TIME_LOW_RES_MODE = 0x23
 
 
 class Sensor(GenericSensor):
-    """Implementation of Sensor class for the BH1750 light sensor."""
+    """
+    Implementation of Sensor class for the BH1750 light sensor.
+    """
 
-    def __init__(self, config):
-        """Initialize sensor class."""
-        import smbus
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        from smbus2 import SMBus
 
-        self.bus = smbus.SMBus(config["i2c_bus_num"])
-        self.address = config["chip_addr"]
+        self.SMBus = SMBus  # pylint: disable=invalid-name
+        self.bus_num: int = self.config["i2c_bus_num"]
+        self.address: int = self.config["chip_addr"]
 
-    def get_value(self, sens_config):
-        """Get the light value from the sensor."""
-        value = self.bus.read_i2c_block_data(self.address, ONE_TIME_HIGH_RES_MODE_1)
-        value = (value[1] + (256 * value[0])) / 1.2
-        return value
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
+        """
+        Get the light value from the sensor.
+        """
+        with self.SMBus(self.bus_num) as bus:
+            return float(bus.read_word_data(self.address, ONE_TIME_HIGH_RES_MODE_1)) / 1.2

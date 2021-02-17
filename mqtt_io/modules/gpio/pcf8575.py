@@ -21,9 +21,9 @@ class GPIO(GenericGPIO):
         # pylint: disable=global-statement,import-outside-toplevel
         global PULLUPS
         PULLUPS = {PinPUD.UP: True, PinPUD.DOWN: False}
-        from pcf8575 import pcf8575  # type: ignore
+        from pcf8575 import PCF8575  # type: ignore
 
-        self.io = pcf8575(self.config["i2c_bus_num"], self.config["chip_addr"])
+        self.io = PCF8575(self.config["i2c_bus_num"], self.config["chip_addr"])
 
     def setup_pin(
         self,

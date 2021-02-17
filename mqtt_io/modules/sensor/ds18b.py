@@ -1,6 +1,10 @@
+from typing import Dict, cast
+
+from ...exceptions import RuntimeConfigError
+from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("w1thermsensor",)
+REQUIREMENTS = ("w1thermsensor>=2.0.0",)
 ALLOWED_TYPES = ["DS18S20", "DS1822", "DS18B20", "DS1825", "DS28EA00", "MAX31850K"]
 CONFIG_SCHEMA = {
     "address": dict(type="string", required=True, empty=False),
@@ -8,7 +12,7 @@ CONFIG_SCHEMA = {
         type="string",
         required=True,
         empty=False,
-        allowed=ALLOWED_TYPES + list(map(str.lower, ALLOWED_TYPES)),
+        allowed=ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES],
     ),
 }
 
@@ -18,26 +22,17 @@ class Sensor(GenericSensor):
     Implementation of Sensor class for the one wire temperature sensors. DS18B etc.
     """
 
-    def __init__(self, config):
-        from w1thermsensor import W1ThermSensor
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        from w1thermsensor import W1ThermSensor  # type: ignore
+        from w1thermsensor.sensors import Sensor as SensorType  # type: ignore
 
-        sensor_config_type = config["type"]
+        sensor_types: Dict[str, SensorType] = {s.name: s for s in list(SensorType)}
+        self.sensor_type = sensor_types[self.config["type"].upper()]
+        self.sensor = W1ThermSensor(self.sensor_type, self.config["address"].lower())
 
-        # get the sensor type mapping
-        self.sensor_type = None
-        for w1_sensor_type, w1_sensor_name in W1ThermSensor.TYPE_NAMES.items():
-            if w1_sensor_name.lower() == sensor_config_type.lower():
-                self.sensor_type = w1_sensor_type
-
-        # initialization failed
-        if self.sensor_type is None:
-            raise Exception(
-                "Supported sensor types: " + str(W1ThermSensor.TYPE_NAMES.values())
-            )
-
-        self.sensor = W1ThermSensor(self.sensor_type, config["address"].lower())
-
-    def get_value(self, sens_config):
-        """get the temperature value from the sensor"""
-        temperature = self.sensor.get_temperature()
-        return temperature
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
+        """
+        Get the temperature value from the sensor
+        """
+        return cast(float, self.sensor.get_temperature())

@@ -1,8 +1,11 @@
+from typing import cast
+
+from ...exceptions import RuntimeConfigError
+from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
-
-REQUIREMENTS = ("smbus", "RPi.bme280")
-CONFIG_SCHEMA = {
+REQUIREMENTS = ("smbus2", "RPi.bme280")
+CONFIG_SCHEMA: CerberusSchemaType = {
     "i2c_bus_num": dict(type="integer", required=True, empty=False),
     "chip_addr": dict(type="integer", required=True, empty=False),
 }
@@ -13,7 +16,7 @@ class Sensor(GenericSensor):
     Implementation of Sensor class for the BME280 sensor.
     """
 
-    SENSOR_SCHEMA = {
+    SENSOR_SCHEMA: CerberusSchemaType = {
         "type": dict(
             type="string",
             required=False,
@@ -23,27 +26,32 @@ class Sensor(GenericSensor):
         )
     }
 
-    def __init__(self, config):
-        import smbus
-        import bme280
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        from smbus2 import SMBus  # type: ignore[attr-defined]
+        import bme280  # type: ignore
 
-        self.bus = smbus.SMBus(config["i2c_bus_num"])
-        self.address = config["chip_addr"]
+        self.bus = SMBus(self.config["i2c_bus_num"])
+        self.address: int = self.config["chip_addr"]
+        self.bme = bme280
         self.calib = bme280.load_calibration_params(self.bus, self.address)
 
-    def setup_sensor(self, config):
-        return True  # nothing to do here
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
+        """
+        Get the temperature, humidity or pressure value from the sensor
+        """
+        data = self.bme.sample(self.bus, self.address, self.calib)
 
-    def get_value(self, config):
-        """get the temperature, humidity or pressure value from the sensor"""
-        import bme280
-
-        data = bme280.sample(self.bus, self.address, self.calib)
-
-        if config["type"] == "temperature":
-            return data.temperature
-        if config["type"] == "humidity":
-            return data.humidity
-        if config["type"] == "pressure":
-            return data.pressure
-        return None
+        if sens_conf["type"] == "temperature":
+            return cast(SensorValueType, data.temperature)
+        if sens_conf["type"] == "humidity":
+            return cast(SensorValueType, data.humidity)
+        if sens_conf["type"] == "pressure":
+            return cast(SensorValueType, data.pressure)
+        raise RuntimeConfigError(
+            (
+                "bme280 sensor '%s' was not configured to return 'temperature', "
+                "'humidity' or 'pressure'"
+            )
+            % sens_conf["name"]
+        )

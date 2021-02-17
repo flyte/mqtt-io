@@ -1,4 +1,8 @@
+from typing import cast
+
+from ...types import ConfigType, SensorValueType
 from . import GenericSensor
+from ...exceptions import RuntimeConfigError
 
 REQUIREMENTS = ("adafruit-circuitpython-ahtx0",)
 
@@ -18,23 +22,32 @@ class Sensor(GenericSensor):
         )
     }
 
-    def __init__(self, config):
-        import adafruit_ahtx0
-        import board
-        import busio
+    def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel
+        import adafruit_ahtx0  # type: ignore
+        import board  # type: ignore
+        import busio  # type: ignore
 
         i2c = busio.I2C(board.SCL, board.SDA)
         self.sensor = adafruit_ahtx0.AHTx0(i2c)
 
-    def setup_sensor(self, config):
-        return True  # nothing to do here
+    @property
+    def _temperature(self) -> SensorValueType:
+        return cast(SensorValueType, self.sensor.temperature)
 
-    def get_value(self, config):
-        """get the temperature value from the sensor"""
-        temperature = self.sensor.temperature
-        humidity = self.sensor.relative_humidity
-        if config["type"] == "temperature" and temperature is not None:
-            return temperature
-        if config["type"] == "humidity" and humidity is not None:
-            return humidity
-        return None
+    @property
+    def _humidity(self) -> SensorValueType:
+        return cast(SensorValueType, self.sensor.relative_humidity)
+
+    def get_value(self, sens_conf: ConfigType) -> SensorValueType:
+        """
+        Get the temperature value from the sensor
+        """
+        if sens_conf["type"] == "temperature":
+            return self._temperature
+        if sens_conf["type"] == "humidity":
+            return self._humidity
+        raise RuntimeConfigError(
+            "aht20 sensor '%s' was not configured to return 'temperature' or 'humidity'"
+            % sens_conf["name"]
+        )
