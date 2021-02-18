@@ -17,22 +17,6 @@ from ...server import MqttIo
 
 
 @pytest.fixture
-def mqttio_mock_gpio_module() -> MqttIo:
-    config = validate_config(
-        """
-mqtt:
-    host: localhost
-
-gpio_modules:
-    - name: mock
-      module: test.mock
-      test: yes
-"""
-    )
-    return MqttIo(config)
-
-
-@pytest.fixture
 def mqttio_mock_sensor_module() -> MqttIo:
     config = validate_config(
         """
@@ -105,8 +89,20 @@ digital_outputs:
     return MqttIo(config)
 
 
-def test_init_gpio_modules(mqttio_mock_gpio_module: MqttIo):
-    mqttio = mqttio_mock_gpio_module
+def test_init_gpio_modules():
+    mqttio = MqttIo(
+        validate_config(
+            """
+mqtt:
+    host: localhost
+
+gpio_modules:
+    - name: mock
+      module: test.mock
+      test: yes
+"""
+        )
+    )
     assert not mqttio.gpio_modules, "Nothing should be initialised yet"
 
     mqttio._init_gpio_modules()
@@ -116,7 +112,7 @@ def test_init_gpio_modules(mqttio_mock_gpio_module: MqttIo):
 
     mock_module = mqttio.gpio_modules["mock"]
     assert (
-        mock_module.setup_module.call_count == 1
+        mock_module.setup_module.call_count == 1  # type: ignore[attr-defined]
     ), "Should only be one call to setup_module()"
 
     assert mock_module.config[

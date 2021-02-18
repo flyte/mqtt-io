@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List
 from unittest.mock import Mock
 
 from ....types import ConfigType, PinType
-from .. import GenericGPIO, InterruptEdge, InterruptSupport
+from .. import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 REQUIREMENTS = ()
 CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
@@ -27,13 +27,19 @@ class GPIO(GenericGPIO):
     }
 
     def __init__(self, config: ConfigType):
+        self.setup_module = Mock()  # type: ignore[assignment]
+        self.setup_pin = Mock()  # type: ignore[assignment]
+        self.setup_interrupt = Mock()  # type: ignore[assignment]
+        self.setup_interrupt_callback = Mock()  # type: ignore[assignment]
+        self.set_pin = Mock()  # type: ignore[assignment]
+        self.get_pin = Mock(return_value=1)  # type: ignore[assignment]
+        self.get_int_pins = Mock(return_value=1)  # type: ignore[assignment]
+        self.get_captured_int_pin_values = Mock(return_value={1: 1})  # type: ignore[assignment]
+
         super().__init__(config)
         self.interrupt_callbacks: Dict[
             PinType, Callable[[List[Any], Dict[Any, Any]], None]
         ] = {}
-
-    setup_module = Mock()
-    setup_pin = Mock()
 
     def setup_interrupt_callback(
         self,
@@ -42,12 +48,43 @@ class GPIO(GenericGPIO):
         in_conf: ConfigType,
         callback: Callable[[List[Any], Dict[Any, Any]], None],
     ) -> None:
-        self.interrupt_edges[pin] = edge
         self.interrupt_callbacks[pin] = callback
 
-    setup_interrupt = Mock()
-    setup_interrupt_callback = Mock()
-    set_pin = Mock()
-    get_pin = Mock(return_value=1)
-    get_int_pins = Mock(return_value=1)
-    get_captured_int_pin_values = Mock(return_value={1: 1})
+    def setup_module(self) -> None:
+        return super().setup_module()
+
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: PinPUD,
+        pin_config: ConfigType,
+        initial: str,
+    ) -> None:
+        return super().setup_pin(pin, direction, pullup, pin_config, initial=initial)
+
+    def setup_interrupt(
+        self, pin: PinType, edge: InterruptEdge, in_conf: ConfigType
+    ) -> None:
+        return super().setup_interrupt(pin, edge, in_conf)
+
+    def setup_interrupt_callback(
+        self,
+        pin: PinType,
+        edge: InterruptEdge,
+        in_conf: ConfigType,
+        callback: Callable[[List[Any], Dict[Any, Any]], None],
+    ) -> None:
+        return super().setup_interrupt_callback(pin, edge, in_conf, callback)
+
+    def set_pin(self, pin: PinType, value: bool) -> None:
+        return super().set_pin(pin, value)
+
+    def get_pin(self, pin: PinType) -> bool:
+        return super().get_pin(pin)
+
+    def get_int_pins(self) -> List[PinType]:
+        return super().get_int_pins()
+
+    def get_captured_int_pin_values(self, pins: PinType) -> Dict[PinType, bool]:
+        return super().get_captured_int_pin_values(pins=pins)
