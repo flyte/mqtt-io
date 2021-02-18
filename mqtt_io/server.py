@@ -1,3 +1,10 @@
+"""
+The main business logic of the server.
+
+Coordinates initialisation of the GPIO, sensor and stream modules, along with getting
+and setting their values and data, connecting to MQTT and sending/receiving MQTT messages.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -9,7 +16,8 @@ from concurrent.futures import Future as ConcurrentFuture
 from functools import partial
 from hashlib import sha1
 from importlib import import_module
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
+from queue import Queue
+from typing import Any, Awaitable, Dict, List, Optional, Tuple, Type, Union, overload
 
 from hbmqtt.client import MQTTClient  # type: ignore
 from hbmqtt.mqtt.constants import QOS_1  # type: ignore
@@ -99,6 +107,11 @@ def output_name_from_topic(topic: str, prefix: str) -> str:
 
 
 class MqttIo:
+    """
+    The main class that represents the business logic of the server. This is instantiated
+    once per config file, of which there is generally only one.
+    """
+
     def __init__(self, config: Dict[str, Any]) -> None:
         self.config = config
         self.gpio_configs: Dict[str, Dict[str, Any]] = {}
@@ -121,6 +134,7 @@ class MqttIo:
         self.event_bus = EventBus(self.loop)
         self.mqtt: MQTTClient = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
+        self.mqtt_publish_queue = Queue()  # type: Queue[Awaitable[Any]]
 
     # Init methods
 
@@ -154,10 +168,16 @@ class MqttIo:
         async def publish_callback(event: DigitalInputChangedEvent) -> None:
             in_conf = self.digital_input_configs[event.input_name]
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
-            await self.mqtt.publish(
-                "%s/%s/%s"
-                % (self.config["mqtt"]["topic_prefix"], INPUT_TOPIC, event.input_name),
-                val.encode("utf8"),
+            self.mqtt_publish_queue.put(
+                self.mqtt.publish(
+                    "%s/%s/%s"
+                    % (
+                        self.config["mqtt"]["topic_prefix"],
+                        INPUT_TOPIC,
+                        event.input_name,
+                    ),
+                    val.encode("utf8"),
+                )
             )
 
         self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
@@ -174,9 +194,7 @@ class MqttIo:
 
             # Only start the poller task if this _isn't_ set up with an interrupt, or if
             # it _is_ an interrupt, but it's used for triggering remote interrupts.
-            # TODO: Tasks pending completion -@flyte at 31/01/2021, 11:01:56
-            # Make this configurable?
-            if interrupt is None or interrupt_for:
+            if interrupt is None or interrupt_for and in_conf["poll_when_interrupt_for"]:
                 self.unawaited_tasks.append(
                     self.loop.create_task(self.digital_input_poller(module, in_conf))
                 )
@@ -196,11 +214,9 @@ class MqttIo:
                 # partial(self.interrupt_callback, module, in_conf["pin"])
                 # as the callback.
                 callback = partial(self.interrupt_callback, module, in_conf["pin"])
-                module.setup_interrupt_callback(
-                    in_conf["pin"], edge, in_conf, callback=callback
-                )
-            else:
-                module.setup_interrupt(in_conf["pin"], edge, in_conf)
+            module.setup_interrupt_internal(
+                in_conf["pin"], edge, in_conf, callback=callback
+            )
 
     def _init_digital_outputs(self) -> None:
         self.digital_output_configs = {
@@ -211,11 +227,14 @@ class MqttIo:
         async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
-            await self.mqtt.publish(
-                "%s/output/%s" % (self.config["mqtt"]["topic_prefix"], event.output_name),
-                val.encode("utf8"),
-                qos=1,
-                retain=out_conf["retain"],
+            self.mqtt_publish_queue.put(
+                self.mqtt.publish(
+                    "%s/output/%s"
+                    % (self.config["mqtt"]["topic_prefix"], event.output_name),
+                    val.encode("utf8"),
+                    qos=1,
+                    retain=out_conf["retain"],
+                )
             )
 
         self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
@@ -241,10 +260,16 @@ class MqttIo:
         self.sensor_input_configs = {x["name"]: x for x in self.config["sensor_inputs"]}
 
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
-            await self.mqtt.publish(
-                "%s/%s/%s"
-                % (self.config["mqtt"]["topic_prefix"], SENSOR_TOPIC, event.sensor_name),
-                str(event.value).encode("utf8"),
+            self.mqtt_publish_queue.put(
+                self.mqtt.publish(
+                    "%s/%s/%s"
+                    % (
+                        self.config["mqtt"]["topic_prefix"],
+                        SENSOR_TOPIC,
+                        event.sensor_name,
+                    ),
+                    str(event.value).encode("utf8"),
+                )
             )
 
         self.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
@@ -329,11 +354,13 @@ class MqttIo:
                 await self.mqtt.subscribe([(topic, QOS_1)])
                 _LOG.info("Subscribed to topic: %r", topic)
 
-        await self.mqtt.publish(
-            "%s/%s" % (topic_prefix, config["status_topic"]),
-            config["status_payload_running"].encode("utf8"),
-            qos=1,
-            retain=True,
+        self.mqtt_publish_queue.put(
+            self.mqtt.publish(
+                "%s/%s" % (topic_prefix, config["status_topic"]),
+                config["status_payload_running"].encode("utf8"),
+                qos=1,
+                retain=True,
+            )
         )
         # Publish initial values of outputs if desired
         for out_conf in self.digital_output_configs.values():
@@ -345,11 +372,13 @@ class MqttIo:
                 if value != out_conf["inverted"]
                 else out_conf["off_payload"]
             )
-            await self.mqtt.publish(
-                "%s/output/%s" % (topic_prefix, out_conf["name"]),
-                payload.encode("utf8"),
-                qos=1,
-                retain=out_conf["retain"],
+            self.mqtt_publish_queue.put(
+                self.mqtt.publish(
+                    "%s/output/%s" % (topic_prefix, out_conf["name"]),
+                    payload.encode("utf8"),
+                    qos=1,
+                    retain=out_conf["retain"],
+                )
             )
         # Publish Home Assistant Discovery messages if desired
         if config["discovery"]:
@@ -365,6 +394,20 @@ class MqttIo:
     async def digital_input_poller(
         self, module: GenericGPIO, in_conf: Dict[str, Any]
     ) -> None:
+        """
+        Polls a single digital input for changes and fires a DigitalInputchangedEvent
+        when it changes.
+
+        This function also helps maintain the working state of pins which are configured
+        as interrupts for other pins by checking if it's in the 'triggered' state. This
+        could mean that the interrupt callback code didn't fire when the pin changed
+        state. If that happens, you can end up in a deadlock where the pin remains in that
+        state until the remote interrupt is 'handled', which would be never, unless this
+        loop polls the 'triggered' value and calls the interupt handling code itself.
+
+        If the interrupt lock is not acquired, then it means that the interrupt is already
+        being handled, so we can check again on the next poll.
+        """
         last_value = None
         while True:
             value = await module.async_get_pin(in_conf["pin"])
@@ -409,9 +452,7 @@ class MqttIo:
                 in_conf["name"],
             )
             self.handle_remote_interrupt(interrupt_for, interrupt_lock)
-            # TODO: Tasks pending completion -@flyte at 29/05/2019, 01:02:50
-            # Make this delay configurable in in_conf
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(in_conf["poll_interval"])
 
     def interrupt_callback(
         self,
@@ -420,6 +461,18 @@ class MqttIo:
         *args: List[Any],
         **kwargs: Dict[Any, Any]
     ) -> None:
+        """
+        This function is passed in to any GPIO library that provides software callbacks
+        called on interrupt. It's passed to the GPIO library's interrupt setup function
+        with its 'module' and 'pin' parameters already filled by partial(), so that
+        any *args and **kwargs supplied by the GPIO library will get passed directly
+        back to our GPIO module's get_interrupt_value() method.
+
+        If the pin is configured as a remote interrupt for another pin or pins, then the
+        execution, along with the interrupt lock is handed off to
+        self.handle_remote_interrupt(), instead of getting the pin value, firing the
+        DigitalInputChangedEvent and unlocking the interrupt lock.
+        """
         pin_name = module.pin_configs[pin]["name"]
         interrupt_lock = self.interrupt_locks[pin_name]
         if not interrupt_lock.acquire(blocking=False):
@@ -457,8 +510,16 @@ class MqttIo:
     def handle_remote_interrupt(
         self, pin_names: List[str], interrupt_lock: threading.Lock
     ) -> None:
-        # TODO: Tasks pending completion -@flyte at 30/01/2021, 13:14:44
-        # Lock this interrupt
+        """
+        Adds tasks to the event loop to go off and get the values for the pin(s) which have
+        triggered a remote pin's interrupt logic.
+
+        The pin_names are organised by module, then a task is created to pass the list of
+        pins to get values for to the module that handles them, and fire a
+        DigitalInputChangedEvent for each of the pin values.
+
+        Once all of these tasks have completed, the interrupt lock is released.
+        """
         # IDEA: Possible implementations -@flyte at 30/01/2021, 16:09:35
         # Does the interrupt_for module say that its interrupt pin will be held low
         # until the interrupt register is read, or does it just pulse its interrupt
@@ -476,6 +537,14 @@ class MqttIo:
             async def handle_remote_interrupt_task(
                 remote_module: GenericGPIO = remote_module, pins: List[PinType] = pins
             ) -> None:
+                """
+                Ask the GPIO module to fetch the values of the specified pins, because
+                they caused an interrupt on another module's pin, presumably because
+                the module's interrupt line was connected to it.
+
+                Fire a DigitalInputChangedEvent for each of the pins' values returned
+                because we don't really know if they changed or not.
+                """
                 interrupt_values = await remote_module.get_interrupt_values_remote(pins)
                 for pin, value in interrupt_values.items():
                     remote_pin_name = remote_module.pin_configs[pin]["name"]
@@ -486,6 +555,10 @@ class MqttIo:
             remote_interrupt_tasks.append(handle_remote_interrupt_task())
 
         async def await_remote_interrupts() -> None:
+            """
+            Await all of the remote interrupt tasks so that we can release the interrupt
+            lock afterwards.
+            """
             try:
                 await asyncio.gather(*remote_interrupt_tasks)
             finally:
@@ -495,6 +568,10 @@ class MqttIo:
         self.unawaited_tasks.append(task)
 
     def _handle_mqtt_msg(self, topic: str, payload: str) -> None:
+        """
+        Parse all MQTT messages received on our subscriptions and dispatch actions
+        such as changing outputs and sending data to streams accordingly.
+        """
         topic_prefix: str = self.config["mqtt"]["topic_prefix"]
 
         if not any(
@@ -507,8 +584,8 @@ class MqttIo:
             return
         try:
             output_name = output_name_from_topic(topic, topic_prefix)
-        except ValueError as e:
-            _LOG.warning("Unable to parse topic: %s", e)
+        except ValueError as exc:
+            _LOG.warning("Unable to parse topic: %s", exc)
             return
         output_config = self.digital_output_configs[output_name]
         module = self.gpio_modules[output_config["module"]]
@@ -571,6 +648,13 @@ class MqttIo:
         self.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], value))
 
     # Tasks
+
+    async def _mqtt_tx_loop(self) -> None:
+        while True:
+            try:
+                await self.mqtt_publish_queue.get()
+            except Exception:  # pylint: disable=broad-except
+                _LOG.exception("Unable to publish MQTT message:")
 
     async def _mqtt_rx_loop(self) -> None:
         try:
@@ -642,7 +726,7 @@ class MqttIo:
             await self.set_digital_output(module, output_config, value)
 
             try:
-                ms = output_config["timed_set_ms"]
+                msec = output_config["timed_set_ms"]
             except KeyError:
                 continue
 
@@ -650,14 +734,14 @@ class MqttIo:
                 """
                 Reset the output to the opposite value after x ms.
                 """
-                await asyncio.sleep(ms / 1000.0)
+                await asyncio.sleep(msec / 1000.0)
                 _LOG.info(
                     (
                         "Setting digital output '%s' back to its previous value after "
                         "configured 'timed_set_ms' delay of %sms"
                     ),
                     output_config["name"],
-                    ms,
+                    msec,
                 )
                 await self.set_digital_output(module, output_config, not value)
 
@@ -667,27 +751,34 @@ class MqttIo:
     # Main entry point
 
     def run(self) -> None:
-        for s in (signals.SIGHUP, signals.SIGTERM, signals.SIGINT):
+        """
+        Main entry point into the server which initialises all of the modules, connects to
+        MQTT and starts the event loop.
+        """
+        for sig in (signals.SIGHUP, signals.SIGTERM, signals.SIGINT):
             self.loop.add_signal_handler(
-                s, lambda s=s: self.loop.create_task(self.shutdown(s))
+                sig, lambda sig=sig: self.loop.create_task(self.shutdown(sig))
             )
+
+        # Initialise the modules and IOs
         self._init_gpio_modules()
-        # Init the outputs before MQTT so we have some topics to subscribe to
+        self._init_digital_inputs()
         self._init_digital_outputs()
+        self._init_sensor_modules()
+        self._init_sensor_inputs()
 
         # Get connected to the MQTT server
         self.loop.run_until_complete(self._init_mqtt())
-
-        # Init the inputs after MQTT so we can start publishing right away
-        self._init_sensor_modules()
-        self._init_digital_inputs()
-        self._init_sensor_inputs()
 
         # This is where we add any other async tasks that we want to run, such as polling
         # inputs, sensor loops etc.
         self.tasks = [
             self.loop.create_task(coro)
-            for coro in (self._mqtt_rx_loop(), self._remove_finished_tasks())
+            for coro in (
+                self._mqtt_tx_loop(),
+                self._mqtt_rx_loop(),
+                self._remove_finished_tasks(),
+            )
         ]
         try:
             self.loop.run_forever()
@@ -711,11 +802,14 @@ class MqttIo:
         _LOG.debug("run() complete")
 
     async def shutdown(self, signal: "signals.Signals") -> None:
+        """
+        Shut down all of the tasks involved in running the server in the right order.
+        """
         _LOG.warning("Received exit signal %s", signal.name)
 
         # Cancel our main task first so we don't mess the MQTT library's connection
-        for t in self.tasks:
-            t.cancel()
+        for task in self.tasks:
+            task.cancel()
         _LOG.info("Waiting for main task to complete...")
         all_done = False
         while not all_done:
@@ -729,8 +823,8 @@ class MqttIo:
             if not t.done() and t is not current_task
         ]
         _LOG.info("Cancelling %s remaining tasks", len(tasks))
-        for t in tasks:
-            t.cancel()
+        for task in tasks:
+            task.cancel()
         _LOG.info("Waiting for %s remaining tasks to complete...", len(tasks))
         all_done = False
         while not all_done:
@@ -739,3 +833,6 @@ class MqttIo:
         _LOG.debug("Tasks all finished. Stopping loop...")
         self.loop.stop()
         _LOG.debug("Loop stopped")
+        unsent_messages = self.mqtt_publish_queue.qsize()
+        if unsent_messages:
+            _LOG.warning("%s queued MQTT message(s) not sent", unsent_messages)

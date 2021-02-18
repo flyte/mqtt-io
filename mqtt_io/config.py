@@ -1,9 +1,13 @@
+"""
+Handles config validation and normalisation.
+"""
+
 from __future__ import annotations
 
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Set
 
 import cerberus  # type: ignore
 import yaml
@@ -55,22 +59,49 @@ def get_duplicate_names(io_conf: List[ConfigType]) -> List[str]:
 
 
 def validate_gpio_module_names(
-    config: ConfigType, module_section: str, io_sections: Iterable[str]
-) -> Dict[str, Dict[str, str]]:
+    bad_configs: Dict[str, Dict[str, List[str]]],
+    config: ConfigType,
+    module_section: str,
+    io_sections: Iterable[str],
+) -> None:
+    """
+    Ensure that all of the IO config sections refer to existing module names.
+    """
     module_names = {x["name"] for x in config.get(module_section, [])}
-    bad_configs: Dict[str, Dict[str, str]] = {}
 
     for io_section in io_sections:
         for io_conf in config.get(io_section, []):
             if io_conf["module"] not in module_names:
-                bad_configs.setdefault(io_section, {})[
-                    io_conf["name"]
-                ] = "%s section has no module configured with the name '%s'" % (
-                    module_section,
-                    io_conf["module"],
+                bad_configs.setdefault(io_section, {}).setdefault(
+                    io_conf["name"], []
+                ).append(
+                    "%s section has no module configured with the name '%s'"
+                    % (
+                        module_section,
+                        io_conf["module"],
+                    )
                 )
 
-    return bad_configs
+
+def validate_gpio_interrupt_for(
+    bad_configs: Dict[str, Dict[str, List[str]]],
+    digital_inputs: List[ConfigType],
+) -> None:
+    """
+    Ensure that all of the pins listed in interrupt_for are configured as interrupts.
+    """
+    interrupt_pins: Set[str] = set(
+        in_conf["name"] for in_conf in digital_inputs if in_conf["interrupt"]
+    )
+    for in_conf in [x for x in digital_inputs if x.get("interrupt_for")]:
+        for pin_name in in_conf["interrupt_for"]:
+            if pin_name not in interrupt_pins:
+                bad_configs.setdefault("digital_inputs", {}).setdefault(
+                    in_conf["name"], []
+                ).append(
+                    f"Pin '{pin_name}' listed in 'interrupt_for' is not configured as an "
+                    "interrupt itself"
+                )
 
 
 def _read_config(path: str) -> Any:
@@ -79,8 +110,8 @@ def _read_config(path: str) -> Any:
     :param path: The filesystem path
     :return: The config
     """
-    with open(path) as f:
-        return yaml.safe_load(f)
+    with open(path) as config_file:
+        return yaml.safe_load(config_file)
 
 
 def get_main_schema() -> Any:
@@ -113,6 +144,9 @@ def validate_and_normalise_config(config: Any, schema: Any) -> ConfigType:
 
 
 def validate_main_config(config: ConfigType) -> ConfigType:
+    """
+    Do our own validation on the config to make sure it contains sane, workable data.
+    """
     unique_name_sections = (
         "gpio_modules",
         "sensor_modules",
@@ -137,7 +171,7 @@ def validate_main_config(config: ConfigType) -> ConfigType:
             % yaml.dump(sections_with_duplicated_names)
         )
 
-    bad_configs = {}
+    bad_configs: Dict[str, Dict[str, List[str]]] = {}
 
     # Make sure each of the IO configs refer to an existing module config
     module_and_io_sections = dict(
@@ -146,9 +180,11 @@ def validate_main_config(config: ConfigType) -> ConfigType:
         stream_modules=("stream_reads", "stream_writes"),
     )
     for module_section, io_sections in module_and_io_sections.items():
-        bad_configs.update(
-            validate_gpio_module_names(config, module_section, io_sections)
-        )
+        validate_gpio_module_names(bad_configs, config, module_section, io_sections)
+
+    # Make sure all digital inputs listed in 'interrupt_for' lists are configured
+    # as interrupts themselves.
+    validate_gpio_interrupt_for(bad_configs, config["digital_inputs"])
 
     if bad_configs:
         raise ConfigValidationFailed(
@@ -172,6 +208,9 @@ def load_main_config(path: str) -> ConfigType:
 def validate_and_normalise_sensor_input_config(
     config: ConfigType, module: GenericSensor
 ) -> ConfigType:
+    """
+    Validate sensor input configs.
+    """
     schema = get_main_schema()
     sensor_input_schema = schema["sensor_inputs"]["schema"]["schema"].copy()
     sensor_input_schema.update(getattr(module, "SENSOR_SCHEMA", {}))

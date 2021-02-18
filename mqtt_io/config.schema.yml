@@ -247,6 +247,14 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      poll_interval:
+        type: float
+        required: no
+        default: 0.1
+      poll_when_interrupt_for:
+        type: boolean
+        required: no
+        default: yes
 
 digital_outputs:
   type: list

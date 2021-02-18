@@ -16,18 +16,23 @@ class GenericStream(ABC):
 
     @abstractmethod
     def setup_module(self) -> None:
-        pass
+        """
+        Configure the module, open ports etc.
+        """
 
     @abstractmethod
     def read(self) -> Optional[bytes]:
-        pass
+        """
+        Read all available bytes from the stream. Return None if no bytes were available.
+        """
 
     @abstractmethod
     def write(self, data: bytes) -> None:
-        pass
+        """
+        Write bytes to the stream.
+        """
 
     def cleanup(self) -> None:
         """
         Called when closing the program to handle any cleanup operations.
         """
-        pass

@@ -1,3 +1,7 @@
+"""
+Contains the base class and some enums that are shared across all GPIO modules.
+"""
+
 import abc
 import asyncio
 import logging
@@ -12,26 +16,53 @@ _LOG = logging.getLogger(__name__)
 
 
 class PinDirection(Enum):
+    """
+    Whether the GPIO pin is an input or an output.
+    """
+
     INPUT = auto()
     OUTPUT = auto()
 
 
 class PinPUD(Enum):
+    """
+    Whether the GPIO pin should be pulled up, down or not anywhere.
+    """
+
     OFF = auto()
     UP = auto()
     DOWN = auto()
 
 
 class InterruptEdge(Enum):
-    RISING = 0
-    FALLING = 1
-    BOTH = 2
+    """
+    Whether to trigger an interrupt on rising edge, falling edge or both.
+    """
+
+    RISING = auto()
+    FALLING = auto()
+    BOTH = auto()
 
 
 class InterruptSupport(Flag):
+    """
+    Classifies the kind of support a GPIO module has for interrupts.
+
+    These are designed to be added to the GPIO module's `INTERRUPT_SUPPORT` class constant
+    by ORing them together, for example:
+
+    class GPIO(GenericGPIO):
+        INTERRUPT_SUPPORT = (
+            InterruptSupport.FLAG_REGISTER | InterruptSupport.CAPTURE_REGISTER
+        )
+
+    The `INTERRUPT_SUPPORT` constant will then be used when deciding how to handle
+    interrupt triggered by, or for this GPIO module.
+    """
+
     NONE = auto()
 
-    # The library supporting this chip provides a callback mechanism on interrupt
+    # The library supporting this chip provides a function callback mechanism on interrupt
     SOFTWARE_CALLBACK = auto()
 
     # The chip flags which pin triggered the interrupt
@@ -49,26 +80,29 @@ class InterruptSupport(Flag):
     SET_TRIGGERS = auto()
 
 
-class GenericGPIO:
+class GenericGPIO(abc.ABC):
     """
     Abstracts a generic GPIO interface to be implemented by the modules in this
     directory.
     """
-
-    __metaclass__ = abc.ABCMeta
 
     INTERRUPT_SUPPORT = InterruptSupport.NONE
 
     def __init__(self, config: ConfigType):
         self.config = config
         self.pin_configs: Dict[PinType, ConfigType] = {}
-        self.io: Any = None
+        self.io: Any = None  # pylint: disable=invalid-name
         self.interrupt_edges: Dict[PinType, InterruptEdge] = {}
         self.setup_module()
 
     @abc.abstractmethod
     def setup_module(self) -> None:
-        pass
+        """
+        Called on initialisation of the GPIO module during the startup phase.
+
+        The module's config from the `gpio_modules` section of the config file is stored
+        in `self.config`.
+        """
 
     @abc.abstractmethod
     def setup_pin(
@@ -79,15 +113,24 @@ class GenericGPIO:
         pin_config: ConfigType,
         initial: Optional[str] = None,
     ) -> None:
-        pass
+        """
+        Called on initialisation of each pin of the GPIO module during the startup phase.
+
+        The `pin_config` passed in here is the pin's entry in the `digital_inputs` or
+        `digital_outputs` section of the config file.
+        """
 
     @abc.abstractmethod
     def set_pin(self, pin: PinType, value: bool) -> None:
-        pass
+        """
+        Set an individual pin to the given value.
+        """
 
     @abc.abstractmethod
     def get_pin(self, pin: PinType) -> bool:
-        pass
+        """
+        Poll a pin for its value.
+        """
 
     def setup_interrupt(
         self,
@@ -95,7 +138,13 @@ class GenericGPIO:
         edge: InterruptEdge,
         in_conf: ConfigType,
     ) -> None:
-        pass
+        """
+        Configure a pin as an interrupt.
+
+        This is used on modules which don't supply software callbacks, but use some other
+        way of representing interrupts, such as connecting a dedicated interrupt output
+        pin to another module that does supply software callbacks.
+        """
 
     def setup_interrupt_callback(
         self,
@@ -104,13 +153,30 @@ class GenericGPIO:
         in_conf: ConfigType,
         callback: Callable[[List[Any], Dict[Any, Any]], None],
     ) -> None:
-        pass
+        """
+        Configure a pin as an interrupt and set up the callback function to be called when
+        the interrupt is triggered.
+        """
+
+    def setup_interrupt_internal(
+        self,
+        pin: PinType,
+        edge: InterruptEdge,
+        in_conf: ConfigType,
+        callback: Optional[Callable[[List[Any], Dict[Any, Any]], None]] = None,
+    ) -> None:
+        """
+        Used internally to ensure that `self.interrupt_edges` is updated for this pin.
+        """
+        self.interrupt_edges[pin] = edge
+        if callback is None:
+            return self.setup_interrupt(pin, edge, in_conf)
+        return self.setup_interrupt_callback(pin, edge, in_conf, callback)
 
     def cleanup(self) -> None:
         """
         Called when closing the program to handle any cleanup operations.
         """
-        pass
 
     def setup_pin_internal(self, direction: PinDirection, pin_config: ConfigType) -> None:
         """
@@ -199,7 +265,6 @@ class GenericGPIO:
         for the value, or looking it up in a register that captures the value at time of
         interrupt.
         """
-        pass
 
     async def get_interrupt_values_remote(
         self, pins: List[PinType]
@@ -209,8 +274,6 @@ class GenericGPIO:
         pin's output changing. Takes a list of pins that can potentially trigger this
         interrupt, as defined in the `interrupt_for` list in the config file.
         """
-        # TODO: Tasks pending completion -@flyte at 27/01/2021, 18:48:22
-        # Make sure that validation sets the `interrupt_for` list as minimum 1 value
         pins_set = set(pins)
         if self.INTERRUPT_SUPPORT & InterruptSupport.FLAG_REGISTER:
             int_pins = set(await self.async_get_int_pins())
@@ -237,14 +300,8 @@ class GenericGPIO:
             pin_values = {}
             for pin in matching_pins:
                 try:
-                    # TODO: Tasks pending completion -@flyte at 27/01/2021, 18:30:20
-                    # Make sure interrupt_edges is added when setup_interrupt() is called
                     edge = self.interrupt_edges[pin]
                 except KeyError:
-                    # TODO: Tasks pending completion -@flyte at 27/01/2021, 18:17:52
-                    # During config validation, check that any pins listed in
-                    # `interrupt_for` have values for the `interrupt` setting on their
-                    # `digital_inputs` entry.
                     _LOG.error(
                         (
                             "Pin %s on %s did not have an entry in the `interrupt_edges` "
@@ -256,8 +313,23 @@ class GenericGPIO:
                     )
                     continue
                 if edge == InterruptEdge.BOTH:
+                    # We'll have to poll the pin for its current value
                     pin_values[pin] = await self.async_get_pin(pin)
                 else:
+                    # NOTE: Needs discussion or investigation -@flyte at 18/02/2021, 10:37:20
+                    # This might cause false interrupts on chips where there's multiple
+                    # pins configured as interrupts on a single remote interrupt line.
+                    # If pin 0 changes value but pin 1 doesn't, and the chip doesn't
+                    # provide a flag register, then this might just report that pin 1
+                    # changed to its interrupt state (high or low for rising and falling
+                    # respectively) when it did not, and it was just pin 0 that changed.
+                    #
+                    # It's probably best to make this configurable, because the
+                    # alternative is just to poll the pin every time, but that could cause
+                    # interrupts to report wrong values for the pin if we poll it after
+                    # it's changed back to the opposite logic level. :thinking:
+
+                    # We can infer the value based on how it's configured
                     pin_values[pin] = edge == InterruptEdge.RISING
 
         return pin_values

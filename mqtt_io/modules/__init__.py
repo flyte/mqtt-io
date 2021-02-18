@@ -1,5 +1,13 @@
+"""
+Contains stuff useful across all modules, whether they're GPIO, sensor or stream ones.
+"""
+
 import logging
+import sys
+from subprocess import CalledProcessError, check_call
 from types import ModuleType
+
+import pkg_resources
 
 from ..exceptions import CannotInstallModuleRequirements
 
@@ -24,22 +32,23 @@ def install_missing_requirements(module: ModuleType) -> None:
     """
     reqs = getattr(module, "REQUIREMENTS", [])
     if not reqs:
-        _LOG.info("Module %r has no extra requirements to install." % module)
+        _LOG.debug("Module %r has no extra requirements to install.", module)
         return
-    import pkg_resources
 
     pkgs_installed = pkg_resources.WorkingSet()
     pkgs_required = []
     for req in reqs:
         if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
             pkgs_required.append(req)
-    if pkgs_required:
-        from subprocess import CalledProcessError, check_call
 
-        try:
-            check_call(["/usr/bin/env", "pip", "install"] + pkgs_required)
-        except CalledProcessError as err:
-            raise CannotInstallModuleRequirements(
-                "Unable to install packages for module %r (%s): %s"
-                % (module, pkgs_required, err)
-            )
+    if not pkgs_required:
+        _LOG.debug("Module %r has all of its requirements installed already.", module)
+        return
+
+    try:
+        check_call([sys.executable, "-m", "pip", "install"] + pkgs_required)
+    except CalledProcessError as err:
+        raise CannotInstallModuleRequirements(
+            "Unable to install packages for module %r (%s): %s"
+            % (module, pkgs_required, err)
+        ) from err
