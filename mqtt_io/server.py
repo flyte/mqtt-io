@@ -5,6 +5,8 @@ Coordinates initialisation of the GPIO, sensor and stream modules, along with ge
 and setting their values and data, connecting to MQTT and sending/receiving MQTT messages.
 """
 
+# pylint: enable=duplicate-code
+
 from __future__ import annotations
 
 import asyncio
@@ -25,6 +27,8 @@ from typing_extensions import Literal
 
 from .config import (
     validate_and_normalise_config,
+    validate_and_normalise_digital_input_config,
+    validate_and_normalise_digital_output_config,
     validate_and_normalise_sensor_input_config,
 )
 from .constants import (
@@ -52,7 +56,7 @@ from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .modules.sensor import GenericSensor
-from .types import ConfigType, PinType
+from .types import ConfigType, PinType, UnawaitedTaskType
 
 _LOG = logging.getLogger(__name__)
 
@@ -106,7 +110,7 @@ def output_name_from_topic(topic: str, prefix: str) -> str:
     return match.group(1)
 
 
-class MqttIo:
+class MqttIo:  # pylint: disable=too-many-instance-attributes
     """
     The main class that represents the business logic of the server. This is instantiated
     once per config file, of which there is generally only one.
@@ -127,11 +131,9 @@ class MqttIo:
 
         self.loop = asyncio.get_event_loop()
         self.tasks = []  # type: List[asyncio.Future[Any]]
-        self.unawaited_tasks = (
-            []
-        )  # type: List[Union[asyncio.Future[Any], ConcurrentFuture[Any]]]
+        self.unawaited_tasks: List[UnawaitedTaskType] = []
 
-        self.event_bus = EventBus(self.loop)
+        self.event_bus = EventBus(self.loop, self.unawaited_tasks)
         self.mqtt: MQTTClient = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
         self.mqtt_publish_queue = Queue()  # type: Queue[Awaitable[Any]]
@@ -161,8 +163,6 @@ class MqttIo:
         - Optionally call the module's setup_interrupt() method, with a software callback
           if it's supported.
         """
-        self.digital_input_configs = {x["name"]: x for x in self.config["digital_inputs"]}
-
         # Set up MQTT publish callback for input event.
         # Needs to be a function, not a method, hence the closure function.
         async def publish_callback(event: DigitalInputChangedEvent) -> None:
@@ -183,11 +183,11 @@ class MqttIo:
         self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
 
         for in_conf in self.config["digital_inputs"]:
-            module = self.gpio_modules[in_conf["module"]]
+            gpio_module = self.gpio_modules[in_conf["module"]]
+            in_conf = validate_and_normalise_digital_input_config(in_conf, gpio_module)
+            self.digital_input_configs[in_conf["name"]] = in_conf
 
-            # setup_pin() is wrapped in __init_subclass__ to have different args, so
-            # ignore the type to avoid confusing mypy
-            module.setup_pin(PinDirection.INPUT, in_conf)  # type: ignore
+            gpio_module.setup_pin_internal(PinDirection.INPUT, in_conf)
 
             interrupt = in_conf.get("interrupt")
             interrupt_for = in_conf.get("interrupt_for")
@@ -196,7 +196,7 @@ class MqttIo:
             # it _is_ an interrupt, but it's used for triggering remote interrupts.
             if interrupt is None or interrupt_for and in_conf["poll_when_interrupt_for"]:
                 self.unawaited_tasks.append(
-                    self.loop.create_task(self.digital_input_poller(module, in_conf))
+                    self.loop.create_task(self.digital_input_poller(gpio_module, in_conf))
                 )
 
             if interrupt is None:
@@ -208,21 +208,17 @@ class MqttIo:
                 "both": InterruptEdge.BOTH,
             }[interrupt]
             callback = None
-            if module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
+            if gpio_module.INTERRUPT_SUPPORT & InterruptSupport.SOFTWARE_CALLBACK:
                 self.interrupt_locks[in_conf["name"]] = threading.Lock()
                 # If it's a software callback interrupt, then supply
                 # partial(self.interrupt_callback, module, in_conf["pin"])
                 # as the callback.
-                callback = partial(self.interrupt_callback, module, in_conf["pin"])
-            module.setup_interrupt_internal(
+                callback = partial(self.interrupt_callback, gpio_module, in_conf["pin"])
+            gpio_module.setup_interrupt_internal(
                 in_conf["pin"], edge, in_conf, callback=callback
             )
 
     def _init_digital_outputs(self) -> None:
-        self.digital_output_configs = {
-            x["name"]: x for x in self.config["digital_outputs"]
-        }
-
         # Set up MQTT publish callback for output event
         async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
@@ -240,9 +236,11 @@ class MqttIo:
         self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
 
         for out_conf in self.config["digital_outputs"]:
-            self.gpio_modules[out_conf["module"]].setup_pin_internal(
-                PinDirection.OUTPUT, out_conf
-            )
+            gpio_module = self.gpio_modules[out_conf["module"]]
+            out_conf = validate_and_normalise_digital_output_config(out_conf, gpio_module)
+            self.digital_output_configs[out_conf["name"]] = out_conf
+
+            gpio_module.setup_pin_internal(PinDirection.OUTPUT, out_conf)
 
             # Create queues for each module with an output
             if out_conf["module"] not in self.module_output_queues:
@@ -257,8 +255,6 @@ class MqttIo:
                 )
 
     def _init_sensor_inputs(self) -> None:
-        self.sensor_input_configs = {x["name"]: x for x in self.config["sensor_inputs"]}
-
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
             self.mqtt_publish_queue.put(
                 self.mqtt.publish(
@@ -276,7 +272,11 @@ class MqttIo:
 
         for sens_conf in self.config["sensor_inputs"]:
             sensor_module = self.sensor_modules[sens_conf["module"]]
-            validate_and_normalise_sensor_input_config(sens_conf, sensor_module)
+            sens_conf = validate_and_normalise_sensor_input_config(
+                sens_conf, sensor_module
+            )
+            self.sensor_input_configs[sens_conf["name"]] = sens_conf
+
             sensor_module.setup_sensor(sens_conf)
 
             # Use default args to the function to get around the late binding closures
@@ -296,7 +296,7 @@ class MqttIo:
 
             self.unawaited_tasks.append(self.loop.create_task(poll_sensor()))
 
-    async def _init_mqtt(self) -> None:
+    async def _init_mqtt(self) -> None:  # pylint: disable=too-many-locals
         config: ConfigType = self.config["mqtt"]
         topic_prefix: str = config["topic_prefix"]
 
@@ -354,14 +354,13 @@ class MqttIo:
                 await self.mqtt.subscribe([(topic, QOS_1)])
                 _LOG.info("Subscribed to topic: %r", topic)
 
-        self.mqtt_publish_queue.put(
-            self.mqtt.publish(
-                "%s/%s" % (topic_prefix, config["status_topic"]),
-                config["status_payload_running"].encode("utf8"),
-                qos=1,
-                retain=True,
-            )
+        await self.mqtt.publish(
+            "%s/%s" % (topic_prefix, config["status_topic"]),
+            config["status_payload_running"].encode("utf8"),
+            qos=1,
+            retain=True,
         )
+
         # Publish initial values of outputs if desired
         for out_conf in self.digital_output_configs.values():
             if not out_conf["publish_initial"]:
@@ -372,13 +371,11 @@ class MqttIo:
                 if value != out_conf["inverted"]
                 else out_conf["off_payload"]
             )
-            self.mqtt_publish_queue.put(
-                self.mqtt.publish(
-                    "%s/output/%s" % (topic_prefix, out_conf["name"]),
-                    payload.encode("utf8"),
-                    qos=1,
-                    retain=out_conf["retain"],
-                )
+            await self.mqtt.publish(
+                "%s/output/%s" % (topic_prefix, out_conf["name"]),
+                payload.encode("utf8"),
+                qos=1,
+                retain=out_conf["retain"],
             )
         # Publish Home Assistant Discovery messages if desired
         if config["discovery"]:
@@ -497,9 +494,10 @@ class MqttIo:
 
             if remote_interrupt_for_pin_names:
                 _LOG.debug("Interrupt on '%s' triggered remote interrupt.", pin_name)
-                return self.handle_remote_interrupt(
+                self.handle_remote_interrupt(
                     remote_interrupt_for_pin_names, interrupt_lock
                 )
+                return
             _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
             value = module.get_interrupt_value(pin, *args, **kwargs)
             self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
@@ -650,6 +648,10 @@ class MqttIo:
     # Tasks
 
     async def _mqtt_tx_loop(self) -> None:
+        """
+        Use a task to publish MQTT messages from a queue so that we don't try to publish
+        them before MQTT is initialised.
+        """
         while True:
             try:
                 await self.mqtt_publish_queue.get()

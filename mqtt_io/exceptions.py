@@ -1,18 +1,27 @@
+"""
+Exceptions thrown by MQTT IO.
+"""
+
+
 class ConfigError(Exception):
-    pass
+    """
+    Base class for any error raised because of a problem with the config file.
+    """
 
 
 class ConfigValidationFailed(ConfigError):
-    pass
+    """
+    The config file validation failed.
+    """
 
 
 class RuntimeConfigError(ConfigError):
-    pass
+    """
+    Something in the config file turned out to be unusable at runtime.
+    """
 
 
 class CannotInstallModuleRequirements(Exception):
-    pass
-
-
-class InvalidPayload(Exception):
-    pass
+    """
+    Installing the Python requirements for a module using pip failed.
+    """

@@ -1,7 +1,11 @@
-from typing import Any, Callable, Dict, List, Optional, cast
+"""
+GPIO module for PCF8575.
+"""
+
+from typing import Any, Dict, Optional, cast
 
 from ...types import ConfigType, PinType
-from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from . import GenericGPIO, PinDirection, PinPUD
 
 REQUIREMENTS = ("pcf8575",)
 CONFIG_SCHEMA = {
@@ -18,7 +22,7 @@ class GPIO(GenericGPIO):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel
+        # pylint: disable=global-statement,import-outside-toplevel,import-error
         global PULLUPS
         PULLUPS = {PinPUD.UP: True, PinPUD.DOWN: False}
         from pcf8575 import PCF8575  # type: ignore

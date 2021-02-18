@@ -1,3 +1,7 @@
+"""
+Sensor module for AHT20.
+"""
+
 from typing import cast
 
 from ...types import ConfigType, SensorValueType
@@ -23,7 +27,7 @@ class Sensor(GenericSensor):
     }
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         import adafruit_ahtx0  # type: ignore
         import board  # type: ignore
         import busio  # type: ignore

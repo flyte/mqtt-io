@@ -16,6 +16,7 @@ from .exceptions import ConfigValidationFailed
 from .types import ConfigType
 
 if TYPE_CHECKING:
+    from .modules.gpio import GenericGPIO
     from .modules.sensor import GenericSensor
 
 _LOG = logging.getLogger(__name__)
@@ -215,3 +216,29 @@ def validate_and_normalise_sensor_input_config(
     sensor_input_schema = schema["sensor_inputs"]["schema"]["schema"].copy()
     sensor_input_schema.update(getattr(module, "SENSOR_SCHEMA", {}))
     return validate_and_normalise_config(config, sensor_input_schema)
+
+
+def validate_and_normalise_digital_input_config(
+    config: ConfigType, module: GenericGPIO
+) -> ConfigType:
+    """
+    Validate digital input configs.
+    """
+    schema = get_main_schema()
+    digital_input_schema = schema["digital_inputs"]["schema"]["schema"].copy()
+    digital_input_schema.update(getattr(module, "PIN_SCHEMA", {}))
+    digital_input_schema.update(getattr(module, "INPUT_SCHEMA", {}))
+    return validate_and_normalise_config(config, digital_input_schema)
+
+
+def validate_and_normalise_digital_output_config(
+    config: ConfigType, module: GenericGPIO
+) -> ConfigType:
+    """
+    Validate digital output configs.
+    """
+    schema = get_main_schema()
+    digital_output_schema = schema["digital_outputs"]["schema"]["schema"].copy()
+    digital_output_schema.update(getattr(module, "PIN_SCHEMA", {}))
+    digital_output_schema.update(getattr(module, "OUTPUT_SCHEMA", {}))
+    return validate_and_normalise_config(config, digital_output_schema)

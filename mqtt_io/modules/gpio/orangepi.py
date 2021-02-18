@@ -1,7 +1,11 @@
-from typing import Any, Callable, Dict, List, Optional
+"""
+GPIO module for OrangePI on-board GPIO.
+"""
+
+from typing import Any, Dict, Optional
 
 from ...types import ConfigType, PinType
-from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from . import GenericGPIO, PinDirection, PinPUD
 
 ALLOWED_BOARDS = [
     "zero",
@@ -44,7 +48,7 @@ class GPIO(GenericGPIO):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel
+        # pylint: disable=global-statement,import-outside-toplevel,import-error
         global DIRECTIONS, PULLUPS
         import OPi.GPIO as gpio  # type: ignore
 

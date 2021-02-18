@@ -1,4 +1,6 @@
-from typing import cast
+"""
+Sensor module for DHT22.
+"""
 
 from ...exceptions import RuntimeConfigError
 from ...types import CerberusSchemaType, ConfigType, PinType, SensorValueType
@@ -33,7 +35,7 @@ class Sensor(GenericSensor):
     }
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         import Adafruit_DHT as DHTsensor  # type: ignore
 
         sensor_type: str = self.config["type"].lower()

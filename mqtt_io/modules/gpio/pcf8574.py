@@ -1,3 +1,7 @@
+"""
+GPIO module for PCF8574.
+"""
+
 from typing import Any, Dict, Optional, cast
 
 from ...types import ConfigType, PinType
@@ -14,11 +18,11 @@ PULLUPS: Dict[PinPUD, Any] = {}
 
 class GPIO(GenericGPIO):
     """
-    Implementation of GPIO class for the pcf8574 IO expander chip.
+    Implementation of GPIO class for the PCF8574 IO expander chip.
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel
+        # pylint: disable=global-statement,import-outside-toplevel,import-error
         global PULLUPS
         PULLUPS = {PinPUD.UP: True, PinPUD.DOWN: False}
         from pcf8574 import PCF8574

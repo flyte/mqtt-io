@@ -1,3 +1,7 @@
+"""
+Contains the base class that is shared across all Stream modules.
+"""
+
 from abc import ABC, abstractmethod
 from typing import Optional
 

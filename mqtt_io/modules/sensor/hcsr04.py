@@ -1,3 +1,7 @@
+"""
+Sensor module for HCSR04 connected to the Raspberry Pi on-board GPIO.
+"""
+
 import time
 from statistics import mean
 from typing import Any, Dict, List, Optional, cast
@@ -92,6 +96,10 @@ class HCSR04:
 
 
 class Sensor(GenericSensor):
+    """
+    Implementation of the sensor using Raspberry Pi on-board GPIO.
+    """
+
     SENSOR_CONFIG = {
         "pin_echo": {"type": "integer", "required": True, "empty": False},
         "pin_trigger": {"type": "integer", "required": True, "empty": False},
@@ -99,7 +107,7 @@ class Sensor(GenericSensor):
     }
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         import RPi.GPIO as GPIO  # type: ignore
 
         # use BCM GPIO-references (instead of Pin-numbers)

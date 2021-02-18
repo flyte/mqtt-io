@@ -1,3 +1,7 @@
+"""
+Sensor module for MCP3008.
+"""
+
 import logging
 from typing import cast
 
@@ -34,7 +38,7 @@ class Sensor(GenericSensor):
         """
         Init the mcp on SPI CE0
         """
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         import Adafruit_GPIO.SPI as SPI  # type: ignore
         import Adafruit_MCP3008  # type: ignore
 

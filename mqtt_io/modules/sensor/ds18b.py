@@ -1,6 +1,9 @@
+"""
+Sensor module for DS18B.
+"""
+
 from typing import Dict, cast
 
-from ...exceptions import RuntimeConfigError
 from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -23,7 +26,7 @@ class Sensor(GenericSensor):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         from w1thermsensor import W1ThermSensor  # type: ignore
         from w1thermsensor.sensors import Sensor as SensorType  # type: ignore
 

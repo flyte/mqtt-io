@@ -1,3 +1,7 @@
+"""
+GPIO module for Raspberry Pi on-board GPIO.
+"""
+
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
@@ -21,7 +25,7 @@ class GPIO(GenericGPIO):
     INTERRUPT_SUPPORT = InterruptSupport.SOFTWARE_CALLBACK
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel
+        # pylint: disable=global-statement,import-outside-toplevel,import-error
         global DIRECTIONS, PULLUPS, INTERRUPT
         import RPi.GPIO as gpio  # type: ignore
 

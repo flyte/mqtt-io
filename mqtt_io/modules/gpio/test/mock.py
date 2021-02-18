@@ -1,14 +1,22 @@
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Union, Tuple
+"""
+Mock GPIO module for using with the tests.
+"""
+
+from typing import Any, Callable, Dict, List
 from unittest.mock import Mock
 
 from ....types import ConfigType, PinType
-from .. import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from .. import GenericGPIO, InterruptEdge, InterruptSupport
 
 REQUIREMENTS = ()
 CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
 
 
 class GPIO(GenericGPIO):
+    """
+    Mock GPIO module for using with the tests.
+    """
+
     INTERRUPT_SUPPORT = (
         InterruptSupport.SOFTWARE_CALLBACK
         | InterruptSupport.FLAG_REGISTER

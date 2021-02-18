@@ -1,9 +1,12 @@
+"""
+GPIO module for MCP23017.
+"""
+
 from __future__ import absolute_import
 
 import logging
 from typing import Any, Dict, List, Optional, cast
 
-from ...exceptions import ConfigValidationFailed
 from ...types import ConfigType, PinType
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
@@ -31,9 +34,12 @@ class GPIO(GenericGPIO):
         | InterruptSupport.INTERRUPT_PIN
         | InterruptSupport.SET_TRIGGERS
     )
+    PIN_SCHEMA = {
+        "pin": dict(type="integer", required=True, min=0, max=15),
+    }
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel
+        # pylint: disable=global-statement,import-outside-toplevel,import-error
         global DIRECTIONS, PULLUPS
         import board  # type: ignore
         import busio  # type: ignore
@@ -53,7 +59,11 @@ class GPIO(GenericGPIO):
 
         # Use the "protected" constant for the default address
         self.io = mcp23017.MCP23017(
-            i2c, address=self.config.get("chip_addr", mcp23017._MCP23017_ADDRESS)
+            i2c,
+            address=self.config.get(
+                "chip_addr",
+                mcp23017._MCP23017_ADDRESS,  # pylint: disable=protected-access
+            ),
         )
         self.io.clear_ints()
 
@@ -65,8 +75,6 @@ class GPIO(GenericGPIO):
         pin_config: ConfigType,
         initial: Optional[str] = None,
     ) -> None:
-        if not isinstance(pin, int):
-            raise ConfigValidationFailed("MCP23017 pins must be integers")
         mcp_pin = self.io.get_pin(pin)
         mcp_pin.direction = DIRECTIONS[direction]
         if direction == PinDirection.OUTPUT:
@@ -78,16 +86,13 @@ class GPIO(GenericGPIO):
     def setup_interrupt(
         self, pin: PinType, edge: InterruptEdge, in_conf: ConfigType
     ) -> None:
-        # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:14:16
-        # Make this a wrapper task on GenericGPIO
-        self.interrupt_edges[pin] = edge
-
         # TODO: Tasks pending completion -@flyte at 29/01/2021, 19:42:23
         # Add ODR and INTPOL values of the IOCON register to the config for this module
         _LOG.debug(
             "MCP23017 module %s IOCON: %s", self.config["name"], bin(self.io.io_control)
         )
 
+        # This is definitely an integer because of the PIN_SCHEMA for this class
         pin = cast(int, pin)
 
         if edge == InterruptEdge.BOTH:

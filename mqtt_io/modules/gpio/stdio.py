@@ -1,7 +1,11 @@
-from typing import Any, Callable, Dict, List, Optional
+"""
+GPIO module for writing outputs to the console. Used for testing.
+"""
+
+from typing import Optional
 
 from ...types import ConfigType, PinType
-from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from . import GenericGPIO, PinDirection, PinPUD
 
 
 class GPIO(GenericGPIO):

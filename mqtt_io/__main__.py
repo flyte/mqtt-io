@@ -1,5 +1,9 @@
-import logging.config
+"""
+Main entrypoint when MQTT IO is invoked as `python -m mqtt_io`.
+"""
+
 import argparse
+import logging.config
 import sys
 
 from .config import load_main_config
@@ -8,15 +12,18 @@ from .server import MqttIo
 
 
 def main() -> None:
-    p = argparse.ArgumentParser()
-    p.add_argument("config")
-    args = p.parse_args()
+    """
+    Main entrypoint function.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("config")
+    args = parser.parse_args()
 
     # Load, validate and normalise config, or quit.
     try:
         config = load_main_config(args.config)
-    except ConfigValidationFailed as e:
-        print(str(e), file=sys.stderr)
+    except ConfigValidationFailed as exc:
+        print(str(exc), file=sys.stderr)
         sys.exit(1)
 
     if config["logging"]:

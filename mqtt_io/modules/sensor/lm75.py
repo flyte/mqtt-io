@@ -1,3 +1,7 @@
+"""
+Sensor module for LM75.
+"""
+
 from mqtt_io.types import ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -17,7 +21,7 @@ class Sensor(GenericSensor):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         from smbus2 import SMBus  # type: ignore[attr-defined]
 
         self.bus = SMBus(self.config["i2c_bus_num"])

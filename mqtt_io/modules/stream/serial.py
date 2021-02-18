@@ -1,3 +1,7 @@
+"""
+Stream module for sending to and receiving from serial ports.
+"""
+
 from typing import Optional
 
 from . import GenericStream
@@ -37,6 +41,10 @@ CONFIG_SCHEMA = {
 
 
 class Stream(GenericStream):
+    """
+    Stream module for sending to and receiving from serial ports.
+    """
+
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel
         import serial  # type: ignore

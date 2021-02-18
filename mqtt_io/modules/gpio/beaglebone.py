@@ -1,4 +1,7 @@
-from typing import Any, Callable, Dict, List, Optional
+"""
+GPIO module for Beaglebone.
+"""
+from typing import Any, Dict, Optional
 
 from ...types import ConfigType, PinType
 from . import GenericGPIO, PinDirection, PinPUD
@@ -15,7 +18,7 @@ class GPIO(GenericGPIO):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel
+        # pylint: disable=global-statement,import-outside-toplevel,import-error
         global DIRECTIONS, PULLUPS
         import Adafruit_BBIO.GPIO as gpio  # type: ignore
 

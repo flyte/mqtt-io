@@ -1,7 +1,11 @@
-from typing import Any, Callable, Dict, List, Optional
+"""
+GPIO module for PiFace 2.
+"""
+
+from typing import Optional
 
 from ...types import ConfigType, PinType
-from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from . import GenericGPIO, PinDirection, PinPUD
 
 REQUIREMENTS = ("pifacedigitalio", "pifacecommon")
 
@@ -12,7 +16,7 @@ class GPIO(GenericGPIO):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-outside-toplevel,import-error
         import pifacedigitalio as pfdio  # type: ignore
 
         pfdio.init()

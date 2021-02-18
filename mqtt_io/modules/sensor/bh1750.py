@@ -37,7 +37,7 @@ class Sensor(GenericSensor):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init,import-error
         from smbus2 import SMBus  # type: ignore[attr-defined]
 
         self.SMBus = SMBus  # pylint: disable=invalid-name

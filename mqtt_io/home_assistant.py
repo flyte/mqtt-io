@@ -1,3 +1,9 @@
+"""
+Home Assistant MQTT Discovery features.
+
+https://www.home-assistant.io/docs/mqtt/discovery/
+"""
+
 from __future__ import annotations
 
 import json
@@ -97,7 +103,12 @@ async def hass_announce_digital_output(
     )
     await mqtt_client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "switch", mqtt_client.client_id, switch_name),
+        % (
+            mqtt_config["discovery_prefix"],
+            "switch",
+            mqtt_client.client_id,
+            switch_name,
+        ),
         json.dumps(switch_config).encode("utf8"),
         retain=True,
     )
@@ -140,7 +151,12 @@ async def hass_announce_sensor_input(
     )
     await mqtt_client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "sensor", mqtt_client.client_id, sensor_name),
+        % (
+            mqtt_config["discovery_prefix"],
+            "sensor",
+            mqtt_client.client_id,
+            sensor_name,
+        ),
         json.dumps(sensor_config).encode("utf8"),
         retain=True,
     )
