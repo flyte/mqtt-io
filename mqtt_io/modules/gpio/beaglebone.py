@@ -8,9 +8,6 @@ from . import GenericGPIO, PinDirection, PinPUD
 
 REQUIREMENTS = ("Adafruit_BBIO",)
 
-DIRECTIONS: Dict[PinDirection, Any] = {}
-PULLUPS: Dict[PinPUD, Any] = {}
-
 
 class GPIO(GenericGPIO):
     """
@@ -18,14 +15,15 @@ class GPIO(GenericGPIO):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel,import-error
-        global DIRECTIONS, PULLUPS
+        # pylint: disable=import-outside-toplevel,import-error
         import Adafruit_BBIO.GPIO as gpio  # type: ignore
 
         self.io = gpio
-        DIRECTIONS = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
-
-        PULLUPS = {
+        self.direction_map = {
+            PinDirection.INPUT: gpio.IN,
+            PinDirection.OUTPUT: gpio.OUT,
+        }
+        self.pullup_map = {
             PinPUD.OFF: gpio.PUD_OFF,
             PinPUD.UP: gpio.PUD_UP,
             PinPUD.DOWN: gpio.PUD_DOWN,
@@ -39,12 +37,12 @@ class GPIO(GenericGPIO):
         pin_config: ConfigType,
         initial: Optional[str] = None,
     ) -> None:
-        direction = DIRECTIONS[direction]
+        direction = self.direction_map[direction]
 
         if pullup is None:
-            pullup = PULLUPS[PinPUD.OFF]
+            pullup = self.pullup_map[PinPUD.OFF]
         else:
-            pullup = PULLUPS[pullup]
+            pullup = self.pullup_map[pullup]
 
         initial_int = {None: -1, "low": 0, "high": 1}[initial]
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial_int)

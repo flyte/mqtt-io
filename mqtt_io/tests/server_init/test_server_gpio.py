@@ -3,25 +3,22 @@ import warnings
 
 import pytest
 import yaml
-from mqtt_io.config import get_main_schema, validate_and_normalise_config
-from mqtt_io.events import DigitalInputChangedEvent, DigitalOutputChangedEvent
-from mqtt_io.modules.gpio import InterruptEdge, PinDirection
+
+from ...events import DigitalInputChangedEvent, DigitalOutputChangedEvent
+from ...exceptions import ConfigValidationFailed
+from ...modules.gpio import InterruptEdge, PinDirection
+from ...types import ConfigType
+from ..utils import validate_config
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-from mqtt_io.server import MqttIo
+from ...server import MqttIo
 
 # pylint: disable=redefined-outer-name, protected-access
 
 
-def prepare_config(yaml_config: str) -> dict:
-    schema = get_main_schema()
-    config = yaml.safe_load(yaml_config)
-    return validate_and_normalise_config(config, schema)
-
-
 @pytest.fixture
 def mqttio_mock_gpio_module() -> MqttIo:
-    config = prepare_config(
+    config = validate_config(
         """
 mqtt:
     host: localhost
@@ -37,7 +34,7 @@ gpio_modules:
 
 @pytest.fixture
 def mqttio_mock_sensor_module() -> MqttIo:
-    config = prepare_config(
+    config = validate_config(
         """
 mqtt:
     host: localhost
@@ -57,7 +54,7 @@ def mqttio_mock_digital_inputs() -> MqttIo:
     Configure the software with one polled input, one interrupt and one interrupt
     configured as a remote interrupt for another pin.
     """
-    config = prepare_config(
+    config = validate_config(
         """
 mqtt:
     host: localhost
@@ -81,7 +78,7 @@ digital_inputs:
       pin: 2
       interrupt: falling
       interrupt_for:
-          - mock0
+          - mock1
 """
     )
     return MqttIo(config)
@@ -90,7 +87,7 @@ digital_inputs:
 @pytest.fixture
 def mqttio_mock_digital_outputs() -> MqttIo:
     """"""
-    config = prepare_config(
+    config = validate_config(
         """
 mqtt:
     host: localhost
@@ -138,8 +135,8 @@ def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo):
 
     mock_module = mqttio.sensor_modules["mock"]
     assert (
-        mock_module.setup_sensor.call_count == 1
-    ), "Should only be one call to setup_sensor()"
+        mock_module.setup_module.call_count == 1
+    ), "Should only be one call to setup_module()"
 
     assert mock_module.config[
         "test"
@@ -179,8 +176,9 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo):
         pin in mock_module.pin_configs
     ), "The config for mock0 should be initialised in the gpio module"
 
-    setup_pin = mock_module.setup_pin.__wrapped__
-    setup_pin_call_config_pins = [x[1]["pin"] for x in setup_pin.call_args_list]
+    setup_pin_call_config_pins = [
+        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list
+    ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock0"
@@ -231,18 +229,21 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo):
         pin in mock_module.pin_configs
     ), "The config for mock1 should be initialised in the gpio module"
 
-    setup_pin = mock_module.setup_pin.__wrapped__
-    setup_pin_call_config_pins = [x[1]["pin"] for x in setup_pin.call_args_list]
+    setup_pin_call_config_pins = [
+        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list
+    ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock1"
 
     mock1_call_args = None
-    for call_args, _ in mock_module.setup_interrupt.call_args_list:
-        if call_args[3]["name"] == "mock1":
-            mock1_call_args = call_args
+    for args, _ in mock_module.setup_interrupt_callback.call_args_list:
+        if args[2]["name"] == "mock1":
+            mock1_call_args = args
 
-    assert mock1_call_args is not None, "setup_interrupt() should be called for mock1"
+    assert (
+        mock1_call_args is not None
+    ), "setup_interrupt_callback() should be called for mock1"
     assert (
         mock1_call_args[1] == InterruptEdge.RISING
     ), "mock1 should be configured with 'rising' interrupt edge"
@@ -288,15 +289,16 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo):
         pin in mock_module.pin_configs
     ), "The config for mock2 should be initialised in the gpio module"
 
-    setup_pin = mock_module.setup_pin.__wrapped__
-    setup_pin_call_config_pins = [x[1]["pin"] for x in setup_pin.call_args_list]
+    setup_pin_call_config_pins = [
+        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list
+    ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock2"
 
     mock2_call_args = None
-    for call_args, _ in mock_module.setup_interrupt.call_args_list:
-        if call_args[3]["name"] == "mock2":
+    for call_args, _ in mock_module.setup_interrupt_callback.call_args_list:
+        if call_args[2]["name"] == "mock2":
             mock2_call_args = call_args
 
     assert mock2_call_args is not None, "setup_interrupt() should be called for mock2"
@@ -323,8 +325,8 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo):
     ), "digital_input_poller task should be added to the task loop for mock2 input"
 
     assert mock_module.remote_interrupt_for(pin) == [
-        "mock0"
-    ], "mock2 should be configured as a remote interrupt for mock0"
+        "mock1"
+    ], "mock2 should be configured as a remote interrupt for mock1"
 
 
 def test_init_digital_outputs_event_sub(mqttio_mock_digital_outputs: MqttIo):
@@ -356,14 +358,15 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo):
     mqttio._init_digital_outputs()
 
     mock_module = mqttio.gpio_modules["mock"]
-    setup_pin = mock_module.setup_pin.__wrapped__
-    assert setup_pin.called, "setup_pin() should be called for the mock0 output"
-    _, call_kwargs = setup_pin.call_args
     assert (
-        call_kwargs["name"] == "mock0"
+        mock_module.setup_pin.called
+    ), "setup_pin() should be called for the mock0 output"
+    args, kwargs = mock_module.setup_pin.call_args
+    assert (
+        kwargs["pin_config"]["name"] == "mock0"
     ), "setup_pin() should be called with the mock0 name"
     assert (
-        call_kwargs["direction"] == PinDirection.OUTPUT
+        args[1] == PinDirection.OUTPUT
     ), "setup_pin() should be called with PinDirection.OUTPUT"
 
     assert all(

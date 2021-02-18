@@ -93,6 +93,11 @@ class GenericGPIO(abc.ABC):
         self.pin_configs: Dict[PinType, ConfigType] = {}
         self.io: Any = None  # pylint: disable=invalid-name
         self.interrupt_edges: Dict[PinType, InterruptEdge] = {}
+
+        self.direction_map: Dict[PinDirection, Any] = {}
+        self.pullup_map: Dict[PinPUD, Any] = {}
+        self.interrupt_edge_map: Dict[InterruptEdge, Any] = {}
+
         self.setup_module()
 
     @abc.abstractmethod

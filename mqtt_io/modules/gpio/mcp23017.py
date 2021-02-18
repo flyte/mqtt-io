@@ -17,9 +17,6 @@ CONFIG_SCHEMA = {
     "chip_addr": {"type": "integer", "required": False, "empty": False},
 }
 
-DIRECTIONS: Dict[PinDirection, Any] = {}
-PULLUPS: Dict[PinPUD, Any] = {}
-
 
 class GPIO(GenericGPIO):
     """
@@ -39,20 +36,19 @@ class GPIO(GenericGPIO):
     }
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel,import-error
-        global DIRECTIONS, PULLUPS
+        # pylint: disable=import-outside-toplevel,import-error
         import board  # type: ignore
         import busio  # type: ignore
         import digitalio  # type: ignore
         from adafruit_mcp230xx import mcp23017  # type: ignore
 
         i2c = busio.I2C(board.SCL, board.SDA)
-        DIRECTIONS = {
+        self.direction_map = {
             PinDirection.INPUT: digitalio.Direction.INPUT,
             PinDirection.OUTPUT: digitalio.Direction.OUTPUT,
         }
         # Pulldowns are not supported on MCP23017
-        PULLUPS = {
+        self.pullup_map = {
             PinPUD.UP: digitalio.Pull.UP,
             PinPUD.OFF: None,
         }
@@ -76,12 +72,12 @@ class GPIO(GenericGPIO):
         initial: Optional[str] = None,
     ) -> None:
         mcp_pin = self.io.get_pin(pin)
-        mcp_pin.direction = DIRECTIONS[direction]
+        mcp_pin.direction = self.direction_map[direction]
         if direction == PinDirection.OUTPUT:
             if initial is not None:
                 mcp_pin.value = initial == "high"
         else:
-            mcp_pin.pull = PULLUPS[pullup]
+            mcp_pin.pull = self.pullup_map[pullup]
 
     def setup_interrupt(
         self, pin: PinType, edge: InterruptEdge, in_conf: ConfigType

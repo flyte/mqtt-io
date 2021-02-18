@@ -127,7 +127,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.sensor_modules: Dict[str, GenericSensor] = {}
         self.module_output_queues = (
             {}
-        )  # type: Dict[GenericGPIO, asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]]
+        )  # type: Dict[str, asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]]
 
         self.loop = asyncio.get_event_loop()
         self.tasks = []  # type: List[asyncio.Future[Any]]
@@ -194,7 +194,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
             # Only start the poller task if this _isn't_ set up with an interrupt, or if
             # it _is_ an interrupt, but it's used for triggering remote interrupts.
-            if interrupt is None or interrupt_for and in_conf["poll_when_interrupt_for"]:
+            if interrupt is None or (
+                interrupt_for and in_conf["poll_when_interrupt_for"]
+            ):
                 self.unawaited_tasks.append(
                     self.loop.create_task(self.digital_input_poller(gpio_module, in_conf))
                 )

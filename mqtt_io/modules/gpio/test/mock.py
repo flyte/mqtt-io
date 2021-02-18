@@ -22,6 +22,9 @@ class GPIO(GenericGPIO):
         | InterruptSupport.FLAG_REGISTER
         | InterruptSupport.CAPTURE_REGISTER
     )
+    PIN_SCHEMA = {
+        "test": dict(type="boolean", required=False, default=False),
+    }
 
     def __init__(self, config: ConfigType):
         super().__init__(config)
@@ -43,6 +46,7 @@ class GPIO(GenericGPIO):
         self.interrupt_callbacks[pin] = callback
 
     setup_interrupt = Mock()
+    setup_interrupt_callback = Mock()
     set_pin = Mock()
     get_pin = Mock(return_value=1)
     get_int_pins = Mock(return_value=1)

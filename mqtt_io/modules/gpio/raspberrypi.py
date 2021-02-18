@@ -12,10 +12,6 @@ _LOG = logging.getLogger(__name__)
 
 REQUIREMENTS = ("RPi.GPIO",)
 
-DIRECTIONS: Dict[PinDirection, Any] = {}
-PULLUPS: Dict[PinPUD, Any] = {}
-INTERRUPT: Dict[InterruptEdge, Any] = {}
-
 
 class GPIO(GenericGPIO):
     """
@@ -25,20 +21,19 @@ class GPIO(GenericGPIO):
     INTERRUPT_SUPPORT = InterruptSupport.SOFTWARE_CALLBACK
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel,import-error
-        global DIRECTIONS, PULLUPS, INTERRUPT
+        # pylint: disable=import-outside-toplevel,import-error
         import RPi.GPIO as gpio  # type: ignore
 
         self.io = gpio
-        DIRECTIONS = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
+        self.direction_map = {PinDirection.INPUT: gpio.IN, PinDirection.OUTPUT: gpio.OUT}
 
-        PULLUPS = {
+        self.pullup_map = {
             PinPUD.OFF: gpio.PUD_OFF,
             PinPUD.UP: gpio.PUD_UP,
             PinPUD.DOWN: gpio.PUD_DOWN,
         }
 
-        INTERRUPT = {
+        self.interrupt_edge_map = {
             InterruptEdge.RISING: gpio.RISING,
             InterruptEdge.FALLING: gpio.FALLING,
             InterruptEdge.BOTH: gpio.BOTH,
@@ -54,8 +49,8 @@ class GPIO(GenericGPIO):
         pin_config: ConfigType,
         initial: Optional[str] = None,
     ) -> None:
-        direction = DIRECTIONS[direction]
-        pullup = PULLUPS[pullup]
+        direction = self.direction_map[direction]
+        pullup = self.pullup_map[pullup]
 
         initial_int = {None: -1, "low": 0, "high": 1}[initial]
         self.io.setup(pin, direction, pull_up_down=pullup, initial=initial_int)
@@ -67,7 +62,7 @@ class GPIO(GenericGPIO):
         in_conf: ConfigType,
         callback: Callable[[List[Any], Dict[Any, Any]], None],
     ) -> None:
-        edge = INTERRUPT[edge]
+        edge = self.interrupt_edge_map[edge]
         _LOG.debug(
             "Added interrupt to Raspberry Pi pin '%s' with callback '%s'", pin, callback
         )

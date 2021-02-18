@@ -7,7 +7,18 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Set
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    TextIO,
+    Union,
+)
 
 import cerberus  # type: ignore
 import yaml
@@ -92,27 +103,23 @@ def validate_gpio_interrupt_for(
     Ensure that all of the pins listed in interrupt_for are configured as interrupts.
     """
     interrupt_pins: Set[str] = set(
-        in_conf["name"] for in_conf in digital_inputs if in_conf["interrupt"]
+        in_conf["name"] for in_conf in digital_inputs if in_conf.get("interrupt")
     )
     for in_conf in [x for x in digital_inputs if x.get("interrupt_for")]:
         for pin_name in in_conf["interrupt_for"]:
+            errors = []
             if pin_name not in interrupt_pins:
-                bad_configs.setdefault("digital_inputs", {}).setdefault(
-                    in_conf["name"], []
-                ).append(
+                errors.append(
                     f"Pin '{pin_name}' listed in 'interrupt_for' is not configured as an "
                     "interrupt itself"
                 )
-
-
-def _read_config(path: str) -> Any:
-    """
-    Loads a yaml file from the file system and returns it as as dict.
-    :param path: The filesystem path
-    :return: The config
-    """
-    with open(path) as config_file:
-        return yaml.safe_load(config_file)
+            if pin_name == in_conf["name"]:
+                errors.append(f"Pin '{pin_name}' lists itself in 'interrupt_for'")
+            if errors:
+                all_errors = bad_configs.setdefault("digital_inputs", {}).setdefault(
+                    in_conf["name"], []
+                )
+                all_errors += errors
 
 
 def get_main_schema() -> Any:
@@ -125,7 +132,9 @@ def get_main_schema() -> Any:
     return yaml.safe_load(open(schema_path))
 
 
-def validate_and_normalise_config(config: Any, schema: Any) -> ConfigType:
+def validate_and_normalise_config(
+    config: Any, schema: Any, **validator_options: Any
+) -> ConfigType:
     """
     Validate the config dict based on the config schema.
     :param config: The supplied configuration
@@ -135,7 +144,7 @@ def validate_and_normalise_config(config: Any, schema: Any) -> ConfigType:
     :return: Normalised config
     :rtype: dict
     """
-    validator = ConfigValidator(schema)
+    validator = ConfigValidator(schema, **validator_options)
     if not validator.validate(config):
         raise ConfigValidationFailed(
             "Config did not validate:\n%s" % yaml.dump(validator.errors)
@@ -144,7 +153,7 @@ def validate_and_normalise_config(config: Any, schema: Any) -> ConfigType:
     return validated_config
 
 
-def validate_main_config(config: ConfigType) -> ConfigType:
+def custom_validate_main_config(config: ConfigType) -> ConfigType:
     """
     Do our own validation on the config to make sure it contains sane, workable data.
     """
@@ -201,8 +210,17 @@ def load_main_config(path: str) -> ConfigType:
     :param path: The filesystem path
     :return: The config
     """
-    config = validate_and_normalise_config(_read_config(path), get_main_schema())
-    config = validate_main_config(config)
+    with open(path, "r") as stream:
+        raw_config = yaml.safe_load(stream)
+    return validate_and_normalise_main_config(raw_config)
+
+
+def validate_and_normalise_main_config(raw_config: Any) -> ConfigType:
+    """
+    Validate and normalise any raw config object with the main schema.
+    """
+    config = validate_and_normalise_config(raw_config, get_main_schema())
+    config = custom_validate_main_config(config)
     return config
 
 
@@ -215,7 +233,7 @@ def validate_and_normalise_sensor_input_config(
     schema = get_main_schema()
     sensor_input_schema = schema["sensor_inputs"]["schema"]["schema"].copy()
     sensor_input_schema.update(getattr(module, "SENSOR_SCHEMA", {}))
-    return validate_and_normalise_config(config, sensor_input_schema)
+    return validate_and_normalise_config(config, sensor_input_schema, allow_unknown=False)
 
 
 def validate_and_normalise_digital_input_config(
@@ -228,7 +246,9 @@ def validate_and_normalise_digital_input_config(
     digital_input_schema = schema["digital_inputs"]["schema"]["schema"].copy()
     digital_input_schema.update(getattr(module, "PIN_SCHEMA", {}))
     digital_input_schema.update(getattr(module, "INPUT_SCHEMA", {}))
-    return validate_and_normalise_config(config, digital_input_schema)
+    return validate_and_normalise_config(
+        config, digital_input_schema, allow_unknown=False
+    )
 
 
 def validate_and_normalise_digital_output_config(
@@ -241,4 +261,6 @@ def validate_and_normalise_digital_output_config(
     digital_output_schema = schema["digital_outputs"]["schema"]["schema"].copy()
     digital_output_schema.update(getattr(module, "PIN_SCHEMA", {}))
     digital_output_schema.update(getattr(module, "OUTPUT_SCHEMA", {}))
-    return validate_and_normalise_config(config, digital_output_schema)
+    return validate_and_normalise_config(
+        config, digital_output_schema, allow_unknown=False
+    )

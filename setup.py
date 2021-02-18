@@ -49,22 +49,7 @@ setup(
     name="pi_mqtt_gpio",
     version="0.5.2",
     cmdclass={"insert_schema": SchemaCommand},
-    packages=find_packages(
-        exclude=[
-            "*.tests",
-            "*.tests.*",
-            "tests.*",
-            "tests",
-            "*.ez_setup",
-            "*.ez_setup.*",
-            "ez_setup.*",
-            "ez_setup",
-            "*.examples",
-            "*.examples.*",
-            "examples.*",
-            "examples",
-        ]
-    ),
+    packages=find_packages(exclude=["tests"]),
     scripts=[],
     entry_points={"console_scripts": ["pi_mqtt_gpio = pi_mqtt_gpio.__main__:main"]},
     include_package_data=True,

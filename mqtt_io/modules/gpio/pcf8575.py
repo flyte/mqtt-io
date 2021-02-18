@@ -13,8 +13,6 @@ CONFIG_SCHEMA = {
     "chip_addr": {"type": "integer", "required": True, "empty": False},
 }
 
-PULLUPS: Dict[PinPUD, Any] = {}
-
 
 class GPIO(GenericGPIO):
     """
@@ -22,9 +20,8 @@ class GPIO(GenericGPIO):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=global-statement,import-outside-toplevel,import-error
-        global PULLUPS
-        PULLUPS = {PinPUD.UP: True, PinPUD.DOWN: False}
+        # pylint: disable=import-outside-toplevel,import-error
+        self.pullup_map = {PinPUD.UP: True, PinPUD.DOWN: False}
         from pcf8575 import PCF8575  # type: ignore
 
         self.io = PCF8575(self.config["i2c_bus_num"], self.config["chip_addr"])
@@ -38,7 +35,7 @@ class GPIO(GenericGPIO):
         initial: Optional[str] = None,
     ) -> None:
         if direction == PinDirection.INPUT and pullup is not None:
-            self.io.port[pin] = PULLUPS[pullup]
+            self.io.port[pin] = self.pullup_map[pullup]
         initial = pin_config.get("initial")
         if initial is not None:
             if initial == "high":
