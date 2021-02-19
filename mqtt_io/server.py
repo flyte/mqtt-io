@@ -19,8 +19,18 @@ from concurrent.futures import Future as ConcurrentFuture
 from functools import partial
 from hashlib import sha1
 from importlib import import_module
-from queue import PriorityQueue
-from typing import Any, Awaitable, Dict, List, Optional, Tuple, Type, Union, overload
+from typing import (
+    Any,
+    Awaitable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    cast,
+    overload,
+)
 
 from hbmqtt.client import MQTTClient  # type: ignore
 from hbmqtt.mqtt.constants import QOS_1  # type: ignore
@@ -116,11 +126,11 @@ def _init_module(
     return module_class(module_config)
 
 
-def output_name_from_topic(topic: str, prefix: str) -> str:
+def output_name_from_topic(topic: str, prefix: str, topic_type: str) -> str:
     """
     Parses an MQTT topic and returns the name of the output that the message relates to.
     """
-    match = re.match("^{}/{}/(.+?)/.+$".format(prefix, OUTPUT_TOPIC), topic)
+    match = re.match(f"^{prefix}/{topic_type}/(.+?)/.+$", topic)
     if match is None:
         raise ValueError("Topic %r does not adhere to expected structure" % topic)
     return match.group(1)
@@ -163,8 +173,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.mqtt: MQTTClient = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
         self.mqtt_task_queue = (
-            PriorityQueue()
-        )  # type: PriorityQueue[Tuple[int, Awaitable[Any]]]
+            asyncio.PriorityQueue()
+        )  # type: asyncio.PriorityQueue[Tuple[int, Awaitable[Any]]]
 
     # Init methods
 
@@ -193,7 +203,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
             stream_conf = self.stream_configs[event.stream_name]
-            self.mqtt_task_queue.put(
+            self.mqtt_task_queue.put_nowait(
                 (
                     MQTT_PUB_PRIORITY,
                     self.mqtt.publish(
@@ -229,7 +239,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             # Queue a stream output loop task
             self.unawaited_tasks.append(
                 self.loop.create_task(
-                    self.stream_output_loop(stream_module, stream_conf, queue)
+                    # Use partial to avoid late binding closure
+                    partial(self.stream_output_loop, stream_module, stream_conf, queue)()
                 )
             )
 
@@ -245,7 +256,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
 
         # Subscribe to stream send topics
-        self.mqtt_task_queue.put((MQTT_SUB_PRIORITY, self._mqtt_subscribe(sub_topics)))
+        self.mqtt_task_queue.put_nowait(
+            (MQTT_SUB_PRIORITY, self._mqtt_subscribe(sub_topics))
+        )
 
     def _init_digital_inputs(self) -> None:
         """
@@ -263,7 +276,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_callback(event: DigitalInputChangedEvent) -> None:
             in_conf = self.digital_input_configs[event.input_name]
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
-            self.mqtt_task_queue.put(
+            self.mqtt_task_queue.put_nowait(
                 (
                     MQTT_PUB_PRIORITY,
                     self.mqtt.publish(
@@ -323,7 +336,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
-            self.mqtt_task_queue.put(
+            self.mqtt_task_queue.put_nowait(
                 (
                     MQTT_PUB_PRIORITY,
                     self.mqtt.publish(
@@ -349,7 +362,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             if out_conf["module"] not in self.gpio_output_queues:
                 queue = (
                     asyncio.Queue()
-                )  # type: asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]
+                )  # type: asyncio.Queue[Tuple[GenericGPIO, ConfigType, str]]
                 self.gpio_output_queues[out_conf["module"]] = queue
 
                 # Use partial to avoid late binding closure
@@ -370,7 +383,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         )
                     )
                 )
-            self.mqtt_task_queue.put((MQTT_SUB_PRIORITY, self._mqtt_subscribe(topics)))
+            self.mqtt_task_queue.put_nowait(
+                (MQTT_SUB_PRIORITY, self._mqtt_subscribe(topics))
+            )
 
             # Fire DigitalOutputChangedEvents for initial values of outputs if required
             if out_conf["publish_initial"]:
@@ -382,7 +397,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
     def _init_sensor_inputs(self) -> None:
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
-            self.mqtt_task_queue.put(
+            self.mqtt_task_queue.put_nowait(
                 (
                     MQTT_PUB_PRIORITY,
                     self.mqtt.publish(
@@ -473,7 +488,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         await self.mqtt.connect(uri, **connect_kwargs)
         _LOG.info("Connected to MQTT")
 
-        self.mqtt_task_queue.put(
+        self.mqtt_task_queue.put_nowait(
             (
                 MQTT_PUB_PRIORITY,
                 self.mqtt.publish(
@@ -498,7 +513,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         for sens_conf in self.sensor_configs.values():
             tasks.append(hass_announce_sensor_input(sens_conf, mqtt_config, self.mqtt))
         for task in tasks:
-            self.mqtt_task_queue.put((MQTT_ANNOUNCE_PRIORITY, task))
+            self.mqtt_task_queue.put_nowait((MQTT_ANNOUNCE_PRIORITY, task))
 
     async def _mqtt_subscribe(self, topics: List[str]) -> None:
         """
@@ -593,8 +608,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self,
         module: GenericGPIO,
         pin: PinType,
-        *args: List[Any],
-        **kwargs: Dict[Any, Any]
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         This function is passed in to any GPIO library that provides software callbacks
@@ -703,28 +718,64 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         task = asyncio.run_coroutine_threadsafe(await_remote_interrupts(), self.loop)
         self.unawaited_tasks.append(task)
 
-    def _handle_mqtt_msg(self, topic: str, payload: str) -> None:
+    async def _handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
         """
         Parse all MQTT messages received on our subscriptions and dispatch actions
         such as changing outputs and sending data to streams accordingly.
         """
-        topic_prefix: str = self.config["mqtt"]["topic_prefix"]
 
         if not any(
-            topic.endswith("/%s" % x)
-            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX)
+            topic.endswith(f"/{x}")
+            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX, SEND_SUFFIX)
         ):
             _LOG.debug(
-                "Ignoring message to topic '%s' which doesn't end with '/set' etc.", topic
+                "Ignoring message to topic '%s' which doesn't end with a known suffix",
+                topic,
             )
             return
+
+        # Handle digital output message
+        if any(
+            topic.endswith(f"/{x}")
+            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX)
+        ):
+            try:
+                payload_str = payload.decode("utf8")
+            except UnicodeDecodeError:
+                _LOG.warning(
+                    "Received MQTT message to a digital output topic '%s' that wasn't unicode.",
+                    topic,
+                )
+                return
+            await self._handle_digital_output_msg(topic, payload_str)
+
+        # Handle stream send message
+        if topic.endswith("/send"):
+            await self._handle_stream_send_msg(topic, payload)
+
+        # Ignore unknown topics, although we shouldn't get here, because we only subscribe
+        # to ones we know.
+
+    async def _handle_digital_output_msg(self, topic: str, payload: str) -> None:
+        """
+        Handle an MQTT message that intends to set a digital output's state.
+        """
+        topic_prefix: str = self.config["mqtt"]["topic_prefix"]
         try:
-            output_name = output_name_from_topic(topic, topic_prefix)
+            output_name = output_name_from_topic(topic, topic_prefix, OUTPUT_TOPIC)
         except ValueError as exc:
-            _LOG.warning("Unable to parse topic: %s", exc)
+            _LOG.warning("Unable to parse digital output name from topic: %s", exc)
             return
-        output_config = self.digital_output_configs[output_name]
-        module = self.gpio_modules[output_config["module"]]
+        try:
+            output_config = self.digital_output_configs[output_name]
+        except KeyError:
+            _LOG.warning("No digital output config found named %r", output_name)
+            return
+        try:
+            module = self.gpio_modules[output_config["module"]]
+        except KeyError:
+            _LOG.warning("No GPIO module config found named %r", output_config["module"])
+            return
         if topic.endswith("/%s" % SET_SUFFIX):
             # This is a message to set a digital output to a given value
             self.gpio_output_queues[output_config["module"]].put_nowait(
@@ -766,6 +817,19 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             task = self.loop.create_task(set_ms())
             self.unawaited_tasks.append(task)
 
+    async def _handle_stream_send_msg(self, topic: str, payload: bytes) -> None:
+        try:
+            stream_name = output_name_from_topic(
+                topic, self.config["mqtt"]["topic_prefix"], STREAM_TOPIC
+            )
+        except ValueError as exc:
+            _LOG.warning("Unable to parse stream name from topic: %s", exc)
+            return
+        try:
+            self.stream_output_queues[stream_name].put_nowait(payload)
+        except KeyError:
+            _LOG.warning("No stream output queue found named %r", stream_name)
+
     async def set_digital_output(
         self, module: GenericGPIO, output_config: ConfigType, value: bool
     ) -> None:
@@ -791,7 +855,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         we don't try to run MQTT tasks before the MQTT connection is initialised.
         """
         while True:
-            _, task = self.mqtt_task_queue.get()
+            _, task = await self.mqtt_task_queue.get()
             try:
                 await task
             except Exception:  # pylint: disable=broad-except
@@ -801,10 +865,15 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         try:
             while True:
                 msg = await self.mqtt.deliver_message()
-                topic = msg.publish_packet.variable_header.topic_name
-                payload = msg.publish_packet.payload.data.decode("utf8")
-                _LOG.info("Received message on topic %r: %r", topic, payload)
-                self._handle_mqtt_msg(topic, payload)
+                topic = cast(str, msg.publish_packet.variable_header.topic_name)
+                payload = cast(bytes, msg.publish_packet.payload.data)
+                try:
+                    payload_str = payload.decode("utf8")
+                except UnicodeDecodeError:
+                    _LOG.debug("Received non-unicode message on topic %r", topic)
+                else:
+                    _LOG.debug("Received message on topic %r: %r", topic, payload_str)
+                await self._handle_mqtt_msg(topic, payload)
         finally:
             await self.mqtt.publish(
                 "%s/%s"
@@ -839,7 +908,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
 
     async def digital_output_loop(
-        self, queue: "asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]"
+        self, queue: "asyncio.Queue[Tuple[GenericGPIO, ConfigType, str]]"
     ) -> None:
         """
         Handle digital output MQTT messages for a specific GPIO module.
