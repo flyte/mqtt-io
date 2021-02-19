@@ -18,6 +18,7 @@ jobs:
         run: |
           pip install poetry
           poetry install
+          poetry run pip install hbmqtt
       - name: Lint with pylint
         run: poetry run pylint -d fixme mqtt_io
       - name: Lint with mypy
