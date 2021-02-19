@@ -209,6 +209,7 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     assert mock0_call_args is None, "setup_interrupt() should not be called for mock0"
 
     if HAS_GET_CORO:
+        # type: ignore[attr-defined]
         poller_task_pin_names = [
             task.get_coro().cr_frame.f_locals["in_conf"]["name"]
             for task in mqttio.unawaited_tasks
@@ -274,6 +275,7 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "mock1 should be configured with 'rising' interrupt edge"
 
     if HAS_GET_CORO:
+        # type: ignore[attr-defined]
         poller_task_pin_names = [
             task.get_coro().cr_frame.f_locals["in_conf"]["name"]
             for task in mqttio.unawaited_tasks
@@ -339,6 +341,7 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
     ), "mock2 should be configured with 'falling' interrupt edge"
 
     if HAS_GET_CORO:
+        # type: ignore[attr-defined]
         poller_task_pin_names = [
             task.get_coro().cr_frame.f_locals["in_conf"]["name"]
             for task in mqttio.unawaited_tasks
@@ -417,6 +420,7 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
     ), "mock module should have an output queue initialised"
 
     if HAS_GET_CORO:
+        # type: ignore[attr-defined]
         digital_output_loop_task_queues = {
             task.get_coro().cr_frame.f_locals["queue"]
             for task in mqttio.unawaited_tasks

@@ -22,6 +22,6 @@ jobs:
       - name: Lint with pylint
         run: poetry run pylint -d fixme mqtt_io
       - name: Lint with mypy
-        run: poetry run mypy mqtt_io
+        run: poetry run mypy --show-error-codes --strict mqtt_io
       - name: Test with pytest
         run: poetry run pytest
