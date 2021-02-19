@@ -5,7 +5,7 @@ from ...server import MqttIo
 from ..utils import validate_config
 
 
-def test_validate_digital_input_extra_val_good():
+def test_validate_digital_input_extra_val_good() -> None:
     mqttio = MqttIo(
         validate_config(
             """
@@ -28,25 +28,25 @@ digital_inputs:
     mqttio._init_digital_inputs()
 
 
-# def test_validate_digital_input_extra_val_bad():
-#     mqttio = MqttIo(
-#         validate_config(
-#             """
-# mqtt:
-#     host: localhost
+def test_validate_digital_input_extra_val_bad() -> None:
+    mqttio = MqttIo(
+        validate_config(
+            """
+mqtt:
+    host: localhost
 
-# gpio_modules:
-#     - name: mock
-#       module: test.mock
+gpio_modules:
+    - name: mock
+      module: test.mock
 
-# digital_inputs:
-#     - name: mock0
-#       module: mock
-#       pin: 0
-#       something_undefined: oops
-# """
-#         )
-#     )
-#     mqttio._init_gpio_modules()
-#     with pytest.raises(ConfigValidationFailed):
-#         mqttio._init_digital_inputs()
+digital_inputs:
+    - name: mock0
+      module: mock
+      pin: 0
+      something_undefined: oops
+"""
+        )
+    )
+    mqttio._init_gpio_modules()
+    with pytest.raises(ConfigValidationFailed):
+        mqttio._init_digital_inputs()

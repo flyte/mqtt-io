@@ -89,7 +89,7 @@ digital_outputs:
     return MqttIo(config)
 
 
-def test_init_gpio_modules():
+def test_init_gpio_modules() -> None:
     mqttio = MqttIo(
         validate_config(
             """
@@ -120,7 +120,7 @@ gpio_modules:
     ], "Module config should have been validated and initialised"
 
 
-def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo):
+def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo) -> None:
     mqttio = mqttio_mock_sensor_module
     assert not mqttio.sensor_modules, "Nothing should be initialised yet"
 
@@ -139,7 +139,7 @@ def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo):
     ], "Module config should have been validated and initialised"
 
 
-def test_init_digital_inputs_event_sub(mqttio_mock_digital_inputs: MqttIo):
+def test_init_digital_inputs_event_sub(mqttio_mock_digital_inputs: MqttIo) -> None:
     mqttio = mqttio_mock_digital_inputs
     assert not mqttio.digital_input_configs, "Nothing should be initialised yet"
 
@@ -155,7 +155,7 @@ def test_init_digital_inputs_event_sub(mqttio_mock_digital_inputs: MqttIo):
     ], "publish_callback() should be subscribed to DigitalInputChangedEvent"
 
 
-def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo):
+def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     """
     Check the initialisation process done for a polled digital input.
     """
@@ -208,7 +208,7 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo):
     ), "Should not be configured as a remote interrupt"
 
 
-def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo):
+def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     """
     Check the initialisation process done for a digital input configured as an interrupt.
     """
@@ -267,7 +267,7 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo):
     ), "Should not be configured as a remote interrupt"
 
 
-def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo):
+def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None:
     """
     Check the initialisation process done for a digital input configured as an interrupt
     for another pin.
@@ -325,7 +325,7 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo):
     ], "mock2 should be configured as a remote interrupt for mock1"
 
 
-def test_init_digital_outputs_event_sub(mqttio_mock_digital_outputs: MqttIo):
+def test_init_digital_outputs_event_sub(mqttio_mock_digital_outputs: MqttIo) -> None:
     """"""
     mqttio = mqttio_mock_digital_outputs
     mqttio._init_gpio_modules()
@@ -347,7 +347,7 @@ def test_init_digital_outputs_event_sub(mqttio_mock_digital_outputs: MqttIo):
     ], "publish_callback() should be subscribed to DigitalOutputChangedEvent"
 
 
-def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo):
+def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
     """"""
     mqttio = mqttio_mock_digital_outputs
     mqttio._init_gpio_modules()

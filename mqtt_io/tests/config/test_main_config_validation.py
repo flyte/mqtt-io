@@ -1,9 +1,6 @@
 import pytest
-import yaml
 
-from ...config import validate_and_normalise_main_config
 from ...exceptions import ConfigValidationFailed
-from ...types import ConfigType
 from ..utils import validate_config
 
 
@@ -20,7 +17,7 @@ gpio_modules:
     )
 
 
-def test_duplicate_gpio_module():
+def test_duplicate_gpio_module() -> None:
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -37,7 +34,7 @@ gpio_modules:
         )
 
 
-def test_single_digital_input():
+def test_single_digital_input() -> None:
     assert validate_config(
         """
 mqtt:
@@ -55,7 +52,7 @@ digital_inputs:
     )
 
 
-def test_duplicate_digital_input():
+def test_duplicate_digital_input() -> None:
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -78,7 +75,7 @@ digital_inputs:
         )
 
 
-def test_interrupt_for_non_interrupt_pin():
+def test_interrupt_for_non_interrupt_pin() -> None:
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -104,7 +101,7 @@ digital_inputs:
         )
 
 
-def test_interrupt_for_no_interrupt():
+def test_interrupt_for_no_interrupt() -> None:
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -125,7 +122,7 @@ digital_inputs:
         )
 
 
-def test_interrupt_for_self():
+def test_interrupt_for_self() -> None:
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
