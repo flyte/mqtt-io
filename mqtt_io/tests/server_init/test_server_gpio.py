@@ -372,8 +372,8 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
 
     assert all(
         (
-            "mock" in mqttio.module_output_queues,
-            isinstance(mqttio.module_output_queues["mock"], asyncio.Queue),
+            "mock" in mqttio.gpio_output_queues,
+            isinstance(mqttio.gpio_output_queues["mock"], asyncio.Queue),
         )
     ), "mock module should have an output queue initialised"
 
@@ -384,7 +384,7 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
         and task.get_coro().__name__ == "digital_output_loop"
     }
     assert (
-        mqttio.module_output_queues["mock"] in digital_output_loop_task_queues
+        mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
     ), "digital_output_loop task should be added to the unawaited_tasks list for the mock module"
 
     digital_output_loop_task_queues = {
@@ -393,5 +393,5 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
         if t.get_coro().__name__ == "digital_output_loop"
     }
     assert (
-        mqttio.module_output_queues["mock"] in digital_output_loop_task_queues
+        mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
     ), "digital_output_loop task should be added to the task loop for the mock module"

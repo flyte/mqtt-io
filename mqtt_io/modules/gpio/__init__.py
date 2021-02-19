@@ -239,7 +239,8 @@ class GenericGPIO(abc.ABC):
         self, pins: Optional[Iterable[PinType]] = None
     ) -> Dict[PinType, bool]:
         """
-        Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
+        Use a ThreadPoolExecutor to call the module's synchronous
+        get_captured_int_pin_values function.
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(

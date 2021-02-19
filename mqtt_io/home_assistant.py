@@ -10,7 +10,7 @@ import json
 import logging
 from typing import TYPE_CHECKING
 
-from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_TOPIC
+from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_SUFFIX
 from .types import ConfigType
 
 if TYPE_CHECKING:
@@ -83,7 +83,7 @@ async def hass_announce_digital_output(
         "state_topic": "%s/%s/%s"
         % (mqtt_config["topic_prefix"], OUTPUT_TOPIC, out_conf["name"]),
         "command_topic": "%s/%s/%s/%s"
-        % (mqtt_config["topic_prefix"], OUTPUT_TOPIC, out_conf["name"], SET_TOPIC),
+        % (mqtt_config["topic_prefix"], OUTPUT_TOPIC, out_conf["name"], SET_SUFFIX),
         "availability_topic": "%s/%s"
         % (mqtt_config["topic_prefix"], mqtt_config["status_topic"]),
         "payload_available": mqtt_config["status_payload_running"],

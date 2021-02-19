@@ -52,6 +52,26 @@ class SensorReadEvent(Event):
     value: Any
 
 
+@dataclass
+class StreamDataReadEvent(Event):
+    """
+    Some data was read from a stream.
+    """
+
+    stream_name: str
+    data: bytes
+
+
+@dataclass
+class StreamDataSentEvent(Event):
+    """
+    Some data was written to a stream.
+    """
+
+    stream_name: str
+    data: bytes
+
+
 class EventBus:
     """
     Event bus that handles subscribing to specific events and firing coroutine callbacks.

@@ -2,7 +2,9 @@
 Contains the base class that is shared across all Stream modules.
 """
 
+import asyncio
 from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
 from ...types import ConfigType
@@ -35,6 +37,20 @@ class GenericStream(ABC):
         """
         Write bytes to the stream.
         """
+
+    async def async_read(self) -> Optional[bytes]:
+        """
+        Use a ThreadPoolExecutor to call the module's synchronous read method.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(ThreadPoolExecutor(), self.read)
+
+    async def async_write(self, data: bytes) -> None:
+        """
+        Use a ThreadPoolExecutor to call the module's synchronous write method.
+        """
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(ThreadPoolExecutor(), self.write, data)
 
     def cleanup(self) -> None:
         """

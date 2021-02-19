@@ -1,3 +1,7 @@
+"""
+Validation functions for GPIO configs.
+"""
+
 from collections import Counter
 from typing import Any, Dict, Iterable, List, Set
 
