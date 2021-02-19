@@ -15,7 +15,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: poetry install
+        run: |
+          pip install poetry
+          poetry install
       - name: Lint with pylint
         run: poetry run pylint -d fixme mqtt_io
       - name: Lint with mypy
