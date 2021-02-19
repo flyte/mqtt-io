@@ -37,6 +37,7 @@ from hbmqtt.mqtt.constants import QOS_1  # type: ignore
 from typing_extensions import Literal
 
 from .config import (
+    get_main_schema_section,
     validate_and_normalise_config,
     validate_and_normalise_digital_input_config,
     validate_and_normalise_digital_output_config,
@@ -70,7 +71,6 @@ from .home_assistant import (
     hass_announce_digital_output,
     hass_announce_sensor_input,
 )
-from .modules import BASE_SCHEMA as MODULE_BASE_SCHEMA
 from .modules import install_missing_requirements
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .modules.sensor import GenericSensor
@@ -115,7 +115,7 @@ def _init_module(
         "%s.%s.%s" % (MODULE_IMPORT_PATH, module_type, module_config["module"])
     )
     # Doesn't need to be a deep copy because we're not mutating the base rules
-    module_schema = MODULE_BASE_SCHEMA.copy()
+    module_schema = get_main_schema_section(f"{module_type}_modules")
     # Add the module's config schema to the base schema
     module_schema.update(getattr(module, "CONFIG_SCHEMA", {}))
     module_config = validate_and_normalise_config(module_config, module_schema)
@@ -996,6 +996,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self._init_digital_outputs()
         self._init_sensor_modules()
         self._init_sensor_inputs()
+        self._init_stream_modules()
 
         # Get connected to the MQTT server
         self.loop.run_until_complete(self._init_mqtt())

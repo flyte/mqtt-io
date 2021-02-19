@@ -183,9 +183,6 @@ stream_modules:
         type: boolean
         required: no
         default: no
-      encoding:
-        type: string
-        required: no
       read_interval:
         type: float
         required: no

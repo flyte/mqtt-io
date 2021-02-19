@@ -21,21 +21,21 @@ CONFIG_SCHEMA = {
         "required": False,
         "default": 8,
         "empty": False,
-        "choices": BYTESIZE_CHOICES,
+        "allowed": BYTESIZE_CHOICES,
     },
     "parity": {
         "type": "string",
         "required": False,
         "default": "none",
         "empty": False,
-        "choices": PARITY_CHOICES,
+        "allowed": PARITY_CHOICES,
     },
     "stopbits": {
         "type": "float",
         "required": False,
         "default": 1,
         "empty": False,
-        "choices": STOPBITS_CHOICES,
+        "allowed": STOPBITS_CHOICES,
     },
 }
 

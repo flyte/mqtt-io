@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 import cerberus  # type: ignore
 import yaml
@@ -65,14 +65,24 @@ def get_duplicate_names(io_conf: List[ConfigType]) -> List[str]:
     return [name for name, count in counter.items() if count > 1]
 
 
-def get_main_schema() -> Any:
+def get_main_schema() -> ConfigType:
     """
-    Load the main config schema from the yaml file packaged in the same dir as this file.
+    Load the main config schema from the YAML file packaged in the same dir as this file.
     :return: Config schema
     :rtype: dict
     """
     schema_path = join(dirname(realpath(__file__)), "config.schema.yml")
-    return yaml.safe_load(open(schema_path))
+    # We write this schema file, so we know it'll adhere to ConfigType rules
+    return cast(ConfigType, yaml.safe_load(open(schema_path)))
+
+
+def get_main_schema_section(section: str) -> ConfigType:
+    """
+    Load the main config schema from the YAML file and return a specific section.
+    """
+    # We write this schema file, so we know it'll adhere to ConfigType rules.
+    # Specifically, all top-level sections of the schema are also dicts.
+    return cast(ConfigType, get_main_schema()[section]["schema"]["schema"])
 
 
 def validate_and_normalise_config(

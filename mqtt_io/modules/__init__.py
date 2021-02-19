@@ -13,12 +13,6 @@ from ..exceptions import CannotInstallModuleRequirements
 
 _LOG = logging.getLogger(__name__)
 
-BASE_SCHEMA = {
-    "name": dict(required=True, empty=False),
-    "module": dict(required=True, empty=False),
-    "cleanup": dict(required=False, type="boolean", default=True),
-}
-
 
 def install_missing_requirements(module: ModuleType) -> None:
     """
