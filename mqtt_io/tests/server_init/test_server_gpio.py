@@ -227,9 +227,9 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "digital_input_poller task should be added to the unawaited tasks list for mock0 input"
 
     poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_input_poller"
+        get_coro(task).cr_frame.f_locals["in_conf"]["name"]
+        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        if get_coro(task).__name__ == "digital_input_poller"
     ]
     assert (
         "mock0" in poller_task_pin_names
@@ -292,9 +292,9 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     )
 
     poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_input_poller"
+        get_coro(task).cr_frame.f_locals["in_conf"]["name"]
+        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        if get_coro(task).__name__ == "digital_input_poller"
     ]
     assert (
         "mock1" not in poller_task_pin_names
@@ -356,9 +356,9 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
     )
 
     poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_input_poller"
+        get_coro(task).cr_frame.f_locals["in_conf"]["name"]
+        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        if get_coro(task).__name__ == "digital_input_poller"
     ]
     assert (
         "mock2" in poller_task_pin_names
@@ -433,9 +433,9 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
     )
 
     digital_output_loop_task_queues = {
-        t.get_coro().cr_frame.f_locals["queue"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_output_loop"
+        get_coro(task).cr_frame.f_locals["queue"]
+        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        if get_coro(task).__name__ == "digital_output_loop"
     }
     assert (
         mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
