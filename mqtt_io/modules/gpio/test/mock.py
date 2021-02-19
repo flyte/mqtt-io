@@ -12,7 +12,7 @@ REQUIREMENTS = ()
 CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
 
 
-# pylint: disable=useless-super-delegation
+# pylint: disable=useless-super-delegation,too-many-instance-attributes
 class GPIO(GenericGPIO):
     """
     Mock GPIO module for using with the tests.

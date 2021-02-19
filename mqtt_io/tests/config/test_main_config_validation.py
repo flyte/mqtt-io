@@ -71,7 +71,7 @@ digital_inputs:
     - name: mockA
       module: mock
       pin: 0
-    
+
     - name: mockB
       module: mock
       pin: 0
@@ -97,7 +97,7 @@ digital_outputs:
     - name: mockA
       module: mock
       pin: 0
-    
+
     - name: mockB
       module: mock
       pin: 0
@@ -144,7 +144,7 @@ mqtt:
 gpio_modules:
     - name: mock1
       module: test.mock
-    
+
     - name: mock2
       module: test.mock
 
@@ -162,6 +162,9 @@ digital_outputs:
 
 
 def test_duplicate_gpio_module() -> None:
+    """
+    Using the same name for a gpio module twice should not validate.
+    """
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -179,6 +182,9 @@ gpio_modules:
 
 
 def test_single_digital_input() -> None:
+    """
+    Valid digital input config should validate.
+    """
     assert validate_config(
         """
 mqtt:
@@ -197,6 +203,9 @@ digital_inputs:
 
 
 def test_duplicate_digital_input() -> None:
+    """
+    Using the same name for two digital inputs should not validate.
+    """
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -220,6 +229,10 @@ digital_inputs:
 
 
 def test_interrupt_for_non_interrupt_pin() -> None:
+    """
+    Putting a pin that's not configured as an interrupt in an interrupt_for list should
+    not validate.
+    """
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -246,6 +259,10 @@ digital_inputs:
 
 
 def test_interrupt_for_no_interrupt() -> None:
+    """
+    Configuring a pin as an interrupt_for another pin without making it an interrupt
+    itself should not validate.
+    """
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """
@@ -261,12 +278,20 @@ digital_inputs:
       module: mock
       pin: 0
       interrupt_for:
-        - mock0
+        - mock1
+
+    - name: mock1
+      module: mock
+      pin: 1
+      interrupt: rising
 """
         )
 
 
 def test_interrupt_for_self() -> None:
+    """
+    Listing a pin as an interrupt_for itself should not validate.
+    """
     with pytest.raises(ConfigValidationFailed):
         validate_config(
             """

@@ -87,15 +87,22 @@ def validate_gpio_interrupt_for(
     digital_inputs: List[ConfigType],
 ) -> None:
     """
-    Ensure that all of the pins listed in interrupt_for are configured as interrupts, and
-    that they don't list themselves.
+    Ensure that:
+    - Pins listed in interrupt_for are configured as interrupts
+    - A pin's interrupt_for doesn't contain itself
+    - A pin with interrupt_for is configured as an interrupt
     """
     interrupt_pins: Set[str] = set(
         in_conf["name"] for in_conf in digital_inputs if in_conf.get("interrupt")
     )
     for in_conf in [x for x in digital_inputs if x.get("interrupt_for")]:
+        errors = []
+        if "interrupt" not in in_conf:
+            errors.append(
+                "Pin is configured as an 'interrupt_for' other pins, but is not "
+                "configured as an interrupt itself"
+            )
         for pin_name in in_conf["interrupt_for"]:
-            errors = []
             if pin_name not in interrupt_pins:
                 errors.append(
                     f"Pin '{pin_name}' listed in 'interrupt_for' is not configured as an "
@@ -103,5 +110,6 @@ def validate_gpio_interrupt_for(
                 )
             if pin_name == in_conf["name"]:
                 errors.append(f"Pin '{pin_name}' lists itself in 'interrupt_for'")
-            for error in errors:
-                add_error(bad_configs, "digital_inputs", in_conf["name"], error)
+
+        for error in errors:
+            add_error(bad_configs, "digital_inputs", in_conf["name"], error)

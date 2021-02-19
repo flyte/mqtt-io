@@ -1,3 +1,7 @@
+"""
+Utility functions for the tests.
+"""
+
 import yaml
 
 from ..config import validate_and_normalise_main_config

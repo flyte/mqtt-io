@@ -1,15 +1,16 @@
+"""
+Test GPIO aspects of the server.
+"""
+
 import asyncio
 import sys
-import warnings
 
 import pytest
 
 from ...events import DigitalInputChangedEvent, DigitalOutputChangedEvent
 from ...modules.gpio import InterruptEdge, PinDirection
-from ..utils import validate_config
-
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 from ...server import MqttIo
+from ..utils import validate_config
 
 # pylint: disable=redefined-outer-name, protected-access
 
@@ -19,6 +20,9 @@ HAS_GET_CORO = sys.version_info.major >= 3 and sys.version_info.minor >= 8
 
 @pytest.fixture
 def mqttio_mock_sensor_module() -> MqttIo:
+    """
+    Get an MqttIo instance with a mock sensor module.
+    """
     config = validate_config(
         """
 mqtt:
@@ -71,7 +75,9 @@ digital_inputs:
 
 @pytest.fixture
 def mqttio_mock_digital_outputs() -> MqttIo:
-    """"""
+    """
+    Get an MqttIo instance with a mock gpio module and a digital output.
+    """
     config = validate_config(
         """
 mqtt:
@@ -91,6 +97,9 @@ digital_outputs:
 
 
 def test_init_gpio_modules() -> None:
+    """
+    Test for successful initialisation of a GPIO module.
+    """
     mqttio = MqttIo(
         validate_config(
             """
@@ -127,6 +136,9 @@ digital_inputs:
 
 
 def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo) -> None:
+    """
+    Test for successful initialisation of a sensor module.
+    """
     mqttio = mqttio_mock_sensor_module
     assert not mqttio.sensor_modules, "Nothing should be initialised yet"
 
@@ -146,6 +158,10 @@ def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo) -> None:
 
 
 def test_init_digital_inputs_event_sub(mqttio_mock_digital_inputs: MqttIo) -> None:
+    """
+    Initialising a digital input should subscribe publish_callback to
+    DigitalInputChangedEvent.
+    """
     mqttio = mqttio_mock_digital_inputs
     assert not mqttio.digital_input_configs, "Nothing should be initialised yet"
 
@@ -179,7 +195,8 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "The config for mock0 should be initialised in the gpio module"
 
     setup_pin_call_config_pins = [
-        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
+        kwargs["pin_config"]["pin"]
+        for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
     ]
     assert (
         pin in setup_pin_call_config_pins
@@ -234,14 +251,18 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "The config for mock1 should be initialised in the gpio module"
 
     setup_pin_call_config_pins = [
-        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
+        kwargs["pin_config"]["pin"]
+        for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
     ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock1"
 
     mock1_call_args = None
-    for args, _ in mock_module.setup_interrupt_callback.call_args_list:  # type: ignore[attr-defined]
+    call_args_list = (
+        mock_module.setup_interrupt_callback.call_args_list  # type: ignore[attr-defined]
+    )
+    for args, _ in call_args_list:
         if args[2]["name"] == "mock1":
             mock1_call_args = args
 
@@ -259,9 +280,10 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
             if isinstance(task, asyncio.Task)
             and task.get_coro().__name__ == "digital_input_poller"
         ]
-        assert (
-            "mock1" not in poller_task_pin_names
-        ), "digital_input_poller task should not be added to the unawaited tasks list for mock1 input"
+        assert "mock1" not in poller_task_pin_names, (
+            "digital_input_poller task should not be added to the unawaited tasks list "
+            "for mock1 input"
+        )
 
         poller_task_pin_names = [
             t.get_coro().cr_frame.f_locals["in_conf"]["name"]
@@ -296,14 +318,18 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
     ), "The config for mock2 should be initialised in the gpio module"
 
     setup_pin_call_config_pins = [
-        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
+        kwargs["pin_config"]["pin"]
+        for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
     ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock2"
 
     mock2_call_args = None
-    for call_args, _ in mock_module.setup_interrupt_callback.call_args_list:  # type: ignore[attr-defined]
+    call_args_list = (
+        mock_module.setup_interrupt_callback.call_args_list  # type: ignore[attr-defined]
+    )
+    for call_args, _ in call_args_list:
         if call_args[2]["name"] == "mock2":
             mock2_call_args = call_args
 
@@ -319,9 +345,10 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
             if isinstance(task, asyncio.Task)
             and task.get_coro().__name__ == "digital_input_poller"
         ]
-        assert (
-            "mock2" in poller_task_pin_names
-        ), "digital_input_poller task should be added to the unawaited tasks list for mock2 input"
+        assert "mock2" in poller_task_pin_names, (
+            "digital_input_poller task should be added to the unawaited tasks list for "
+            "mock2 input"
+        )
 
         poller_task_pin_names = [
             t.get_coro().cr_frame.f_locals["in_conf"]["name"]
@@ -338,7 +365,10 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
 
 
 def test_init_digital_outputs_event_sub(mqttio_mock_digital_outputs: MqttIo) -> None:
-    """"""
+    """
+    Initialising a digital output should subscribe publish_callback to
+    DigitalOutputChangedEvent.
+    """
     mqttio = mqttio_mock_digital_outputs
     mqttio._init_gpio_modules()
 
@@ -360,7 +390,9 @@ def test_init_digital_outputs_event_sub(mqttio_mock_digital_outputs: MqttIo) -> 
 
 
 def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
-    """"""
+    """
+    Test that digital outputs get initialised properly.
+    """
     mqttio = mqttio_mock_digital_outputs
     mqttio._init_gpio_modules()
     mqttio._init_digital_outputs()
@@ -391,9 +423,10 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
             if isinstance(task, asyncio.Task)
             and task.get_coro().__name__ == "digital_output_loop"
         }
-        assert (
-            mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
-        ), "digital_output_loop task should be added to the unawaited_tasks list for the mock module"
+        assert mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues, (
+            "digital_output_loop task should be added to the unawaited_tasks list for "
+            "the mock module"
+        )
 
         digital_output_loop_task_queues = {
             t.get_coro().cr_frame.f_locals["queue"]
