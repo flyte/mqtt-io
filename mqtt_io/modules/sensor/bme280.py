@@ -31,7 +31,8 @@ class Sensor(GenericSensor):
     }
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init,import-error
+        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        # pylint: disable=import-error,no-member
         from smbus2 import SMBus  # type: ignore[attr-defined]
         import bme280  # type: ignore
 
@@ -44,6 +45,7 @@ class Sensor(GenericSensor):
         """
         Get the temperature, humidity or pressure value from the sensor
         """
+        # pylint: disable=no-member
         data = self.bme.sample(self.bus, self.address, self.calib)
 
         if sens_conf["type"] == "temperature":

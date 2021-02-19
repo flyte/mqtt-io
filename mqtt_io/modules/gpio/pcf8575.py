@@ -21,6 +21,7 @@ class GPIO(GenericGPIO):
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
+        # pylint: disable=no-name-in-module
         self.pullup_map = {PinPUD.UP: True, PinPUD.DOWN: False}
         from pcf8575 import PCF8575  # type: ignore
 

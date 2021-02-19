@@ -39,6 +39,8 @@ CONFIG_SCHEMA = {
     },
 }
 
+# pylint: disable=no-member
+
 
 class Stream(GenericStream):
     """
