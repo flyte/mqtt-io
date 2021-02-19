@@ -4,8 +4,6 @@ Home Assistant MQTT Discovery features.
 https://www.home-assistant.io/docs/mqtt/discovery/
 """
 
-from __future__ import annotations
-
 import json
 import logging
 from typing import TYPE_CHECKING
@@ -20,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 
 
 async def hass_announce_digital_input(
-    in_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: MQTTClient
+    in_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: "MQTTClient"
 ) -> None:
     """
     Announces digital input as binary_sensor to HomeAssistant.
@@ -66,7 +64,7 @@ async def hass_announce_digital_input(
 
 
 async def hass_announce_digital_output(
-    out_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: MQTTClient
+    out_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: "MQTTClient"
 ) -> None:
     """
     Announces digital output as switch to HomeAssistant.
@@ -115,7 +113,7 @@ async def hass_announce_digital_output(
 
 
 async def hass_announce_sensor_input(
-    sens_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: MQTTClient
+    sens_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: "MQTTClient"
 ) -> None:
     """
     Announces digital output as sensor to HomeAssistant.

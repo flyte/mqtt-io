@@ -2,8 +2,6 @@
 Handles config validation and normalisation.
 """
 
-from __future__ import annotations
-
 import logging
 from collections import Counter
 from os.path import dirname, join, realpath
@@ -72,8 +70,9 @@ def get_main_schema() -> ConfigType:
     :rtype: dict
     """
     schema_path = join(dirname(realpath(__file__)), "config.schema.yml")
-    # We write this schema file, so we know it'll adhere to ConfigType rules
-    return cast(ConfigType, yaml.safe_load(open(schema_path)))
+    with open(schema_path) as schema_file:
+        # We write this schema file, so we know it'll adhere to ConfigType rules
+        return cast(ConfigType, yaml.safe_load(schema_file))
 
 
 def get_main_schema_section(section: str) -> ConfigType:
@@ -184,7 +183,7 @@ def validate_and_normalise_main_config(raw_config: Any) -> ConfigType:
 
 
 def validate_and_normalise_sensor_input_config(
-    config: ConfigType, module: GenericSensor
+    config: ConfigType, module: "GenericSensor"
 ) -> ConfigType:
     """
     Validate sensor input configs.
@@ -196,7 +195,7 @@ def validate_and_normalise_sensor_input_config(
 
 
 def validate_and_normalise_digital_input_config(
-    config: ConfigType, module: GenericGPIO
+    config: ConfigType, module: "GenericGPIO"
 ) -> ConfigType:
     """
     Validate digital input configs.
@@ -211,7 +210,7 @@ def validate_and_normalise_digital_input_config(
 
 
 def validate_and_normalise_digital_output_config(
-    config: ConfigType, module: GenericGPIO
+    config: ConfigType, module: "GenericGPIO"
 ) -> ConfigType:
     """
     Validate digital output configs.

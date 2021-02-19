@@ -1,4 +1,5 @@
 import asyncio
+import sys
 import warnings
 
 import pytest
@@ -11,6 +12,9 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 from ...server import MqttIo
 
 # pylint: disable=redefined-outer-name, protected-access
+
+
+HAS_GET_CORO = sys.version_info.major >= 3 and sys.version_info.minor >= 8
 
 
 @pytest.fixture
@@ -187,24 +191,25 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo) -> None:
             mock0_call_args = call_args
     assert mock0_call_args is None, "setup_interrupt() should not be called for mock0"
 
-    poller_task_pin_names = [
-        task.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for task in mqttio.unawaited_tasks
-        if isinstance(task, asyncio.Task)  # concurrent.Future doesn't have get_coro()
-        and task.get_coro().__name__ == "digital_input_poller"
-    ]
-    assert (
-        "mock0" in poller_task_pin_names
-    ), "digital_input_poller task should be added to the unawaited tasks list for mock0 input"
+    if HAS_GET_CORO:
+        poller_task_pin_names = [
+            task.get_coro().cr_frame.f_locals["in_conf"]["name"]
+            for task in mqttio.unawaited_tasks
+            if isinstance(task, asyncio.Task)  # concurrent.Future doesn't have get_coro()
+            and task.get_coro().__name__ == "digital_input_poller"
+        ]
+        assert (
+            "mock0" in poller_task_pin_names
+        ), "digital_input_poller task should be added to the unawaited tasks list for mock0 input"
 
-    poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_input_poller"
-    ]
-    assert (
-        "mock0" in poller_task_pin_names
-    ), "digital_input_poller task should be added to the task loop for mock0 input"
+        poller_task_pin_names = [
+            t.get_coro().cr_frame.f_locals["in_conf"]["name"]
+            for t in asyncio.Task.all_tasks(loop=mqttio.loop)
+            if t.get_coro().__name__ == "digital_input_poller"
+        ]
+        assert (
+            "mock0" in poller_task_pin_names
+        ), "digital_input_poller task should be added to the task loop for mock0 input"
 
     assert not mock_module.remote_interrupt_for(
         pin
@@ -247,24 +252,25 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
         mock1_call_args[1] == InterruptEdge.RISING
     ), "mock1 should be configured with 'rising' interrupt edge"
 
-    poller_task_pin_names = [
-        task.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for task in mqttio.unawaited_tasks
-        if isinstance(task, asyncio.Task)
-        and task.get_coro().__name__ == "digital_input_poller"
-    ]
-    assert (
-        "mock1" not in poller_task_pin_names
-    ), "digital_input_poller task should not be added to the unawaited tasks list for mock1 input"
+    if HAS_GET_CORO:
+        poller_task_pin_names = [
+            task.get_coro().cr_frame.f_locals["in_conf"]["name"]
+            for task in mqttio.unawaited_tasks
+            if isinstance(task, asyncio.Task)
+            and task.get_coro().__name__ == "digital_input_poller"
+        ]
+        assert (
+            "mock1" not in poller_task_pin_names
+        ), "digital_input_poller task should not be added to the unawaited tasks list for mock1 input"
 
-    poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_input_poller"
-    ]
-    assert (
-        "mock1" not in poller_task_pin_names
-    ), "digital_input_poller task should not be added to the task loop for mock1 input"
+        poller_task_pin_names = [
+            t.get_coro().cr_frame.f_locals["in_conf"]["name"]
+            for t in asyncio.Task.all_tasks(loop=mqttio.loop)
+            if t.get_coro().__name__ == "digital_input_poller"
+        ]
+        assert (
+            "mock1" not in poller_task_pin_names
+        ), "digital_input_poller task should not be added to the task loop for mock1 input"
 
     assert not mock_module.remote_interrupt_for(
         pin
@@ -306,24 +312,25 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
         mock2_call_args[1] == InterruptEdge.FALLING
     ), "mock2 should be configured with 'falling' interrupt edge"
 
-    poller_task_pin_names = [
-        task.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for task in mqttio.unawaited_tasks
-        if isinstance(task, asyncio.Task)
-        and task.get_coro().__name__ == "digital_input_poller"
-    ]
-    assert (
-        "mock2" in poller_task_pin_names
-    ), "digital_input_poller task should be added to the unawaited tasks list for mock2 input"
+    if HAS_GET_CORO:
+        poller_task_pin_names = [
+            task.get_coro().cr_frame.f_locals["in_conf"]["name"]
+            for task in mqttio.unawaited_tasks
+            if isinstance(task, asyncio.Task)
+            and task.get_coro().__name__ == "digital_input_poller"
+        ]
+        assert (
+            "mock2" in poller_task_pin_names
+        ), "digital_input_poller task should be added to the unawaited tasks list for mock2 input"
 
-    poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_input_poller"
-    ]
-    assert (
-        "mock2" in poller_task_pin_names
-    ), "digital_input_poller task should be added to the task loop for mock2 input"
+        poller_task_pin_names = [
+            t.get_coro().cr_frame.f_locals["in_conf"]["name"]
+            for t in asyncio.Task.all_tasks(loop=mqttio.loop)
+            if t.get_coro().__name__ == "digital_input_poller"
+        ]
+        assert (
+            "mock2" in poller_task_pin_names
+        ), "digital_input_poller task should be added to the task loop for mock2 input"
 
     assert mock_module.remote_interrupt_for(pin) == [
         "mock1"
@@ -377,21 +384,22 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
         )
     ), "mock module should have an output queue initialised"
 
-    digital_output_loop_task_queues = {
-        task.get_coro().cr_frame.f_locals["queue"]
-        for task in mqttio.unawaited_tasks
-        if isinstance(task, asyncio.Task)
-        and task.get_coro().__name__ == "digital_output_loop"
-    }
-    assert (
-        mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
-    ), "digital_output_loop task should be added to the unawaited_tasks list for the mock module"
+    if HAS_GET_CORO:
+        digital_output_loop_task_queues = {
+            task.get_coro().cr_frame.f_locals["queue"]
+            for task in mqttio.unawaited_tasks
+            if isinstance(task, asyncio.Task)
+            and task.get_coro().__name__ == "digital_output_loop"
+        }
+        assert (
+            mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
+        ), "digital_output_loop task should be added to the unawaited_tasks list for the mock module"
 
-    digital_output_loop_task_queues = {
-        t.get_coro().cr_frame.f_locals["queue"]
-        for t in asyncio.Task.all_tasks(loop=mqttio.loop)
-        if t.get_coro().__name__ == "digital_output_loop"
-    }
-    assert (
-        mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
-    ), "digital_output_loop task should be added to the task loop for the mock module"
+        digital_output_loop_task_queues = {
+            t.get_coro().cr_frame.f_locals["queue"]
+            for t in asyncio.Task.all_tasks(loop=mqttio.loop)
+            if t.get_coro().__name__ == "digital_output_loop"
+        }
+        assert (
+            mqttio.gpio_output_queues["mock"] in digital_output_loop_task_queues
+        ), "digital_output_loop task should be added to the task loop for the mock module"

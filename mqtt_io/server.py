@@ -8,8 +8,6 @@ and setting their values and data, connecting to MQTT and sending/receiving MQTT
 # pylint: enable=duplicate-code
 # pylint: disable=too-many-lines
 
-from __future__ import annotations
-
 import asyncio
 import logging
 import re

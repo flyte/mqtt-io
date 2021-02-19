@@ -1,3 +1,4 @@
 PyYAML>=5.3.1
 cerberus
 hbmqtt
+typing-extensions
