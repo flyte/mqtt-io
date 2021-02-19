@@ -1,0 +1,37 @@
+mqtt:
+  host: test.mosquitto.org
+  port: 1883
+  topic_prefix: mqtt_gpio
+  clean_session: yes
+  protocol: 3.1.1
+  discovery: yes
+
+stream_modules:
+  - name: serial
+    module: serial
+    device: /dev/pts/15
+    baud: 9600
+    read_interval: 1
+
+logging:
+  version: 1
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      level: DEBUG
+  formatters:
+    default:
+      format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+  loggers:
+    mqtt_io:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    asyncio:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
