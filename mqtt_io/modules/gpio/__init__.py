@@ -7,8 +7,7 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, Flag, auto
-from functools import wraps
-from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from ...types import ConfigType, PinType
 

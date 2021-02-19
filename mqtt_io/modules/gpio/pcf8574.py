@@ -2,7 +2,7 @@
 GPIO module for PCF8574.
 """
 
-from typing import Any, Dict, Optional, cast
+from typing import Optional, cast
 
 from ...types import ConfigType, PinType
 from . import GenericGPIO, PinDirection, PinPUD

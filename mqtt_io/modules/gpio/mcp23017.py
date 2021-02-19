@@ -5,7 +5,7 @@ GPIO module for MCP23017.
 from __future__ import absolute_import
 
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional, cast
 
 from ...types import ConfigType, PinType
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD

@@ -2,12 +2,9 @@ import asyncio
 import warnings
 
 import pytest
-import yaml
 
 from ...events import DigitalInputChangedEvent, DigitalOutputChangedEvent
-from ...exceptions import ConfigValidationFailed
 from ...modules.gpio import InterruptEdge, PinDirection
-from ...types import ConfigType
 from ..utils import validate_config
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -100,6 +97,11 @@ gpio_modules:
     - name: mock
       module: test.mock
       test: yes
+
+digital_inputs:
+    - name: mock0
+      module: mock
+      pin: 0
 """
         )
     )
@@ -131,7 +133,7 @@ def test_init_sensor_modules(mqttio_mock_sensor_module: MqttIo) -> None:
 
     mock_module = mqttio.sensor_modules["mock"]
     assert (
-        mock_module.setup_module.call_count == 1
+        mock_module.setup_module.call_count == 1  # type: ignore[attr-defined]
     ), "Should only be one call to setup_module()"
 
     assert mock_module.config[
@@ -173,22 +175,23 @@ def test_init_digital_inputs_no_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "The config for mock0 should be initialised in the gpio module"
 
     setup_pin_call_config_pins = [
-        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list
+        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
     ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock0"
 
     mock0_call_args = None
-    for call_args, _ in mock_module.setup_interrupt.call_args_list:
+    for call_args, _ in mock_module.setup_interrupt.call_args_list:  # type: ignore[attr-defined]
         if call_args[3]["name"] == "mock0":
             mock0_call_args = call_args
     assert mock0_call_args is None, "setup_interrupt() should not be called for mock0"
 
     poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in mqttio.unawaited_tasks
-        if t.get_coro().__name__ == "digital_input_poller"
+        task.get_coro().cr_frame.f_locals["in_conf"]["name"]
+        for task in mqttio.unawaited_tasks
+        if isinstance(task, asyncio.Task)  # concurrent.Future doesn't have get_coro()
+        and task.get_coro().__name__ == "digital_input_poller"
     ]
     assert (
         "mock0" in poller_task_pin_names
@@ -226,14 +229,14 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "The config for mock1 should be initialised in the gpio module"
 
     setup_pin_call_config_pins = [
-        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list
+        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
     ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock1"
 
     mock1_call_args = None
-    for args, _ in mock_module.setup_interrupt_callback.call_args_list:
+    for args, _ in mock_module.setup_interrupt_callback.call_args_list:  # type: ignore[attr-defined]
         if args[2]["name"] == "mock1":
             mock1_call_args = args
 
@@ -245,9 +248,10 @@ def test_init_digital_inputs_int(mqttio_mock_digital_inputs: MqttIo) -> None:
     ), "mock1 should be configured with 'rising' interrupt edge"
 
     poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in mqttio.unawaited_tasks
-        if t.get_coro().__name__ == "digital_input_poller"
+        task.get_coro().cr_frame.f_locals["in_conf"]["name"]
+        for task in mqttio.unawaited_tasks
+        if isinstance(task, asyncio.Task)
+        and task.get_coro().__name__ == "digital_input_poller"
     ]
     assert (
         "mock1" not in poller_task_pin_names
@@ -286,14 +290,14 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
     ), "The config for mock2 should be initialised in the gpio module"
 
     setup_pin_call_config_pins = [
-        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list
+        kwargs["pin_config"]["pin"] for _, kwargs in mock_module.setup_pin.call_args_list  # type: ignore[attr-defined]
     ]
     assert (
         pin in setup_pin_call_config_pins
     ), "GPIO module's setup_pin() method should have been called for mock2"
 
     mock2_call_args = None
-    for call_args, _ in mock_module.setup_interrupt_callback.call_args_list:
+    for call_args, _ in mock_module.setup_interrupt_callback.call_args_list:  # type: ignore[attr-defined]
         if call_args[2]["name"] == "mock2":
             mock2_call_args = call_args
 
@@ -303,9 +307,10 @@ def test_init_digital_inputs_int_for(mqttio_mock_digital_inputs: MqttIo) -> None
     ), "mock2 should be configured with 'falling' interrupt edge"
 
     poller_task_pin_names = [
-        t.get_coro().cr_frame.f_locals["in_conf"]["name"]
-        for t in mqttio.unawaited_tasks
-        if t.get_coro().__name__ == "digital_input_poller"
+        task.get_coro().cr_frame.f_locals["in_conf"]["name"]
+        for task in mqttio.unawaited_tasks
+        if isinstance(task, asyncio.Task)
+        and task.get_coro().__name__ == "digital_input_poller"
     ]
     assert (
         "mock2" in poller_task_pin_names
@@ -355,9 +360,9 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
 
     mock_module = mqttio.gpio_modules["mock"]
     assert (
-        mock_module.setup_pin.called
+        mock_module.setup_pin.called  # type: ignore[attr-defined]
     ), "setup_pin() should be called for the mock0 output"
-    args, kwargs = mock_module.setup_pin.call_args
+    args, kwargs = mock_module.setup_pin.call_args  # type: ignore[attr-defined]
     assert (
         kwargs["pin_config"]["name"] == "mock0"
     ), "setup_pin() should be called with the mock0 name"
@@ -373,9 +378,10 @@ def test_init_digital_outputs(mqttio_mock_digital_outputs: MqttIo) -> None:
     ), "mock module should have an output queue initialised"
 
     digital_output_loop_task_queues = {
-        t.get_coro().cr_frame.f_locals["queue"]
-        for t in mqttio.unawaited_tasks
-        if t.get_coro().__name__ == "digital_output_loop"
+        task.get_coro().cr_frame.f_locals["queue"]
+        for task in mqttio.unawaited_tasks
+        if isinstance(task, asyncio.Task)
+        and task.get_coro().__name__ == "digital_output_loop"
     }
     assert (
         mqttio.module_output_queues["mock"] in digital_output_loop_task_queues

@@ -2,7 +2,7 @@
 GPIO module for OrangePI on-board GPIO.
 """
 
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from ...types import ConfigType, PinType
 from . import GenericGPIO, PinDirection, PinPUD

@@ -11,6 +11,7 @@ REQUIREMENTS = ()
 CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
 
 
+# pylint: disable=useless-super-delegation
 class Sensor(GenericSensor):
     """
     Mock Sensor class for use with the tests.
