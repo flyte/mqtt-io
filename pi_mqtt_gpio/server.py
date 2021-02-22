@@ -946,7 +946,7 @@ def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
             "identifiers": ["mqtt-gpio", device_id],
             "name": mqtt_config["discovery_name"],
         },
-        **in_conf["extra_announce_payload"],
+        **in_conf.get("extra_announce_payload", {}),
     }
 
     client.publish(
@@ -986,7 +986,7 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
             "identifiers": ["mqtt-gpio", device_id],
             "name": mqtt_config["discovery_name"],
         },
-        **out_conf["extra_announce_payload"],
+        **out_conf.get("extra_announce_payload", {}),
     }
 
     client.publish(
@@ -1022,7 +1022,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
             "identifiers": ["mqtt-gpio", device_id],
             "name": mqtt_config["discovery_name"],
         },
-        **in_conf["extra_announce_payload"],
+        **in_conf.get("extra_announce_payload", {}),
     }
     if "unit_of_measurement" in in_conf:
         sensor_config["unit_of_measurement"] = in_conf["unit_of_measurement"]
