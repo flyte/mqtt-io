@@ -236,6 +236,10 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      extra_announce_payload:
+        type: dict
+        allow_unknown: yes
+        schema:
 
 digital_outputs:
   type: list
@@ -288,6 +292,10 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      extra_announce_payload:
+        type: dict
+        allow_unknown: yes
+        schema:
 
 sensor_inputs:
   type: list
