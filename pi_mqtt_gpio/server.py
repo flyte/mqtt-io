@@ -726,6 +726,7 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
             "manufacturer": "MQTT GPIO",
             "identifiers": ["mqtt-gpio", device_id],
             "name": mqtt_config["discovery_name"],
+            **out_conf["device"],
         },
     }
 
