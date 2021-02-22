@@ -240,6 +240,10 @@ digital_inputs:
         type: string
         required: no
         default: binary_sensor
+      extra_announce_payload:
+        type: dict
+        allow_unknown: yes
+        schema:
 
 digital_outputs:
   type: list
@@ -296,6 +300,10 @@ digital_outputs:
         type: string
         required: no
         default: switch
+      extra_announce_payload:
+        type: dict
+        allow_unknown: yes
+        schema:
 
 sensor_inputs:
   type: list
