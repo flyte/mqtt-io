@@ -950,7 +950,7 @@ def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
 
     client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "binary_sensor", device_id, sensor_name),
+        % (mqtt_config["discovery_prefix"], in_conf. get("component", "binary_sensor"), device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
@@ -988,7 +988,7 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
 
     client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "switch", device_id, sensor_name),
+        % (mqtt_config["discovery_prefix"], out_conf. get("component", "switch"), device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
@@ -1025,7 +1025,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
 
     client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "sensor", device_id, sensor_name),
+        % (mqtt_config["discovery_prefix"], in_conf.get("component", "sensor"), device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
