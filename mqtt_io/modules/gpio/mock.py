@@ -5,8 +5,8 @@ Mock GPIO module for using with the tests.
 from typing import Any, Callable, Dict, Iterable, List, Optional
 from unittest.mock import Mock
 
-from ....types import ConfigType, PinType
-from .. import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
+from ...types import ConfigType, PinType
+from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 REQUIREMENTS = ()
 CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))

@@ -10,20 +10,9 @@ import pytest
 from ...events import DigitalInputChangedEvent, DigitalOutputChangedEvent
 from ...modules.gpio import InterruptEdge, PinDirection
 from ...server import MqttIo
-from ..utils import validate_config
+from ..utils import get_coro, validate_config
 
 # pylint: disable=redefined-outer-name, protected-access
-
-
-def get_coro(task: "asyncio.Task[Any]") -> Any:
-    """
-    Get a task's coroutine.
-    """
-    if hasattr(task, "get_coro"):
-        return task.get_coro()  # type: ignore[attr-defined]
-    if hasattr(task, "_coro"):
-        return task._coro  # type: ignore[attr-defined]
-    raise AttributeError("Unable to get task's coro")
 
 
 @pytest.fixture

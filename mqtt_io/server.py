@@ -13,13 +13,14 @@ import logging
 import re
 import signal as signals
 import threading
+from asyncio.queues import QueueEmpty
 from concurrent.futures import Future as ConcurrentFuture
 from functools import partial
 from hashlib import sha1
 from importlib import import_module
 from typing import (
     Any,
-    Awaitable,
+    Coroutine,
     Dict,
     List,
     Optional,
@@ -140,7 +141,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     once per config file, of which there is generally only one.
     """
 
-    def __init__(self, config: Dict[str, Any]) -> None:
+    def __init__(
+        self, config: Dict[str, Any], loop: Optional[asyncio.AbstractEventLoop] = None
+    ) -> None:
         self.config = config
 
         # GPIO
@@ -163,16 +166,23 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             {}
         )  # type: Dict[str, asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]]
 
-        self.loop = asyncio.get_event_loop()
+        self.loop = loop or asyncio.get_event_loop()
         self.tasks = []  # type: List[asyncio.Future[Any]]
         self.unawaited_tasks: List[UnawaitedTaskType] = []
 
         self.event_bus = EventBus(self.loop, self.unawaited_tasks)
         self.mqtt: MQTTClient = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
-        self.mqtt_task_queue = (
-            asyncio.PriorityQueue()
-        )  # type: asyncio.PriorityQueue[Tuple[int, Awaitable[Any]]]
+
+        async def create_mqtt_task_queue() -> None:
+            """
+            Create the queue on the loop we're going to use.
+            """
+            self.mqtt_task_queue = (  # pylint: disable=attribute-defined-outside-init
+                asyncio.PriorityQueue()
+            )  # type: asyncio.PriorityQueue[Tuple[int, Coroutine[Any, Any, Any]]]
+
+        self.loop.run_until_complete(create_mqtt_task_queue())
 
     # Init methods
 
@@ -230,15 +240,27 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 self.loop.create_task(self.stream_poller(stream_module, stream_conf))
             )
 
-            # Set up a stream output queue
-            queue = asyncio.Queue()  # type: asyncio.Queue[bytes]
-            self.stream_output_queues[stream_conf["name"]] = queue
+            async def create_stream_output_queue(
+                stream_conf: ConfigType = stream_conf,
+            ) -> None:
+                """
+                Set up a stream output queue.
+                """
+                queue = asyncio.Queue()  # type: asyncio.Queue[bytes]
+                self.stream_output_queues[stream_conf["name"]] = queue
+
+            self.loop.run_until_complete(create_stream_output_queue())
 
             # Queue a stream output loop task
             self.unawaited_tasks.append(
                 self.loop.create_task(
                     # Use partial to avoid late binding closure
-                    partial(self.stream_output_loop, stream_module, stream_conf, queue)()
+                    partial(
+                        self.stream_output_loop,
+                        stream_module,
+                        stream_conf,
+                        self.stream_output_queues[stream_conf["name"]],
+                    )()
                 )
             )
 
@@ -307,7 +329,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 interrupt_for and in_conf["poll_when_interrupt_for"]
             ):
                 self.unawaited_tasks.append(
-                    self.loop.create_task(self.digital_input_poller(gpio_module, in_conf))
+                    self.loop.create_task(
+                        partial(self.digital_input_poller, gpio_module, in_conf)()
+                    )
                 )
 
             if interrupt:
@@ -358,14 +382,28 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
             # Create queues for each module with an output
             if out_conf["module"] not in self.gpio_output_queues:
-                queue = (
-                    asyncio.Queue()
-                )  # type: asyncio.Queue[Tuple[GenericGPIO, ConfigType, str]]
-                self.gpio_output_queues[out_conf["module"]] = queue
+
+                async def create_digital_output_queue(
+                    out_conf: ConfigType = out_conf,
+                ) -> None:
+                    """
+                    Create digital output queue on the right loop.
+                    """
+                    queue = (
+                        asyncio.Queue()
+                    )  # type: asyncio.Queue[Tuple[GenericGPIO, ConfigType, str]]
+                    self.gpio_output_queues[out_conf["module"]] = queue
+
+                self.loop.run_until_complete(create_digital_output_queue())
 
                 # Use partial to avoid late binding closure
                 self.unawaited_tasks.append(
-                    self.loop.create_task(partial(self.digital_output_loop, queue)())
+                    self.loop.create_task(
+                        partial(
+                            self.digital_output_loop,
+                            self.gpio_output_queues[out_conf["module"]],
+                        )()
+                    )
                 )
 
             # Add tasks to subscribe to outputs when MQTT is initialised
@@ -502,16 +540,16 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         Publish Home Assistant Discovery messages.
         """
-        tasks: List[Awaitable[Any]] = []
+        coros: List[Coroutine[Any, Any, Any]] = []
         mqtt_config: ConfigType = self.config["mqtt"]
         for in_conf in self.digital_input_configs.values():
-            tasks.append(hass_announce_digital_input(in_conf, mqtt_config, self.mqtt))
+            coros.append(hass_announce_digital_input(in_conf, mqtt_config, self.mqtt))
         for out_conf in self.digital_output_configs.values():
-            tasks.append(hass_announce_digital_output(out_conf, mqtt_config, self.mqtt))
+            coros.append(hass_announce_digital_output(out_conf, mqtt_config, self.mqtt))
         for sens_conf in self.sensor_configs.values():
-            tasks.append(hass_announce_sensor_input(sens_conf, mqtt_config, self.mqtt))
-        for task in tasks:
-            self.mqtt_task_queue.put_nowait((MQTT_ANNOUNCE_PRIORITY, task))
+            coros.append(hass_announce_sensor_input(sens_conf, mqtt_config, self.mqtt))
+        for coro in coros:
+            self.mqtt_task_queue.put_nowait((MQTT_ANNOUNCE_PRIORITY, coro))
 
     async def _mqtt_subscribe(self, topics: List[str]) -> None:
         """
@@ -853,9 +891,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         we don't try to run MQTT tasks before the MQTT connection is initialised.
         """
         while True:
-            _, task = await self.mqtt_task_queue.get()
+            _, coro = await self.mqtt_task_queue.get()
             try:
-                await task
+                await coro
             except Exception:  # pylint: disable=broad-except
                 _LOG.exception("Exception while handling MQTT task:")
 
@@ -1033,11 +1071,12 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     )
         _LOG.debug("run() complete")
 
-    async def shutdown(self, signal: "signals.Signals") -> None:
+    async def shutdown(self, signal: "Optional[signals.Signals]" = None) -> None:
         """
         Shut down all of the tasks involved in running the server in the right order.
         """
-        _LOG.warning("Received exit signal %s", signal.name)
+        if signal is not None:
+            _LOG.warning("Received exit signal %s", signal.name)
 
         # Cancel our main task first so we don't mess the MQTT library's connection
         for task in self.tasks:
@@ -1047,6 +1086,14 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         while not all_done:
             all_done = all(t.done() for t in self.tasks)
             await asyncio.sleep(0.1)
+
+        # Close any remaining unscheduled mqtt coroutines
+        while True:
+            try:
+                _, mqtt_coro = self.mqtt_task_queue.get_nowait()
+            except QueueEmpty:
+                break
+            mqtt_coro.close()
 
         current_task = asyncio.Task.current_task()
         tasks = [
@@ -1065,6 +1112,3 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         _LOG.debug("Tasks all finished. Stopping loop...")
         self.loop.stop()
         _LOG.debug("Loop stopped")
-        unhandled_mqtt_tasks = self.mqtt_task_queue.qsize()
-        if unhandled_mqtt_tasks:
-            _LOG.warning("%s queued MQTT task(s) not handled", unhandled_mqtt_tasks)

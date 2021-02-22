@@ -4,8 +4,8 @@ Mock Sensor module for use with the tests.
 
 from unittest.mock import Mock
 
-from ....types import ConfigType, SensorValueType
-from .. import GenericSensor
+from ...types import ConfigType, SensorValueType
+from . import GenericSensor
 
 REQUIREMENTS = ()
 CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))

@@ -19,6 +19,7 @@ pytest = "^6.2.2"
 tox = "^3.22.0"
 pylint = "^2.6.2"
 mypy = "^0.812"
+behave = "^1.2.6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
