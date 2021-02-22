@@ -254,7 +254,10 @@ digital_outputs:
         type: boolean
         required: no
         default: no
-
+      device:
+        type: dict
+        allow_unknown: yes
+        schema:
 sensor_inputs:
   type: list
   required: no
