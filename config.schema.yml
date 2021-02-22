@@ -236,6 +236,10 @@ digital_inputs:
         type: boolean
         required: no
         default: no
+      component:
+        type: string
+        required: no
+        default: binary_sensor
 
 digital_outputs:
   type: list
@@ -288,6 +292,10 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      component:
+        type: string
+        required: no
+        default: switch
 
 sensor_inputs:
   type: list
@@ -322,6 +330,10 @@ sensor_inputs:
       unit_of_measurement:
         type: string
         required: no
+      component:
+        type: string
+        required: no
+        default: sensor
 
 stream_reads:
   type: list
