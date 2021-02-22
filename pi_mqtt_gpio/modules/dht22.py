@@ -5,7 +5,10 @@ ALLOWED_TYPES = ["dht11", "dht22", "am2302"]
 CONFIG_SCHEMA = {
     "pin": dict(type="integer", required=True, empty=False),
     "type": dict(
-        type="string", required=True, empty=False, allowed=ALLOWED_TYPES + list(map(str.upper, ALLOWED_TYPES))
+        type="string",
+        required=True,
+        empty=False,
+        allowed=ALLOWED_TYPES + list(map(str.upper, ALLOWED_TYPES)),
     ),
 }
 SENSOR_SCHEMA = {

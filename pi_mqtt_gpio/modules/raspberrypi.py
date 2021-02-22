@@ -1,5 +1,4 @@
-from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, \
-                                 InterruptEdge
+from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup, InterruptEdge
 
 REQUIREMENTS = ("RPi.GPIO",)
 
@@ -30,7 +29,7 @@ class GPIO(GenericGPIO):
         INTERRUPT = {
             InterruptEdge.RISING: gpio.RISING,
             InterruptEdge.FALLING: gpio.FALLING,
-            InterruptEdge.BOTH: gpio.BOTH
+            InterruptEdge.BOTH: gpio.BOTH,
         }
 
         gpio.setmode(gpio.BCM)
@@ -56,10 +55,13 @@ class GPIO(GenericGPIO):
         bouncetime: minimum time between two interrupts
         """
         edge = INTERRUPT[edge]
-        self.io.add_event_detect(pin, edge, callback=self.interrupt_callback,
-                                 bouncetime=bouncetime)
-        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin] = {"handle": handle,
-                                                    "callback": callback}
+        self.io.add_event_detect(
+            pin, edge, callback=self.interrupt_callback, bouncetime=bouncetime
+        )
+        self.GPIO_INTERRUPT_CALLBACK_LOOKUP[pin] = {
+            "handle": handle,
+            "callback": callback,
+        }
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)

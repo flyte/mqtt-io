@@ -1,6 +1,9 @@
 schema:
 	python setup.py insert_schema
 
+black:
+	black -l 90 pi_mqtt_gpio
+
 packages: clean schema sdist wheel2 wheel3
 
 sdist: schema

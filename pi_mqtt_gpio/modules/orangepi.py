@@ -1,25 +1,34 @@
 from pi_mqtt_gpio.modules import GenericGPIO, PinDirection, PinPullup
 
 ALLOWED_BOARDS = [
-    'zero', 'r1', 'zeroplus', 'zeroplus2h5', 'zeroplus2h3',
-    'pcpcplus', 'one', 'lite', 'plus2e', 'pc2', 'prime'
+    "zero",
+    "r1",
+    "zeroplus",
+    "zeroplus2h5",
+    "zeroplus2h3",
+    "pcpcplus",
+    "one",
+    "lite",
+    "plus2e",
+    "pc2",
+    "prime",
 ]
-ALLOWED_MODES = ['bcm', 'board', 'mode_soc']
+ALLOWED_MODES = ["bcm", "board", "mode_soc"]
 REQUIREMENTS = ("OrangePi.GPIO",)
 CONFIG_SCHEMA = {
     "board": {
         "type": "string",
         "required": True,
         "empty": False,
-        "allowed": ALLOWED_BOARDS + list(map(str.upper, ALLOWED_BOARDS))
+        "allowed": ALLOWED_BOARDS + list(map(str.upper, ALLOWED_BOARDS)),
     },
     "mode": {
         "type": "string",
         "required": True,
         "empty": False,
         "default": "bcm",
-        "allowed": ALLOWED_MODES + list(map(str.upper, ALLOWED_MODES))
-    }
+        "allowed": ALLOWED_MODES + list(map(str.upper, ALLOWED_MODES)),
+    },
 }
 
 DIRECTIONS = None
@@ -63,7 +72,9 @@ class GPIO(GenericGPIO):
         try:
             self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
         except ValueError as e:
-            raise IOError("channel %d setup failed" % pin) from e
+            e2 = IOError("channel %d setup failed" % pin)
+            e2.__cause__ = e
+            raise e2
 
     def set_pin(self, pin, value):
         self.io.output(pin, value)
