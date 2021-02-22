@@ -322,6 +322,10 @@ sensor_inputs:
       unit_of_measurement:
         type: string
         required: no
+      expire_after:
+        type: integer
+        required: no
+        min: 1
 
 stream_reads:
   type: list
