@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 import yaml
@@ -51,3 +52,17 @@ def step(context: Any, target: str, name: str) -> None:
     target_config = getattr(mqttio, f"{target.lower().replace(' ', '_')}_configs")[name]
     for key, value in data.items():
         assert target_config[key] == value
+
+
+@then("GPIO module {module_name} {should_shouldnt} have an output queue initialised")  # type: ignore[no-redef]
+def step(context: Any, module_name: str, should_shouldnt: str) -> None:
+    assert should_shouldnt in ("should", "shouldn't")
+    mqttio = context.data["mqttio"]
+    test = all(
+        (
+            "mock" in mqttio.gpio_output_queues,
+            isinstance(mqttio.gpio_output_queues.get("mock"), asyncio.Queue),
+        )
+    )
+
+    assert test if should_shouldnt == "should" else not test

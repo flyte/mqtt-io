@@ -1,3 +1,4 @@
+@wip
 Feature: Tests for the successful initialisation of the GPIO aspects of the server
     Scenario: Successful initialisation of mock GPIO module
         Given a valid config
@@ -45,9 +46,12 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         And digital input config mock0 should exist
         And GPIO module mock should have a pin config for mock0
         And GPIO module mock should have a setup_pin() call for mock0
+        And mock0 pin should have been set up as an input
         And GPIO module mock shouldn't have a setup_interrupt() call for mock0
         And mock0 shouldn't be configured as a remote interrupt
         And a digital input poller task is added for mock0
+        And GPIO module mock shouldn't have an output queue initialised
+        And a digital output loop task isn't added for GPIO module mock
 
     Scenario: Initialising an interrupt digital input
         Given a valid config
@@ -72,10 +76,13 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         And digital input config mock0 should exist
         And GPIO module mock should have a pin config for mock0
         And GPIO module mock should have a setup_pin() call for mock0
+        And mock0 pin should have been set up as an input
         And GPIO module mock should have a setup_interrupt_callback() call for mock0
         And mock0 shouldn't be configured as a remote interrupt
         And mock0 should be configured as a rising interrupt
         And a digital input poller task isn't added for mock0
+        And GPIO module mock shouldn't have an output queue initialised
+        And a digital output loop task isn't added for GPIO module mock
 
     Scenario: Initialising an interrupt digital input for another pin
         Given a valid config
@@ -112,6 +119,8 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         And GPIO module mock should have a pin config for mock1
         And GPIO module mock should have a setup_pin() call for mock0
         And GPIO module mock should have a setup_pin() call for mock1
+        And mock0 pin should have been set up as an input
+        And mock1 pin should have been set up as an input
         And GPIO module mock should have a setup_interrupt_callback() call for mock0
         And GPIO module mock should have a setup_interrupt_callback() call for mock1
         And mock0 shouldn't be configured as a remote interrupt
@@ -120,9 +129,10 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         And mock1 should be configured as a falling interrupt
         And a digital input poller task isn't added for mock0
         And a digital input poller task is added for mock1
+        And GPIO module mock shouldn't have an output queue initialised
+        And a digital output loop task isn't added for GPIO module mock
 
-    @wip
-    Scenario: Initialising a digital output should add publish_callback to DigitalOutputChangedEvent
+    Scenario: Initialising a digital output
         Given a valid config
         And the config has an entry in gpio_modules with
             """
@@ -141,3 +151,10 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         And we initialise GPIO modules
         And we initialise digital outputs
         Then publish_callback function should be subscribed to DigitalOutputChangedEvent
+        And digital output config mock0 should exist
+        And GPIO module mock should have a pin config for mock0
+        And GPIO module mock should have a setup_pin() call for mock0
+        And mock0 pin should have been set up as an output
+        And GPIO module mock should have an output queue initialised
+        And a digital input poller task isn't added for mock0
+        And a digital output loop task is added for GPIO module mock

@@ -164,7 +164,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         self.gpio_output_queues = (
             {}
-        )  # type: Dict[str, asyncio.Queue[Tuple[GenericGPIO, Dict[str, Any], str]]]
+        )  # type: Dict[str, asyncio.Queue[Tuple[ConfigType, str]]]
 
         self.loop = loop or asyncio.get_event_loop()
         self.tasks = []  # type: List[asyncio.Future[Any]]
@@ -389,9 +389,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     """
                     Create digital output queue on the right loop.
                     """
-                    queue = (
-                        asyncio.Queue()
-                    )  # type: asyncio.Queue[Tuple[GenericGPIO, ConfigType, str]]
+                    queue = asyncio.Queue()  # type: asyncio.Queue[Tuple[ConfigType, str]]
                     self.gpio_output_queues[out_conf["module"]] = queue
 
                 self.loop.run_until_complete(create_digital_output_queue())
@@ -401,6 +399,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     self.loop.create_task(
                         partial(
                             self.digital_output_loop,
+                            gpio_module,
                             self.gpio_output_queues[out_conf["module"]],
                         )()
                     )
@@ -803,20 +802,18 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             _LOG.warning("Unable to parse digital output name from topic: %s", exc)
             return
         try:
-            output_config = self.digital_output_configs[output_name]
+            out_conf = self.digital_output_configs[output_name]
         except KeyError:
             _LOG.warning("No digital output config found named %r", output_name)
             return
         try:
-            module = self.gpio_modules[output_config["module"]]
+            module = self.gpio_modules[out_conf["module"]]
         except KeyError:
-            _LOG.warning("No GPIO module config found named %r", output_config["module"])
+            _LOG.warning("No GPIO module config found named %r", out_conf["module"])
             return
         if topic.endswith("/%s" % SET_SUFFIX):
             # This is a message to set a digital output to a given value
-            self.gpio_output_queues[output_config["module"]].put_nowait(
-                (module, output_config, payload)
-            )
+            self.gpio_output_queues[out_conf["module"]].put_nowait((out_conf, payload))
         else:
             # This must be a set_on_ms or set_off_ms topic
             desired_value = topic.endswith("/%s" % SET_ON_MS_SUFFIX)
@@ -836,19 +833,19 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     return
                 _LOG.info(
                     "Turning output '%s' %s for %s second(s)",
-                    output_config["name"],
+                    out_conf["name"],
                     "on" if desired_value else "off",
                     secs,
                 )
-                await self.set_digital_output(module, output_config, desired_value)
+                await self.set_digital_output(module, out_conf, desired_value)
                 await asyncio.sleep(secs)
                 _LOG.info(
                     "Turning output '%s' %s after %s second(s) elapsed",
-                    output_config["name"],
+                    out_conf["name"],
                     "off" if desired_value else "on",
                     secs,
                 )
-                await self.set_digital_output(module, output_config, not desired_value)
+                await self.set_digital_output(module, out_conf, not desired_value)
 
             task = self.loop.create_task(set_ms())
             self.unawaited_tasks.append(task)
@@ -944,7 +941,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
 
     async def digital_output_loop(
-        self, queue: "asyncio.Queue[Tuple[GenericGPIO, ConfigType, str]]"
+        self, module: GenericGPIO, queue: "asyncio.Queue[Tuple[ConfigType, str]]"
     ) -> None:
         """
         Handle digital output MQTT messages for a specific GPIO module.
@@ -957,22 +954,22 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         hold up /set messages that need to take place immediately.
         """
         while True:
-            module, output_config, payload = await queue.get()
-            if payload not in (output_config["on_payload"], output_config["off_payload"]):
+            out_conf, payload = await queue.get()
+            if payload not in (out_conf["on_payload"], out_conf["off_payload"]):
                 _LOG.warning(
                     "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed.",
                     payload,
-                    output_config["name"],
-                    output_config["on_payload"],
-                    output_config["off_payload"],
+                    out_conf["name"],
+                    out_conf["on_payload"],
+                    out_conf["off_payload"],
                 )
                 continue
 
-            value = payload == output_config["on_payload"]
-            await self.set_digital_output(module, output_config, value)
+            value = payload == out_conf["on_payload"]
+            await self.set_digital_output(module, out_conf, value)
 
             try:
-                msec = output_config["timed_set_ms"]
+                msec = out_conf["timed_set_ms"]
             except KeyError:
                 continue
 
@@ -986,10 +983,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         "Setting digital output '%s' back to its previous value after "
                         "configured 'timed_set_ms' delay of %sms"
                     ),
-                    output_config["name"],
+                    out_conf["name"],
                     msec,
                 )
-                await self.set_digital_output(module, output_config, not value)
+                await self.set_digital_output(module, out_conf, not value)
 
             task = self.loop.create_task(reset_timer())
             self.unawaited_tasks.append(task)

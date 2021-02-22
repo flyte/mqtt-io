@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 
 from behave import given, then, when  # type: ignore
-from mqtt_io.modules.gpio import InterruptEdge
+from mqtt_io.modules.gpio import InterruptEdge, PinDirection
 
 # pylint: disable=function-redefined,protected-access
 
@@ -38,6 +38,22 @@ def step(context: Any, module_name: str, pin_name: str) -> None:
         kwargs["pin_config"]["name"] for _, kwargs in module.setup_pin.call_args_list
     }
     assert pin_name in call_pin_names
+
+
+@then("{pin_name} pin should have been set up as an {io_dir}")  # type: ignore[no-redef]
+def step(context: Any, pin_name: str, io_dir: str) -> None:
+    assert io_dir in ("input", "output")
+    mqttio = context.data["mqttio"]
+    io_conf = getattr(mqttio, f"digital_{io_dir}_configs")[pin_name]
+    module = mqttio.gpio_modules[io_conf["module"]]
+    pin_dirs = {
+        kwargs["pin_config"]["name"]: args[1]
+        for args, kwargs in module.setup_pin.call_args_list
+    }
+    if io_dir == "input":
+        assert pin_dirs[pin_name] == PinDirection.INPUT
+    else:
+        assert pin_dirs[pin_name] == PinDirection.OUTPUT
 
 
 @then("GPIO module {module_name} {should_shouldnt} have a {setup_func_name}() call for {pin_name}")  # type: ignore[no-redef]
@@ -90,11 +106,46 @@ def step(context: Any, is_isnt: str, pin_name: str):
     if is_isnt == "is":
         assert (
             pin_name in poller_task_pin_names
-        ), "Should have a digital input poller task added to the task loop"
+        ), "Should have a digital input poller task added to the event loop"
     else:
         assert (
             pin_name not in poller_task_pin_names
-        ), "Shouldn't have a digital input poller task added to the task loop"
+        ), "Shouldn't have a digital input poller task added to the event loop"
+
+
+@then("a digital output loop task {is_isnt} added for GPIO module {module_name}")  # type: ignore[no-redef]
+def step(context: Any, is_isnt: str, module_name: str):
+    assert is_isnt in ("is", "isn't")
+    mqttio = context.data["mqttio"]
+    module = mqttio.gpio_modules[module_name]
+    task_modules = {
+        get_coro(task).cr_frame.f_locals["module"]
+        for task in mqttio.unawaited_tasks
+        if isinstance(task, asyncio.Task)  # concurrent.Future doesn't have get_coro()
+        and get_coro(task).__name__ == "digital_output_loop"
+    }
+    if is_isnt == "is":
+        assert (
+            module in task_modules
+        ), "Should have a digital output loop task added to unawaited_tasks"
+    else:
+        assert (
+            module not in task_modules
+        ), "Shouldn't have a digital output loop task added to unawaited_tasks"
+
+    task_modules = {
+        get_coro(task).cr_frame.f_locals["module"]
+        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        if get_coro(task).__name__ == "digital_output_loop"
+    }
+    if is_isnt == "is":
+        assert (
+            module in task_modules
+        ), "Should have a digital output loop task added to the event loop"
+    else:
+        assert (
+            module not in task_modules
+        ), "Shouldn't have a digital output loop task added to the event loop"
 
 
 @then("{pin_name} {should_shouldnt} be configured as a remote interrupt")  # type: ignore[no-redef]
