@@ -239,7 +239,7 @@ digital_inputs:
       extra_announce_payload:
         type: dict
         allow_unknown: yes
-        schema:
+        schema: {}
 
 digital_outputs:
   type: list
@@ -295,7 +295,7 @@ digital_outputs:
       extra_announce_payload:
         type: dict
         allow_unknown: yes
-        schema:
+        schema: {}
 
 sensor_inputs:
   type: list
