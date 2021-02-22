@@ -48,7 +48,7 @@ class Stream(GenericStream):
     """
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel
+        # pylint: disable=import-error,import-outside-toplevel
         import serial  # type: ignore
 
         self.ser = serial.Serial(
