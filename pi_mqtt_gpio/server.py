@@ -1009,6 +1009,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
         "pi-mqtt-gpio-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()[:8]
     )  # TODO: Unify with MQTT Client ID
     sensor_name = in_conf["name"]
+    expire_after = in_conf.get("expire_after")
     sensor_config = {
         "name": sensor_name,
         "unique_id": "%s_%s_output_%s" % (device_id, in_conf["module"], sensor_name),
@@ -1016,7 +1017,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
         "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
         "payload_available": mqtt_config["status_payload_running"],
         "payload_not_available": mqtt_config["status_payload_dead"],
-        "expire_after": 2 * int(in_conf.get("interval", "60")) + 5,
+        "expire_after":  expire_after if expire_after else 2 * int(in_conf.get("interval", "60")) + 5,
         "device": {
             "manufacturer": "MQTT GPIO",
             "identifiers": ["mqtt-gpio", device_id],

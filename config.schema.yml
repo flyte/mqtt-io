@@ -342,6 +342,10 @@ sensor_inputs:
         type: string
         required: no
         default: sensor
+      expire_after:
+        type: integer
+        required: no
+        min: 1
 
 stream_reads:
   type: list
