@@ -933,7 +933,7 @@ def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
     )  # TODO: Unify with MQTT Client ID
     sensor_name = in_conf["name"]
     sensor_config = {
-        "name": sensor_name,
+        "name": in_conf.get("display_name", None) or sensor_name,
         "unique_id": "%s_%s_input_%s" % (device_id, in_conf["module"], sensor_name),
         "state_topic": "%s/%s/%s" % (topic_prefix, INPUT_TOPIC, in_conf["name"]),
         "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
@@ -947,10 +947,12 @@ def hass_announce_digital_input(in_conf, topic_prefix, mqtt_config):
             "name": mqtt_config["discovery_name"],
         },
     }
+    if "device_class" in in_conf:
+        sensor_config["device_class"] = in_conf["device_class"]
 
     client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "binary_sensor", device_id, sensor_name),
+        % (mqtt_config["discovery_prefix"], in_conf.get("component", None) or "binary_sensor", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
@@ -988,7 +990,7 @@ def hass_announce_digital_output(out_conf, topic_prefix, mqtt_config):
 
     client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "switch", device_id, sensor_name),
+        % (mqtt_config["discovery_prefix"], out_conf.get("component", None) or "switch", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )
@@ -1007,7 +1009,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
     )  # TODO: Unify with MQTT Client ID
     sensor_name = in_conf["name"]
     sensor_config = {
-        "name": out_conf.get("display_name", None) or sensor_name,
+        "name": in_conf.get("display_name", None) or sensor_name,
         "unique_id": "%s_%s_output_%s" % (device_id, in_conf["module"], sensor_name),
         "state_topic": "%s/%s/%s" % (topic_prefix, SENSOR_TOPIC, in_conf["name"]),
         "availability_topic": "%s/%s" % (topic_prefix, mqtt_config["status_topic"]),
@@ -1025,7 +1027,7 @@ def hass_announce_sensor_input(in_conf, topic_prefix, mqtt_config):
 
     client.publish(
         "%s/%s/%s/%s/config"
-        % (mqtt_config["discovery_prefix"], "sensor", device_id, sensor_name),
+        % (mqtt_config["discovery_prefix"], in_conf.get("component", None) or "sensor", device_id, sensor_name),
         payload=json.dumps(sensor_config),
         retain=True,
     )

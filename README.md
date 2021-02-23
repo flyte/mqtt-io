@@ -19,6 +19,7 @@ Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for mor
     - [Sensors](#sensors-1)
     - [Streams](#streams-1)
     - [OrangePi boards](#orangepi-boards)
+    - [HomeAssistant discovery](#homeassistant-discovery)
   - [Serving Suggestion](#serving-suggestion)
   - [Docker](#docker)
 
@@ -263,6 +264,51 @@ gpio_modules:
     module: orangepi
     board: zero # Supported: ZERO, R1, ZEROPLUS, ZEROPLUS2H5, ZEROPLUS2H3, PCPCPLUS, ONE, LITE, PLUS2E, PC2, PRIME
     mode: board
+```
+
+### HomeAssistant discovery
+
+Metadata of all `sensor_inputs`, `digital_inputs` and `digital_outputs` can be published via HomeAssistant config messages to be discovered by a HomeAssistant instance that is listening on the same MQTT broker:
+
+```yaml
+mqtt:
+  discovery: yes
+  discovery_prefix: "homeassistant" # optional
+  discovery_name: "device1" # optional
+```
+
+The optional value `display_name`, `component` and `device_class` can be used to improve the autodetection with homeassistant.
+`display_name` and `component` can be used for digital_inputs, digital_outputs and sensor_inputs.
+`device_class` can only be used together with `digital_inputs`.
+
+```yaml
+digital_inputs:
+  - name: motion_sensor
+    display_name: PIR Garage # optional and defaults to `name` given above
+    device_class: motion # optional
+    component: binary_sensor # optional and defaults to `binary_sensor`
+    module: pi_gpio
+    pin: 22
+    retain: yes
+```
+
+```yaml
+digital_outputs:
+  - name: lamp
+    display_name: Garden light # optional and defaults to `name` given above
+    component: light # optional and defaults to `switch`
+    module: pi_gpio
+    pin: 21
+```
+
+```yaml
+sensor_inputs:
+  - name: lm75_temperature
+    display_name: LM75 Temperature # optional and defaults to `name` given above
+    component: sensor # optional and defaults to `sensor`
+    module: lm75_sensor
+    interval: 15
+    digits: 4
 ```
 
 ## Serving Suggestion
