@@ -1,10 +1,14 @@
 from typing import Any
-from unittest.mock import AsyncMock
 
 import yaml
 from behave import given, then, when  # type: ignore
 from mqtt_io import events
 from mqtt_io.server import MqttIo
+
+try:
+    from unittest.mock import AsyncMock  # type: ignore[attr-defined]
+except ImportError:
+    from mock import AsyncMock  # type: ignore[attr-defined]
 
 # pylint: disable=function-redefined,protected-access
 
@@ -18,14 +22,14 @@ def step(context: Any, event_type_name: str) -> None:
     mqttio.event_bus.subscribe(event_type, mock_sub)
 
 
-@then("{func_name} function should be subscribed to {event_type_name}")  # type: ignore
+@then("{func_name} function should be subscribed to {event_type_name}")  # type: ignore[no-redef]
 def step(context: Any, func_name: str, event_type_name: str) -> None:
     mqttio = context.data["mqttio"]
     event_type = getattr(events, event_type_name)
     assert func_name in {x.__name__ for x in mqttio.event_bus._listeners[event_type]}
 
 
-@then("{event_type_name} is fired with")
+@then("{event_type_name} is fired with")  # type: ignore[no-redef]
 def step(context: Any, event_type_name: str) -> None:
     data = yaml.safe_load(context.text)
     assert isinstance(data, dict), "Data provided to this step must be a YAML dict"

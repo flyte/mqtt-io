@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 
 from behave import given, then, when  # type: ignore
-from behave.api.async_step import async_run_until_complete
+from behave.api.async_step import async_run_until_complete  # type: ignore
 from mqtt_io.modules.gpio import InterruptEdge, PinDirection
 from mqtt_io.server import MqttIo
 
