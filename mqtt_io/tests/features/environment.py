@@ -14,6 +14,7 @@ def before_scenario(context: Any, scenario: Any) -> None:
         loop=asyncio.new_event_loop(),
         unawaited_tasks=[],
         event_subs={},
+        mocks={},
     )
 
 
