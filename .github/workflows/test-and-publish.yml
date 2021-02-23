@@ -17,6 +17,7 @@ jobs:
         if: matrix.python-version != '2.7'
       - run: pip install pytest mock -r requirements.txt
       - run: make schema
+        if: matrix.python-version != '2.7'
       - run: make black
         if: matrix.python-version != '2.7'
       - run: PYTHONPATH=$GITHUB_WORKSPACE py.test -m "not hw_raspberrypi and not mqtt"
@@ -36,6 +37,7 @@ jobs:
         if: matrix.python-version != '2.7'
       - run: pip install -r requirements.txt
       - run: make schema
+        if: matrix.python-version != '2.7'
       - run: make black
         if: matrix.python-version != '2.7'
       - run: pip install build
