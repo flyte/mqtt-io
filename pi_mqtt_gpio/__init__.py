@@ -1,7 +1,6 @@
 import yaml
 
-CONFIG_SCHEMA = yaml.safe_load(
-    """
+CONFIG_SCHEMA = yaml.safe_load("""
 mqtt:
   type: dict
   required: yes
@@ -43,6 +42,11 @@ mqtt:
       allowed:
         - "3.1"
         - "3.1.1"
+    keepalive:
+      type: integer
+      min: 1
+      required: no
+      default: 60
     status_topic:
       type: string
       required: no
@@ -198,10 +202,12 @@ digital_inputs:
       on_payload:
         type: string
         required: no
+        empty: no
         default: "ON"
       off_payload:
         type: string
         required: no
+        empty: no
         default: "OFF"
       inverted:
         type: boolean
@@ -265,10 +271,12 @@ digital_outputs:
         type: string
         required: no
         empty: no
+        default: "ON"
       off_payload:
         type: string
         required: no
         empty: no
+        default: "OFF"
       inverted:
         type: boolean
         required: no
@@ -397,5 +405,4 @@ logging:
         handlers: [console]
         propagate: yes
 
-"""
-)
+""")

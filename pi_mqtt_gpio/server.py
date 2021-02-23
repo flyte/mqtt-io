@@ -2,25 +2,27 @@ import argparse
 import json
 import logging
 import logging.config
-import yaml
-import sys
 import socket
 import ssl
-from time import sleep, time
-from importlib import import_module
-from hashlib import sha1
-
-import threading  # For callback functions
-from fractions import gcd  # for calculating the callback periodic time
+import sys
+import threading
 from functools import reduce
+from hashlib import sha1
+from importlib import import_module
+from time import sleep, time
 
-import paho.mqtt.client as mqtt
 import cerberus
+import paho.mqtt.client as mqtt
+import yaml
 
 from pi_mqtt_gpio import CONFIG_SCHEMA
-from pi_mqtt_gpio.modules import PinPullup, PinDirection, InterruptEdge, BASE_SCHEMA
+from pi_mqtt_gpio.modules import BASE_SCHEMA, InterruptEdge, PinDirection, PinPullup
 from pi_mqtt_gpio.scheduler import Scheduler, Task
 
+try:
+    from math import gcd
+except ImportError:
+    from fractions import gcd
 
 LOG_LEVEL_MAP = {
     mqtt.MQTT_LOG_INFO: logging.INFO,
@@ -317,7 +319,7 @@ def install_missing_requirements(module):
         if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
             pkgs_required.append(req)
     if pkgs_required:
-        from subprocess import check_call, CalledProcessError
+        from subprocess import CalledProcessError, check_call
 
         try:
             check_call([sys.executable, "-m", "pip", "install"] + pkgs_required)
@@ -1157,7 +1159,9 @@ def main(args):
         initialise_stream(stream_conf, STREAM_MODULES[stream_conf["module"]])
 
     try:
-        client.connect(config["mqtt"]["host"], config["mqtt"]["port"], 60)
+        client.connect(
+            config["mqtt"]["host"], config["mqtt"]["port"], config["mqtt"]["keepalive"]
+        )
     except socket.error as err:
         _LOG.fatal("Unable to connect to MQTT server: %s" % err)
         sys.exit(1)
@@ -1167,7 +1171,9 @@ def main(args):
         # If configured to do so, publish the initial states of the outputs
         initial_setting = out_conf.get("initial")
         if initial_setting is not None and out_conf.get("publish_initial", False):
-            payload = out_conf["on_payload" if initial_setting else "off_payload"]
+            payload = out_conf[
+                "on_payload" if initial_setting == "high" else "off_payload"
+            ]
             client.publish(
                 "%s/%s/%s" % (topic_prefix, OUTPUT_TOPIC, out_conf["name"]),
                 retain=out_conf["retain"],
