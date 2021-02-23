@@ -20,3 +20,11 @@ upload: packages
 graphs:
 	dot -Tsvg -O interrupt_handling.dot
 	dot -Tsvg -O interrupt_callbacks.dot
+
+coverage:
+	coverage run --source "." --omit "mqtt_io/tests/*,mqtt_io/modules/*" -m behave mqtt_io/tests/features
+	coverage report -m
+
+requirements:
+	poetry export > requirements.txt
+	echo "hbmqtt==0.9.6" >> requirements.txt

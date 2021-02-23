@@ -26,6 +26,50 @@ Feature: Invalid main config validation
 
     # GPIO
 
+    Scenario: Digital input with no existing module should fail
+        Given a valid config
+        And the config has an entry in gpio_modules with
+            """
+            name: mock
+            module: mock
+            """
+        And the config has an entry in digital_inputs with
+            """
+            name: mock0
+            module: mock
+            pin: 0
+            """
+        And the config has an entry in digital_inputs with
+            """
+            name: mock1
+            module: doesntexist
+            pin: 1
+            """
+        When we validate the main config
+        Then config validation fails
+
+    Scenario: Digital output with no existing module should fail
+        Given a valid config
+        And the config has an entry in gpio_modules with
+            """
+            name: mock
+            module: mock
+            """
+        And the config has an entry in digital_outputs with
+            """
+            name: mock0
+            module: mock
+            pin: 0
+            """
+        And the config has an entry in digital_outputs with
+            """
+            name: mock1
+            module: doesntexist
+            pin: 1
+            """
+        When we validate the main config
+        Then config validation fails
+
     Scenario: Two GPIO modules with the same name should fail
         Given a valid config
         And the config has an entry in gpio_modules with

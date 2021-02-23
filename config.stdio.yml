@@ -22,6 +22,7 @@ digital_inputs:
   - name: test
     module: stdio
     pin: 22
+    interrupt: rising
 
   - name: button
     module: stdio
@@ -31,6 +32,7 @@ digital_inputs:
     pullup: yes
     pulldown: no
     inverted: yes
+    interrupt: rising
     interrupt_for:
       - test
 

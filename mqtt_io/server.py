@@ -75,6 +75,7 @@ from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirec
 from .modules.sensor import GenericSensor
 from .modules.stream import GenericStream
 from .types import ConfigType, PinType, UnawaitedTaskType
+from .utils import PriorityCoro
 
 _LOG = logging.getLogger(__name__)
 
@@ -83,21 +84,21 @@ _LOG = logging.getLogger(__name__)
 def _init_module(
     module_config: Dict[str, Dict[str, Any]], module_type: Literal["gpio"]
 ) -> GenericGPIO:
-    ...
+    ...  # pragma: no cover
 
 
 @overload
 def _init_module(
     module_config: Dict[str, Dict[str, Any]], module_type: Literal["sensor"]
 ) -> GenericSensor:
-    ...
+    ...  # pragma: no cover
 
 
 @overload
 def _init_module(
     module_config: Dict[str, Dict[str, Any]], module_type: Literal["stream"]
 ) -> GenericStream:
-    ...
+    ...  # pragma: no cover
 
 
 def _init_module(
@@ -180,7 +181,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             """
             self.mqtt_task_queue = (  # pylint: disable=attribute-defined-outside-init
                 asyncio.PriorityQueue()
-            )  # type: asyncio.PriorityQueue[Tuple[int, Coroutine[Any, Any, Any]]]
+            )  # type: asyncio.PriorityQueue[PriorityCoro]
 
         self.loop.run_until_complete(create_mqtt_task_queue())
 
@@ -212,8 +213,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
             stream_conf = self.stream_configs[event.stream_name]
             self.mqtt_task_queue.put_nowait(
-                (
-                    MQTT_PUB_PRIORITY,
+                PriorityCoro(
                     self.mqtt.publish(
                         "/".join(
                             (
@@ -224,6 +224,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         ),
                         event.data,
                     ),
+                    MQTT_PUB_PRIORITY,
                 )
             )
 
@@ -277,7 +278,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         # Subscribe to stream send topics
         self.mqtt_task_queue.put_nowait(
-            (MQTT_SUB_PRIORITY, self._mqtt_subscribe(sub_topics))
+            PriorityCoro(self._mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
         )
 
     def _init_digital_inputs(self) -> None:
@@ -297,8 +298,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             in_conf = self.digital_input_configs[event.input_name]
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
             self.mqtt_task_queue.put_nowait(
-                (
-                    MQTT_PUB_PRIORITY,
+                PriorityCoro(
                     self.mqtt.publish(
                         "%s/%s/%s"
                         % (
@@ -308,6 +308,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         ),
                         val.encode("utf8"),
                     ),
+                    MQTT_PUB_PRIORITY,
                 )
             )
 
@@ -359,8 +360,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
             self.mqtt_task_queue.put_nowait(
-                (
-                    MQTT_PUB_PRIORITY,
+                PriorityCoro(
                     self.mqtt.publish(
                         "%s/output/%s"
                         % (self.config["mqtt"]["topic_prefix"], event.output_name),
@@ -368,6 +368,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         qos=1,
                         retain=out_conf["retain"],
                     ),
+                    MQTT_PUB_PRIORITY,
                 )
             )
 
@@ -419,7 +420,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     )
                 )
             self.mqtt_task_queue.put_nowait(
-                (MQTT_SUB_PRIORITY, self._mqtt_subscribe(topics))
+                PriorityCoro(self._mqtt_subscribe(topics), MQTT_SUB_PRIORITY)
             )
 
             # Fire DigitalOutputChangedEvents for initial values of outputs if required
@@ -433,8 +434,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     def _init_sensor_inputs(self) -> None:
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
             self.mqtt_task_queue.put_nowait(
-                (
-                    MQTT_PUB_PRIORITY,
+                PriorityCoro(
                     self.mqtt.publish(
                         "%s/%s/%s"
                         % (
@@ -444,6 +444,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         ),
                         str(event.value).encode("utf8"),
                     ),
+                    MQTT_PUB_PRIORITY,
                 )
             )
 
@@ -524,14 +525,14 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         _LOG.info("Connected to MQTT")
 
         self.mqtt_task_queue.put_nowait(
-            (
-                MQTT_PUB_PRIORITY,
+            PriorityCoro(
                 self.mqtt.publish(
                     "%s/%s" % (topic_prefix, config["status_topic"]),
                     config["status_payload_running"].encode("utf8"),
                     qos=1,
                     retain=True,
                 ),
+                MQTT_PUB_PRIORITY,
             )
         )
 
@@ -548,7 +549,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         for sens_conf in self.sensor_configs.values():
             coros.append(hass_announce_sensor_input(sens_conf, mqtt_config, self.mqtt))
         for coro in coros:
-            self.mqtt_task_queue.put_nowait((MQTT_ANNOUNCE_PRIORITY, coro))
+            self.mqtt_task_queue.put_nowait(PriorityCoro(coro, MQTT_ANNOUNCE_PRIORITY))
 
     async def _mqtt_subscribe(self, topics: List[str]) -> None:
         """
@@ -900,9 +901,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         we don't try to run MQTT tasks before the MQTT connection is initialised.
         """
         while True:
-            _, coro = await self.mqtt_task_queue.get()
+            entry = await self.mqtt_task_queue.get()
             try:
-                await coro
+                await entry.coro
             except Exception:  # pylint: disable=broad-except
                 _LOG.exception("Exception while handling MQTT task:")
 
@@ -1091,18 +1092,19 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         for task in self.tasks:
             task.cancel()
         _LOG.info("Waiting for main task to complete...")
-        all_done = False
-        while not all_done:
-            all_done = all(t.done() for t in self.tasks)
-            await asyncio.sleep(0.1)
+        await asyncio.gather(*self.tasks, return_exceptions=True)
+        # all_done = False
+        # while not all_done:
+        #     all_done = all(t.done() for t in self.tasks)
+        #     await asyncio.sleep(0.1)
 
         # Close any remaining unscheduled mqtt coroutines
         while True:
             try:
-                _, mqtt_coro = self.mqtt_task_queue.get_nowait()
+                mqtt_coro = self.mqtt_task_queue.get_nowait()
             except QueueEmpty:
                 break
-            mqtt_coro.close()
+            mqtt_coro.coro.close()
 
         current_task = asyncio.Task.current_task()
         tasks = [

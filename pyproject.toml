@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-io"
-version = "2.0.0"
+version = "2.0.0-b2"
 description = "Expose GPIO modules (Raspberry Pi, Beaglebone, PCF8754, PiFace2 etc.), digital sensors (LM75 etc.) and serial streams to an MQTT server for remote control and monitoring."
 authors = ["Ellis Percival <mqtt-io@failcode.co.uk>"]
 license = "MIT"
@@ -20,6 +20,7 @@ tox = "^3.22.0"
 pylint = "^2.6.2"
 mypy = "^0.812"
 behave = "^1.2.6"
+coverage = "^5.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
