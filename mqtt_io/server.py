@@ -560,12 +560,17 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
     # Runtime methods
 
-    async def digital_input_poller(
-        self, module: GenericGPIO, in_conf: ConfigType
+    async def _handle_digital_input_value(
+        self,
+        module: GenericGPIO,
+        in_conf: ConfigType,
+        value: bool,
+        last_value: Optional[bool],
     ) -> None:
         """
-        Polls a single digital input for changes and fires a DigitalInputchangedEvent
-        when it changes.
+        Handles values read from a digital input.
+
+        Fires a DigitalInputchangedEvent when it changes.
 
         This function also helps maintain the working state of pins which are configured
         as interrupts for other pins by checking if it's in the 'triggered' state. This
@@ -577,50 +582,57 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         If the interrupt lock is not acquired, then it means that the interrupt is already
         being handled, so we can check again on the next poll.
         """
-        last_value = None
-        while True:
-            value = await module.async_get_pin(in_conf["pin"])
-            if value != last_value:
-                _LOG.info(
-                    "Digital input '%s' value changed to %s", in_conf["name"], value
-                )
-                self.event_bus.fire(
-                    DigitalInputChangedEvent(in_conf["name"], last_value, value)
-                )
-                last_value = value
-            # If the value is now the same as the 'interrupt' value (falling, rising)
-            # and we're a remote interrupt then just trigger the remote interrupt
-            interrupt = in_conf.get("interrupt")
-            interrupt_for = in_conf.get("interrupt_for")
-            if not interrupt or not interrupt_for:
-                continue
-            if not any(
-                (
-                    interrupt == "rising" and value,
-                    interrupt == "falling" and not value,
-                    # Doesn't work for 'both' because there's no one 'triggered' state
-                    # to check if we're stuck in.
-                    # interrupt == "both",
-                )
-            ):
-                continue
-            interrupt_lock = self.interrupt_locks[in_conf["name"]]
-            if not interrupt_lock.acquire(blocking=False):
-                _LOG.debug(
-                    (
-                        "Polled an interrupt value on pin '%s', but we're "
-                        "not triggering the remote interrupt because we're "
-                        "already handling it."
-                    ),
-                    in_conf["name"],
-                )
-                continue
+        if value != last_value:
+            _LOG.info("Digital input '%s' value changed to %s", in_conf["name"], value)
+            self.event_bus.fire(
+                DigitalInputChangedEvent(in_conf["name"], last_value, value)
+            )
+            last_value = value
+        # If the value is now the same as the 'interrupt' value (falling, rising)
+        # and we're a remote interrupt then just trigger the remote interrupt
+        interrupt = in_conf.get("interrupt")
+        interrupt_for = in_conf.get("interrupt_for")
+        if not interrupt or not interrupt_for:
+            return
+        if not any(
+            (
+                interrupt == "rising" and value,
+                interrupt == "falling" and not value,
+                # Doesn't work for 'both' because there's no one 'triggered' state
+                # to check if we're stuck in.
+                # interrupt == "both",
+            )
+        ):
+            return
+        interrupt_lock = self.interrupt_locks[in_conf["name"]]
+        if not interrupt_lock.acquire(blocking=False):
             _LOG.debug(
-                "Polled value of %s on '%s' triggered remote interrupt",
-                value,
+                (
+                    "Polled an interrupt value on pin '%s', but we're "
+                    "not triggering the remote interrupt because we're "
+                    "already handling it."
+                ),
                 in_conf["name"],
             )
-            self.handle_remote_interrupt(interrupt_for, interrupt_lock)
+            return
+        _LOG.debug(
+            "Polled value of %s on '%s' triggered remote interrupt",
+            value,
+            in_conf["name"],
+        )
+        self.handle_remote_interrupt(interrupt_for, interrupt_lock)
+
+    async def digital_input_poller(
+        self, module: GenericGPIO, in_conf: ConfigType
+    ) -> None:
+        """
+        Polls a single digital input for changes and calls the handler function when it's
+        been read.
+        """
+        last_value: Optional[bool] = None
+        while True:
+            value = await module.async_get_pin(in_conf["pin"])
+            await self._handle_digital_input_value(module, in_conf, value, last_value)
             await asyncio.sleep(in_conf["poll_interval"])
 
     async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:

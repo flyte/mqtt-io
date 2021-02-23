@@ -1,4 +1,3 @@
-@wip
 Feature: Tests for the successful initialisation of the GPIO aspects of the server
     Scenario: Successful initialisation of mock GPIO module
         Given a valid config

@@ -6,7 +6,6 @@ import asyncio
 import logging
 from abc import ABC
 from dataclasses import dataclass
-from types import FunctionType
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Type
 
 from .types import UnawaitedTaskType
@@ -124,9 +123,9 @@ class EventBus:
             )
         if not Event in event_class.mro():
             raise TypeError("Event class must be a subclass of mqtt_io.events.Event")
-        if not isinstance(callback, FunctionType):
+        if not isinstance(callback, Callable):
             raise TypeError(
-                "callback must be of type 'FunctionType'. Got type %s." % type(callback)
+                "callback must be of type 'Callable'. Got type %s." % type(callback)
             )
         self._listeners.setdefault(event_class, []).append(callback)
 

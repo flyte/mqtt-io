@@ -2,7 +2,9 @@ import asyncio
 from typing import Any
 
 from behave import given, then, when  # type: ignore
+from behave.api.async_step import async_run_until_complete
 from mqtt_io.modules.gpio import InterruptEdge, PinDirection
+from mqtt_io.server import MqttIo
 
 # pylint: disable=function-redefined,protected-access
 
@@ -168,3 +170,17 @@ def step(context: Any, pin_name: str, direction_str: str):
     module = mqttio.gpio_modules[in_conf["module"]]
     direction = module.interrupt_edges[in_conf["pin"]]
     assert direction == getattr(InterruptEdge, direction_str.upper())
+
+
+@when("{pin_name} reads a value of {value_str} with a last value of {last_value_str}")  # type: ignore[no-redef]
+@async_run_until_complete
+async def step(context: Any, pin_name: str, value_str: str, last_value_str: str) -> None:
+    assert value_str in ("true", "false")
+    assert last_value_str in ("null", "true", "false")
+    value_map = dict(true=True, false=False, null=None)
+    mqttio: MqttIo = context.data["mqttio"]
+    in_conf = mqttio.digital_input_configs[pin_name]
+    module = mqttio.gpio_modules[in_conf["module"]]
+    value = value_map[value_str]
+    last_value = value_map[last_value_str]
+    await mqttio._handle_digital_input_value(module, in_conf, value, last_value)

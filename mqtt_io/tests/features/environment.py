@@ -2,18 +2,26 @@ import asyncio
 from typing import Any
 
 
+# fixture of event handler that calls a mock, so we can see if an event has been called
+
+
 def before_scenario(context: Any, scenario: Any) -> None:
     """
     Initialise data.
     """
-    context.data = dict(raw_config={}, loop=asyncio.new_event_loop())
+    context.data = dict(
+        raw_config={},
+        loop=asyncio.new_event_loop(),
+        unawaited_tasks=[],
+        event_subs={},
+    )
 
 
 def after_scenario(context: Any, scenario: Any) -> None:
     """
     Shut down asyncio loop cleanly.
     """
-    loop = context.data["loop"]
+    loop: asyncio.AbstractEventLoop = context.data["loop"]
     try:
         mqttio = context.data["mqttio"]
     except (KeyError, AttributeError):
