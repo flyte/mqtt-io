@@ -28,3 +28,7 @@ coverage:
 requirements:
 	poetry export > requirements.txt
 	echo "hbmqtt==0.9.6" >> requirements.txt
+
+lint:
+	pylint -d fixme mqtt_io
+	mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
