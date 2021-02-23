@@ -214,7 +214,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             stream_conf = self.stream_configs[event.stream_name]
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
-                    self.mqtt.publish(
+                    self._mqtt_publish(
                         "/".join(
                             (
                                 self.config["mqtt"]["topic_prefix"],
@@ -299,7 +299,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             val = in_conf["on_payload"] if event.to_value else in_conf["off_payload"]
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
-                    self.mqtt.publish(
+                    self._mqtt_publish(
                         "%s/%s/%s"
                         % (
                             self.config["mqtt"]["topic_prefix"],
@@ -361,7 +361,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
-                    self.mqtt.publish(
+                    self._mqtt_publish(
                         "%s/output/%s"
                         % (self.config["mqtt"]["topic_prefix"], event.output_name),
                         val.encode("utf8"),
@@ -435,7 +435,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
-                    self.mqtt.publish(
+                    self._mqtt_publish(
                         "%s/%s/%s"
                         % (
                             self.config["mqtt"]["topic_prefix"],
@@ -526,7 +526,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         self.mqtt_task_queue.put_nowait(
             PriorityCoro(
-                self.mqtt.publish(
+                self._mqtt_publish(
                     "%s/%s" % (topic_prefix, config["status_topic"]),
                     config["status_payload_running"].encode("utf8"),
                     qos=1,
@@ -559,11 +559,23 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         for topic in topics:
             _LOG.info("Subscribed to topic: %r", topic)
 
+    async def _mqtt_publish(
+        self, topic: str, payload: bytes, *args: Any, **kwargs: Any
+    ) -> None:
+        try:
+            payload_str = payload.decode("utf8")
+        except UnicodeDecodeError:
+            _LOG.debug(
+                "Publishing MQTT message on topic %r with non-unicode payload", topic
+            )
+        else:
+            _LOG.debug("Publishing MQTT message on topic %r: %r", topic, payload_str)
+        await self.mqtt.publish(topic, payload, *args, **kwargs)
+
     # Runtime methods
 
     async def _handle_digital_input_value(
         self,
-        module: GenericGPIO,
         in_conf: ConfigType,
         value: bool,
         last_value: Optional[bool],
@@ -588,7 +600,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.event_bus.fire(
                 DigitalInputChangedEvent(in_conf["name"], last_value, value)
             )
-            last_value = value
         # If the value is now the same as the 'interrupt' value (falling, rising)
         # and we're a remote interrupt then just trigger the remote interrupt
         interrupt = in_conf.get("interrupt")
@@ -633,7 +644,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         last_value: Optional[bool] = None
         while True:
             value = await module.async_get_pin(in_conf["pin"])
-            await self._handle_digital_input_value(module, in_conf, value, last_value)
+            await self._handle_digital_input_value(in_conf, value, last_value)
+            last_value = value
             await asyncio.sleep(in_conf["poll_interval"])
 
     async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:
@@ -921,7 +933,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     _LOG.debug("Received message on topic %r: %r", topic, payload_str)
                 await self._handle_mqtt_msg(topic, payload)
         finally:
-            await self.mqtt.publish(
+            await self._mqtt_publish(
                 "%s/%s"
                 % (
                     self.config["mqtt"]["topic_prefix"],

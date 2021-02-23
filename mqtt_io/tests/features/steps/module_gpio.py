@@ -180,7 +180,6 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
     value_map = dict(true=True, false=False, null=None)
     mqttio: MqttIo = context.data["mqttio"]
     in_conf = mqttio.digital_input_configs[pin_name]
-    module = mqttio.gpio_modules[in_conf["module"]]
     value = value_map[value_str]
     last_value = value_map[last_value_str]
-    await mqttio._handle_digital_input_value(module, in_conf, value, last_value)
+    await mqttio._handle_digital_input_value(in_conf, value, last_value)
