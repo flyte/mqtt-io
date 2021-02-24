@@ -76,6 +76,10 @@ mqtt:
       type: string
       required: no
       default: "MQTT IO"
+    client_module:
+      type: string
+      required: no
+      default: mqtt_io.mqtt.asyncio_mqtt
     tls:
       type: dict
       required: no
@@ -352,6 +356,10 @@ sensor_inputs:
       unit_of_measurement:
         type: string
         required: no
+      expire_after:
+        type: integer
+        required: no
+        min: 1
 
 stream_reads:
   type: list

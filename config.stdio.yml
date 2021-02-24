@@ -4,7 +4,7 @@ mqtt:
   #  port: 8884
   user: ""
   password: ""
-  topic_prefix: mqtt_gpio
+  topic_prefix: mqtt_io
   clean_session: yes
   protocol: 3.1.1
   discovery: yes
@@ -57,6 +57,16 @@ logging:
       format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
       datefmt: "%Y-%m-%d %H:%M:%S"
   loggers:
+    paho:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    mqtt:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
     mqtt_io:
       level: DEBUG
       handlers:

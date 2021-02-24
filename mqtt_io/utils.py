@@ -1,8 +1,8 @@
 """
 Utils for MQTT IO project.
 """
-
-from typing import Coroutine, Any, cast
+import asyncio
+from typing import Any, Coroutine, List, cast
 
 
 class PriorityCoro:
@@ -19,3 +19,18 @@ class PriorityCoro:
 
     def __eq__(self, other: Any) -> bool:
         return cast(bool, self.priority == other.priority)
+
+
+def create_unawaited_task_threadsafe(
+    loop: asyncio.AbstractEventLoop,
+    unawaited_tasks: List["asyncio.Task[Any]"],
+    coro: Coroutine[Any, Any, None],
+) -> None:
+    """
+    Schedule a coroutine on the loop and add the Task to unawaited_tasks.
+    """
+
+    def callback() -> None:
+        unawaited_tasks.append(loop.create_task(coro))
+
+    loop.call_soon_threadsafe(callback)

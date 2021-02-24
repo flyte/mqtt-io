@@ -2,6 +2,11 @@
 Contains the base class and some enums that are shared across all GPIO modules.
 """
 
+# IDEA: Possible implementations -@flyte at 23/02/2021, 21:37:43
+# Decide which executor we should use for async functions.
+# https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
+# Should we use the default executor, or have one per module?
+
 import abc
 import asyncio
 import logging

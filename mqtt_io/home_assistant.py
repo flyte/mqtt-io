@@ -6,155 +6,114 @@ https://www.home-assistant.io/docs/mqtt/discovery/
 
 import json
 import logging
-from typing import TYPE_CHECKING
+from typing import Any, Dict
 
 from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_SUFFIX
+from .mqtt import MQTTClientOptions, MQTTMessageSend
 from .types import ConfigType
-
-if TYPE_CHECKING:
-    from hbmqtt.client import MQTTClient  # type: ignore
 
 _LOG = logging.getLogger(__name__)
 
 
-async def hass_announce_digital_input(
-    in_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: "MQTTClient"
-) -> None:
+def get_common_config(
+    mqtt_config: ConfigType, mqtt_options: MQTTClientOptions
+) -> Dict[str, Any]:
     """
-    Announces digital input as binary_sensor to HomeAssistant.
-    :param in_conf: Input config
-    :type in_conf: dict
-    :return: None
-    :rtype: NoneType
+    Return config that's common across all HQ discovery announcements.
     """
-    sensor_name = in_conf["name"]
-    sensor_config = {
-        "name": sensor_name,
-        "unique_id": "%s_%s_input_%s"
-        % (mqtt_client.client_id, in_conf["module"], sensor_name),
-        "state_topic": "%s/%s/%s"
-        % (mqtt_config["topic_prefix"], INPUT_TOPIC, in_conf["name"]),
-        "availability_topic": "%s/%s"
-        % (mqtt_config["topic_prefix"], mqtt_config["status_topic"]),
-        "payload_available": mqtt_config["status_payload_running"],
-        "payload_not_available": mqtt_config["status_payload_dead"],
-        "payload_on": in_conf["on_payload"],
-        "payload_off": in_conf["off_payload"],
-        "device": {
-            "manufacturer": "MQTT IO",
-            "identifiers": ["mqtt-io", mqtt_client.client_id],
-            "name": mqtt_config["discovery_name"],
-        },
-    }
-
-    _LOG.info(
-        "Sending Home Assistant discovery message for digital input '%s'", in_conf["name"]
-    )
-    await mqtt_client.publish(
-        "%s/%s/%s/%s/config"
-        % (
-            mqtt_config["discovery_prefix"],
-            "binary_sensor",
-            mqtt_client.client_id,
-            sensor_name,
+    return dict(
+        availability_topic="/".join(
+            (mqtt_config["topic_prefix"], mqtt_config["status_topic"])
         ),
+        payload_available=mqtt_config["status_payload_running"],
+        payload_not_available=mqtt_config["status_payload_dead"],
+        device=dict(
+            manufacturer="MQTT IO",
+            identifiers=["mqtt-io", mqtt_options.client_id],
+            name=mqtt_config["discovery_name"],
+        ),
+    )
+
+
+def hass_announce_digital_input(
+    in_conf: ConfigType, mqtt_config: ConfigType, mqtt_options: MQTTClientOptions
+) -> MQTTMessageSend:
+    """
+    Create a message which announces digital input as binary_sensor to Home Assistant.
+    """
+    name: str = in_conf["name"]
+    disco_prefix: str = mqtt_config["discovery_prefix"]
+    sensor_config = get_common_config(mqtt_config, mqtt_options)
+    sensor_config.update(
+        dict(
+            name=name,
+            unique_id=f"{mqtt_options.client_id}_{in_conf['module']}_input_{name}",
+            state_topic="/".join((mqtt_config["topic_prefix"], INPUT_TOPIC, name)),
+            payload_on=in_conf["on_payload"],
+            payload_off=in_conf["off_payload"],
+        )
+    )
+    return MQTTMessageSend(
+        "/".join((disco_prefix, "binary_sensor", mqtt_options.client_id, name, "config")),
         json.dumps(sensor_config).encode("utf8"),
         retain=True,
     )
 
 
-async def hass_announce_digital_output(
-    out_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: "MQTTClient"
-) -> None:
+def hass_announce_digital_output(
+    out_conf: ConfigType,
+    mqtt_config: ConfigType,
+    mqtt_options: MQTTClientOptions,
+) -> MQTTMessageSend:
     """
-    Announces digital output as switch to HomeAssistant.
-    :param out_conf: Output config
-    :type out_conf: dict
-    :return: None
-    :rtype: NoneType
+    Create a message which announces digital output as switch to Home Assistant.
     """
-    switch_name = out_conf["name"]
-    switch_config = {
-        "name": switch_name,
-        "unique_id": "%s_%s_output_%s"
-        % (mqtt_client.client_id, out_conf["module"], switch_name),
-        "state_topic": "%s/%s/%s"
-        % (mqtt_config["topic_prefix"], OUTPUT_TOPIC, out_conf["name"]),
-        "command_topic": "%s/%s/%s/%s"
-        % (mqtt_config["topic_prefix"], OUTPUT_TOPIC, out_conf["name"], SET_SUFFIX),
-        "availability_topic": "%s/%s"
-        % (mqtt_config["topic_prefix"], mqtt_config["status_topic"]),
-        "payload_available": mqtt_config["status_payload_running"],
-        "payload_not_available": mqtt_config["status_payload_dead"],
-        "payload_on": out_conf["on_payload"],
-        "payload_off": out_conf["off_payload"],
-        "device": {
-            "manufacturer": "MQTT IO",
-            "identifiers": ["mqtt-io", mqtt_client.client_id],
-            "name": mqtt_config["discovery_name"],
-        },
-    }
-
-    _LOG.info(
-        "Sending Home Assistant discovery message for digital output '%s'",
-        out_conf["name"],
+    name: str = out_conf["name"]
+    prefix: str = mqtt_config["topic_prefix"]
+    disco_prefix: str = mqtt_config["discovery_prefix"]
+    switch_config = get_common_config(mqtt_config, mqtt_options)
+    switch_config.update(
+        dict(
+            name=name,
+            unique_id=f"{mqtt_options.client_id}_{out_conf['module']}_output_{name}",
+            state_topic="/".join((prefix, OUTPUT_TOPIC, name)),
+            command_topic="/".join((prefix, OUTPUT_TOPIC, name, SET_SUFFIX)),
+            payload_on=out_conf["on_payload"],
+            payload_off=out_conf["off_payload"],
+        )
     )
-    await mqtt_client.publish(
-        "%s/%s/%s/%s/config"
-        % (
-            mqtt_config["discovery_prefix"],
-            "switch",
-            mqtt_client.client_id,
-            switch_name,
-        ),
+    return MQTTMessageSend(
+        "/".join((disco_prefix, "switch", mqtt_options.client_id, name, "config")),
         json.dumps(switch_config).encode("utf8"),
         retain=True,
     )
 
 
-async def hass_announce_sensor_input(
-    sens_conf: ConfigType, mqtt_config: ConfigType, mqtt_client: "MQTTClient"
-) -> None:
+def hass_announce_sensor_input(
+    sens_conf: ConfigType,
+    mqtt_config: ConfigType,
+    mqtt_options: MQTTClientOptions,
+) -> MQTTMessageSend:
     """
-    Announces digital output as sensor to HomeAssistant.
-    :param sens_conf: Sensor config
-    :type sens_conf: dict
-    :return: None
-    :rtype: NoneType
+    Create a message which announces digital output as sensor to Home Assistant.
     """
-    sensor_name = sens_conf["name"]
-    sensor_config = {
-        "name": sensor_name,
-        "unique_id": "%s_%s_output_%s"
-        % (mqtt_client.client_id, sens_conf["module"], sensor_name),
-        "state_topic": "%s/%s/%s"
-        % (mqtt_config["topic_prefix"], SENSOR_TOPIC, sens_conf["name"]),
-        "availability_topic": "%s/%s"
-        % (mqtt_config["topic_prefix"], mqtt_config["status_topic"]),
-        "payload_available": mqtt_config["status_payload_running"],
-        "payload_not_available": mqtt_config["status_payload_dead"],
-        "expire_after": 2 * int(sens_conf.get("interval", "60")) + 5,
-        "device": {
-            "manufacturer": "MQTT IO",
-            "identifiers": ["mqtt-io", mqtt_client.client_id],
-            "name": mqtt_config["discovery_name"],
-        },
-    }
+    name: str = sens_conf["name"]
+    prefix: str = mqtt_config["topic_prefix"]
+    disco_prefix: str = mqtt_config["discovery_prefix"]
+    expire_after: int = sens_conf.get("expire_after", sens_conf["interval"] * 2 + 5)
+    sensor_config = get_common_config(mqtt_config, mqtt_options)
+    sensor_config.update(
+        dict(
+            name=name,
+            unique_id=f"{mqtt_options.client_id}_{sens_conf['module']}_sensor_{name}",
+            state_topic="/".join((prefix, SENSOR_TOPIC, name)),
+            expire_after=expire_after,
+        )
+    )
     if "unit_of_measurement" in sens_conf:
         sensor_config["unit_of_measurement"] = sens_conf["unit_of_measurement"]
-
-    _LOG.info(
-        "Sending Home Assistant discovery message for sensor '%s'",
-        sens_conf["name"],
-    )
-    await mqtt_client.publish(
-        "%s/%s/%s/%s/config"
-        % (
-            mqtt_config["discovery_prefix"],
-            "sensor",
-            mqtt_client.client_id,
-            sensor_name,
-        ),
+    return MQTTMessageSend(
+        "/".join((disco_prefix, "sensor", mqtt_options.client_id, name, "config")),
         json.dumps(sensor_config).encode("utf8"),
         retain=True,
     )

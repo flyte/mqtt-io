@@ -6,11 +6,15 @@ import asyncio
 import logging
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Type
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Type
 
-from .types import UnawaitedTaskType
+from .utils import create_unawaited_task_threadsafe
 
 _LOG = logging.getLogger(__name__)
+
+# Unfortunately can't use Callable[[Event], Coroutine[Any, Any, None]] here because
+# Callable[] is 'contravariant'.
+ListenerType = Callable[[Any], Coroutine[Any, Any, None]]
 
 
 @dataclass
@@ -79,11 +83,11 @@ class EventBus:
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
-        unawaited_tasks: List[UnawaitedTaskType],
+        unawaited_tasks: List["asyncio.Task[Any]"],
     ):
         self._loop = loop
         self._unawaited_tasks = unawaited_tasks
-        self._listeners: Dict[Type[Event], List[Callable[[Any], Awaitable[None]]]] = {}
+        self._listeners: Dict[Type[Event], List[ListenerType]] = {}
 
     def fire(self, event: Event) -> None:
         """
@@ -103,16 +107,14 @@ class EventBus:
 
         for listener in listeners:
             # Run threadsafe in case we're firing events from interrupt callback threads
-            self._unawaited_tasks.append(
-                asyncio.run_coroutine_threadsafe(listener(event), self._loop)
+            create_unawaited_task_threadsafe(
+                self._loop, self._unawaited_tasks, listener(event)
             )
 
     def subscribe(
         self,
         event_class: Type[Event],
-        # Unfortunately can't use Callable[[Event], Awaitable[None]] here because
-        # Callable[] is 'contravariant'.
-        callback: Callable[[Any], Awaitable[None]],
+        callback: ListenerType,
     ) -> Callable[[], None]:
         """
         Add a coroutine to be used as a callback when the given event class is fired.

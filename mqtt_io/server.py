@@ -20,19 +20,15 @@ from hashlib import sha1
 from importlib import import_module
 from typing import (
     Any,
-    Coroutine,
     Dict,
     List,
     Optional,
     Tuple,
     Type,
     Union,
-    cast,
     overload,
 )
 
-from hbmqtt.client import MQTTClient  # type: ignore
-from hbmqtt.mqtt.constants import QOS_1  # type: ignore
 from typing_extensions import Literal
 
 from .config import (
@@ -74,10 +70,20 @@ from .modules import install_missing_requirements
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .modules.sensor import GenericSensor
 from .modules.stream import GenericStream
-from .types import ConfigType, PinType, UnawaitedTaskType
-from .utils import PriorityCoro
+from .mqtt import (
+    AbstractMQTTClient,
+    MQTTClientOptions,
+    MQTTMessageSend,
+    MQTTTLSOptions,
+    MQTTWill,
+)
+from .types import ConfigType, PinType
+from .utils import PriorityCoro, create_unawaited_task_threadsafe
 
 _LOG = logging.getLogger(__name__)
+
+# This could be configurable if we make another MQTT module
+_MQTT_CLIENT_MODULE = "mqtt.asyncio_mqtt"
 
 
 @overload
@@ -146,6 +152,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self, config: Dict[str, Any], loop: Optional[asyncio.AbstractEventLoop] = None
     ) -> None:
         self.config = config
+        self._init_mqtt_config()
 
         # GPIO
         self.gpio_configs: Dict[str, ConfigType] = {}
@@ -168,22 +175,58 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         )  # type: Dict[str, asyncio.Queue[Tuple[ConfigType, str]]]
 
         self.loop = loop or asyncio.get_event_loop()
-        self.tasks = []  # type: List[asyncio.Future[Any]]
-        self.unawaited_tasks: List[UnawaitedTaskType] = []
+        self.tasks: List["asyncio.Task[Any]"] = []
+        self.unawaited_tasks: List["asyncio.Task[Any]"] = []
 
         self.event_bus = EventBus(self.loop, self.unawaited_tasks)
-        self.mqtt: MQTTClient = None
+        self.mqtt: Optional[AbstractMQTTClient] = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
 
-        async def create_mqtt_task_queue() -> None:
-            """
-            Create the queue on the loop we're going to use.
-            """
-            self.mqtt_task_queue = (  # pylint: disable=attribute-defined-outside-init
-                asyncio.PriorityQueue()
-            )  # type: asyncio.PriorityQueue[PriorityCoro]
+        self.mqtt_task_queue: "asyncio.PriorityQueue[PriorityCoro]"
+        self.mqtt_connected: asyncio.Event
 
-        self.loop.run_until_complete(create_mqtt_task_queue())
+        async def create_loop_resources() -> None:
+            """
+            Create non-threadsafe resources on the loop we're going to use.
+            """
+            self.mqtt_task_queue = asyncio.PriorityQueue()
+            self.mqtt_connected = asyncio.Event()
+
+        self.loop.run_until_complete(create_loop_resources())
+
+    def _init_mqtt_config(self) -> None:
+        config: ConfigType = self.config["mqtt"]
+        topic_prefix: str = config["topic_prefix"]
+
+        client_id: Optional[str] = config["client_id"]
+        if not client_id:
+            client_id = "mqtt-io-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
+
+        tls_enabled: bool = config.get("tls", {}).get("enabled")
+
+        tls_options = None
+        if tls_enabled:
+            tls_options = MQTTTLSOptions(
+                ca_certs=config["tls"]["ca_certs"],
+                certfile=config["tls"]["certfile"],
+                keyfile=config["tls"]["keyfile"],
+                ciphers=config["tls"]["ciphers"],
+            )
+
+        self.mqtt_client_options = MQTTClientOptions(
+            hostname=config["host"],
+            port=config["port"],
+            client_id=client_id,
+            keepalive=config["keepalive"],
+            clean_session=config["clean_session"],
+            tls_options=tls_options,
+            will=MQTTWill(
+                topic="/".join((topic_prefix, config["status_topic"])),
+                payload=config["status_payload_dead"].encode("utf8"),
+                qos=1,
+                retain=True,
+            ),
+        )
 
     # Init methods
 
@@ -215,14 +258,16 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
                     self._mqtt_publish(
-                        "/".join(
-                            (
-                                self.config["mqtt"]["topic_prefix"],
-                                STREAM_TOPIC,
-                                stream_conf["name"],
-                            )
-                        ),
-                        event.data,
+                        MQTTMessageSend(
+                            "/".join(
+                                (
+                                    self.config["mqtt"]["topic_prefix"],
+                                    STREAM_TOPIC,
+                                    stream_conf["name"],
+                                )
+                            ),
+                            event.data,
+                        )
                     ),
                     MQTT_PUB_PRIORITY,
                 )
@@ -277,9 +322,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
 
         # Subscribe to stream send topics
-        self.mqtt_task_queue.put_nowait(
-            PriorityCoro(self._mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
-        )
+        if sub_topics:
+            self.mqtt_task_queue.put_nowait(
+                PriorityCoro(self._mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
+            )
 
     def _init_digital_inputs(self) -> None:
         """
@@ -300,13 +346,16 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
                     self._mqtt_publish(
-                        "%s/%s/%s"
-                        % (
-                            self.config["mqtt"]["topic_prefix"],
-                            INPUT_TOPIC,
-                            event.input_name,
-                        ),
-                        val.encode("utf8"),
+                        MQTTMessageSend(
+                            "/".join(
+                                (
+                                    self.config["mqtt"]["topic_prefix"],
+                                    INPUT_TOPIC,
+                                    event.input_name,
+                                )
+                            ),
+                            val.encode("utf8"),
+                        )
                     ),
                     MQTT_PUB_PRIORITY,
                 )
@@ -362,11 +411,17 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
                     self._mqtt_publish(
-                        "%s/output/%s"
-                        % (self.config["mqtt"]["topic_prefix"], event.output_name),
-                        val.encode("utf8"),
-                        qos=1,
-                        retain=out_conf["retain"],
+                        MQTTMessageSend(
+                            "/".join(
+                                (
+                                    self.config["mqtt"]["topic_prefix"],
+                                    "output",
+                                    event.output_name,
+                                )
+                            ),
+                            val.encode("utf8"),
+                            retain=out_conf["retain"],
+                        )
                     ),
                     MQTT_PUB_PRIORITY,
                 )
@@ -436,13 +491,16 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
                     self._mqtt_publish(
-                        "%s/%s/%s"
-                        % (
-                            self.config["mqtt"]["topic_prefix"],
-                            SENSOR_TOPIC,
-                            event.sensor_name,
-                        ),
-                        str(event.value).encode("utf8"),
+                        MQTTMessageSend(
+                            "/".join(
+                                (
+                                    self.config["mqtt"]["topic_prefix"],
+                                    SENSOR_TOPIC,
+                                    event.sensor_name,
+                                )
+                            ),
+                            str(event.value).encode("utf8"),
+                        )
                     ),
                     MQTT_PUB_PRIORITY,
                 )
@@ -476,101 +534,100 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
             self.unawaited_tasks.append(self.loop.create_task(poll_sensor()))
 
-    async def _init_mqtt(self) -> None:
+    async def _connect_mqtt(self) -> None:
         config: ConfigType = self.config["mqtt"]
         topic_prefix: str = config["topic_prefix"]
-
-        client_id: Optional[str] = config["client_id"]
-        if not client_id:
-            client_id = "mqtt-io-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
-
-        tls_enabled: bool = config.get("tls", {}).get("enabled")
-
-        uri = "mqtt%s://" % ("s" if tls_enabled else "")
-        if config["user"] and config["password"]:
-            uri += "%s:%s@" % (config["user"], config["password"])
-        uri += "%s:%s" % (config["host"], config["port"])
-
-        client_config = dict(
-            keep_alive=config["keepalive"],
-        )
-        connect_kwargs = dict(cleansession=config["clean_session"])
-        if tls_enabled:
-            tls_config = config["tls"]
-            if tls_config.get("certfile") and tls_config.get("keyfile"):
-                client_config.update(
-                    dict(
-                        certfile=tls_config.get("certfile") or None,
-                        keyfile=tls_config.get("keyfile") or None,
-                    )
-                )
-            client_config["check_hostname"] = not tls_config["insecure"]
-            connect_kwargs.update(
-                dict(
-                    capath=tls_config.get("ca_certs"),
-                    cafile=tls_config.get("ca_file"),
-                    cadata=tls_config.get("ca_data"),
-                )
-            )
-        client_config["will"] = dict(
-            retain=True,
-            topic="%s/%s" % (topic_prefix, config["status_topic"]),
-            message=config["status_payload_dead"].encode("utf8"),
-            qos=1,
+        self.mqtt = AbstractMQTTClient.get_implementation(config["client_module"])(
+            self.mqtt_client_options
         )
 
-        self.mqtt = MQTTClient(client_id=client_id, config=client_config, loop=self.loop)
         _LOG.info("Connecting to MQTT...")
-        await self.mqtt.connect(uri, **connect_kwargs)
+        await self.mqtt.connect()
         _LOG.info("Connected to MQTT")
 
         self.mqtt_task_queue.put_nowait(
             PriorityCoro(
                 self._mqtt_publish(
-                    "%s/%s" % (topic_prefix, config["status_topic"]),
-                    config["status_payload_running"].encode("utf8"),
-                    qos=1,
-                    retain=True,
+                    MQTTMessageSend(
+                        "/".join((topic_prefix, config["status_topic"])),
+                        config["status_payload_running"].encode("utf8"),
+                        qos=1,
+                        retain=True,
+                    )
                 ),
                 MQTT_PUB_PRIORITY,
             )
         )
+        self.mqtt_connected.set()
 
     def _ha_discovery_announce(self) -> None:
         """
         Publish Home Assistant Discovery messages.
         """
-        coros: List[Coroutine[Any, Any, Any]] = []
+        messages: List[MQTTMessageSend] = []
         mqtt_config: ConfigType = self.config["mqtt"]
+
         for in_conf in self.digital_input_configs.values():
-            coros.append(hass_announce_digital_input(in_conf, mqtt_config, self.mqtt))
+            messages.append(
+                hass_announce_digital_input(
+                    in_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
         for out_conf in self.digital_output_configs.values():
-            coros.append(hass_announce_digital_output(out_conf, mqtt_config, self.mqtt))
+            messages.append(
+                hass_announce_digital_output(
+                    out_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
         for sens_conf in self.sensor_configs.values():
-            coros.append(hass_announce_sensor_input(sens_conf, mqtt_config, self.mqtt))
-        for coro in coros:
-            self.mqtt_task_queue.put_nowait(PriorityCoro(coro, MQTT_ANNOUNCE_PRIORITY))
+            messages.append(
+                hass_announce_sensor_input(
+                    sens_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
+        for msg in messages:
+            self.mqtt_task_queue.put_nowait(
+                PriorityCoro(self._mqtt_publish(msg), MQTT_ANNOUNCE_PRIORITY)
+            )
 
     async def _mqtt_subscribe(self, topics: List[str]) -> None:
         """
         Subscribe to MQTT topics and output to log for each.
         """
-        await self.mqtt.subscribe((topic, QOS_1) for topic in topics)
+        if not self.mqtt_connected.is_set():
+            _LOG.debug("_mqtt_subscribe awaiting MQTT connection")
+            await self.mqtt_connected.wait()
+            _LOG.debug("_mqtt_subscribe unblocked after MQTT connection")
+        if self.mqtt is None:
+            raise RuntimeError("MQTT client was None when trying to subscribe.")
+        await self.mqtt.subscribe([(topic, 1) for topic in topics])
         for topic in topics:
             _LOG.info("Subscribed to topic: %r", topic)
 
-    async def _mqtt_publish(
-        self, topic: str, payload: bytes, *args: Any, **kwargs: Any
-    ) -> None:
-        try:
-            payload_str = payload.decode("utf8")
-        except UnicodeDecodeError:
-            _LOG.debug(
-                "Publishing MQTT message on topic %r with non-unicode payload", topic
-            )
+    async def _mqtt_publish(self, msg: MQTTMessageSend) -> None:
+        if not self.mqtt_connected.is_set():
+            _LOG.debug("_mqtt_publish awaiting MQTT connection")
+            await self.mqtt_connected.wait()
+            _LOG.debug("_mqtt_publish unblocked after MQTT connection")
+        if self.mqtt is None:
+            raise RuntimeError("MQTT client was None when trying to publish.")
+
+        if msg.payload is None:
+            _LOG.debug("Publishing MQTT message on topic %r with no payload", msg.topic)
         else:
-            _LOG.debug("Publishing MQTT message on topic %r: %r", topic, payload_str)
-        await self.mqtt.publish(topic, payload, *args, **kwargs)
+            try:
+                payload_str = msg.payload.decode("utf8")
+            except UnicodeDecodeError:
+                _LOG.debug(
+                    "Publishing MQTT message on topic %r with non-unicode payload",
+                    msg.topic,
+                )
+            else:
+                _LOG.debug(
+                    "Publishing MQTT message on topic %r: %r", msg.topic, payload_str
+                )
+
+        await self.mqtt.publish(msg)
 
     # Runtime methods
 
@@ -775,8 +832,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             finally:
                 interrupt_lock.release()
 
-        task = asyncio.run_coroutine_threadsafe(await_remote_interrupts(), self.loop)
-        self.unawaited_tasks.append(task)
+        create_unawaited_task_threadsafe(
+            self.loop, self.unawaited_tasks, await_remote_interrupts()
+        )
 
     async def _handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
         """
@@ -912,40 +970,66 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         This loop pulls tasks from `self.mqtt_task_queue` and awaits (runs) them, so that
         we don't try to run MQTT tasks before the MQTT connection is initialised.
         """
+        if not self.mqtt_connected.is_set():
+            _LOG.debug("_mqtt_task_loop awaiting MQTT connection")
+            await self.mqtt_connected.wait()
+            _LOG.debug("_mqtt_task_loop unblocked after MQTT connection")
         while True:
             entry = await self.mqtt_task_queue.get()
+            _LOG.debug(
+                "Running MQTT task with priority %s: %s", entry.priority, entry.coro
+            )
             try:
                 await entry.coro
             except Exception:  # pylint: disable=broad-except
                 _LOG.exception("Exception while handling MQTT task:")
+            self.mqtt_task_queue.task_done()
 
     async def _mqtt_rx_loop(self) -> None:
+        if not self.mqtt_connected.is_set():
+            _LOG.debug("_mqtt_rx_loop awaiting MQTT connection")
+            await self.mqtt_connected.wait()
+            _LOG.debug("_mqtt_rx_loop unblocked after MQTT connection")
         try:
             while True:
-                msg = await self.mqtt.deliver_message()
-                topic = cast(str, msg.publish_packet.variable_header.topic_name)
-                payload = cast(bytes, msg.publish_packet.payload.data)
+                if self.mqtt is None:
+                    _LOG.error("Attempted to get MQTT message before client initialised")
+                    while self.mqtt is None:
+                        await asyncio.sleep(1)
+                    continue
+                msg = await self.mqtt.message_queue.get()
+                if msg.payload is None:
+                    _LOG.warning(
+                        "Received a message to topic '%r' without a payload", msg.topic
+                    )
+                    continue
                 try:
-                    payload_str = payload.decode("utf8")
+                    payload_str = msg.payload.decode("utf8")
                 except UnicodeDecodeError:
-                    _LOG.debug("Received non-unicode message on topic %r", topic)
+                    _LOG.debug("Received non-unicode message on topic %r", msg.topic)
                 else:
-                    _LOG.debug("Received message on topic %r: %r", topic, payload_str)
-                await self._handle_mqtt_msg(topic, payload)
+                    _LOG.debug("Received message on topic %r: %r", msg.topic, payload_str)
+                await self._handle_mqtt_msg(msg.topic, msg.payload)
         finally:
             await self._mqtt_publish(
-                "%s/%s"
-                % (
-                    self.config["mqtt"]["topic_prefix"],
-                    self.config["mqtt"]["status_topic"],
-                ),
-                self.config["mqtt"]["status_payload_stopped"].encode("utf8"),
-                qos=1,
-                retain=True,
+                MQTTMessageSend(
+                    "/".join(
+                        (
+                            self.config["mqtt"]["topic_prefix"],
+                            self.config["mqtt"]["status_topic"],
+                        )
+                    ),
+                    self.config["mqtt"]["status_payload_stopped"].encode("utf8"),
+                    qos=1,
+                    retain=True,
+                )
             )
             _LOG.info("Disconnecting from MQTT...")
-            await self.mqtt.disconnect()
-            _LOG.info("MQTT disconnected")
+            if self.mqtt is None:
+                _LOG.error("Attempted to disconnect from MQTT before client initialised")
+            else:
+                await self.mqtt.disconnect()
+                _LOG.info("MQTT disconnected")
 
     async def _remove_finished_tasks(self) -> None:
         while True:
@@ -1056,8 +1140,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self._init_sensor_inputs()
         self._init_stream_modules()
 
-        # Get connected to the MQTT server
-        self.loop.run_until_complete(self._init_mqtt())
+        # # Get connected to the MQTT server
+        # try:
+        #     self.loop.run_until_complete(self._init_mqtt())
+        # except asyncio.CancelledError:
+        #     print("cancelled")
 
         if self.config["mqtt"]["discovery"]:
             self._ha_discovery_announce()
@@ -1067,11 +1154,13 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.tasks = [
             self.loop.create_task(coro)
             for coro in (
+                self._connect_mqtt(),
                 self._mqtt_task_loop(),
                 self._mqtt_rx_loop(),
                 self._remove_finished_tasks(),
             )
         ]
+        _LOG.debug("Going Asynchronous")
         try:
             self.loop.run_forever()
         finally:
@@ -1100,15 +1189,13 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         if signal is not None:
             _LOG.warning("Received exit signal %s", signal.name)
 
-        # Cancel our main task first so we don't mess the MQTT library's connection
-        for task in self.tasks:
+        # Cancel our tasks
+        our_tasks: List["asyncio.Task[Any]"] = self.tasks + self.unawaited_tasks
+        for task in our_tasks:
             task.cancel()
-        _LOG.info("Waiting for main task to complete...")
-        await asyncio.gather(*self.tasks, return_exceptions=True)
-        # all_done = False
-        # while not all_done:
-        #     all_done = all(t.done() for t in self.tasks)
-        #     await asyncio.sleep(0.1)
+
+        _LOG.info("Waiting for our tasks to complete...")
+        await asyncio.gather(*our_tasks, return_exceptions=True)
 
         # Close any remaining unscheduled mqtt coroutines
         while True:
@@ -1119,19 +1206,19 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             mqtt_coro.coro.close()
 
         current_task = asyncio.Task.current_task()
-        tasks = [
+        other_tasks = [
             t
             for t in asyncio.Task.all_tasks(loop=self.loop)
             if not t.done() and t is not current_task
         ]
-        _LOG.info("Cancelling %s remaining tasks", len(tasks))
-        for task in tasks:
-            task.cancel()
-        _LOG.info("Waiting for %s remaining tasks to complete...", len(tasks))
-        all_done = False
-        while not all_done:
-            all_done = all(t.done() for t in tasks)
-            await asyncio.sleep(0.1)
+        if other_tasks:
+            _LOG.warning("Cancelling %s other running tasks", len(other_tasks))
+            _LOG.debug(other_tasks)
+            for task in other_tasks:
+                task.cancel()
+            _LOG.warning("Waiting for %s other tasks to complete...", len(other_tasks))
+            await asyncio.gather(*other_tasks, return_exceptions=True)
+
         _LOG.debug("Tasks all finished. Stopping loop...")
         self.loop.stop()
         _LOG.debug("Loop stopped")
