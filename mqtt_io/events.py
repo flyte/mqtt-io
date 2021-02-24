@@ -83,10 +83,10 @@ class EventBus:
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
-        unawaited_tasks: List["asyncio.Task[Any]"],
+        transient_tasks: List["asyncio.Task[Any]"],
     ):
         self._loop = loop
-        self._unawaited_tasks = unawaited_tasks
+        self._transient_tasks = transient_tasks
         self._listeners: Dict[Type[Event], List[ListenerType]] = {}
 
     def fire(self, event: Event) -> None:
@@ -108,7 +108,7 @@ class EventBus:
         for listener in listeners:
             # Run threadsafe in case we're firing events from interrupt callback threads
             create_unawaited_task_threadsafe(
-                self._loop, self._unawaited_tasks, listener(event)
+                self._loop, self._transient_tasks, listener(event)
             )
 
     def subscribe(

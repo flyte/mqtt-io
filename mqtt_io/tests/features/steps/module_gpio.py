@@ -87,18 +87,18 @@ def step(context: Any, is_isnt: str, pin_name: str):
 
     poller_task_pin_names = {
         get_coro(task).cr_frame.f_locals["in_conf"]["name"]
-        for task in mqttio.unawaited_tasks
+        for task in mqttio.transient_tasks
         if isinstance(task, asyncio.Task)  # concurrent.Future doesn't have get_coro()
         and get_coro(task).__name__ == "digital_input_poller"
     }
     if is_isnt == "is":
         assert (
             pin_name in poller_task_pin_names
-        ), "Should have a digital input poller task added to unawaited_tasks"
+        ), "Should have a digital input poller task added to transient_tasks"
     else:
         assert (
             pin_name not in poller_task_pin_names
-        ), "Shouldn't have a digital input poller task added to unawaited_tasks"
+        ), "Shouldn't have a digital input poller task added to transient_tasks"
 
     poller_task_pin_names = {
         get_coro(task).cr_frame.f_locals["in_conf"]["name"]
@@ -122,18 +122,18 @@ def step(context: Any, is_isnt: str, module_name: str):
     module = mqttio.gpio_modules[module_name]
     task_modules = {
         get_coro(task).cr_frame.f_locals["module"]
-        for task in mqttio.unawaited_tasks
+        for task in mqttio.transient_tasks
         if isinstance(task, asyncio.Task)  # concurrent.Future doesn't have get_coro()
         and get_coro(task).__name__ == "digital_output_loop"
     }
     if is_isnt == "is":
         assert (
             module in task_modules
-        ), "Should have a digital output loop task added to unawaited_tasks"
+        ), "Should have a digital output loop task added to transient_tasks"
     else:
         assert (
             module not in task_modules
-        ), "Shouldn't have a digital output loop task added to unawaited_tasks"
+        ), "Shouldn't have a digital output loop task added to transient_tasks"
 
     task_modules = {
         get_coro(task).cr_frame.f_locals["module"]

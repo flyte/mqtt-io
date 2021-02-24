@@ -13,7 +13,6 @@ import logging
 import re
 import signal as signals
 import threading
-from asyncio.exceptions import CancelledError
 from asyncio.queues import QueueEmpty
 from functools import partial
 from hashlib import sha1
@@ -1149,7 +1148,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     await asyncio.gather(*self.critical_tasks)
                 except Exception:  # pylint: disable=broad-except
                     _LOG.exception("Exception in critical task:")
-            except CancelledError:
+            except asyncio.CancelledError:
                 pass
             finally:
                 self.running.clear()
@@ -1201,23 +1200,21 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 break
             mqtt_coro.coro.close()
 
-        await self._mqtt_publish(
-            MQTTMessageSend(
-                "/".join(
-                    (
-                        self.config["mqtt"]["topic_prefix"],
-                        self.config["mqtt"]["status_topic"],
-                    )
-                ),
-                self.config["mqtt"]["status_payload_stopped"].encode("utf8"),
-                qos=1,
-                retain=True,
-            ),
-            wait=False,
-        )
-        _LOG.info("Disconnecting from MQTT...")
         if self.mqtt is not None:
+            await self._mqtt_publish(
+                MQTTMessageSend(
+                    "/".join(
+                        (
+                            self.config["mqtt"]["topic_prefix"],
+                            self.config["mqtt"]["status_topic"],
+                        )
+                    ),
+                    self.config["mqtt"]["status_payload_stopped"].encode("utf8"),
+                    qos=1,
+                    retain=True,
+                ),
+                wait=False,
+            )
+            _LOG.info("Disconnecting from MQTT...")
             await self.mqtt.disconnect()
             _LOG.info("MQTT disconnected")
-        else:
-            _LOG.error("Attempted to disconnect from MQTT before client initialised")

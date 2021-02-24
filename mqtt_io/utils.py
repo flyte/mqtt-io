@@ -23,14 +23,14 @@ class PriorityCoro:
 
 def create_unawaited_task_threadsafe(
     loop: asyncio.AbstractEventLoop,
-    unawaited_tasks: List["asyncio.Task[Any]"],
+    transient_tasks: List["asyncio.Task[Any]"],
     coro: Coroutine[Any, Any, None],
 ) -> None:
     """
-    Schedule a coroutine on the loop and add the Task to unawaited_tasks.
+    Schedule a coroutine on the loop and add the Task to transient_tasks.
     """
 
     def callback() -> None:
-        unawaited_tasks.append(loop.create_task(coro))
+        transient_tasks.append(loop.create_task(coro))
 
     loop.call_soon_threadsafe(callback)

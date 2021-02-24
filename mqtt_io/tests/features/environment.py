@@ -12,7 +12,7 @@ def before_scenario(context: Any, scenario: Any) -> None:
     context.data = dict(
         raw_config={},
         loop=asyncio.new_event_loop(),
-        unawaited_tasks=[],
+        transient_tasks=[],
         event_subs={},
         mocks={},
     )
@@ -29,5 +29,4 @@ def after_scenario(context: Any, scenario: Any) -> None:
         pass
     else:
         loop.run_until_complete(mqttio.shutdown())
-    loop.stop()
     loop.close()
