@@ -34,7 +34,5 @@ lint:
 	mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
 
 publish:
-	sed -i "s/# hbmqtt/hbmqtt/" pyproject.toml
 	poetry build
 	poetry publish
-	sed -i "s/hbmqtt/# hbmqtt/" pyproject.toml
