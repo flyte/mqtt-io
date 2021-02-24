@@ -9,7 +9,7 @@ from typing import Any, List, Optional, Tuple
 
 from paho.mqtt import client as paho  # type: ignore
 
-from asyncio_mqtt.client import Client, Will
+from asyncio_mqtt.client import Client, Will  # type: ignore
 
 from . import (
     AbstractMQTTClient,
@@ -30,9 +30,9 @@ class MQTTClient(AbstractMQTTClient):
     def __init__(self, options: MQTTClientOptions):
         super().__init__(options)
         protocol_map = {
-            MQTTProtocol.v31: paho.MQTTv31,
-            MQTTProtocol.v311: paho.MQTTv311,
-            MQTTProtocol.v5: paho.MQTTv5,
+            MQTTProtocol.V31: paho.MQTTv31,
+            MQTTProtocol.V311: paho.MQTTv311,
+            MQTTProtocol.V5: paho.MQTTv5,
         }
         will = None
         if options.will is not None:

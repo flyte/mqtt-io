@@ -90,12 +90,6 @@ mqtt:
         ca_certs:
           type: string
           required: no
-        ca_file:
-          type: string
-          required: no
-        ca_data:
-          type: string
-          required: no
         certfile:
           type: string
           required: no

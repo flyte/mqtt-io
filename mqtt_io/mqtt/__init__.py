@@ -17,9 +17,9 @@ class MQTTProtocol(Enum):
     MQTT protocol.
     """
 
-    v31 = auto()
-    v311 = auto()
-    v5 = auto()
+    V31 = auto()
+    V311 = auto()
+    V5 = auto()
 
 
 @dataclass
@@ -105,7 +105,7 @@ class MQTTClientOptions:  # pylint: disable=too-many-instance-attributes
     username: Optional[str] = None
     password: Optional[str] = None
     tls_options: Optional[MQTTTLSOptions] = None
-    protocol: MQTTProtocol = MQTTProtocol.v311
+    protocol: MQTTProtocol = MQTTProtocol.V311
     clean_session: Optional[bool] = None
     keepalive: int = 60
     will: Optional[MQTTWill] = None
