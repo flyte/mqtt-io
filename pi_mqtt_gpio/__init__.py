@@ -189,6 +189,7 @@ digital_inputs:
         type: string
         required: no
         empty: no
+        default: binary_sensor
       device_class:
         type: string
         required: no
@@ -266,6 +267,7 @@ digital_outputs:
         type: string
         required: no
         empty: no
+        default: switch
       display_name:
         type: string
         required: no
@@ -328,6 +330,7 @@ sensor_inputs:
         type: string
         required: no
         empty: no
+        default: sensor
       display_name:
         type: string
         required: no
