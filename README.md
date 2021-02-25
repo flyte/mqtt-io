@@ -8,7 +8,7 @@ Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for mor
 
 ## * New asynchronous version in beta *
 
-The project has been rebuilt using Python's asyncio framework, but requires beta testing before it can be released. The new version is just as easy to install as the current one, so please see [here](https://github.com/flyte/pi-mqtt-gpio/issues/141) for instructions and to give feedback (or on discord).
+The project has been rebuilt using Python's asyncio framework, but requires beta testing before it can be released. The new version is just as easy to install as the current one, so please see [here](https://github.com/flyte/pi-mqtt-gpio/discussions/178) for instructions and to give feedback.
 
 **This means that we're only accepting critical pull requests for the current version**. There's a chance that an issue you have with this version is already fixed in the new one, so make sure you give that one a try before raising an issue.
 
