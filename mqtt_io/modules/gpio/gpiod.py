@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, Callable, Dict, Optional
 
 from ...types import ConfigType, PinType
-from . import GenericGPIO, InterruptEdge, PinDirection, PinPUD
+from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 if TYPE_CHECKING:
     # pylint: disable=import-error
@@ -24,6 +24,8 @@ class GPIO(GenericGPIO):
     """
     Implementation of GPIO class for libgpiod (linux kernel >= 4.8).
     """
+
+    INTERRUPT_SUPPORT = InterruptSupport.SOFTWARE_CALLBACK
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
