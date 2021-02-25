@@ -4,7 +4,6 @@ Sensor module for BME280.
 
 from typing import cast
 
-from ...exceptions import RuntimeConfigError
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -45,19 +44,13 @@ class Sensor(GenericSensor):
         """
         Get the temperature, humidity or pressure value from the sensor
         """
-        # pylint: disable=no-member
+        sens_type = sens_conf["type"]
         data = self.bme.sample(self.bus, self.address, self.calib)
-
-        if sens_conf["type"] == "temperature":
-            return cast(SensorValueType, data.temperature)
-        if sens_conf["type"] == "humidity":
-            return cast(SensorValueType, data.humidity)
-        if sens_conf["type"] == "pressure":
-            return cast(SensorValueType, data.pressure)
-        raise RuntimeConfigError(
-            (
-                "bme280 sensor '%s' was not configured to return 'temperature', "
-                "'humidity' or 'pressure'"
-            )
-            % sens_conf["name"]
+        return cast(
+            float,
+            dict(
+                temperature=data.temperature,
+                humidity=data.humidity,
+                pressure=data.pressure,
+            )[sens_type],
         )
