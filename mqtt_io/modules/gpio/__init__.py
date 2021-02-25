@@ -160,7 +160,7 @@ class GenericGPIO(abc.ABC):
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Callable[[List[Any], Dict[Any, Any]], None],
+        callback: Callable[..., None],
     ) -> None:
         """
         Configure a pin as an interrupt and set up the callback function to be called when
@@ -266,9 +266,7 @@ class GenericGPIO(abc.ABC):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(ThreadPoolExecutor(), self.get_pin, pin)
 
-    def get_interrupt_value(
-        self, pin: PinType, *args: List[Any], **kwargs: Dict[Any, Any]
-    ) -> bool:
+    def get_interrupt_value(self, pin: PinType, *args: Any, **kwargs: Any) -> bool:
         """
         Called on interrupt when this module's software callback was called, in order to
         get a value for the pin that caused the interrupt. This could just involve polling
