@@ -206,12 +206,12 @@ digital_inputs:
           component:
             type: string
             required: no
-	    empty: no
+            empty: no
             default: binary_sensor
           display_name:
             type: string
             required: no
-	    empty: no
+            empty: no
       module:
         type: string
         required: yes
@@ -295,12 +295,12 @@ digital_outputs:
           component:
             type: string
             required: no
-	    empty: no
+            empty: no
             default: switch
           display_name:
             type: string
             required: no
-	    empty: no
+            empty: no
       module:
         type: string
         required: yes
@@ -362,12 +362,12 @@ sensor_inputs:
           component:
             type: string
             required: no
-	    empty: no
+            empty: no
             default: sensor
           display_name:
             type: string
             required: no
-	    empty: no
+            empty: no
       module:
         type: string
         required: yes
