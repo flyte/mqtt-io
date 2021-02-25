@@ -9,7 +9,6 @@ and setting their values and data, connecting to MQTT and sending/receiving MQTT
 # pylint: disable=too-many-lines
 
 import asyncio
-import json
 import logging
 import re
 import signal as signals
@@ -620,12 +619,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     msg.topic,
                 )
             else:
-                if _LOG.level <= logging.DEBUG:
-                    # Make JSON payloads readable in debug logs
-                    try:
-                        payload_str = json.dumps(json.loads(payload_str), indent=2)
-                    except json.JSONDecodeError:
-                        pass
                 _LOG.debug(
                     "Publishing MQTT message on topic %r: %r", msg.topic, payload_str
                 )
