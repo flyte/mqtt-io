@@ -1155,6 +1155,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
                 try:
                     await asyncio.gather(*self.critical_tasks)
+                except asyncio.CancelledError:
+                    pass
                 except Exception:  # pylint: disable=broad-except
                     _LOG.exception("Exception in critical task:")
             except asyncio.CancelledError:
