@@ -61,7 +61,8 @@ def hass_announce_digital_input(
         )
     )
     return MQTTMessageSend(
-        "/".join((disco_prefix, sensor_config.pop("component", "binary_sensor"), mqtt_options.client_id, name, "config")),
+        "/".join((disco_prefix, sensor_config.pop("component", "binary_sensor"),
+                  mqtt_options.client_id, name, "config")),
         json.dumps(sensor_config).encode("utf8"),
         retain=True,
     )
@@ -90,7 +91,8 @@ def hass_announce_digital_output(
         )
     )
     return MQTTMessageSend(
-        "/".join((disco_prefix, switch_config.pop("component", "switch"), mqtt_options.client_id, name, "config")),
+        "/".join((disco_prefix, switch_config.pop("component", "switch"),
+                  mqtt_options.client_id, name, "config")),
         json.dumps(switch_config).encode("utf8"),
         retain=True,
     )
@@ -120,7 +122,8 @@ def hass_announce_sensor_input(
     if "unit_of_measurement" in sens_conf:
         sensor_config["unit_of_measurement"] = sens_conf["unit_of_measurement"]
     return MQTTMessageSend(
-        "/".join((disco_prefix, sensor_config.pop("component", "sensor"), mqtt_options.client_id, name, "config")),
+        "/".join((disco_prefix, sensor_config.pop("component", "sensor"),
+                  mqtt_options.client_id, name, "config")),
         json.dumps(sensor_config).encode("utf8"),
         retain=True,
     )
