@@ -574,7 +574,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     out_conf, mqtt_config, self.mqtt_client_options
                 )
             )
-        for sens_conf in self.sensor_configs.values():
+        for sens_conf in self.sensor_input_configs.values():
             messages.append(
                 hass_announce_sensor_input(
                     sens_conf, mqtt_config, self.mqtt_client_options
