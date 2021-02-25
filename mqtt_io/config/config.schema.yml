@@ -199,19 +199,6 @@ digital_inputs:
         type: string
         required: yes
         empty: no
-      ha_discovery:
-        type: dict
-        allow_unknown: yes
-        schema:
-          component:
-            type: string
-            required: no
-            empty: no
-            default: binary_sensor
-          display_name:
-            type: string
-            required: no
-            empty: no
       module:
         type: string
         required: yes
@@ -276,6 +263,15 @@ digital_inputs:
         type: boolean
         required: no
         default: yes
+      ha_discovery:
+        type: dict
+        allow_unknown: yes
+        schema:
+          component:
+            type: string
+            required: no
+            empty: no
+            default: binary_sensor
 
 digital_outputs:
   type: list
@@ -288,19 +284,6 @@ digital_outputs:
       name:
         type: string
         required: yes
-      ha_discovery:
-        type: dict
-        allow_unknown: yes
-        schema:
-          component:
-            type: string
-            required: no
-            empty: no
-            default: switch
-          display_name:
-            type: string
-            required: no
-            empty: no
       module:
         type: string
         required: yes
@@ -342,6 +325,15 @@ digital_outputs:
         type: boolean
         required: no
         default: no
+      ha_discovery:
+        type: dict
+        allow_unknown: yes
+        schema:
+          component:
+            type: string
+            required: no
+            empty: no
+            default: switch
 
 sensor_inputs:
   type: list
@@ -355,19 +347,6 @@ sensor_inputs:
         type: string
         required: yes
         empty: no
-      ha_discovery:
-        type: dict
-        allow_unknown: yes
-        schema:
-          component:
-            type: string
-            required: no
-            empty: no
-            default: sensor
-          display_name:
-            type: string
-            required: no
-            empty: no
       module:
         type: string
         required: yes
@@ -393,6 +372,15 @@ sensor_inputs:
         type: integer
         required: no
         min: 1
+      ha_discovery:
+        type: dict
+        allow_unknown: yes
+        schema:
+          component:
+            type: string
+            required: no
+            empty: no
+            default: sensor
 
 stream_reads:
   type: list
@@ -439,7 +427,7 @@ stream_writes:
         type: string
         required: yes
         empty: no
-        
+
 logging:
   type: dict
   required: no

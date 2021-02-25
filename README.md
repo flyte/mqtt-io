@@ -19,7 +19,7 @@ Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for mor
     - [Sensors](#sensors-1)
     - [Streams](#streams-1)
     - [OrangePi boards](#orangepi-boards)
-    - [HomeAssistant discovery](#homeassistant-discovery)
+    - [Home Assistant discovery](#home-assistant-discovery)
   - [Serving Suggestion](#serving-suggestion)
   - [Docker](#docker)
 
@@ -266,9 +266,9 @@ gpio_modules:
     mode: board
 ```
 
-### HomeAssistant discovery
+### Home Assistant discovery
 
-Metadata of all `sensor_inputs`, `digital_inputs` and `digital_outputs` can be published via HomeAssistant config messages to be discovered by a HomeAssistant instance that is listening on the same MQTT broker:
+The metadata of all `sensor_inputs`, `digital_inputs` and `digital_outputs` can be published via MQTT messages to be discovered by a Home Assistant instance that is listening on the same MQTT broker:
 
 ```yaml
 mqtt:
@@ -277,41 +277,40 @@ mqtt:
   discovery_name: "device1" # optional
 ```
 
-The optional value `display_name` and `component` underneath `ha_discovery` can be used to improve the autodetection with homeassistant.
-Further, any other key / value pair for autodetection from home assistant can be used underneath `ha_discovery`, e.g. `device_class` or `force_update`.
+Entries in the `ha_discovery` section of the input/output configs will be added to the discovery MQTT messages in order to improve the accuracy of the Home Assistant auto-detection e.g. `device_class` or `force_update`. See the [Home Assistant MQTT Discovery](https://www.home-assistant.io/docs/mqtt/discovery/) documentation for valid options.
 
 ```yaml
 digital_inputs:
   - name: motion_sensor
-    ha_discovery:
-      display_name: PIR Garage # optional and defaults to `name` given above
-      component: binary_sensor # optional and defaults to `binary_sensor`
-      device_class: motion # optional
-      force_update: true # or any other key / value pair home-assistant discovery
     module: pi_gpio
     pin: 22
     retain: yes
+    ha_discovery:
+      name: PIR Garage  # optional and defaults to `name` given above
+      component: binary_sensor  # optional and defaults to `binary_sensor`
+      device_class: motion  # optional
+      force_update: true  # or any other key / value pair home-assistant discovery
 ```
 
 ```yaml
 digital_outputs:
   - name: lamp
-    ha_discovery:
-      display_name: Garden light # optional and defaults to `name` given above
-      component: light # optional and defaults to `switch`
     module: pi_gpio
     pin: 21
+    ha_discovery:
+      name: Garden light  # optional and defaults to `name` given above
+      component: light  # optional and defaults to `switch`
 ```
 
 ```yaml
 sensor_inputs:
   - name: lm75_temperature
-    ha_discovery:
-      display_name: LM75 Temperature # optional and defaults to `name` given above
-      component: sensor # optional and defaults to `sensor`
     module: lm75_sensor
     interval: 15
     digits: 4
+    ha_discovery:
+      name: LM75 Temperature  # optional and defaults to `name` given above
+      component: sensor  # optional and defaults to `sensor`
 ```
 
 ## Serving Suggestion
