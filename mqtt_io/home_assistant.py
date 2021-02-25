@@ -22,7 +22,7 @@ def get_common_config(
     Return config that's common across all HQ discovery announcements.
     """
     config = dict(name=io_conf["name"])
-    config = io_conf.get("ha_discovery", {})
+    config.update(io_conf.get("ha_discovery", {}))
     config.update(
         dict(
             availability_topic="/".join(
