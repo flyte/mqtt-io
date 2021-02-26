@@ -1,15 +1,13 @@
 """
 Abstraction layer for MQTT clients to enable easier switching out.
 """
-from importlib import import_module
 import abc
 import asyncio
 import ssl
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, Tuple, Type, Union
-
-from typing_extensions import Literal
+from importlib import import_module
+from typing import List, Optional, Tuple, Type
 
 
 class MQTTProtocol(Enum):
