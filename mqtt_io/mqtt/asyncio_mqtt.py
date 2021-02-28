@@ -99,7 +99,3 @@ class MQTTClient(AbstractMQTTClient):
                 self._on_message
             )
         return self._message_queue
-
-
-# TODO: Tasks pending completion -@flyte at 23/02/2021, 22:59:13
-# Implement this for asyncio-mqtt client
