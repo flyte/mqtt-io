@@ -262,6 +262,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                                 )
                             ),
                             event.data,
+                            retain=stream_conf["retain"],
                         )
                     ),
                     MQTT_PUB_PRIORITY,
@@ -485,6 +486,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
     def _init_sensor_inputs(self) -> None:
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
+            sensor_conf = self.sensor_configs[event.sensor_name]
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
                     self._mqtt_publish(
@@ -497,6 +499,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                                 )
                             ),
                             str(event.value).encode("utf8"),
+                            retain=sensor_conf["retain"],
                         )
                     ),
                     MQTT_PUB_PRIORITY,
