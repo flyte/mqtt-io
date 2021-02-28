@@ -351,6 +351,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                                 )
                             ),
                             val.encode("utf8"),
+                            retain=in_conf["retain"],
                         )
                     ),
                     MQTT_PUB_PRIORITY,
