@@ -7,7 +7,7 @@ from typing import cast
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("smbus2", "bme680",)
+REQUIREMENTS = ("smbus2", "bme680")
 CONFIG_SCHEMA = {
     "i2c_bus_num": dict(type="integer", required=False, empty=False),
     "chip_addr": dict(type="integer", required=True, empty=False),
@@ -36,7 +36,7 @@ class Sensor(GenericSensor):
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
         # pylint: disable=import-error,no-member
-        from smbus2 import SMBus
+        from smbus2 import SMBus  # type: ignore
         import bme680  # type: ignore
 
         # self.address: int = self.config["chip_addr"]
