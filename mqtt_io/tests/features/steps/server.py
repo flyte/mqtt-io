@@ -6,6 +6,7 @@ from unittest.mock import Mock
 import yaml
 from behave import given, then, when  # type: ignore
 from mqtt_io.exceptions import ConfigValidationFailed
+from mqtt_io.mqtt import MQTTMessage, MQTTMessageSend
 from mqtt_io.server import MqttIo
 
 try:
@@ -76,10 +77,32 @@ def step(context: Any, method_name: str):
         ), f"Should have been called with {kwarg_value} at kwargs key {kwarg_key}"
 
 
-@then("{method_name} on MqttIo should not be called")  # type: ignore[no-redef]
-def step(context: Any, method_name: str):
+@then("_mqtt_publish on MqttIo should be called with MQTT message")  # type: ignore[no-redef]
+def step(context: Any):
+    mock: Union[Mock, AsyncMock] = context.data["mocks"]["mqttio._mqtt_publish"]
+    data = yaml.safe_load(context.text)
+    msg: MQTTMessageSend = mock.call_args.args[0]
+    assert isinstance(msg, MQTTMessageSend), "Should have been called with an MQTTMessage"
+    if "topic" in data:
+        assert msg.topic == data["topic"]
+    if "payload" in data:
+        try:
+            payload_str = msg.payload.decode("utf8")
+        except UnicodeDecodeError as err:
+            raise AssertionError(
+                "Payload was specified but a non-unicode one was published"
+            ) from err
+        assert payload_str == data["payload"]
+
+
+@then("{method_name} on MqttIo {should_shouldnt} be called")  # type: ignore[no-redef]
+def step(context: Any, method_name: str, should_shouldnt: str):
+    assert should_shouldnt in ("should", "shouldn't")
     mock: Union[Mock, AsyncMock] = context.data["mocks"][f"mqttio.{method_name}"]
-    mock.assert_not_called()
+    if should_shouldnt == "should":
+        mock.assert_called()
+    else:
+        mock.assert_not_called()
 
 
 @then("{module} module {name} should be initialised")  # type: ignore[no-redef]

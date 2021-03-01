@@ -91,4 +91,122 @@ Feature: GPIO module runtime
         And we mock handle_remote_interrupt on MqttIo
         And we lock interrupt lock for mock1
         And mock1 reads a value of false with a last value of true
-        Then handle_remote_interrupt on MqttIo should not be called
+        Then handle_remote_interrupt on MqttIo shouldn't be called
+
+    Scenario: Non-inverted value is published on DigitalInputChangedEvent to_value True
+        Given a valid config
+        And the config has an entry in gpio_modules with
+            """
+            name: mock
+            module: mock
+            """
+        And the config has an entry in digital_inputs with
+            """
+            name: mock0
+            module: mock
+            pin: 0
+            """
+        When we validate the main config
+        And we instantiate MqttIo
+        And we initialise GPIO modules
+        And we initialise digital inputs
+        And we mock _mqtt_publish on MqttIo
+        And we fire a new DigitalInputChangedEvent event with
+            """
+            input_name: mock0
+            from_value: false
+            to_value: true
+            """
+        Then _mqtt_publish on MqttIo should be called with MQTT message
+            """
+            payload: "ON"
+            """
+
+    Scenario: Inverted value is published on DigitalInputChangedEvent to_value True
+        Given a valid config
+        And the config has an entry in gpio_modules with
+            """
+            name: mock
+            module: mock
+            """
+        And the config has an entry in digital_inputs with
+            """
+            name: mock0
+            module: mock
+            pin: 0
+            inverted: yes
+            """
+        When we validate the main config
+        And we instantiate MqttIo
+        And we initialise GPIO modules
+        And we initialise digital inputs
+        And we mock _mqtt_publish on MqttIo
+        And we fire a new DigitalInputChangedEvent event with
+            """
+            input_name: mock0
+            from_value: false
+            to_value: true
+            """
+        Then _mqtt_publish on MqttIo should be called with MQTT message
+            """
+            payload: "OFF"
+            """
+
+    Scenario: Non-inverted value is published on DigitalInputChangedEvent to_value False
+        Given a valid config
+        And the config has an entry in gpio_modules with
+            """
+            name: mock
+            module: mock
+            """
+        And the config has an entry in digital_inputs with
+            """
+            name: mock0
+            module: mock
+            pin: 0
+            """
+        When we validate the main config
+        And we instantiate MqttIo
+        And we initialise GPIO modules
+        And we initialise digital inputs
+        And we mock _mqtt_publish on MqttIo
+        And we fire a new DigitalInputChangedEvent event with
+            """
+            input_name: mock0
+            from_value: false
+            to_value: false
+            """
+        Then _mqtt_publish on MqttIo should be called with MQTT message
+            """
+            payload: "OFF"
+            """
+
+    Scenario: Inverted value is published on DigitalInputChangedEvent to_value False
+        Given a valid config
+        And the config has an entry in gpio_modules with
+            """
+            name: mock
+            module: mock
+            """
+        And the config has an entry in digital_inputs with
+            """
+            name: mock0
+            module: mock
+            pin: 0
+            inverted: yes
+            """
+        When we validate the main config
+        And we instantiate MqttIo
+        And we initialise GPIO modules
+        And we initialise digital inputs
+        And we mock _mqtt_publish on MqttIo
+        And we fire a new DigitalInputChangedEvent event with
+            """
+            input_name: mock0
+            from_value: false
+            to_value: false
+            """
+        Then _mqtt_publish on MqttIo should be called with MQTT message
+            """
+            payload: "ON"
+            """

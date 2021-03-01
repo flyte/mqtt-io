@@ -1,7 +1,9 @@
-from typing import Any
+import asyncio
+from typing import Any, Dict, List, Type
 
 import yaml
 from behave import given, then, when  # type: ignore
+from behave.api.async_step import async_run_until_complete
 from mqtt_io import events
 from mqtt_io.server import MqttIo
 
@@ -20,6 +22,18 @@ def step(context: Any, event_type_name: str) -> None:
     mock_sub = AsyncMock()
     context.data["event_subs"][event_type_name] = mock_sub
     mqttio.event_bus.subscribe(event_type, mock_sub)
+
+
+@when("we fire a new {event_type_name} event with")  # type: ignore[no-redef]
+@async_run_until_complete(loop="loop")
+async def step(context: Any, event_type_name: str) -> None:
+    data: Dict[str, Any] = yaml.safe_load(context.text)
+    assert isinstance(data, dict), "Data provided to this step must be a YAML dict"
+    mqttio: MqttIo = context.data["mqttio"]
+    event_type: Type[events.Event] = getattr(events, event_type_name)
+    event = event_type(**data)
+    task_futures = mqttio.event_bus.fire(event)
+    await asyncio.gather(*task_futures)
 
 
 @then("{func_name} function should be subscribed to {event_type_name}")  # type: ignore[no-redef]

@@ -9,9 +9,10 @@ def before_scenario(context: Any, scenario: Any) -> None:
     """
     Initialise data.
     """
+    context.loop = asyncio.new_event_loop()
     context.data = dict(
         raw_config={},
-        loop=asyncio.new_event_loop(),
+        loop=context.loop,
         transient_tasks=[],
         event_subs={},
         mocks={},
@@ -22,7 +23,7 @@ def after_scenario(context: Any, scenario: Any) -> None:
     """
     Shut down asyncio loop cleanly.
     """
-    loop: asyncio.AbstractEventLoop = context.data["loop"]
+    loop: asyncio.AbstractEventLoop = context.loop
     try:
         mqttio = context.data["mqttio"]
     except (KeyError, AttributeError):
