@@ -33,7 +33,7 @@ class SectionDocumenter:
             parent_sections = []
         else:
             parent_sections = parent_sections.copy()
-        self.doc(f"\n<!--schema_section(depth={len(parent_sections)})-->")
+
         if child_schema := schema_section.get("schema"):
             # This must be a list, which has a schema for each item
             parent_sections.append("*")
@@ -47,7 +47,6 @@ class SectionDocumenter:
         self, entry_name: str, cerberus_section: ConfigType, parent_sections: List[str]
     ) -> None:
         parent_sections = parent_sections.copy()
-        self.doc(f"\n<!--cerberus_section(depth={len(parent_sections)})-->")
 
         auto_title = ""
         if parent_sections:
