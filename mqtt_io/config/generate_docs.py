@@ -51,7 +51,8 @@ class SectionDocumenter:
 
         auto_title = ""
         if parent_sections:
-            auto_title += "_" + ".".join(parent_sections) + "_."
+            # auto_title += "_" + ".".join(parent_sections) + "_."
+            auto_title += ".".join(parent_sections) + "."
         auto_title += f"`{entry_name}`"
 
         title = meta_entry(cerberus_section, "title") or auto_title
