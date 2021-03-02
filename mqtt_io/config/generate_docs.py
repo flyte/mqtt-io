@@ -122,14 +122,17 @@ class SectionDocumenter:
 
         if yaml_example_expand := meta_entry(cerberus_section, "yaml_example_expand"):
             self.doc(
-                f"""\n
-<details>
-  <summary>View example</summary>
+                dedent(
+                    f"""\n
+                    <details>
+                    <summary>View example</summary>
 
-```yaml
-{yaml_example_expand}
-```
-</details>"""
+                    ```yaml
+                    {yaml_example_expand}
+                    ```
+                    </details>
+                    """
+                ).rstrip("\n")
             )
 
         if child_schema:
