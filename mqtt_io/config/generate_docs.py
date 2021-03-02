@@ -1,3 +1,5 @@
+import os.path
+from argparse import ArgumentParser
 from shutil import move
 from textwrap import dedent, indent
 from typing import Any, Callable, List, Optional, TextIO
@@ -7,8 +9,6 @@ import yaml
 
 from ..types import ConfigType
 from . import get_main_schema
-
-DOC_PATH = "config-doc.md"
 
 
 def meta_entry(section: ConfigType, meta_key: str) -> Any:
@@ -155,8 +155,6 @@ def document_schema(doc_file: TextIO) -> None:
     doc(
         dedent(
             """
-        # MQTT IO Configuration
-
         The software is configured using a single YAML config file. This document details
         the config options for each section and provides examples.
 
@@ -175,11 +173,15 @@ def add_toc(path: str) -> None:
 
 
 def main() -> None:
-    tmp_path = f"~{DOC_PATH}"
+    p = ArgumentParser()
+    p.add_argument("output_path")
+    args = p.parse_args()
+    path, fname = os.path.split(args.output_path)
+    tmp_path = os.path.join(path, f"~{fname}")
     with open(tmp_path, "w") as _doc_file:
         document_schema(_doc_file)
     add_toc(tmp_path)
-    move(tmp_path, DOC_PATH)
+    move(tmp_path, args.output_path)
 
 
 if __name__ == "__main__":
