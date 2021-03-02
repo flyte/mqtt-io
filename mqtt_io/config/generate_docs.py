@@ -155,11 +155,11 @@ def document_schema(doc_file: TextIO) -> None:
     doc(
         dedent(
             """
-        The software is configured using a single YAML config file. This document details
-        the config options for each section and provides examples.
+            The software is configured using a single YAML config file. This document details
+            the config options for each section and provides examples.
 
-        <!-- TOC -->
-"""
+            <!-- TOC -->
+            """
         ).strip()
     )
 
