@@ -1,7 +1,7 @@
 # MQTT IO Configuration
 
 The software is configured using a single YAML config file. This document details
-the config options for each section and provides examples for each section.
+the config options for each section and provides examples.
 
 <!-- TOC -->
 
