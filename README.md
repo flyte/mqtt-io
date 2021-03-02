@@ -18,6 +18,7 @@ Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for mor
     - [Modules](#modules)
     - [Sensors](#sensors-1)
     - [Streams](#streams-1)
+      - [New in v2.0.0+](#new-in-v200)
     - [OrangePi boards](#orangepi-boards)
     - [Home Assistant discovery](#home-assistant-discovery)
   - [Serving Suggestion](#serving-suggestion)
@@ -43,18 +44,22 @@ Visit the [GitHub Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki/Home) for mor
 - DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
 - HC-SR04 ultrasonic distance sensor (`hcsr04`)
 - MCP3008 analog digital converter (`mcp3008`)
+- BME280 temperature, humidity and pressure sensor (`bme280`)
+- BME680 temperature, humidity and pressure sensor (`bme680`)
 
 ### Streams
 
-- Serial port (`streamserial`)
+- Serial port (`serial`)
 
 ## Installation
 
-`pip install pi-mqtt-gpio`
+_Requires Python 3.6+_
+
+`pip3 install mqtt-io`
 
 ## Execution
 
-`python -m pi_mqtt_gpio.server config.yml`
+`python3 -m mqtt-io config.yml`
 
 ## Configuration
 
@@ -111,7 +116,7 @@ The IO modules are pluggable and multiple may be used at once. For example, if y
 ```yaml
 mqtt:
   host: test.mosquitto.org
-  topic_prefix: pimqttgpio/mydevice
+  topic_prefix: home/mydevice
 
 gpio_modules:
   - name: pi_gpio
@@ -214,11 +219,14 @@ sensor_inputs:
 
 ### Streams
 
-Transmit data by publishing to the `home/stream/<stream_write_name>` topic. In the following example, this would be `home/stream/serialtx`.
+Transmit data by publishing to the `home/stream/<stream_name>` topic. In the following example, this would be `home/stream/serialtx`.
 
-Receive data from a stream by subscribing to the `home/stream/<stream_read_name>` topic. In the following example, this would be `home/stream/serialrx`.
+Receive data from a stream by subscribing to the `home/stream/<stream_name>` topic. In the following example, this would be `home/stream/serialrx`.
 
-The stream data is parsed using Python's `string_escape` to allow the transfer of control characters.
+#### New in v2.0.0+
+
+- The stream config has changed from requiring `stream_reads` and `stream_writes` sections to just using the `stream_modules` entry to configure both.
+- Stream data is not encoded or decoded. Data read from the stream is published to MQTT in its original binary form and data received in MQTT messages is written to the stream unchanged.
 
 ```yaml
 mqtt:
@@ -227,31 +235,25 @@ mqtt:
 
 stream_modules:
   - name: serialcomms
-    module: streamserial
+    module: serial
     device: /dev/ttyS0
     baud: 115200
     bytesize: 8 # Number of data bits in word. Can be: 5,6,7,8
     parity: none # Parity can be one of none,odd,even,mark,space
     stopbits: 1 # Number of stop bits. Can be: 1,1.5,2
-    cleanup: no  # This optional boolean value sets whether the module's `cleanup()` function will be called when the software exits.
-
-stream_reads:
-  - name: serialrx
-    module: serialcomms
-    interval: 0.25 # Stream read polling interval in seconds
-
-stream_writes:
-  - name: serialtx
-    module: serialcomms
+    cleanup: no  # default: yes - Sets whether the module's `cleanup()` function will be called when the software exits
+    read_interval: 1 # default: 60 - Stream read polling interval in seconds
+    read: yes  # default: yes - Whether to poll the stream for incoming data and publish read data
+    write: yes  # default: yes - Whether to subscribe to MQTT topic to enable writing data to the stream
 ```
 
 Testing example:
 
 ```bash
 # -N disables printing extra new line on each subscription
-mosquitto_sub -h <broker url> -t <topic prefix>/stream/serialrx -N
+mosquitto_sub -h <broker url> -t <topic prefix>/stream/serialcomms -N
 
-mosquitto_pub -h <broker url> -t <topic prefix>/stream/serialtx -m "testing123\r\n"
+mosquitto_pub -h <broker url> -t <topic prefix>/stream/serialcomms -m "testing123\r\n"
 ```
 
 ### OrangePi boards

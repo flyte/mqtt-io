@@ -14,6 +14,8 @@ Required: yes
 ```
 
 Contains the configuration data used for connecting to an MQTT server.
+
+### Section options:
 <!--schema_section(depth=1)-->
 <!--cerberus_section(depth=1)-->
 
@@ -234,6 +236,20 @@ Required: no
 ```
 
 TLS/SSL settings for connecting to the MQTT server over an encrypted connection.
+
+**Example:**
+
+```yaml
+mqtt:
+  host: localhost
+  tls:
+    enabled: yes
+    ca_certs: mosquitto.org.crt
+    certfile: client.crt
+    keyfile: client.key
+```
+
+### Section options:
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
@@ -243,6 +259,12 @@ TLS/SSL settings for connecting to the MQTT server over an encrypted connection.
 Type: boolean
 Required: yes
 ```
+
+Enable a secure connection to the MQTT server.
+
+> Most of these options map directly to the
+[`tls_set()` arguments](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
+on the Paho MQTT client.
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`ca_certs`
@@ -251,6 +273,10 @@ Required: yes
 Type: string
 Required: no
 ```
+
+Path to the Certificate Authority certificate files that are to be treated
+as trusted by this client.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`certfile`
@@ -259,6 +285,9 @@ Required: no
 Type: string
 Required: no
 ```
+
+Path to the PEM encoded client certificate.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`keyfile`
@@ -267,6 +296,9 @@ Required: no
 Type: string
 Required: no
 ```
+
+Path to the PEM encoded client private key.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`cert_reqs`
@@ -280,6 +312,11 @@ Allowed:
 - CERT_OPTIONAL
 - CERT_REQUIRED
 ```
+
+Defines the certificate requirements that the client imposes on the MQTT server.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
+
+> By default this is `CERT_REQUIRED`, which means that the broker must provide a certificate.
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`tls_version`
@@ -288,6 +325,11 @@ Allowed:
 Type: string
 Required: no
 ```
+
+Specifies the version of the SSL/TLS protocol to be used.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
+
+> By default the highest TLS version is detected.
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`ciphers`
@@ -296,6 +338,9 @@ Required: no
 Type: string
 Required: no
 ```
+
+Which encryption ciphers are allowable for this connection.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
 - - #### <small>_mqtt.tls_.</small>`insecure`
@@ -304,6 +349,16 @@ Required: no
 Type: boolean
 Required: no
 ```
+
+Configure verification of the server hostname in the server certificate.
+[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-insecure-set)
+
+> If set to true, it is impossible to guarantee that the host you are
+connecting to is not impersonating your server. This can be useful in
+initial server testing, but makes it possible for a malicious third party
+to impersonate your server through DNS spoofing, for example.
+Do not use this function in a real system. Setting value to true means there
+is no point using encryption.
 <!--cerberus_section(depth=0)-->
 
 ## `gpio_modules`
@@ -314,33 +369,66 @@ Required: no
 Type: list
 Required: no
 ```
-<!--schema_section(depth=1)-->
-<!--schema_section(depth=1)-->
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_gpio_modules_.</small>`name`
+List of GPIO modules to configure for use with inputs and/or outputs.
+
+Each of the entries in this list should be a dict using the following variables.
+
+> Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+`CONFIG_SCHEMA` value of the module's code in
+[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
+TODO: Link this to the pending wiki pages on each module's requirements.
+
+**Example:**
+
+```yaml
+gpio_modules:
+  - name: rpi_gpio
+    module: raspberrypi
+  
+  - name: pcf
+    module: pcf8574
+    i2c_bus_num: 1
+    chip_addr: 0x20
+```
+
+### Section options:
+<!--schema_section(depth=1)-->
+<!--schema_section(depth=2)-->
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_gpio_modules.*_.</small>`name`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_gpio_modules_.</small>`module`
+Your name for this configuration of the module. Will be referred to by entries
+in the `digital_inputs` and/or `digital_outputs` sections.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_gpio_modules.*_.</small>`module`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_gpio_modules_.</small>`cleanup`
+Name of the module in the code. This is listed in the README's
+"Supported Hardware" section in brackets.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_gpio_modules.*_.</small>`cleanup`
 
 ```yaml
 Type: boolean
 Required: no
 Default: true
 ```
+
+Whether to run the module's `cleanup()` method on exit.
 <!--cerberus_section(depth=0)-->
 
 ## `sensor_modules`
@@ -351,33 +439,68 @@ Default: true
 Type: list
 Required: no
 ```
-<!--schema_section(depth=1)-->
-<!--schema_section(depth=1)-->
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_sensor_modules_.</small>`name`
+List of sensor modules to configure for use with sensor inputs.
+
+Each of the entries in this list should be a dict using the following variables.
+
+> Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+`CONFIG_SCHEMA` value of the module's code in
+[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
+TODO: Link this to the pending wiki pages on each module's requirements.
+
+**Example:**
+
+```yaml
+sensor_modules:
+  - name: dht
+    module: dht22
+    type: AM2302
+    pin: 4
+  
+  - name: ds
+    module: ds18b
+    type: DS18S20
+    address: 000803702e49
+```
+
+### Section options:
+<!--schema_section(depth=1)-->
+<!--schema_section(depth=2)-->
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_sensor_modules.*_.</small>`name`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_sensor_modules_.</small>`module`
+Your name for this configuration of the module. Will be referred to by entries
+in the `sensor_inputs` section.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_sensor_modules.*_.</small>`module`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_sensor_modules_.</small>`cleanup`
+Name of the module in the code. This is listed in the README's
+"Supported Hardware" section in brackets.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_sensor_modules.*_.</small>`cleanup`
 
 ```yaml
 Type: boolean
 Required: no
 Default: true
 ```
+
+Whether to run the module's `cleanup()` method on exit.
 <!--cerberus_section(depth=0)-->
 
 ## `stream_modules`
@@ -388,69 +511,117 @@ Default: true
 Type: list
 Required: no
 ```
-<!--schema_section(depth=1)-->
-<!--schema_section(depth=1)-->
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_stream_modules_.</small>`name`
+List of stream modules to configure.
+
+Each of the entries in this list should be a dict using the following variables.
+
+> Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+`CONFIG_SCHEMA` value of the module's code in
+[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
+TODO: Link this to the pending wiki pages on each module's requirements.
+
+**Example:**
+
+```yaml
+stream_modules:
+  - name: network_switch
+    module: serial
+    device: /dev/ttyUSB1
+    baud: 115200
+    interval: 10
+
+  - name: ups
+    module: serial
+    type: /dev/ttyUSB0
+    baud: 9600
+    interval: 1
+```
+
+### Section options:
+<!--schema_section(depth=1)-->
+<!--schema_section(depth=2)-->
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_stream_modules.*_.</small>`name`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_stream_modules_.</small>`module`
+Your name for this configuration of the module. Will be used in the topic on
+which the stream's data is published and the topic on which messages can be
+sent for writing to the stream.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_stream_modules.*_.</small>`module`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_stream_modules_.</small>`cleanup`
+Name of the module in the code. This is listed in the README's
+"Supported Hardware" section in brackets.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_stream_modules.*_.</small>`cleanup`
 
 ```yaml
 Type: boolean
 Required: no
 Default: true
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_stream_modules_.</small>`retain`
+Whether to run the module's `cleanup()` method on exit.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_stream_modules.*_.</small>`retain`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_stream_modules_.</small>`read_interval`
+Whether to set the `retain` flag on MQTT messages publishing data received
+from the stream.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_stream_modules.*_.</small>`read_interval`
 
 ```yaml
 Type: float
 Required: no
 Default: 60
+Unit: seconds
 Minimum value: 0.01
 ```
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_stream_modules_.</small>`read`
+How long to wait between polling the stream for new data.
+<!--cerberus_section(depth=2)-->
 
-```yaml
-Type: boolean
-Required: no
-Default: true
-```
-<!--cerberus_section(depth=1)-->
-
-- ### <small>_stream_modules_.</small>`write`
+- ### <small>_stream_modules.*_.</small>`read`
 
 ```yaml
 Type: boolean
 Required: no
 Default: true
 ```
+
+Whether to poll this stream for incoming data and publish it on an MQTT topic.
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_stream_modules.*_.</small>`write`
+
+```yaml
+Type: boolean
+Required: no
+Default: true
+```
+
+Whether to subscribe to MQTT messages on a topic and write messages received on it to the stream.
 <!--cerberus_section(depth=0)-->
 
 ## `digital_inputs`
@@ -461,86 +632,88 @@ Default: true
 Type: list
 Required: no
 ```
-<!--schema_section(depth=1)-->
-<!--schema_section(depth=1)-->
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_digital_inputs_.</small>`name`
+### Section options:
+<!--schema_section(depth=1)-->
+<!--schema_section(depth=2)-->
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_digital_inputs.*_.</small>`name`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`module`
+- ### <small>_digital_inputs.*_.</small>`module`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`pin`
+- ### <small>_digital_inputs.*_.</small>`pin`
 
 ```yaml
 Type: ['string', 'integer']
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`on_payload`
+- ### <small>_digital_inputs.*_.</small>`on_payload`
 
 ```yaml
 Type: string
 Required: no
 Default: 'ON'
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`off_payload`
+- ### <small>_digital_inputs.*_.</small>`off_payload`
 
 ```yaml
 Type: string
 Required: no
 Default: 'OFF'
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`inverted`
+- ### <small>_digital_inputs.*_.</small>`inverted`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`interrupt_payload`
+- ### <small>_digital_inputs.*_.</small>`interrupt_payload`
 
 ```yaml
 Type: string
 Required: no
 Default: INT
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`pullup`
-
-```yaml
-Type: boolean
-Required: no
-```
-<!--cerberus_section(depth=1)-->
-
-- ### <small>_digital_inputs_.</small>`pulldown`
+- ### <small>_digital_inputs.*_.</small>`pullup`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`interrupt`
+- ### <small>_digital_inputs.*_.</small>`pulldown`
+
+```yaml
+Type: boolean
+Required: no
+```
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_digital_inputs.*_.</small>`interrupt`
 
 ```yaml
 Type: string
@@ -550,17 +723,17 @@ Allowed:
 - falling
 - both
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`interrupt_for`
+- ### <small>_digital_inputs.*_.</small>`interrupt_for`
 
 ```yaml
 Type: list
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`bouncetime`
+- ### <small>_digital_inputs.*_.</small>`bouncetime`
 
 ```yaml
 Type: integer
@@ -568,35 +741,35 @@ Required: no
 Default: 100
 Minimum value: 1
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`retain`
+- ### <small>_digital_inputs.*_.</small>`retain`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`poll_interval`
+- ### <small>_digital_inputs.*_.</small>`poll_interval`
 
 ```yaml
 Type: float
 Required: no
 Default: 0.1
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`poll_when_interrupt_for`
+- ### <small>_digital_inputs.*_.</small>`poll_when_interrupt_for`
 
 ```yaml
 Type: boolean
 Required: no
 Default: true
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_inputs_.</small>`ha_discovery`
+- ### <small>_digital_inputs.*_.</small>`ha_discovery`
 
 -------------------
 
@@ -604,10 +777,12 @@ Default: true
 Type: dict
 Required: no
 ```
-<!--schema_section(depth=2)-->
-<!--cerberus_section(depth=2)-->
 
-- - #### <small>_digital_inputs.ha_discovery_.</small>`component`
+### Section options:
+<!--schema_section(depth=3)-->
+<!--cerberus_section(depth=3)-->
+
+- - #### <small>_digital_inputs.*.ha_discovery_.</small>`component`
 
 ```yaml
 Type: string
@@ -624,69 +799,71 @@ Default: binary_sensor
 Type: list
 Required: no
 ```
-<!--schema_section(depth=1)-->
-<!--schema_section(depth=1)-->
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_digital_outputs_.</small>`name`
+### Section options:
+<!--schema_section(depth=1)-->
+<!--schema_section(depth=2)-->
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_digital_outputs.*_.</small>`name`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`module`
+- ### <small>_digital_outputs.*_.</small>`module`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`pin`
+- ### <small>_digital_outputs.*_.</small>`pin`
 
 ```yaml
 Type: ['string', 'integer']
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`on_payload`
+- ### <small>_digital_outputs.*_.</small>`on_payload`
 
 ```yaml
 Type: string
 Required: no
 Default: 'ON'
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`off_payload`
+- ### <small>_digital_outputs.*_.</small>`off_payload`
 
 ```yaml
 Type: string
 Required: no
 Default: 'OFF'
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`inverted`
+- ### <small>_digital_outputs.*_.</small>`inverted`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`timed_set_ms`
+- ### <small>_digital_outputs.*_.</small>`timed_set_ms`
 
 ```yaml
 Type: integer
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`initial`
+- ### <small>_digital_outputs.*_.</small>`initial`
 
 ```yaml
 Type: string
@@ -695,25 +872,25 @@ Allowed:
 - high
 - low
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`publish_initial`
-
-```yaml
-Type: boolean
-Required: no
-```
-<!--cerberus_section(depth=1)-->
-
-- ### <small>_digital_outputs_.</small>`retain`
+- ### <small>_digital_outputs.*_.</small>`publish_initial`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_digital_outputs_.</small>`ha_discovery`
+- ### <small>_digital_outputs.*_.</small>`retain`
+
+```yaml
+Type: boolean
+Required: no
+```
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_digital_outputs.*_.</small>`ha_discovery`
 
 -------------------
 
@@ -721,10 +898,12 @@ Required: no
 Type: dict
 Required: no
 ```
-<!--schema_section(depth=2)-->
-<!--cerberus_section(depth=2)-->
 
-- - #### <small>_digital_outputs.ha_discovery_.</small>`component`
+### Section options:
+<!--schema_section(depth=3)-->
+<!--cerberus_section(depth=3)-->
+
+- - #### <small>_digital_outputs.*.ha_discovery_.</small>`component`
 
 ```yaml
 Type: string
@@ -741,35 +920,37 @@ Default: switch
 Type: list
 Required: no
 ```
-<!--schema_section(depth=1)-->
-<!--schema_section(depth=1)-->
-<!--cerberus_section(depth=1)-->
 
-- ### <small>_sensor_inputs_.</small>`name`
+### Section options:
+<!--schema_section(depth=1)-->
+<!--schema_section(depth=2)-->
+<!--cerberus_section(depth=2)-->
+
+- ### <small>_sensor_inputs.*_.</small>`name`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`module`
+- ### <small>_sensor_inputs.*_.</small>`module`
 
 ```yaml
 Type: string
 Required: yes
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`retain`
+- ### <small>_sensor_inputs.*_.</small>`retain`
 
 ```yaml
 Type: boolean
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`interval`
+- ### <small>_sensor_inputs.*_.</small>`interval`
 
 ```yaml
 Type: integer
@@ -777,35 +958,35 @@ Required: no
 Default: 60
 Minimum value: 1
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`digits`
+- ### <small>_sensor_inputs.*_.</small>`digits`
 
 ```yaml
 Type: integer
 Required: no
 Default: 2
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`unit_of_measurement`
+- ### <small>_sensor_inputs.*_.</small>`unit_of_measurement`
 
 ```yaml
 Type: string
 Required: no
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`expire_after`
+- ### <small>_sensor_inputs.*_.</small>`expire_after`
 
 ```yaml
 Type: integer
 Required: no
 Minimum value: 1
 ```
-<!--cerberus_section(depth=1)-->
+<!--cerberus_section(depth=2)-->
 
-- ### <small>_sensor_inputs_.</small>`ha_discovery`
+- ### <small>_sensor_inputs.*_.</small>`ha_discovery`
 
 -------------------
 
@@ -813,10 +994,12 @@ Minimum value: 1
 Type: dict
 Required: no
 ```
-<!--schema_section(depth=2)-->
-<!--cerberus_section(depth=2)-->
 
-- - #### <small>_sensor_inputs.ha_discovery_.</small>`component`
+### Section options:
+<!--schema_section(depth=3)-->
+<!--cerberus_section(depth=3)-->
+
+- - #### <small>_sensor_inputs.*.ha_discovery_.</small>`component`
 
 ```yaml
 Type: string

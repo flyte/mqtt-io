@@ -25,6 +25,10 @@ if TYPE_CHECKING:
 
 _LOG = logging.getLogger(__name__)
 
+# TODO: Tasks pending completion -@flyte at 02/03/2021, 10:37:38
+# Add validation to make sure that the names used for inputs/outputs/stream modules
+# are suitable for use in an MQTT topic.
+
 
 class ConfigValidator(cerberus.Validator):  # type: ignore # No stubs for Cerberus
     """

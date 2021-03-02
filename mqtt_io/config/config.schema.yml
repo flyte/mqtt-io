@@ -1,39 +1,68 @@
 mqtt:
+  meta:
+    description: |
+      Contains the configuration data used for connecting to an MQTT server.
   type: dict
   required: yes
   schema:
     host:
+      meta:
+        description: Host name or IP address of the MQTT server.
       type: string
       empty: no
       required: yes
     port:
+      meta:
+        description: Port number to connect to on the MQTT server.
       type: integer
       min: 1
       max: 65535
       required: no
       default: 1883
     user:
+      meta:
+        description: Username to authenticate with on the MQTT server.
       type: string
       required: no
       default: ""
     password:
+      meta:
+        description: Password to authenticate with on the MQTT server.
       type: string
       required: no
       default: ""
     client_id:
+      meta:
+        description: |
+          [MQTT client ID](https://www.cloudmqtt.com/blog/2018-11-21-mqtt-what-is-client-id.html) to use on the MQTT server.
       type: string
       required: no
       default: ""
     topic_prefix:
+      meta:
+        description: Prefix to use for all topics.
+        extra_info: |
+          For example, a `topic_prefix` of `home/livingroom` would make a digital input
+          called "doorbell" publish its changes to the `home/livingroom/input/doorbell`
+          topic.
       type: string
       required: no
       default: ""
       coerce: rstrip_slash
     clean_session:
+      meta:
+        description: |
+          Whether or not to start a
+          [clean MQTT session](https://www.hivemq.com/blog/mqtt-essentials-part-7-persistent-session-queuing-messages/)
+          on every MQTT connection.
       type: boolean
       required: no
       default: false
     protocol:
+      meta:
+        description: Version of the MQTT protocol to use.
+        extra_info: |
+          This renders in the documentation as a float, but should always be set within quotes.
       type: string
       required: no
       empty: no
@@ -43,60 +72,129 @@ mqtt:
         - "3.1"
         - "3.1.1"
     keepalive:
+      meta:
+        description: |
+          How frequently in seconds to send
+          [ping packets](https://www.hivemq.com/blog/mqtt-essentials-part-10-alive-client-take-over/)
+          to the MQTT server.
+        unit: seconds
       type: integer
       min: 1
       required: no
       default: 10
     status_topic:
+      meta:
+        description: Topic on which to send messages about the running status of this software.
+        extra_info: |
+          Sends the payloads configured in `status_payload_running`,
+          `status_payload_stopped` and `status_payload_dead`.
       type: string
       required: no
       default: status
     status_payload_running:
+      meta:
+        description: Payload to send on the status topic when the software is running.
       type: string
       required: no
       default: running
     status_payload_stopped:
+      meta:
+        description: Payload to send on the status topic when the software has exited cleanly.
       type: string
       required: no
       default: stopped
     status_payload_dead:
+      meta:
+        description: Payload to send on the status topic when the software has exited unexpectedly.
+        extra_info: |
+          Uses [MQTT Last Will and Testament](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/)
+          to make the server automatically send this payload if our connection fails.
       type: string
       required: no
       default: dead
     discovery:
+      meta:
+        description: |
+          Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)
+          of our configured devices.
       type: boolean
       required: no
       default: no
     discovery_prefix:
+      meta:
+        description: Prefix for the Home Assistant MQTT discovery topic.
       type: string
       required: no
       default: "homeassistant"
       coerce: rstrip_slash
     discovery_name:
+      meta:
+        description: Name to identify this "device" in Home Assistant.
       type: string
       required: no
       default: "MQTT IO"
     client_module:
+      meta:
+        description: MQTT Client implementation module path.
+        extra_info: |
+          There's currently only one implementation, which uses the
+          [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.
       type: string
       required: no
       default: mqtt_io.mqtt.asyncio_mqtt
     tls:
+      meta:
+        description: |
+          TLS/SSL settings for connecting to the MQTT server over an encrypted connection.
+        yaml_example: |
+          mqtt:
+            host: localhost
+            tls:
+              enabled: yes
+              ca_certs: mosquitto.org.crt
+              certfile: client.crt
+              keyfile: client.key
       type: dict
       required: no
       schema:
         enabled:
+          meta:
+            description: Enable a secure connection to the MQTT server.
+            extra_info: |
+              Most of these options map directly to the
+              [`tls_set()` arguments](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
+              on the Paho MQTT client.
           type: boolean
           required: yes
         ca_certs:
+          meta:
+            description: |
+              Path to the Certificate Authority certificate files that are to be treated
+              as trusted by this client.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
           type: string
           required: no
         certfile:
+          meta:
+            description: |
+              Path to the PEM encoded client certificate.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
           type: string
           required: no
         keyfile:
+          meta:
+            description: |
+              Path to the PEM encoded client private key.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
           type: string
           required: no
         cert_reqs:
+          meta:
+            description: |
+              Defines the certificate requirements that the client imposes on the MQTT server.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
+            extra_info: |
+              By default this is `CERT_REQUIRED`, which means that the broker must provide a certificate.
           type: string
           required: no
           allowed:
@@ -105,17 +203,58 @@ mqtt:
             - CERT_REQUIRED
           default: CERT_REQUIRED
         tls_version:
+          meta:
+            description: |
+              Specifies the version of the SSL/TLS protocol to be used.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
+            extra_info: |
+              By default the highest TLS version is detected.
           type: string
           required: no
         ciphers:
+          meta:
+            description: |
+              Which encryption ciphers are allowable for this connection.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
           type: string
           required: no
         insecure:
+          meta:
+            description: |
+              Configure verification of the server hostname in the server certificate.
+              [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-insecure-set)
+            extra_info: |
+              If set to true, it is impossible to guarantee that the host you are
+              connecting to is not impersonating your server. This can be useful in
+              initial server testing, but makes it possible for a malicious third party
+              to impersonate your server through DNS spoofing, for example.
+              Do not use this function in a real system. Setting value to true means there
+              is no point using encryption.
           type: boolean
           required: no
           default: false
 
 gpio_modules:
+  meta:
+    description: |
+      List of GPIO modules to configure for use with inputs and/or outputs.
+
+      Each of the entries in this list should be a dict using the following variables.
+    extra_info: |
+      Some modules require extra config entries, specified by the modules themselves.
+      Until the documentation is written for the individual modules, please refer to the
+      `CONFIG_SCHEMA` value of the module's code in
+      [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
+      TODO: Link this to the pending wiki pages on each module's requirements.
+    yaml_example: |
+      gpio_modules:
+        - name: rpi_gpio
+          module: raspberrypi
+        
+        - name: pcf
+          module: pcf8574
+          i2c_bus_num: 1
+          chip_addr: 0x20
   type: list
   required: no
   default: []
@@ -124,19 +263,51 @@ gpio_modules:
     allow_unknown: yes
     schema:
       name:
+        meta:
+          description: |
+            Your name for this configuration of the module. Will be referred to by entries
+            in the `digital_inputs` and/or `digital_outputs` sections.
         type: string
         required: yes
         empty: no
       module:
+        meta:
+          description: |
+            Name of the module in the code. This is listed in the README's
+            "Supported Hardware" section in brackets.
         type: string
         required: yes
         empty: no
       cleanup:
+        meta:
+          description: Whether to run the module's `cleanup()` method on exit.
         type: boolean
         required: no
         default: yes
 
 sensor_modules:
+  meta:
+    description: |
+      List of sensor modules to configure for use with sensor inputs.
+
+      Each of the entries in this list should be a dict using the following variables.
+    extra_info: |
+      Some modules require extra config entries, specified by the modules themselves.
+      Until the documentation is written for the individual modules, please refer to the
+      `CONFIG_SCHEMA` value of the module's code in
+      [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
+      TODO: Link this to the pending wiki pages on each module's requirements.
+    yaml_example: |
+      sensor_modules:
+        - name: dht
+          module: dht22
+          type: AM2302
+          pin: 4
+        
+        - name: ds
+          module: ds18b
+          type: DS18S20
+          address: 000803702e49
   type: list
   required: no
   default: []
@@ -145,19 +316,53 @@ sensor_modules:
     allow_unknown: yes
     schema:
       name:
+        meta:
+          description: |
+            Your name for this configuration of the module. Will be referred to by entries
+            in the `sensor_inputs` section.
         type: string
         required: yes
         empty: no
       module:
+        meta:
+          description: |
+            Name of the module in the code. This is listed in the README's
+            "Supported Hardware" section in brackets.
         type: string
         required: yes
         empty: no
       cleanup:
+        meta:
+          description: Whether to run the module's `cleanup()` method on exit.
         type: boolean
         required: no
         default: yes
 
 stream_modules:
+  meta:
+    description: |
+      List of stream modules to configure.
+
+      Each of the entries in this list should be a dict using the following variables.
+    extra_info: |
+      Some modules require extra config entries, specified by the modules themselves.
+      Until the documentation is written for the individual modules, please refer to the
+      `CONFIG_SCHEMA` value of the module's code in
+      [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
+      TODO: Link this to the pending wiki pages on each module's requirements.
+    yaml_example: |
+      stream_modules:
+        - name: network_switch
+          module: serial
+          device: /dev/ttyUSB1
+          baud: 115200
+          interval: 10
+
+        - name: ups
+          module: serial
+          type: /dev/ttyUSB0
+          baud: 9600
+          interval: 1
   type: list
   required: no
   default: []
@@ -166,26 +371,59 @@ stream_modules:
     allow_unknown: yes
     schema:
       name:
+        meta:
+          description: |
+            Your name for this configuration of the module. Will be used in the topic on
+            which the stream's data is published and the topic on which messages can be
+            sent for writing to the stream.
         type: string
         required: yes
         empty: no
       module:
+        meta:
+          description: |
+            Name of the module in the code. This is listed in the README's
+            "Supported Hardware" section in brackets.
         type: string
         required: yes
         empty: no
       cleanup:
+        meta:
+          description: Whether to run the module's `cleanup()` method on exit.
         type: boolean
         required: no
         default: yes
       retain:
+        meta:
+          description: |
+            Whether to set the `retain` flag on MQTT messages publishing data received
+            from the stream.
         type: boolean
         required: no
         default: no
       read_interval:
+        meta:
+          description: How long to wait between polling the stream for new data.
+          unit: seconds
         type: float
         required: no
         default: 60
         min: 0.01
+      read:
+        meta:
+          description: |
+            Whether to poll this stream for incoming data and publish it on an MQTT topic.
+        type: boolean
+        required: no
+        default: yes
+      write:
+        meta:
+          description:
+            Whether to subscribe to MQTT messages on a topic and write messages received
+            on it to the stream.
+        type: boolean
+        required: no
+        default: yes
 
 digital_inputs:
   type: list
@@ -381,52 +619,6 @@ sensor_inputs:
             required: no
             empty: no
             default: sensor
-
-stream_reads:
-  type: list
-  required: no
-  default: []
-  schema:
-    type: dict
-    allow_unknown: yes
-    schema:
-      name:
-        type: string
-        required: yes
-        empty: no
-      module:
-        type: string
-        required: yes
-        empty: no
-      retain:
-        type: boolean
-        required: no
-        default: no
-      encoding:
-        type: string
-        required: no
-      read_interval:
-        type: float
-        required: no
-        default: 60
-        min: 0.01
-
-stream_writes:
-  type: list
-  required: no
-  default: []
-  schema:
-    type: dict
-    allow_unknown: yes
-    schema:
-      name:
-        type: string
-        required: yes
-        empty: no
-      module:
-        type: string
-        required: yes
-        empty: no
 
 logging:
   type: dict

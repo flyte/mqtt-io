@@ -248,6 +248,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         Initialise Stream modules.
         """
 
+        # TODO: Tasks pending completion -@flyte at 01/03/2021, 14:40:10
+        # Only publish if read: true and only subscribe if write: true
+
         async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
             stream_conf = self.stream_configs[event.stream_name]
             self.mqtt_task_queue.put_nowait(

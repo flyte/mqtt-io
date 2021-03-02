@@ -13,7 +13,10 @@ DOC_PATH = "config-doc.md"
 
 
 def meta_entry(section: ConfigType, meta_key: str) -> Any:
-    return section.get("meta", {}).get(meta_key, "").strip() or None
+    entry = section.get("meta", {}).get(meta_key, "")
+    if hasattr(entry, "strip"):
+        entry = entry.strip()
+    return entry or None
 
 
 def titleify(text: str) -> str:
@@ -33,6 +36,8 @@ class SectionDocumenter:
             parent_sections = parent_sections.copy()
         self.doc(f"\n<!--schema_section(depth={len(parent_sections)})-->")
         if child_schema := schema_section.get("schema"):
+            # This must be a list, which has a schema for each item
+            parent_sections.append("*")
             self.document_schema_section(child_schema, parent_sections)
             return
         for entry_name in schema_section.keys():
@@ -52,12 +57,10 @@ class SectionDocumenter:
 
         title = meta_entry(cerberus_section, "title") or auto_title
 
-        dashes = "- " * (len(parent_sections))
-        hashes = "#" * (len(parent_sections) + 2)
+        depth = len([x for x in parent_sections if x != "*"])
+        dashes = "- " * depth
+        hashes = "#" * (depth + 2)
         self.doc(f"\n\n{dashes}{hashes} {title}")
-
-        # dashes = "- " * (len(parent_sections))
-        # self.doc(f"\n\n{dashes}**{title}**:")
 
         if child_schema := cerberus_section.get("schema"):
             self.doc("\n\n-------------------")
@@ -101,8 +104,23 @@ class SectionDocumenter:
         if extra_info := meta_entry(cerberus_section, "extra_info"):
             self.doc(f"\n\n> {extra_info}")
 
+        if yaml_example := meta_entry(cerberus_section, "yaml_example"):
+            self.doc(f"\n\n**Example:**\n\n```yaml\n{yaml_example}\n```")
+
+        if yaml_example_expand := meta_entry(cerberus_section, "yaml_example_expand"):
+            self.doc(
+                f"""\n
+<details>
+  <summary>View example</summary>
+
+```yaml
+{yaml_example_expand}
+```
+</details>"""
+            )
+
         if child_schema:
-            # self.doc("\n\n### Section options:")
+            self.doc("\n\n### Section options:")
             parent_sections.append(entry_name)
             self.document_schema_section(child_schema, parent_sections)
             return
