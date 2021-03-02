@@ -2,6 +2,17 @@ mqtt:
   meta:
     description: |
       Contains the configuration data used for connecting to an MQTT server.
+    yaml_example: |
+      mqtt:
+        host: test.mosquitto.org
+        port: 8883
+        topic_prefix: mqtt_io
+        discovery: yes
+        tls:
+          enabled: yes
+          ca_certs: mosquitto.org.crt
+          certfile: client.crt
+          keyfile: client.key
   type: dict
   required: yes
   schema:

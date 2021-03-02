@@ -1,9 +1,8 @@
 from shutil import move
 from textwrap import dedent
-import textwrap
-from types import FunctionType
-from typing import Any, Callable, List, Optional, TextIO, cast
+from typing import Any, Callable, List, Optional, TextIO
 
+import md_toc
 import yaml
 
 from ..types import ConfigType
@@ -57,13 +56,18 @@ class SectionDocumenter:
 
         title = meta_entry(cerberus_section, "title") or auto_title
 
+        child_schema = cerberus_section.get("schema")
+
         depth = len([x for x in parent_sections if x != "*"])
         dashes = "- " * depth
-        hashes = "#" * (depth + 2)
-        self.doc(f"\n\n{dashes}{hashes} {title}")
+        hashes = "#" * (depth + 1)
+        if child_schema:
+            self.doc(f"\n\n{hashes} {title}")
+        else:
+            self.doc(f"\n\n{dashes}{hashes} {title}")
 
-        if child_schema := cerberus_section.get("schema"):
-            self.doc("\n\n-------------------")
+        # if child_schema:
+        #     self.doc("\n\n-------------------")
 
         self.doc("\n\n```yaml")
 
@@ -120,13 +124,13 @@ class SectionDocumenter:
             )
 
         if child_schema:
-            self.doc("\n\n### Section options:")
+            # self.doc(f"\n\n{hashes}# `{entry_name}` config")
             parent_sections.append(entry_name)
             self.document_schema_section(child_schema, parent_sections)
             return
 
 
-def main(doc_file: TextIO) -> None:
+def document_schema(doc_file: TextIO) -> None:
     schema = get_main_schema()
 
     def doc(entry: str) -> None:
@@ -137,7 +141,10 @@ def main(doc_file: TextIO) -> None:
             """
         # MQTT IO Configuration
 
-        Description stuff...
+        The software is configured using a single YAML config file. This document details
+        the config options for each section and provides examples for each section.
+
+        <!-- TOC -->
 """
         ).strip()
     )
@@ -145,33 +152,19 @@ def main(doc_file: TextIO) -> None:
     sd = SectionDocumenter(doc)
     sd.document_schema_section(schema)
 
-    # for section_name in schema.keys():
-    #     section: ConfigType = schema[section_name]
 
-    # title = meta_entry(section, "title") or titleify(section_name)
-    # doc(f"\n\n## {title}")
+def add_toc(path: str) -> None:
+    toc = md_toc.build_toc(path, keep_header_levels=10, skip_lines=1)
+    md_toc.write_string_on_file_between_markers(path, toc, "<!-- TOC -->")
 
-    # required: bool = section["required"]
-    # doc("\n\n")
-    # doc("_Required section_" if required else "_Optional section_")
 
-    # if description := meta_entry(section, "description"):
-    #     doc(f"\n\n{description}")
-
-    #     section_schema: ConfigType = {}
-    #     if section["type"] == "dict":
-    #         section_schema = section.get("schema", {})
-    #     elif section["type"] == "list":
-    #         section_schema = section.get("schema", {}).get("schema", {})
-    #     for entry_name in section_schema.keys():
-    #         entry: ConfigType = section_schema[entry_name]
-    #         doc(f"\n\n### {entry_name}")
-    #         required: bool = entry["required"]
-    #         doc(f"\n\n")
-    #         doc("_Required_" if required else "_Optional_")
+def main() -> None:
+    tmp_path = f"~{DOC_PATH}"
+    with open(tmp_path, "w") as _doc_file:
+        document_schema(_doc_file)
+    add_toc(tmp_path)
+    move(tmp_path, DOC_PATH)
 
 
 if __name__ == "__main__":
-    with open(f"~{DOC_PATH}", "w") as _doc_file:
-        main(_doc_file)
-    move(f"~{DOC_PATH}", DOC_PATH)
+    main()
