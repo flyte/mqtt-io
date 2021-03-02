@@ -6,16 +6,16 @@ the config options for each section and provides examples for each section.
 <!-- TOC -->
 
 - [`mqtt`](#mqtt)
-  - [<small>_mqtt_.</small>`tls`](#small_mqtt_smalltls)
+  - [_mqtt_.`tls`](#_mqtt_tls)
 - [`gpio_modules`](#gpio_modules)
 - [`sensor_modules`](#sensor_modules)
 - [`stream_modules`](#stream_modules)
 - [`digital_inputs`](#digital_inputs)
-  - [<small>_digital_inputs.*_.</small>`ha_discovery`](#small_digital_inputs_smallha_discovery)
+  - [_digital_inputs.*_.`ha_discovery`](#_digital_inputs_ha_discovery)
 - [`digital_outputs`](#digital_outputs)
-  - [<small>_digital_outputs.*_.</small>`ha_discovery`](#small_digital_outputs_smallha_discovery)
+  - [_digital_outputs.*_.`ha_discovery`](#_digital_outputs_ha_discovery)
 - [`sensor_inputs`](#sensor_inputs)
-  - [<small>_sensor_inputs.*_.</small>`ha_discovery`](#small_sensor_inputs_smallha_discovery)
+  - [_sensor_inputs.*_.`ha_discovery`](#_sensor_inputs_ha_discovery)
 - [`logging`](#logging)
 
 <!-- TOC -->
@@ -48,7 +48,7 @@ mqtt:
 <!--schema_section(depth=1)-->
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`host`
+- ## _mqtt_.`host`
 
 ```yaml
 Type: string
@@ -58,7 +58,7 @@ Required: yes
 Host name or IP address of the MQTT server.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`port`
+- ## _mqtt_.`port`
 
 ```yaml
 Type: integer
@@ -71,7 +71,7 @@ Minimum value: 65535
 Port number to connect to on the MQTT server.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`user`
+- ## _mqtt_.`user`
 
 ```yaml
 Type: string
@@ -81,7 +81,7 @@ Required: no
 Username to authenticate with on the MQTT server.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`password`
+- ## _mqtt_.`password`
 
 ```yaml
 Type: string
@@ -91,7 +91,7 @@ Required: no
 Password to authenticate with on the MQTT server.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`client_id`
+- ## _mqtt_.`client_id`
 
 ```yaml
 Type: string
@@ -101,7 +101,7 @@ Required: no
 [MQTT client ID](https://www.cloudmqtt.com/blog/2018-11-21-mqtt-what-is-client-id.html) to use on the MQTT server.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`topic_prefix`
+- ## _mqtt_.`topic_prefix`
 
 ```yaml
 Type: string
@@ -115,7 +115,7 @@ called "doorbell" publish its changes to the `home/livingroom/input/doorbell`
 topic.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`clean_session`
+- ## _mqtt_.`clean_session`
 
 ```yaml
 Type: boolean
@@ -127,7 +127,7 @@ Whether or not to start a
 on every MQTT connection.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`protocol`
+- ## _mqtt_.`protocol`
 
 ```yaml
 Type: string
@@ -143,7 +143,7 @@ Version of the MQTT protocol to use.
 > This renders in the documentation as a float, but should always be set within quotes.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`keepalive`
+- ## _mqtt_.`keepalive`
 
 ```yaml
 Type: integer
@@ -158,7 +158,7 @@ How frequently in seconds to send
 to the MQTT server.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`status_topic`
+- ## _mqtt_.`status_topic`
 
 ```yaml
 Type: string
@@ -172,7 +172,7 @@ Topic on which to send messages about the running status of this software.
 `status_payload_stopped` and `status_payload_dead`.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`status_payload_running`
+- ## _mqtt_.`status_payload_running`
 
 ```yaml
 Type: string
@@ -183,7 +183,7 @@ Default: running
 Payload to send on the status topic when the software is running.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`status_payload_stopped`
+- ## _mqtt_.`status_payload_stopped`
 
 ```yaml
 Type: string
@@ -194,7 +194,7 @@ Default: stopped
 Payload to send on the status topic when the software has exited cleanly.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`status_payload_dead`
+- ## _mqtt_.`status_payload_dead`
 
 ```yaml
 Type: string
@@ -208,7 +208,7 @@ Payload to send on the status topic when the software has exited unexpectedly.
 to make the server automatically send this payload if our connection fails.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`discovery`
+- ## _mqtt_.`discovery`
 
 ```yaml
 Type: boolean
@@ -219,7 +219,7 @@ Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/d
 of our configured devices.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`discovery_prefix`
+- ## _mqtt_.`discovery_prefix`
 
 ```yaml
 Type: string
@@ -230,7 +230,7 @@ Default: homeassistant
 Prefix for the Home Assistant MQTT discovery topic.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`discovery_name`
+- ## _mqtt_.`discovery_name`
 
 ```yaml
 Type: string
@@ -241,7 +241,7 @@ Default: MQTT IO
 Name to identify this "device" in Home Assistant.
 <!--cerberus_section(depth=1)-->
 
-- ## <small>_mqtt_.</small>`client_module`
+- ## _mqtt_.`client_module`
 
 ```yaml
 Type: string
@@ -255,7 +255,7 @@ MQTT Client implementation module path.
 [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.
 <!--cerberus_section(depth=1)-->
 
-## <small>_mqtt_.</small>`tls`
+## _mqtt_.`tls`
 
 ```yaml
 Type: dict
@@ -278,7 +278,7 @@ mqtt:
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`enabled`
+- - ### _mqtt.tls_.`enabled`
 
 ```yaml
 Type: boolean
@@ -292,7 +292,7 @@ Enable a secure connection to the MQTT server.
 on the Paho MQTT client.
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`ca_certs`
+- - ### _mqtt.tls_.`ca_certs`
 
 ```yaml
 Type: string
@@ -304,7 +304,7 @@ as trusted by this client.
 [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`certfile`
+- - ### _mqtt.tls_.`certfile`
 
 ```yaml
 Type: string
@@ -315,7 +315,7 @@ Path to the PEM encoded client certificate.
 [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`keyfile`
+- - ### _mqtt.tls_.`keyfile`
 
 ```yaml
 Type: string
@@ -326,7 +326,7 @@ Path to the PEM encoded client private key.
 [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`cert_reqs`
+- - ### _mqtt.tls_.`cert_reqs`
 
 ```yaml
 Type: string
@@ -344,7 +344,7 @@ Defines the certificate requirements that the client imposes on the MQTT server.
 > By default this is `CERT_REQUIRED`, which means that the broker must provide a certificate.
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`tls_version`
+- - ### _mqtt.tls_.`tls_version`
 
 ```yaml
 Type: string
@@ -357,7 +357,7 @@ Specifies the version of the SSL/TLS protocol to be used.
 > By default the highest TLS version is detected.
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`ciphers`
+- - ### _mqtt.tls_.`ciphers`
 
 ```yaml
 Type: string
@@ -368,7 +368,7 @@ Which encryption ciphers are allowable for this connection.
 [More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)
 <!--cerberus_section(depth=2)-->
 
-- - ### <small>_mqtt.tls_.</small>`insecure`
+- - ### _mqtt.tls_.`insecure`
 
 ```yaml
 Type: boolean
@@ -419,7 +419,7 @@ gpio_modules:
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_gpio_modules.*_.</small>`name`
+- ## _gpio_modules.*_.`name`
 
 ```yaml
 Type: string
@@ -430,7 +430,7 @@ Your name for this configuration of the module. Will be referred to by entries
 in the `digital_inputs` and/or `digital_outputs` sections.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_gpio_modules.*_.</small>`module`
+- ## _gpio_modules.*_.`module`
 
 ```yaml
 Type: string
@@ -441,7 +441,7 @@ Name of the module in the code. This is listed in the README's
 "Supported Hardware" section in brackets.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_gpio_modules.*_.</small>`cleanup`
+- ## _gpio_modules.*_.`cleanup`
 
 ```yaml
 Type: boolean
@@ -487,7 +487,7 @@ sensor_modules:
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_modules.*_.</small>`name`
+- ## _sensor_modules.*_.`name`
 
 ```yaml
 Type: string
@@ -498,7 +498,7 @@ Your name for this configuration of the module. Will be referred to by entries
 in the `sensor_inputs` section.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_modules.*_.</small>`module`
+- ## _sensor_modules.*_.`module`
 
 ```yaml
 Type: string
@@ -509,7 +509,7 @@ Name of the module in the code. This is listed in the README's
 "Supported Hardware" section in brackets.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_modules.*_.</small>`cleanup`
+- ## _sensor_modules.*_.`cleanup`
 
 ```yaml
 Type: boolean
@@ -557,7 +557,7 @@ stream_modules:
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`name`
+- ## _stream_modules.*_.`name`
 
 ```yaml
 Type: string
@@ -569,7 +569,7 @@ which the stream's data is published and the topic on which messages can be
 sent for writing to the stream.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`module`
+- ## _stream_modules.*_.`module`
 
 ```yaml
 Type: string
@@ -580,7 +580,7 @@ Name of the module in the code. This is listed in the README's
 "Supported Hardware" section in brackets.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`cleanup`
+- ## _stream_modules.*_.`cleanup`
 
 ```yaml
 Type: boolean
@@ -591,7 +591,7 @@ Default: true
 Whether to run the module's `cleanup()` method on exit.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`retain`
+- ## _stream_modules.*_.`retain`
 
 ```yaml
 Type: boolean
@@ -602,7 +602,7 @@ Whether to set the `retain` flag on MQTT messages publishing data received
 from the stream.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`read_interval`
+- ## _stream_modules.*_.`read_interval`
 
 ```yaml
 Type: float
@@ -615,7 +615,7 @@ Minimum value: 0.01
 How long to wait between polling the stream for new data.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`read`
+- ## _stream_modules.*_.`read`
 
 ```yaml
 Type: boolean
@@ -626,7 +626,7 @@ Default: true
 Whether to poll this stream for incoming data and publish it on an MQTT topic.
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_stream_modules.*_.</small>`write`
+- ## _stream_modules.*_.`write`
 
 ```yaml
 Type: boolean
@@ -647,7 +647,7 @@ Required: no
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`name`
+- ## _digital_inputs.*_.`name`
 
 ```yaml
 Type: string
@@ -655,7 +655,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`module`
+- ## _digital_inputs.*_.`module`
 
 ```yaml
 Type: string
@@ -663,7 +663,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`pin`
+- ## _digital_inputs.*_.`pin`
 
 ```yaml
 Type: ['string', 'integer']
@@ -671,7 +671,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`on_payload`
+- ## _digital_inputs.*_.`on_payload`
 
 ```yaml
 Type: string
@@ -680,7 +680,7 @@ Default: 'ON'
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`off_payload`
+- ## _digital_inputs.*_.`off_payload`
 
 ```yaml
 Type: string
@@ -689,7 +689,7 @@ Default: 'OFF'
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`inverted`
+- ## _digital_inputs.*_.`inverted`
 
 ```yaml
 Type: boolean
@@ -697,7 +697,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`interrupt_payload`
+- ## _digital_inputs.*_.`interrupt_payload`
 
 ```yaml
 Type: string
@@ -706,7 +706,7 @@ Default: INT
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`pullup`
+- ## _digital_inputs.*_.`pullup`
 
 ```yaml
 Type: boolean
@@ -714,7 +714,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`pulldown`
+- ## _digital_inputs.*_.`pulldown`
 
 ```yaml
 Type: boolean
@@ -722,7 +722,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`interrupt`
+- ## _digital_inputs.*_.`interrupt`
 
 ```yaml
 Type: string
@@ -734,7 +734,7 @@ Allowed:
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`interrupt_for`
+- ## _digital_inputs.*_.`interrupt_for`
 
 ```yaml
 Type: list
@@ -742,7 +742,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`bouncetime`
+- ## _digital_inputs.*_.`bouncetime`
 
 ```yaml
 Type: integer
@@ -752,7 +752,7 @@ Minimum value: 1
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`retain`
+- ## _digital_inputs.*_.`retain`
 
 ```yaml
 Type: boolean
@@ -760,7 +760,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`poll_interval`
+- ## _digital_inputs.*_.`poll_interval`
 
 ```yaml
 Type: float
@@ -769,7 +769,7 @@ Default: 0.1
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_inputs.*_.</small>`poll_when_interrupt_for`
+- ## _digital_inputs.*_.`poll_when_interrupt_for`
 
 ```yaml
 Type: boolean
@@ -778,7 +778,7 @@ Default: true
 ```
 <!--cerberus_section(depth=2)-->
 
-## <small>_digital_inputs.*_.</small>`ha_discovery`
+## _digital_inputs.*_.`ha_discovery`
 
 ```yaml
 Type: dict
@@ -787,7 +787,7 @@ Required: no
 <!--schema_section(depth=3)-->
 <!--cerberus_section(depth=3)-->
 
-- - ### <small>_digital_inputs.*.ha_discovery_.</small>`component`
+- - ### _digital_inputs.*.ha_discovery_.`component`
 
 ```yaml
 Type: string
@@ -806,7 +806,7 @@ Required: no
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`name`
+- ## _digital_outputs.*_.`name`
 
 ```yaml
 Type: string
@@ -814,7 +814,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`module`
+- ## _digital_outputs.*_.`module`
 
 ```yaml
 Type: string
@@ -822,7 +822,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`pin`
+- ## _digital_outputs.*_.`pin`
 
 ```yaml
 Type: ['string', 'integer']
@@ -830,7 +830,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`on_payload`
+- ## _digital_outputs.*_.`on_payload`
 
 ```yaml
 Type: string
@@ -839,7 +839,7 @@ Default: 'ON'
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`off_payload`
+- ## _digital_outputs.*_.`off_payload`
 
 ```yaml
 Type: string
@@ -848,7 +848,7 @@ Default: 'OFF'
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`inverted`
+- ## _digital_outputs.*_.`inverted`
 
 ```yaml
 Type: boolean
@@ -856,7 +856,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`timed_set_ms`
+- ## _digital_outputs.*_.`timed_set_ms`
 
 ```yaml
 Type: integer
@@ -864,7 +864,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`initial`
+- ## _digital_outputs.*_.`initial`
 
 ```yaml
 Type: string
@@ -875,7 +875,7 @@ Allowed:
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`publish_initial`
+- ## _digital_outputs.*_.`publish_initial`
 
 ```yaml
 Type: boolean
@@ -883,7 +883,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_digital_outputs.*_.</small>`retain`
+- ## _digital_outputs.*_.`retain`
 
 ```yaml
 Type: boolean
@@ -891,7 +891,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-## <small>_digital_outputs.*_.</small>`ha_discovery`
+## _digital_outputs.*_.`ha_discovery`
 
 ```yaml
 Type: dict
@@ -900,7 +900,7 @@ Required: no
 <!--schema_section(depth=3)-->
 <!--cerberus_section(depth=3)-->
 
-- - ### <small>_digital_outputs.*.ha_discovery_.</small>`component`
+- - ### _digital_outputs.*.ha_discovery_.`component`
 
 ```yaml
 Type: string
@@ -919,7 +919,7 @@ Required: no
 <!--schema_section(depth=2)-->
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`name`
+- ## _sensor_inputs.*_.`name`
 
 ```yaml
 Type: string
@@ -927,7 +927,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`module`
+- ## _sensor_inputs.*_.`module`
 
 ```yaml
 Type: string
@@ -935,7 +935,7 @@ Required: yes
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`retain`
+- ## _sensor_inputs.*_.`retain`
 
 ```yaml
 Type: boolean
@@ -943,7 +943,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`interval`
+- ## _sensor_inputs.*_.`interval`
 
 ```yaml
 Type: integer
@@ -953,7 +953,7 @@ Minimum value: 1
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`digits`
+- ## _sensor_inputs.*_.`digits`
 
 ```yaml
 Type: integer
@@ -962,7 +962,7 @@ Default: 2
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`unit_of_measurement`
+- ## _sensor_inputs.*_.`unit_of_measurement`
 
 ```yaml
 Type: string
@@ -970,7 +970,7 @@ Required: no
 ```
 <!--cerberus_section(depth=2)-->
 
-- ## <small>_sensor_inputs.*_.</small>`expire_after`
+- ## _sensor_inputs.*_.`expire_after`
 
 ```yaml
 Type: integer
@@ -979,7 +979,7 @@ Minimum value: 1
 ```
 <!--cerberus_section(depth=2)-->
 
-## <small>_sensor_inputs.*_.</small>`ha_discovery`
+## _sensor_inputs.*_.`ha_discovery`
 
 ```yaml
 Type: dict
@@ -988,7 +988,7 @@ Required: no
 <!--schema_section(depth=3)-->
 <!--cerberus_section(depth=3)-->
 
-- - ### <small>_sensor_inputs.*.ha_discovery_.</small>`component`
+- - ### _sensor_inputs.*.ha_discovery_.`component`
 
 ```yaml
 Type: string
