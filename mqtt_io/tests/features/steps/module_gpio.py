@@ -173,7 +173,7 @@ def step(context: Any, pin_name: str, direction_str: str):
 
 
 @when("{pin_name} reads a value of {value_str} with a last value of {last_value_str}")  # type: ignore[no-redef]
-@async_run_until_complete
+@async_run_until_complete(loop="loop")
 async def step(context: Any, pin_name: str, value_str: str, last_value_str: str) -> None:
     assert value_str in ("true", "false")
     assert last_value_str in ("null", "true", "false")

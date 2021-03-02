@@ -92,7 +92,9 @@ def step(context: Any):
             raise AssertionError(
                 "Payload was specified but a non-unicode one was published"
             ) from err
-        assert payload_str == data["payload"]
+        assert (
+            payload_str == data["payload"]
+        ), f"Payload was '{payload_str}' but we were expecting '{data['payload']}'"
 
 
 @then("{method_name} on MqttIo {should_shouldnt} be called")  # type: ignore[no-redef]

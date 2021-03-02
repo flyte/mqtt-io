@@ -33,7 +33,7 @@ class GPIO(GenericGPIO):
         self.setup_interrupt = Mock()  # type: ignore[assignment]
         self.setup_interrupt_callback = Mock()  # type: ignore[assignment]
         self.set_pin = Mock()  # type: ignore[assignment]
-        self.get_pin = Mock(return_value=1)  # type: ignore[assignment]
+        self.get_pin = Mock(return_value=True)  # type: ignore[assignment]
         self.get_int_pins = Mock(return_value=1)  # type: ignore[assignment]
         self.get_captured_int_pin_values = Mock(return_value={1: 1})  # type: ignore[assignment]
 

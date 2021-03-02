@@ -93,6 +93,7 @@ Feature: GPIO module runtime
         And mock1 reads a value of false with a last value of true
         Then handle_remote_interrupt on MqttIo shouldn't be called
 
+    @wip
     Scenario: Non-inverted value is published on DigitalInputChangedEvent to_value True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -110,6 +111,8 @@ Feature: GPIO module runtime
         And we instantiate MqttIo
         And we initialise GPIO modules
         And we initialise digital inputs
+        # Mock this to stop the digital_input_poller from firing events too
+        And we mock _handle_digital_input_value on MqttIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
@@ -122,6 +125,7 @@ Feature: GPIO module runtime
             payload: "ON"
             """
 
+    @wip
     Scenario: Inverted value is published on DigitalInputChangedEvent to_value True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -140,6 +144,8 @@ Feature: GPIO module runtime
         And we instantiate MqttIo
         And we initialise GPIO modules
         And we initialise digital inputs
+        # Mock this to stop the digital_input_poller from firing events too
+        And we mock _handle_digital_input_value on MqttIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
@@ -152,6 +158,7 @@ Feature: GPIO module runtime
             payload: "OFF"
             """
 
+    @wip
     Scenario: Non-inverted value is published on DigitalInputChangedEvent to_value False
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -169,11 +176,13 @@ Feature: GPIO module runtime
         And we instantiate MqttIo
         And we initialise GPIO modules
         And we initialise digital inputs
+        # Mock this to stop the digital_input_poller from firing events too
+        And we mock _handle_digital_input_value on MqttIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
             input_name: mock0
-            from_value: false
+            from_value: true
             to_value: false
             """
         Then _mqtt_publish on MqttIo should be called with MQTT message
@@ -181,6 +190,7 @@ Feature: GPIO module runtime
             payload: "OFF"
             """
 
+    @wip
     Scenario: Inverted value is published on DigitalInputChangedEvent to_value False
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -199,11 +209,13 @@ Feature: GPIO module runtime
         And we instantiate MqttIo
         And we initialise GPIO modules
         And we initialise digital inputs
+        # Mock this to stop the digital_input_poller from firing events too
+        And we mock _handle_digital_input_value on MqttIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
             input_name: mock0
-            from_value: false
+            from_value: true
             to_value: false
             """
         Then _mqtt_publish on MqttIo should be called with MQTT message

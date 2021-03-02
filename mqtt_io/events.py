@@ -89,7 +89,7 @@ class EventBus:
         self._transient_tasks = transient_tasks
         self._listeners: Dict[Type[Event], List[ListenerType]] = {}
 
-    def fire(self, event: Event) -> "List[asyncio.Future[asyncio.Task[Any]]]":
+    def fire(self, event: Event) -> List["asyncio.Future[asyncio.Task[Any]]"]:
         """
         Add callback functions that have subscribed to this event type to the task loop.
         """
@@ -105,7 +105,7 @@ class EventBus:
             _LOG.debug("No listeners for event type %s", event_class.__name__)
             return []
 
-        task_futures: "List[asyncio.Future[asyncio.Task[Any]]]" = []
+        task_futures: List["asyncio.Future[asyncio.Task[Any]]"] = []
         for listener in listeners:
             # Pass in a future on which the asyncio.Task will be set when the coro
             # has been scheduled on the loop.
