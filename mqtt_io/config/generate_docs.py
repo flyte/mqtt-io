@@ -1,10 +1,12 @@
+# pylint: disable-all
+
 import os.path
 from argparse import ArgumentParser
 from shutil import move
 from textwrap import dedent, indent
 from typing import Any, Callable, List, Optional, TextIO
 
-import md_toc
+import md_toc  # type: ignore
 import yaml
 
 from ..types import ConfigType
@@ -45,7 +47,8 @@ class SectionDocumenter:
         else:
             parent_sections = parent_sections.copy()
 
-        if child_schema := schema_section.get("schema"):
+        child_schema = schema_section.get("schema")
+        if child_schema:
             # This must be a list, which has a schema for each item
             parent_sections.append("*")
             self.document_schema_section(child_schema, parent_sections)
@@ -85,20 +88,25 @@ class SectionDocumenter:
         required: bool = cerberus_section.get("required", False)
         self.doc("\nRequired: %s" % ("yes" if required else "no"))
 
-        if (unit := meta_entry(cerberus_section, "unit")) is not None:
+        unit = meta_entry(cerberus_section, "unit")
+        if unit is not None:
             self.doc(f"\nUnit: {unit}")
 
-        if (allowed := cerberus_section.get("allowed")) is not None:
+        allowed = cerberus_section.get("allowed")
+        if allowed is not None:
             allowed_str: str = yaml.dump(allowed)
             self.doc(f"\nAllowed:\n{allowed_str.strip()}")
 
-        if (min_val := cerberus_section.get("min")) is not None:
+        min_val = cerberus_section.get("min")
+        if min_val is not None:
             self.doc(f"\nMinimum value: {min_val}")
 
-        if (max_val := cerberus_section.get("max")) is not None:
+        max_val = cerberus_section.get("max")
+        if max_val is not None:
             self.doc(f"\nMinimum value: {max_val}")
 
-        if (allow_unknown := cerberus_section.get("allow_unknown")) is not None:
+        allow_unknown = cerberus_section.get("allow_unknown")
+        if allow_unknown is not None:
             allow_unknown_str = "yes" if allow_unknown else "no"
             self.doc(f"\nUnlisted entries accepted: {allow_unknown_str}")
 
@@ -108,16 +116,20 @@ class SectionDocumenter:
 
         self.doc("\n```")
 
-        if description := meta_entry(cerberus_section, "description"):
+        description = meta_entry(cerberus_section, "description")
+        if description:
             self.doc(f"\n\n{description}")
 
-        if extra_info := meta_entry(cerberus_section, "extra_info"):
+        extra_info = meta_entry(cerberus_section, "extra_info")
+        if extra_info:
             self.doc(f"\n\n> {extra_info}")
 
-        if yaml_example := meta_entry(cerberus_section, "yaml_example"):
+        yaml_example = meta_entry(cerberus_section, "yaml_example")
+        if yaml_example:
             self.doc(f"\n\n**Example:**\n\n```yaml\n{yaml_example}\n```")
 
-        if yaml_example_expand := meta_entry(cerberus_section, "yaml_example_expand"):
+        yaml_example_expand = meta_entry(cerberus_section, "yaml_example_expand")
+        if yaml_example_expand:
             self.doc(
                 dedent(
                     f"""\n

@@ -25,7 +25,7 @@ def create_unawaited_task_threadsafe(
     loop: asyncio.AbstractEventLoop,
     transient_tasks: List["asyncio.Task[Any]"],
     coro: Coroutine[Any, Any, None],
-    task_future: "Optional[asyncio.Future[asyncio.Task[Any]]]" = None,
+    task_future: Optional["asyncio.Future[asyncio.Task[Any]]"] = None,
 ) -> None:
     """
     Schedule a coroutine on the loop and add the Task to transient_tasks.

@@ -1,9 +1,9 @@
 import asyncio
-from typing import Any, Dict, List, Type
+from typing import Any, Dict, Type
 
 import yaml
 from behave import given, then, when  # type: ignore
-from behave.api.async_step import async_run_until_complete
+from behave.api.async_step import async_run_until_complete  # type: ignore
 from mqtt_io import events
 from mqtt_io.server import MqttIo
 
