@@ -1,5 +1,5 @@
 from shutil import move
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import Any, Callable, List, Optional, TextIO
 
 import md_toc
@@ -20,6 +20,17 @@ def meta_entry(section: ConfigType, meta_key: str) -> Any:
 
 def titleify(text: str) -> str:
     return text.replace("_", " ").title()
+
+
+def format_yaml_value(value: Any) -> str:
+    value_str: str = yaml.dump(value, default_style=None)
+    if value_str.endswith("\n...\n"):
+        value_str = " " + value_str[: -len("\n...\n")]
+    elif "\n" not in value_str.rstrip("\n"):
+        value_str = " " + value_str.rstrip("\n")
+    else:
+        value_str = "\n" + indent(value_str.rstrip("\n"), "  ")
+    return value_str
 
 
 class SectionDocumenter:
@@ -61,7 +72,7 @@ class SectionDocumenter:
         depth = len([x for x in parent_sections if x != "*"])
         dashes = "- " * depth
         hashes = "#" * (depth + 1)
-        if child_schema:
+        if child_schema and not entry_name.endswith("*"):
             self.doc(f"\n\n{hashes} {title}")
         else:
             self.doc(f"\n\n{dashes}{hashes} {title}")
@@ -71,34 +82,32 @@ class SectionDocumenter:
 
         self.doc("\n\n```yaml")
 
-        type_str: str = cerberus_section["type"]
-        self.doc(f"\nType: {type_str}")
+        type_str: str = format_yaml_value(cerberus_section["type"])
+        self.doc(f"\nType:{type_str}")
 
         required: bool = cerberus_section.get("required", False)
         self.doc("\nRequired: %s" % ("yes" if required else "no"))
 
-        if default := cerberus_section.get("default"):
-            default_str: str = yaml.dump(default, default_style=None)
-            if default_str.endswith("\n...\n"):
-                default_str = " " + default_str[: -len("\n...\n")]
-            elif "\n" not in default_str.rstrip("\n"):
-                default_str = " " + default_str.rstrip("\n")
-            else:
-                default_str = "\n" + default_str.rstrip("\n")
-            self.doc(f"\nDefault:{default_str}")
-
-        if unit := meta_entry(cerberus_section, "unit"):
+        if (unit := meta_entry(cerberus_section, "unit")) is not None:
             self.doc(f"\nUnit: {unit}")
 
-        if allowed := cerberus_section.get("allowed"):
+        if (allowed := cerberus_section.get("allowed")) is not None:
             allowed_str: str = yaml.dump(allowed)
             self.doc(f"\nAllowed:\n{allowed_str.strip()}")
 
-        if min_val := cerberus_section.get("min"):
+        if (min_val := cerberus_section.get("min")) is not None:
             self.doc(f"\nMinimum value: {min_val}")
 
-        if max_val := cerberus_section.get("max"):
+        if (max_val := cerberus_section.get("max")) is not None:
             self.doc(f"\nMinimum value: {max_val}")
+
+        if (allow_unknown := cerberus_section.get("allow_unknown")) is not None:
+            allow_unknown_str = "yes" if allow_unknown else "no"
+            self.doc(f"\nUnlisted entries accepted: {allow_unknown_str}")
+
+        if "default" in cerberus_section:
+            default_str = format_yaml_value(cerberus_section["default"])
+            self.doc(f"\nDefault:{default_str}")
 
         self.doc("\n```")
 
@@ -126,8 +135,15 @@ class SectionDocumenter:
         if child_schema:
             # self.doc(f"\n\n{hashes}# `{entry_name}` config")
             parent_sections.append(entry_name)
-            self.document_schema_section(child_schema, parent_sections)
-            return
+            if "type" in child_schema:
+                self.document_cerberus_section("*", child_schema, parent_sections)
+            else:
+                # if entry_name == "*":
+                #     self.doc(
+                #         "\n\nEach of the entries in this list should be a %s using the following values:"
+                #         % cerberus_section["type"]
+                #     )
+                self.document_schema_section(child_schema, parent_sections)
 
 
 def document_schema(doc_file: TextIO) -> None:

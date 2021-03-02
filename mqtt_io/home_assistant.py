@@ -119,17 +119,16 @@ def hass_announce_sensor_input(
     name: str = sens_conf["name"]
     prefix: str = mqtt_config["topic_prefix"]
     disco_prefix: str = mqtt_config["discovery_prefix"]
-    expire_after: int = sens_conf.get("expire_after", sens_conf["interval"] * 2 + 5)
     sensor_config = get_common_config(sens_conf, mqtt_config, mqtt_options)
     sensor_config.update(
         dict(
             unique_id=f"{mqtt_options.client_id}_{sens_conf['module']}_sensor_{name}",
             state_topic="/".join((prefix, SENSOR_TOPIC, name)),
-            expire_after=expire_after,
         )
     )
-    if "unit_of_measurement" in sens_conf:
-        sensor_config["unit_of_measurement"] = sens_conf["unit_of_measurement"]
+    if "expire_after" not in sensor_config:
+        sensor_config["expire_after"] = sens_conf["interval"] * 2 + 5
+
     return MQTTMessageSend(
         "/".join(
             (
