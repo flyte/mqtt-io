@@ -77,9 +77,6 @@ class SectionDocumenter:
         else:
             self.doc(f"\n\n{dashes}{hashes} {title}")
 
-        # if child_schema:
-        #     self.doc("\n\n-------------------")
-
         self.doc("\n\n```yaml")
 
         type_str: str = format_yaml_value(cerberus_section["type"])
@@ -136,16 +133,10 @@ class SectionDocumenter:
             )
 
         if child_schema:
-            # self.doc(f"\n\n{hashes}# `{entry_name}` config")
             parent_sections.append(entry_name)
             if "type" in child_schema:
                 self.document_cerberus_section("*", child_schema, parent_sections)
             else:
-                # if entry_name == "*":
-                #     self.doc(
-                #         "\n\nEach of the entries in this list should be a %s using the following values:"
-                #         % cerberus_section["type"]
-                #     )
                 self.document_schema_section(child_schema, parent_sections)
 
 
