@@ -12,7 +12,7 @@ from mqtt_io.server import MqttIo
 try:
     from unittest.mock import AsyncMock  # type: ignore[attr-defined]
 except ImportError:
-    from mock import Mock  # type: ignore[attr-defined]
+    from mock import AsyncMock  # type: ignore[attr-defined]
 
 # pylint: disable=function-redefined
 
