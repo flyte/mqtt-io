@@ -22,6 +22,9 @@ mypy = "^0.812"
 behave = "^1.2.6"
 coverage = "^5.4"
 md-toc = "^7.1.0"
+Sphinx = "^3.5.1"
+sphinx-autoapi = "^1.7.0"
+recommonmark = "^0.7.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

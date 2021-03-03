@@ -93,7 +93,6 @@ Feature: GPIO module runtime
         And mock1 reads a value of false with a last value of true
         Then handle_remote_interrupt on MqttIo shouldn't be called
 
-    @wip
     Scenario: Non-inverted value is published on DigitalInputChangedEvent to_value True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -125,7 +124,6 @@ Feature: GPIO module runtime
             payload: "ON"
             """
 
-    @wip
     Scenario: Inverted value is published on DigitalInputChangedEvent to_value True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -158,7 +156,6 @@ Feature: GPIO module runtime
             payload: "OFF"
             """
 
-    @wip
     Scenario: Non-inverted value is published on DigitalInputChangedEvent to_value False
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -190,7 +187,6 @@ Feature: GPIO module runtime
             payload: "OFF"
             """
 
-    @wip
     Scenario: Inverted value is published on DigitalInputChangedEvent to_value False
         Given a valid config
         And the config has an entry in gpio_modules with
