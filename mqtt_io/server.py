@@ -1152,7 +1152,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
                 self.running.set()
 
-                if self.config["mqtt"]["discovery"]:
+                if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
                     self._ha_discovery_announce()
 
                 try:

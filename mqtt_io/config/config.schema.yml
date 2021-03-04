@@ -7,7 +7,8 @@ mqtt:
         host: test.mosquitto.org
         port: 8883
         topic_prefix: mqtt_io
-        discovery: yes
+        ha_discovery:
+          enabled: yes
         tls:
           enabled: yes
           ca_certs: mosquitto.org.crt
@@ -123,27 +124,6 @@ mqtt:
       type: string
       required: no
       default: dead
-    discovery:
-      meta:
-        description: |
-          Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)
-          of our configured devices.
-      type: boolean
-      required: no
-      default: no
-    discovery_prefix:
-      meta:
-        description: Prefix for the Home Assistant MQTT discovery topic.
-      type: string
-      required: no
-      default: "homeassistant"
-      coerce: rstrip_slash
-    discovery_name:
-      meta:
-        description: Name to identify this "device" in Home Assistant.
-      type: string
-      required: no
-      default: "MQTT IO"
     client_module:
       meta:
         description: MQTT Client implementation module path.
@@ -153,6 +133,32 @@ mqtt:
       type: string
       required: no
       default: mqtt_io.mqtt.asyncio_mqtt
+    ha_discovery:
+      type: dict
+      required: no
+      schema:
+        enabled:
+          meta:
+            description: |
+              Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)
+              of our configured devices.
+          type: boolean
+          required: yes
+        prefix:
+          meta:
+            description: Prefix for the Home Assistant MQTT discovery topic.
+          type: string
+          required: no
+          default: "homeassistant"
+          coerce: rstrip_slash
+        name:
+          meta:
+            description: Name to identify this "device" in Home Assistant.
+          type: string
+          required: no
+          default: "MQTT IO"
+        # TODO: Tasks pending completion -@flyte at 04/03/2021, 21:42:13
+        # Add whitelist and blacklist for configs to announce
     tls:
       meta:
         description: |

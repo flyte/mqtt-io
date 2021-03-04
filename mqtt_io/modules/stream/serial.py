@@ -41,6 +41,9 @@ CONFIG_SCHEMA = {
 
 # pylint: disable=no-member
 
+# IDEA: Possible implementations -@flyte at 04/03/2021, 18:32:05
+# Use the asyncio event loop to fire a callback when data is available on the serial port?
+
 
 class Stream(GenericStream):
     """

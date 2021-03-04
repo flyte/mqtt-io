@@ -205,34 +205,6 @@ to the MQTT server.</p>
 to make the server automatically send this payload if our connection fails.</p>
 </div>
 </div>
-<div class="section" id="mqtt.discovery">
-<h2><em>mqtt.</em><strong>discovery</strong><a class="headerlink" href="#mqtt.discovery" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
-<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
-<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
-</pre></div>
-</div>
-<p>Enable <a class="reference external" href="https://www.home-assistant.io/docs/mqtt/discovery/">Home Assistant MQTT discovery</a>
-of our configured devices.</p>
-</div>
-<div class="section" id="mqtt.discovery_prefix">
-<h2><em>mqtt.</em><strong>discovery_prefix</strong><a class="headerlink" href="#mqtt.discovery_prefix" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
-<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">homeassistant</span>
-</pre></div>
-</div>
-<p>Prefix for the Home Assistant MQTT discovery topic.</p>
-</div>
-<div class="section" id="mqtt.discovery_name">
-<h2><em>mqtt.</em><strong>discovery_name</strong><a class="headerlink" href="#mqtt.discovery_name" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
-<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">MQTT IO</span>
-</pre></div>
-</div>
-<p>Name to identify this “device” in Home Assistant.</p>
-</div>
 <div class="section" id="mqtt.client_module">
 <h2><em>mqtt.</em><strong>client_module</strong><a class="headerlink" href="#mqtt.client_module" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
@@ -245,6 +217,42 @@ of our configured devices.</p>
 <p class="admonition-title">Note</p>
 <p>There’s currently only one implementation, which uses the
 <a class="reference external" href="https://github.com/sbtinstruments/asyncio-mqtt/">asyncio-mqtt</a> client.</p>
+</div>
+</div>
+<div class="section" id="mqtt.ha_discovery">
+<h2><em>mqtt.</em><strong>ha_discovery</strong><a class="headerlink" href="#mqtt.ha_discovery" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-2 docutils container">
+<div class="section" id="mqtt.ha_discovery.enabled">
+<h2><em>mqtt.ha_discovery.</em><strong>enabled</strong><a class="headerlink" href="#mqtt.ha_discovery.enabled" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Enable <a class="reference external" href="https://www.home-assistant.io/docs/mqtt/discovery/">Home Assistant MQTT discovery</a>
+of our configured devices.</p>
+</div>
+<div class="section" id="mqtt.ha_discovery.prefix">
+<h2><em>mqtt.ha_discovery.</em><strong>prefix</strong><a class="headerlink" href="#mqtt.ha_discovery.prefix" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">homeassistant</span>
+</pre></div>
+</div>
+<p>Prefix for the Home Assistant MQTT discovery topic.</p>
+</div>
+<div class="section" id="mqtt.ha_discovery.name">
+<h2><em>mqtt.ha_discovery.</em><strong>name</strong><a class="headerlink" href="#mqtt.ha_discovery.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">MQTT IO</span>
+</pre></div>
+</div>
+<p>Name to identify this “device” in Home Assistant.</p>
 </div>
 </div>
 <div class="section" id="mqtt.tls">

@@ -16,43 +16,45 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_common_config(
-    io_conf: ConfigType, mqtt_config: ConfigType, mqtt_options: MQTTClientOptions
+    io_conf: ConfigType, mqtt_conf: ConfigType, mqtt_options: MQTTClientOptions
 ) -> Dict[str, Any]:
     """
     Return config that's common across all HQ discovery announcements.
     """
+    disco_conf: ConfigType = mqtt_conf["ha_discovery"]
     config = dict(name=io_conf["name"])
-    config.update(io_conf.get("ha_discovery", {}))
     config.update(
         dict(
             availability_topic="/".join(
-                (mqtt_config["topic_prefix"], mqtt_config["status_topic"])
+                (mqtt_conf["topic_prefix"], mqtt_conf["status_topic"])
             ),
-            payload_available=mqtt_config["status_payload_running"],
-            payload_not_available=mqtt_config["status_payload_dead"],
+            payload_available=mqtt_conf["status_payload_running"],
+            payload_not_available=mqtt_conf["status_payload_dead"],
             device=dict(
                 manufacturer="MQTT IO",
                 identifiers=["mqtt-io", mqtt_options.client_id],
-                name=mqtt_config["discovery_name"],
+                name=disco_conf["name"],
             ),
         )
     )
+    config.update(io_conf.get("ha_discovery", {}))
     return config
 
 
 def hass_announce_digital_input(
-    in_conf: ConfigType, mqtt_config: ConfigType, mqtt_options: MQTTClientOptions
+    in_conf: ConfigType, mqtt_conf: ConfigType, mqtt_options: MQTTClientOptions
 ) -> MQTTMessageSend:
     """
     Create a message which announces digital input as binary_sensor to Home Assistant.
     """
+    disco_conf: ConfigType = mqtt_conf["ha_discovery"]
     name: str = in_conf["name"]
-    disco_prefix: str = mqtt_config["discovery_prefix"]
-    sensor_config = get_common_config(in_conf, mqtt_config, mqtt_options)
+    disco_prefix: str = disco_conf["prefix"]
+    sensor_config = get_common_config(in_conf, mqtt_conf, mqtt_options)
     sensor_config.update(
         dict(
             unique_id=f"{mqtt_options.client_id}_{in_conf['module']}_input_{name}",
-            state_topic="/".join((mqtt_config["topic_prefix"], INPUT_TOPIC, name)),
+            state_topic="/".join((mqtt_conf["topic_prefix"], INPUT_TOPIC, name)),
             payload_on=in_conf["on_payload"],
             payload_off=in_conf["off_payload"],
         )
@@ -74,16 +76,17 @@ def hass_announce_digital_input(
 
 def hass_announce_digital_output(
     out_conf: ConfigType,
-    mqtt_config: ConfigType,
+    mqtt_conf: ConfigType,
     mqtt_options: MQTTClientOptions,
 ) -> MQTTMessageSend:
     """
     Create a message which announces digital output as switch to Home Assistant.
     """
+    disco_conf: ConfigType = mqtt_conf["ha_discovery"]
     name: str = out_conf["name"]
-    prefix: str = mqtt_config["topic_prefix"]
-    disco_prefix: str = mqtt_config["discovery_prefix"]
-    switch_config = get_common_config(out_conf, mqtt_config, mqtt_options)
+    prefix: str = mqtt_conf["topic_prefix"]
+    disco_prefix: str = disco_conf["prefix"]
+    switch_config = get_common_config(out_conf, mqtt_conf, mqtt_options)
     switch_config.update(
         dict(
             unique_id=f"{mqtt_options.client_id}_{out_conf['module']}_output_{name}",
@@ -110,16 +113,17 @@ def hass_announce_digital_output(
 
 def hass_announce_sensor_input(
     sens_conf: ConfigType,
-    mqtt_config: ConfigType,
+    mqtt_conf: ConfigType,
     mqtt_options: MQTTClientOptions,
 ) -> MQTTMessageSend:
     """
     Create a message which announces digital output as sensor to Home Assistant.
     """
+    disco_conf: ConfigType = mqtt_conf["ha_discovery"]
     name: str = sens_conf["name"]
-    prefix: str = mqtt_config["topic_prefix"]
-    disco_prefix: str = mqtt_config["discovery_prefix"]
-    sensor_config = get_common_config(sens_conf, mqtt_config, mqtt_options)
+    prefix: str = mqtt_conf["topic_prefix"]
+    disco_prefix: str = disco_conf["prefix"]
+    sensor_config = get_common_config(sens_conf, mqtt_conf, mqtt_options)
     sensor_config.update(
         dict(
             unique_id=f"{mqtt_options.client_id}_{sens_conf['module']}_sensor_{name}",
