@@ -1,0 +1,1362 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to MQTT IO’s documentation! &#8212; MQTT IO 2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="_static/configschema.css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-mqtt-io-s-documentation">
+<h1>Welcome to MQTT IO’s documentation!<a class="headerlink" href="#welcome-to-mqtt-io-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="schema-0 docutils container">
+<div class="section" id="mqtt">
+<h2><strong>mqtt</strong><a class="headerlink" href="#mqtt" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Contains the configuration data used for connecting to an MQTT server.</p>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">mqtt</span><span class="p">:</span>
+  <span class="nt">host</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">test.mosquitto.org</span>
+  <span class="nt">port</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">8883</span>
+  <span class="nt">topic_prefix</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mqtt_io</span>
+  <span class="nt">discovery</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+  <span class="nt">tls</span><span class="p">:</span>
+    <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+    <span class="nt">ca_certs</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mosquitto.org.crt</span>
+    <span class="nt">certfile</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">client.crt</span>
+    <span class="nt">keyfile</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">client.key</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="mqtt.host">
+<h2><em>mqtt.</em><strong>host</strong><a class="headerlink" href="#mqtt.host" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Host name or IP address of the MQTT server.</p>
+</div>
+<div class="section" id="mqtt.port">
+<h2><em>mqtt.</em><strong>port</strong><a class="headerlink" href="#mqtt.port" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">65535</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1883</span>
+</pre></div>
+</div>
+<p>Port number to connect to on the MQTT server.</p>
+</div>
+<div class="section" id="mqtt.user">
+<h2><em>mqtt.</em><strong>user</strong><a class="headerlink" href="#mqtt.user" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+</pre></div>
+</div>
+<p>Username to authenticate with on the MQTT server.</p>
+</div>
+<div class="section" id="mqtt.password">
+<h2><em>mqtt.</em><strong>password</strong><a class="headerlink" href="#mqtt.password" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+</pre></div>
+</div>
+<p>Password to authenticate with on the MQTT server.</p>
+</div>
+<div class="section" id="mqtt.client_id">
+<h2><em>mqtt.</em><strong>client_id</strong><a class="headerlink" href="#mqtt.client_id" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://www.cloudmqtt.com/blog/2018-11-21-mqtt-what-is-client-id.html">MQTT client ID</a> to use on the MQTT server.</p>
+</div>
+<div class="section" id="mqtt.topic_prefix">
+<h2><em>mqtt.</em><strong>topic_prefix</strong><a class="headerlink" href="#mqtt.topic_prefix" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;&#39;</span>
+</pre></div>
+</div>
+<p>Prefix to use for all topics.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For example, a <code class="docutils literal notranslate"><span class="pre">topic_prefix</span></code> of <code class="docutils literal notranslate"><span class="pre">home/livingroom</span></code> would make a digital input
+called “doorbell” publish its changes to the <code class="docutils literal notranslate"><span class="pre">home/livingroom/input/doorbell</span></code>
+topic.</p>
+</div>
+</div>
+<div class="section" id="mqtt.clean_session">
+<h2><em>mqtt.</em><strong>clean_session</strong><a class="headerlink" href="#mqtt.clean_session" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Whether or not to start a
+<a class="reference external" href="https://www.hivemq.com/blog/mqtt-essentials-part-7-persistent-session-queuing-messages/">clean MQTT session</a>
+on every MQTT connection.</p>
+</div>
+<div class="section" id="mqtt.protocol">
+<h2><em>mqtt.</em><strong>protocol</strong><a class="headerlink" href="#mqtt.protocol" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Allowed</span><span class="p">:</span>
+<span class="p p-Indicator">-</span> <span class="s">&#39;3.1&#39;</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">3.1.1</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">3.1.1</span>
+</pre></div>
+</div>
+<p>Version of the MQTT protocol to use.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This renders in the documentation as a float, but should always be set within quotes.</p>
+</div>
+</div>
+<div class="section" id="mqtt.keepalive">
+<h2><em>mqtt.</em><strong>keepalive</strong><a class="headerlink" href="#mqtt.keepalive" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">seconds</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+</pre></div>
+</div>
+<p>How frequently in seconds to send
+<a class="reference external" href="https://www.hivemq.com/blog/mqtt-essentials-part-10-alive-client-take-over/">ping packets</a>
+to the MQTT server.</p>
+</div>
+<div class="section" id="mqtt.status_topic">
+<h2><em>mqtt.</em><strong>status_topic</strong><a class="headerlink" href="#mqtt.status_topic" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">status</span>
+</pre></div>
+</div>
+<p>Topic on which to send messages about the running status of this software.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Sends the payloads configured in <code class="docutils literal notranslate"><span class="pre">status_payload_running</span></code>,
+<code class="docutils literal notranslate"><span class="pre">status_payload_stopped</span></code> and <code class="docutils literal notranslate"><span class="pre">status_payload_dead</span></code>.</p>
+</div>
+</div>
+<div class="section" id="mqtt.status_payload_running">
+<h2><em>mqtt.</em><strong>status_payload_running</strong><a class="headerlink" href="#mqtt.status_payload_running" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">running</span>
+</pre></div>
+</div>
+<p>Payload to send on the status topic when the software is running.</p>
+</div>
+<div class="section" id="mqtt.status_payload_stopped">
+<h2><em>mqtt.</em><strong>status_payload_stopped</strong><a class="headerlink" href="#mqtt.status_payload_stopped" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">stopped</span>
+</pre></div>
+</div>
+<p>Payload to send on the status topic when the software has exited cleanly.</p>
+</div>
+<div class="section" id="mqtt.status_payload_dead">
+<h2><em>mqtt.</em><strong>status_payload_dead</strong><a class="headerlink" href="#mqtt.status_payload_dead" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dead</span>
+</pre></div>
+</div>
+<p>Payload to send on the status topic when the software has exited unexpectedly.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Uses <a class="reference external" href="https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/">MQTT Last Will and Testament</a>
+to make the server automatically send this payload if our connection fails.</p>
+</div>
+</div>
+<div class="section" id="mqtt.discovery">
+<h2><em>mqtt.</em><strong>discovery</strong><a class="headerlink" href="#mqtt.discovery" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Enable <a class="reference external" href="https://www.home-assistant.io/docs/mqtt/discovery/">Home Assistant MQTT discovery</a>
+of our configured devices.</p>
+</div>
+<div class="section" id="mqtt.discovery_prefix">
+<h2><em>mqtt.</em><strong>discovery_prefix</strong><a class="headerlink" href="#mqtt.discovery_prefix" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">homeassistant</span>
+</pre></div>
+</div>
+<p>Prefix for the Home Assistant MQTT discovery topic.</p>
+</div>
+<div class="section" id="mqtt.discovery_name">
+<h2><em>mqtt.</em><strong>discovery_name</strong><a class="headerlink" href="#mqtt.discovery_name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">MQTT IO</span>
+</pre></div>
+</div>
+<p>Name to identify this “device” in Home Assistant.</p>
+</div>
+<div class="section" id="mqtt.client_module">
+<h2><em>mqtt.</em><strong>client_module</strong><a class="headerlink" href="#mqtt.client_module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mqtt_io.mqtt.asyncio_mqtt</span>
+</pre></div>
+</div>
+<p>MQTT Client implementation module path.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There’s currently only one implementation, which uses the
+<a class="reference external" href="https://github.com/sbtinstruments/asyncio-mqtt/">asyncio-mqtt</a> client.</p>
+</div>
+</div>
+<div class="section" id="mqtt.tls">
+<h2><em>mqtt.</em><strong>tls</strong><a class="headerlink" href="#mqtt.tls" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>TLS/SSL settings for connecting to the MQTT server over an encrypted connection.</p>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">mqtt</span><span class="p">:</span>
+  <span class="nt">host</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">localhost</span>
+  <span class="nt">tls</span><span class="p">:</span>
+    <span class="nt">enabled</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+    <span class="nt">ca_certs</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">mosquitto.org.crt</span>
+    <span class="nt">certfile</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">client.crt</span>
+    <span class="nt">keyfile</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">client.key</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="schema-2 docutils container">
+<div class="section" id="mqtt.tls.enabled">
+<h2><em>mqtt.tls.</em><strong>enabled</strong><a class="headerlink" href="#mqtt.tls.enabled" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Enable a secure connection to the MQTT server.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Most of these options map directly to the
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set"><code class="docutils literal notranslate"><span class="pre">tls_set()</span></code> arguments</a>
+on the Paho MQTT client.</p>
+</div>
+</div>
+<div class="section" id="mqtt.tls.ca_certs">
+<h2><em>mqtt.tls.</em><strong>ca_certs</strong><a class="headerlink" href="#mqtt.tls.ca_certs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>Path to the Certificate Authority certificate files that are to be treated
+as trusted by this client.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set">More info</a></p>
+</div>
+<div class="section" id="mqtt.tls.certfile">
+<h2><em>mqtt.tls.</em><strong>certfile</strong><a class="headerlink" href="#mqtt.tls.certfile" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>Path to the PEM encoded client certificate.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set">More info</a></p>
+</div>
+<div class="section" id="mqtt.tls.keyfile">
+<h2><em>mqtt.tls.</em><strong>keyfile</strong><a class="headerlink" href="#mqtt.tls.keyfile" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>Path to the PEM encoded client private key.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set">More info</a></p>
+</div>
+<div class="section" id="mqtt.tls.cert_reqs">
+<h2><em>mqtt.tls.</em><strong>cert_reqs</strong><a class="headerlink" href="#mqtt.tls.cert_reqs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Allowed</span><span class="p">:</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">CERT_NONE</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">CERT_OPTIONAL</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">CERT_REQUIRED</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">CERT_REQUIRED</span>
+</pre></div>
+</div>
+<p>Defines the certificate requirements that the client imposes on the MQTT server.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set">More info</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default this is <code class="docutils literal notranslate"><span class="pre">CERT_REQUIRED</span></code>, which means that the broker must provide a certificate.</p>
+</div>
+</div>
+<div class="section" id="mqtt.tls.tls_version">
+<h2><em>mqtt.tls.</em><strong>tls_version</strong><a class="headerlink" href="#mqtt.tls.tls_version" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>Specifies the version of the SSL/TLS protocol to be used.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set">More info</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default the highest TLS version is detected.</p>
+</div>
+</div>
+<div class="section" id="mqtt.tls.ciphers">
+<h2><em>mqtt.tls.</em><strong>ciphers</strong><a class="headerlink" href="#mqtt.tls.ciphers" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>Which encryption ciphers are allowable for this connection.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set">More info</a></p>
+</div>
+<div class="section" id="mqtt.tls.insecure">
+<h2><em>mqtt.tls.</em><strong>insecure</strong><a class="headerlink" href="#mqtt.tls.insecure" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Configure verification of the server hostname in the server certificate.
+<a class="reference external" href="https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-insecure-set">More info</a></p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If set to true, it is impossible to guarantee that the host you are
+connecting to is not impersonating your server. This can be useful in
+initial server testing, but makes it possible for a malicious third party
+to impersonate your server through DNS spoofing, for example.
+Do not use this function in a real system. Setting value to true means there
+is no point using encryption.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="gpio_modules">
+<h2><strong>gpio_modules</strong><a class="headerlink" href="#gpio_modules" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<p>List of GPIO modules to configure for use with inputs and/or outputs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_SCHEMA</span></code> value of the module’s code in
+<a class="reference external" href="https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules">the repository</a>.
+TODO: Link this to the pending wiki pages on each module’s requirements.</p>
+</div>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">gpio_modules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi_gpio</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">raspberrypi</span>
+  
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">pcf</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">pcf8574</span>
+    <span class="nt">i2c_bus_num</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+    <span class="nt">chip_addr</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0x20</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="section" id="gpio_modules.*">
+<h2><em>gpio_modules.</em><strong>*</strong><a class="headerlink" href="#gpio_modules.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="gpio_modules.*.name">
+<h2><em>gpio_modules.*.</em><strong>name</strong><a class="headerlink" href="#gpio_modules.*.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Your name for this configuration of the module. Will be referred to by entries
+in the <code class="docutils literal notranslate"><span class="pre">digital_inputs</span></code> and/or <code class="docutils literal notranslate"><span class="pre">digital_outputs</span></code> sections.</p>
+</div>
+<div class="section" id="gpio_modules.*.module">
+<h2><em>gpio_modules.*.</em><strong>module</strong><a class="headerlink" href="#gpio_modules.*.module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the module in the code. This is listed in the README’s
+“Supported Hardware” section in brackets.</p>
+</div>
+<div class="section" id="gpio_modules.*.cleanup">
+<h2><em>gpio_modules.*.</em><strong>cleanup</strong><a class="headerlink" href="#gpio_modules.*.cleanup" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Whether to run the module’s <code class="docutils literal notranslate"><span class="pre">cleanup()</span></code> method on exit.</p>
+</div>
+</div>
+<div class="section" id="sensor_modules">
+<h2><strong>sensor_modules</strong><a class="headerlink" href="#sensor_modules" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<p>List of sensor modules to configure for use with sensor inputs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_SCHEMA</span></code> value of the module’s code in
+<a class="reference external" href="https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules">the repository</a>.
+TODO: Link this to the pending wiki pages on each module’s requirements.</p>
+</div>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">sensor_modules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht22</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">AM2302</span>
+    <span class="nt">pin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+  
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ds</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ds18b</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">DS18S20</span>
+    <span class="nt">address</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">000803702e49</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="section" id="sensor_modules.*">
+<h2><em>sensor_modules.</em><strong>*</strong><a class="headerlink" href="#sensor_modules.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="sensor_modules.*.name">
+<h2><em>sensor_modules.*.</em><strong>name</strong><a class="headerlink" href="#sensor_modules.*.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Your name for this configuration of the module. Will be referred to by entries
+in the <code class="docutils literal notranslate"><span class="pre">sensor_inputs</span></code> section.</p>
+</div>
+<div class="section" id="sensor_modules.*.module">
+<h2><em>sensor_modules.*.</em><strong>module</strong><a class="headerlink" href="#sensor_modules.*.module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the module in the code. This is listed in the README’s
+“Supported Hardware” section in brackets.</p>
+</div>
+<div class="section" id="sensor_modules.*.cleanup">
+<h2><em>sensor_modules.*.</em><strong>cleanup</strong><a class="headerlink" href="#sensor_modules.*.cleanup" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Whether to run the module’s <code class="docutils literal notranslate"><span class="pre">cleanup()</span></code> method on exit.</p>
+</div>
+</div>
+<div class="section" id="stream_modules">
+<h2><strong>stream_modules</strong><a class="headerlink" href="#stream_modules" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<p>List of stream modules to configure.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_SCHEMA</span></code> value of the module’s code in
+<a class="reference external" href="https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules">the repository</a>.
+TODO: Link this to the pending wiki pages on each module’s requirements.</p>
+</div>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">stream_modules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">network_switch</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">serial</span>
+    <span class="nt">device</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/dev/ttyUSB1</span>
+    <span class="nt">baud</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">115200</span>
+    <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">10</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">ups</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">serial</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">/dev/ttyUSB0</span>
+    <span class="nt">baud</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">9600</span>
+    <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="section" id="stream_modules.*">
+<h2><em>stream_modules.</em><strong>*</strong><a class="headerlink" href="#stream_modules.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="stream_modules.*.name">
+<h2><em>stream_modules.*.</em><strong>name</strong><a class="headerlink" href="#stream_modules.*.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Your name for this configuration of the module. Will be used in the topic on
+which the stream’s data is published and the topic on which messages can be
+sent for writing to the stream.</p>
+</div>
+<div class="section" id="stream_modules.*.module">
+<h2><em>stream_modules.*.</em><strong>module</strong><a class="headerlink" href="#stream_modules.*.module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the module in the code. This is listed in the README’s
+“Supported Hardware” section in brackets.</p>
+</div>
+<div class="section" id="stream_modules.*.cleanup">
+<h2><em>stream_modules.*.</em><strong>cleanup</strong><a class="headerlink" href="#stream_modules.*.cleanup" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Whether to run the module’s <code class="docutils literal notranslate"><span class="pre">cleanup()</span></code> method on exit.</p>
+</div>
+<div class="section" id="stream_modules.*.retain">
+<h2><em>stream_modules.*.</em><strong>retain</strong><a class="headerlink" href="#stream_modules.*.retain" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Whether to set the <code class="docutils literal notranslate"><span class="pre">retain</span></code> flag on MQTT messages publishing data received
+from the stream.</p>
+</div>
+<div class="section" id="stream_modules.*.read_interval">
+<h2><em>stream_modules.*.</em><strong>read_interval</strong><a class="headerlink" href="#stream_modules.*.read_interval" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">float</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">seconds</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.01</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+</pre></div>
+</div>
+<p>How long to wait between polling the stream for new data.</p>
+</div>
+<div class="section" id="stream_modules.*.read">
+<h2><em>stream_modules.*.</em><strong>read</strong><a class="headerlink" href="#stream_modules.*.read" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Whether to poll this stream for incoming data and publish it on an MQTT topic.</p>
+</div>
+<div class="section" id="stream_modules.*.write">
+<h2><em>stream_modules.*.</em><strong>write</strong><a class="headerlink" href="#stream_modules.*.write" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Whether to subscribe to MQTT messages on a topic and write messages received on it to the stream.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs">
+<h2><strong>digital_inputs</strong><a class="headerlink" href="#digital_inputs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<p>List of digital inputs to configure.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+<code class="docutils literal notranslate"><span class="pre">PIN_SCHEMA</span></code> and <code class="docutils literal notranslate"><span class="pre">INPUT_SCHEMA</span></code> values of the module’s code in
+<a class="reference external" href="https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules">the repository</a>.
+TODO: Link this to the pending wiki pages on each module’s requirements.</p>
+</div>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">gpio_modules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">raspberrypi</span>
+
+<span class="nt">digital_inputs</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gpio0</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">pin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gpio1</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">pin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="section" id="digital_inputs.*">
+<h2><em>digital_inputs.</em><strong>*</strong><a class="headerlink" href="#digital_inputs.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="digital_inputs.*.name">
+<h2><em>digital_inputs.*.</em><strong>name</strong><a class="headerlink" href="#digital_inputs.*.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the input. Used in the MQTT topic when publishing input changes.</p>
+<p>The topic that input changes will be published to is:
+<code class="docutils literal notranslate"><span class="pre">&lt;mqtt.topic_prefix&gt;/input/&lt;this</span> <span class="pre">name&gt;</span></code></p>
+</div>
+<div class="section" id="digital_inputs.*.module">
+<h2><em>digital_inputs.*.</em><strong>module</strong><a class="headerlink" href="#digital_inputs.*.module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the module configured in <code class="docutils literal notranslate"><span class="pre">gpio_modules</span></code> that this input is attached to.</p>
+</div>
+<div class="section" id="digital_inputs.*.pin">
+<h2><em>digital_inputs.*.</em><strong>pin</strong><a class="headerlink" href="#digital_inputs.*.pin" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Which of the GPIO module’s pins this input refers to.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Depending on the GPIO module’s implementation, this can be either a string
+or an integer.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.on_payload">
+<h2><em>digital_inputs.*.</em><strong>on_payload</strong><a class="headerlink" href="#digital_inputs.*.on_payload" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;ON&#39;</span>
+</pre></div>
+</div>
+<p>Payload to be sent when the input changes to what is considered to be “on”.
+See <code class="docutils literal notranslate"><span class="pre">inverted</span></code> below for the definition of “on” and “off”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Make sure to avoid YAML’s automatic boolean type conversion when setting this
+option by surrounding potential booleans with quotes.
+See the “Regexp” section of the
+<a class="reference external" href="https://yaml.org/type/bool.html">YAML bool docs</a> for all of the values that
+will be parsed as boolean.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.off_payload">
+<h2><em>digital_inputs.*.</em><strong>off_payload</strong><a class="headerlink" href="#digital_inputs.*.off_payload" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;OFF&#39;</span>
+</pre></div>
+</div>
+<p>Payload to be sent when the input changes to what is considered to be “off”.
+See <code class="docutils literal notranslate"><span class="pre">inverted</span></code> below for the definition of “on” and “off”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Make sure to avoid YAML’s automatic boolean type conversion when setting this
+option by surrounding potential booleans with quotes.
+See the “Regexp” section of the
+<a class="reference external" href="https://yaml.org/type/bool.html">YAML bool docs</a> for all of the values that
+will be parsed as boolean.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.inverted">
+<h2><em>digital_inputs.*.</em><strong>inverted</strong><a class="headerlink" href="#digital_inputs.*.inverted" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Invert the logic level so that “low” levels are considered to be “on” and
+“high” levels are considered “off”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This can be useful for when an input is pulled “high” with a resistor and a
+device (like a button or another IC) connects it to ground when it’s “active”.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.pullup">
+<h2><em>digital_inputs.*.</em><strong>pullup</strong><a class="headerlink" href="#digital_inputs.*.pullup" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Enable the pull-up resistor for this input so that the logic level is pulled
+“high” by default.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not all GPIO modules support pull-up resistors.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.pulldown">
+<h2><em>digital_inputs.*.</em><strong>pulldown</strong><a class="headerlink" href="#digital_inputs.*.pulldown" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Enable the pull-down resistor for this input so that the logic level is pulled
+“low” by default.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not all GPIO modules support pull-down resistors.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.interrupt">
+<h2><em>digital_inputs.*.</em><strong>interrupt</strong><a class="headerlink" href="#digital_inputs.*.interrupt" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Allowed</span><span class="p">:</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">rising</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">falling</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">both</span>
+</pre></div>
+</div>
+<p>Configure this pin to trigger an interrupt when the logic level is “rising”,
+“falling” or “both”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not all GPIO modules support interrupts, and those that do may do so in
+various ways.
+TODO: Add link to interrupt documentation.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.interrupt_for">
+<h2><em>digital_inputs.*.</em><strong>interrupt_for</strong><a class="headerlink" href="#digital_inputs.*.interrupt_for" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+</pre></div>
+</div>
+<p>List of other pin names that this pin is an interrupt for.</p>
+<p>This is generally used on GPIO modules that provide software callbacks on
+interrupts, so that we can attach another “remote” module’s interrupt output
+pin (one that changes logic level when one of its pins triggers an interrupt)
+to this input and use the callback to get the value of the “remote” pin and
+publish it on MQTT.</p>
+<p>TODO: Add link to interrupt documentation.</p>
+</div>
+<div class="section" id="digital_inputs.*.interrupt_for.*">
+<h2><em>digital_inputs.*.interrupt_for.</em><strong>*</strong><a class="headerlink" href="#digital_inputs.*.interrupt_for.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.bouncetime">
+<h2><em>digital_inputs.*.</em><strong>bouncetime</strong><a class="headerlink" href="#digital_inputs.*.bouncetime" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">milliseconds</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">100</span>
+</pre></div>
+</div>
+<p>Don’t trigger interrupts more frequently than once per <code class="docutils literal notranslate"><span class="pre">bouncetime</span></code>.</p>
+</div>
+<div class="section" id="digital_inputs.*.retain">
+<h2><em>digital_inputs.*.</em><strong>retain</strong><a class="headerlink" href="#digital_inputs.*.retain" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Set the retain flag on MQTT messages published on input change.</p>
+</div>
+<div class="section" id="digital_inputs.*.poll_interval">
+<h2><em>digital_inputs.*.</em><strong>poll_interval</strong><a class="headerlink" href="#digital_inputs.*.poll_interval" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">float</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">seconds</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</pre></div>
+</div>
+<p>How long to wait between checking the value of this input.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When the pin is configured as an interrupt, the pin is no longer polled.
+The only exception to this is if the pin is configured as an interrupt for
+another pin. In this case, whether or not we poll is decided by the
+<code class="docutils literal notranslate"><span class="pre">poll_when_interrupt_for</span></code> setting below.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.poll_when_interrupt_for">
+<h2><em>digital_inputs.*.</em><strong>poll_when_interrupt_for</strong><a class="headerlink" href="#digital_inputs.*.poll_when_interrupt_for" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+</pre></div>
+</div>
+<p>Poll this pin when it’s configured as an interrupt for another pin.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Polling the pin when it’s configured as an interrupt for another pin is useful
+in order to make sure that if we somehow miss an interrupt on this pin (the
+remote module’s interrupt output pin goes low (“triggered”)), we
+don’t end up stuck in that state where we don’t handle the remote module’s
+interrupt at all. If we poll the “triggered” value on this pin and our
+interrupt handling hasn’t dealt with it, then we’ll handle it here.</p>
+</div>
+</div>
+<div class="section" id="digital_inputs.*.ha_discovery">
+<h2><em>digital_inputs.*.</em><strong>ha_discovery</strong><a class="headerlink" href="#digital_inputs.*.ha_discovery" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Configures the
+<a class="reference external" href="https://www.home-assistant.io/docs/mqtt/discovery/">Home Assistant MQTT discovery</a>
+for this pin.</p>
+<p>Any values entered into this section will be sent as part of the discovery
+config payload. See the above link for documentation.</p>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">digital_inputs</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">livingroom_motion</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">ha_discovery</span><span class="p">:</span>
+      <span class="nt">component</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">binary_sensor</span>
+      <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Living Room Motion</span>
+      <span class="nt">device_class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">motion</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="schema-2 docutils container">
+<div class="section" id="digital_inputs.*.ha_discovery.component">
+<h2><em>digital_inputs.*.ha_discovery.</em><strong>component</strong><a class="headerlink" href="#digital_inputs.*.ha_discovery.component" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">binary_sensor</span>
+</pre></div>
+</div>
+<p>Type of component to report this input as to Home Assistant.</p>
+</div>
+</div>
+</div>
+<div class="section" id="digital_outputs">
+<h2><strong>digital_outputs</strong><a class="headerlink" href="#digital_outputs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<p>List of digital outputs to configure.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+<code class="docutils literal notranslate"><span class="pre">PIN_SCHEMA</span></code> and <code class="docutils literal notranslate"><span class="pre">OUTPUT_SCHEMA</span></code> values of the module’s code in
+<a class="reference external" href="https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules">the repository</a>.
+TODO: Link this to the pending wiki pages on each module’s requirements.</p>
+</div>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">gpio_modules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">raspberrypi</span>
+
+<span class="nt">digital_outputs</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gpio0</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">pin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">gpio1</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">pin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="section" id="digital_outputs.*">
+<h2><em>digital_outputs.</em><strong>*</strong><a class="headerlink" href="#digital_outputs.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="digital_outputs.*.name">
+<h2><em>digital_outputs.*.</em><strong>name</strong><a class="headerlink" href="#digital_outputs.*.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the output. Used in the MQTT topics that are subscribed to in order to
+change the output value according to received MQTT messages, as well as in the
+MQTT topic for publishing output changes.</p>
+<p>The topics subscribed to for each output are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;mqtt.topic_prefix&gt;/output/&lt;this</span> <span class="pre">name&gt;/set</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;mqtt.topic_prefix&gt;/output/&lt;this</span> <span class="pre">name&gt;/set_on_ms</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&lt;mqtt.topic_prefix&gt;/output/&lt;this</span> <span class="pre">name&gt;/set_off_ms</span></code></p></li>
+</ul>
+<p>The topic that output changes will be published to is:
+<code class="docutils literal notranslate"><span class="pre">&lt;mqtt.topic_prefix&gt;/output/&lt;this</span> <span class="pre">name&gt;</span></code></p>
+</div>
+<div class="section" id="digital_outputs.*.module">
+<h2><em>digital_outputs.*.</em><strong>module</strong><a class="headerlink" href="#digital_outputs.*.module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the module configured in <code class="docutils literal notranslate"><span class="pre">gpio_modules</span></code> that this output is attached to.</p>
+</div>
+<div class="section" id="digital_outputs.*.pin">
+<h2><em>digital_outputs.*.</em><strong>pin</strong><a class="headerlink" href="#digital_outputs.*.pin" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+  <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Which of the GPIO module’s pins this output refers to.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Depending on the GPIO module’s implementation, this can be either a string
+or an integer.</p>
+</div>
+</div>
+<div class="section" id="digital_outputs.*.on_payload">
+<h2><em>digital_outputs.*.</em><strong>on_payload</strong><a class="headerlink" href="#digital_outputs.*.on_payload" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;ON&#39;</span>
+</pre></div>
+</div>
+<p>Payload to consider as “on” when received to the <code class="docutils literal notranslate"><span class="pre">/set</span></code> topic for this output.
+See <code class="docutils literal notranslate"><span class="pre">inverted</span></code> below for the definition of “on” and “off”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Make sure to avoid YAML’s automatic boolean type conversion when setting this
+option by surrounding potential booleans with quotes.
+See the “Regexp” section of the
+<a class="reference external" href="https://yaml.org/type/bool.html">YAML bool docs</a> for all of the values that
+will be parsed as boolean.</p>
+</div>
+</div>
+<div class="section" id="digital_outputs.*.off_payload">
+<h2><em>digital_outputs.*.</em><strong>off_payload</strong><a class="headerlink" href="#digital_outputs.*.off_payload" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="s">&#39;OFF&#39;</span>
+</pre></div>
+</div>
+<p>Payload to consider as “off” when received to the <code class="docutils literal notranslate"><span class="pre">/set</span></code> topic for this output.
+See <code class="docutils literal notranslate"><span class="pre">inverted</span></code> below for the definition of “on” and “off”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Make sure to avoid YAML’s automatic boolean type conversion when setting this
+option by surrounding potential booleans with quotes.
+See the “Regexp” section of the
+<a class="reference external" href="https://yaml.org/type/bool.html">YAML bool docs</a> for all of the values that
+will be parsed as boolean.</p>
+</div>
+</div>
+<div class="section" id="digital_outputs.*.inverted">
+<h2><em>digital_outputs.*.</em><strong>inverted</strong><a class="headerlink" href="#digital_outputs.*.inverted" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Invert the logic level so that “low” levels are considered to be “on” and
+“high” levels are considered “off”.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This can be useful for when an output turns something on when its output is
+“low”.</p>
+</div>
+</div>
+<div class="section" id="digital_outputs.*.timed_set_ms">
+<h2><em>digital_outputs.*.</em><strong>timed_set_ms</strong><a class="headerlink" href="#digital_outputs.*.timed_set_ms" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">milliseconds</span>
+</pre></div>
+</div>
+<p>How long to set an output to the desired value on receipt of an MQTT message
+to the <code class="docutils literal notranslate"><span class="pre">/set</span></code> topic before then setting it back to the opposite value.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This may be useful if the output controls a device where leaving the ouput
+“on” for too long would be detrimental. Using this option means that you don’t
+have to rely on a second “off” message getting through MQTT for the output to
+return to a safe state.</p>
+</div>
+</div>
+<div class="section" id="digital_outputs.*.initial">
+<h2><em>digital_outputs.*.</em><strong>initial</strong><a class="headerlink" href="#digital_outputs.*.initial" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Allowed</span><span class="p">:</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">high</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">low</span>
+</pre></div>
+</div>
+<p>Set the output to an initial “high” or “low” state when the software starts.</p>
+</div>
+<div class="section" id="digital_outputs.*.publish_initial">
+<h2><em>digital_outputs.*.</em><strong>publish_initial</strong><a class="headerlink" href="#digital_outputs.*.publish_initial" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Whether to publish an MQTT message for the initial “high” or “low” state set
+above.</p>
+</div>
+<div class="section" id="digital_outputs.*.retain">
+<h2><em>digital_outputs.*.</em><strong>retain</strong><a class="headerlink" href="#digital_outputs.*.retain" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Set the retain flag on MQTT messages published on output change.</p>
+</div>
+<div class="section" id="digital_outputs.*.ha_discovery">
+<h2><em>digital_outputs.*.</em><strong>ha_discovery</strong><a class="headerlink" href="#digital_outputs.*.ha_discovery" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Configures the
+<a class="reference external" href="https://www.home-assistant.io/docs/mqtt/discovery/">Home Assistant MQTT discovery</a>
+for this pin.</p>
+<p>Any values entered into this section will be sent as part of the discovery
+config payload. See the above link for documentation.</p>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">digital_outputs</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">garage_door1</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">rpi</span>
+    <span class="nt">ha_discovery</span><span class="p">:</span>
+      <span class="nt">component</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">switch</span>
+      <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Ferrari Garage Door</span>
+      <span class="nt">device_class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">garage_door</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="schema-2 docutils container">
+<div class="section" id="digital_outputs.*.ha_discovery.component">
+<h2><em>digital_outputs.*.ha_discovery.</em><strong>component</strong><a class="headerlink" href="#digital_outputs.*.ha_discovery.component" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">switch</span>
+</pre></div>
+</div>
+<p>Type of component to report this output as to Home Assistant.</p>
+</div>
+</div>
+</div>
+<div class="section" id="sensor_inputs">
+<h2><strong>sensor_inputs</strong><a class="headerlink" href="#sensor_inputs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">list</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="p p-Indicator">[]</span>
+</pre></div>
+</div>
+<p>List of sensor inputs to configure.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some modules require extra config entries, specified by the modules themselves.
+Until the documentation is written for the individual modules, please refer to the
+<code class="docutils literal notranslate"><span class="pre">MODULE_SCHEMA</span></code> values of the module’s code in
+<a class="reference external" href="https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules">the repository</a>.
+TODO: Link this to the pending wiki pages on each module’s requirements.</p>
+</div>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">sensor_modules</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht22</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">AM2302</span>
+    <span class="nt">pin</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">4</span>
+
+<span class="nt">sensor_inputs</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">workshop_temp</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">temperature</span>
+    <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">30</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">workshop_humidity</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">humidity</span>
+    <span class="nt">interval</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="section" id="sensor_inputs.*">
+<h2><em>sensor_inputs.</em><strong>*</strong><a class="headerlink" href="#sensor_inputs.*" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+</div>
+<div class="schema-1 docutils container">
+<div class="section" id="sensor_inputs.*.name">
+<h2><em>sensor_inputs.*.</em><strong>name</strong><a class="headerlink" href="#sensor_inputs.*.name" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the sensor. Used in the MQTT topic when publishing sensor values.</p>
+<p>The topic that sensor values will be published to is:
+<code class="docutils literal notranslate"><span class="pre">&lt;mqtt.topic_prefix&gt;/sensor/&lt;this</span> <span class="pre">name&gt;</span></code></p>
+</div>
+<div class="section" id="sensor_inputs.*.module">
+<h2><em>sensor_inputs.*.</em><strong>module</strong><a class="headerlink" href="#sensor_inputs.*.module" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Name of the module configured in <code class="docutils literal notranslate"><span class="pre">sensor_modules</span></code> that this sensor reading
+comes from.</p>
+</div>
+<div class="section" id="sensor_inputs.*.retain">
+<h2><em>sensor_inputs.*.</em><strong>retain</strong><a class="headerlink" href="#sensor_inputs.*.retain" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">boolean</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<p>Set the retain flag on MQTT messages published on sensor read.</p>
+</div>
+<div class="section" id="sensor_inputs.*.interval">
+<h2><em>sensor_inputs.*.</em><strong>interval</strong><a class="headerlink" href="#sensor_inputs.*.interval" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unit</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">seconds</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">60</span>
+</pre></div>
+</div>
+<p>How long to wait between checking the value of this sensor.</p>
+</div>
+<div class="section" id="sensor_inputs.*.digits">
+<h2><em>sensor_inputs.*.</em><strong>digits</strong><a class="headerlink" href="#sensor_inputs.*.digits" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">2</span>
+</pre></div>
+</div>
+<p>How many decimal places to round the sensor reading to.</p>
+</div>
+<div class="section" id="sensor_inputs.*.ha_discovery">
+<h2><em>sensor_inputs.*.</em><strong>ha_discovery</strong><a class="headerlink" href="#sensor_inputs.*.ha_discovery" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+</pre></div>
+</div>
+<p>Configures the
+<a class="reference external" href="https://www.home-assistant.io/docs/mqtt/discovery/">Home Assistant MQTT discovery</a>
+for this sensor.</p>
+<p>Any values entered into this section will be sent as part of the discovery
+config payload. See the above link for documentation.</p>
+<p><strong>Example:</strong><div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">sensor_inputs</span><span class="p">:</span>
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">workshop_temp</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">temperature</span>
+    <span class="nt">ha_discovery</span><span class="p">:</span>
+      <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Workshop Temperature</span>
+      <span class="nt">device_class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">temperature</span>
+
+  <span class="p p-Indicator">-</span> <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">workshop_humidity</span>
+    <span class="nt">module</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dht</span>
+    <span class="nt">type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">humidity</span>
+    <span class="nt">ha_discovery</span><span class="p">:</span>
+      <span class="nt">name</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">Workshop Humidity</span>
+      <span class="nt">device_class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">humidity</span>
+</pre></div>
+</div>
+</p>
+</div>
+<div class="schema-2 docutils container">
+<div class="section" id="sensor_inputs.*.ha_discovery.component">
+<h2><em>sensor_inputs.*.ha_discovery.</em><strong>component</strong><a class="headerlink" href="#sensor_inputs.*.ha_discovery.component" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Default</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">sensor</span>
+</pre></div>
+</div>
+<p>Type of component to report this sensor as to Home Assistant.</p>
+</div>
+<div class="section" id="sensor_inputs.*.ha_discovery.expire_after">
+<h2><em>sensor_inputs.*.ha_discovery.</em><strong>expire_after</strong><a class="headerlink" href="#sensor_inputs.*.ha_discovery.expire_after" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">integer</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Minimum value</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+<p>How long after receiving a sensor update to declare it invalid.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">interval</span></code> * 2 + 5</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="logging">
+<h2><strong>logging</strong><a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">Type</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">dict</span>
+<span class="nt">Required</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">no</span>
+<span class="nt">Unlisted entries accepted</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+<span class="nt">Default</span><span class="p">:</span>
+  <span class="nt">formatters</span><span class="p">:</span>
+    <span class="nt">default</span><span class="p">:</span>
+      <span class="nt">datefmt</span><span class="p">:</span> <span class="s">&#39;%Y-%m-%d</span><span class="nv"> </span><span class="s">%H:%M:%S&#39;</span>
+      <span class="nt">format</span><span class="p">:</span> <span class="s">&#39;%(asctime)s</span><span class="nv"> </span><span class="s">%(name)s</span><span class="nv"> </span><span class="s">[%(levelname)s]</span><span class="nv"> </span><span class="s">%(message)s&#39;</span>
+  <span class="nt">handlers</span><span class="p">:</span>
+    <span class="nt">console</span><span class="p">:</span>
+      <span class="nt">class</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">logging.StreamHandler</span>
+      <span class="nt">formatter</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">default</span>
+      <span class="nt">level</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">INFO</span>
+  <span class="nt">loggers</span><span class="p">:</span>
+    <span class="nt">mqtt_io</span><span class="p">:</span>
+      <span class="nt">handlers</span><span class="p">:</span>
+      <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">console</span>
+      <span class="nt">level</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">INFO</span>
+      <span class="nt">propagate</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">true</span>
+  <span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+</pre></div>
+</div>
+<p>Config to pass directly to
+<a class="reference external" href="https://docs.python.org/3/library/logging.config.html#logging-config-dictschema">Python’s logging module</a>
+to influence the logging output of the software.</p>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">MQTT IO</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Ellis Percival.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.5.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
