@@ -1,13 +1,11 @@
-from textwrap import dedent, indent
+from textwrap import indent
 from typing import Any, List, Optional
 
 import yaml
 from docutils import nodes
-from docutils.parsers.rst import Directive
 from mqtt_io.config import get_main_schema
 from mqtt_io.types import ConfigType
 from recommonmark.parser import CommonMarkParser
-from sphinx.directives.code import CodeBlock
 from sphinx.util.docutils import SphinxDirective
 
 
