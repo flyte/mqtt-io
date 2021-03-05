@@ -10,6 +10,9 @@
 </head>
 <body>
   <div id="app"></div>
+  <script src="//cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="//unpkg.com/vue-async-computed@3.9.0"></script>
+  <script src="_js/schema.js"></script>
   <script>
     window.$docsify = {
       repo: "flyte/mqtt-io",
@@ -17,6 +20,12 @@
       auto2top: true,
       maxLevel: 2,
       subMaxLevel: 4,
+      vueComponents: {
+        "toc-entry": tocEntry,
+        "schema-documentation": schemaDocumentation,
+        "schema-section": schemaSection,
+        "cerberus-section": cerberusSection,
+      },
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>

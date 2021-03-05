@@ -43,7 +43,7 @@ _Requires Python 3.6+_
 
 `python3 -m mqtt-io config.yml`
 
-## Configuration
+## Configuration Example
 
 Configuration is written in a YAML file which is passed as an argument to the server on startup.
 

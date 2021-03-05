@@ -133,10 +133,6 @@ def add_yaml_example(parent: nodes.Element, section: ConfigType) -> None:
 
 
 class ConfigSchemaDirective(SphinxDirective):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._nodes: List[Any] = []
-
     def document_schema_section(
         self,
         schema_section: ConfigType,
@@ -197,6 +193,7 @@ class ConfigSchemaDirective(SphinxDirective):
                 self.document_schema_section(child_schema, parent_sections, container)
 
     def run(self):
+        section = self.content
         return [self.document_schema_section(get_main_schema())]
 
 
