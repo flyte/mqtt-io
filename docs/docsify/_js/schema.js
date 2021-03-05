@@ -119,6 +119,7 @@ cerberusSection = {
             <div v-if="description" v-html="description"></div>
             <pre>{{ details }}</pre>
             <div style="background-color: #f8f8f8;" v-if="extraInfo" v-html="extraInfo"></div>
+            <strong v-if="yamlExample">Example:</strong>
             <pre v-if="yamlExample" data-lang="yaml">{{ yamlExample }}</pre>
             <cerberus-section
                 v-if="childHasType"
