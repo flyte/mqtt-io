@@ -1,6 +1,8 @@
 // TODO: Tasks pending completion -@flyte at 05/03/2021, 12:20:04
 // Handle events passed up when a title is added, so that we can build a TOC
 
+const converter = new showdown.Converter()
+
 tocEntry = {
     props: ["toc_entry"],
     template: `
@@ -113,8 +115,11 @@ cerberusSection = {
     props: ["entry_name", "cerberus_section", "parent_titles"],
     template: `
         <div :style="'margin-left: ' + (parent_titles.length * 10) + ';'">
-            <h2 :id="titleId" v-html="title"></h2>
+        <h2 :id="titleId" v-html="title"></h2>
+            <div v-if="description" v-html="description"></div>
             <pre>{{ details }}</pre>
+            <div style="background-color: #f8f8f8;" v-if="extraInfo" v-html="extraInfo"></div>
+            <pre v-if="yamlExample" data-lang="yaml">{{ yamlExample }}</pre>
             <cerberus-section
                 v-if="childHasType"
                 v-on="$listeners"
@@ -130,11 +135,26 @@ cerberusSection = {
             />
         </div>
     `,
+    methods: {
+        metaEntry(key) {
+            if (!("meta" in this.cerberus_section) || !(key in this.cerberus_section.meta)) {
+                return null
+            }
+            return this.cerberus_section.meta[key]
+        },
+        metaEntryMarkdown(key) {
+            let text = this.metaEntry(key)
+            if (text === null) {
+                return null
+            }
+            return converter.makeHtml(text)
+        }
+    },
     computed: {
         titleId() {
             let titleId = ""
             if (this.parent_titles.length > 0) {
-                titleId += this.parent_titles.join("-") + "-"
+                titleId += this.parent_titles.join("-").replace("*", "star") + "-"
             }
             titleId += this.entry_name
             this.$emit("new-title-id", titleId, this.entry_name, this.parent_titles)
@@ -168,7 +188,7 @@ cerberusSection = {
             let cs = this.cerberus_section
             let str = `Type: ${cs.type}\nRequired: ${cs.required}`
             
-            let unit = metaEntry(cs, "unit")
+            let unit = this.metaEntry("unit")
             if (unit !== null) {
                 str += `\nUnit: ${unit}`
             }
@@ -190,13 +210,20 @@ cerberusSection = {
 
             return str
         },
+        description() {
+            return this.metaEntryMarkdown("description")
+        },
+        extraInfo() {
+            return this.metaEntryMarkdown("extra_info")
+        },
+        yamlExample() {
+            let example = this.metaEntry("yaml_example")
+            if (example === null) {
+                return null
+            }
+            return example
+        }
     }
 }
 
 
-function metaEntry(section, key) {
-    if (!("meta" in section) || !(key in section.meta)) {
-        return null
-    }
-    return section.meta[key]
-}
