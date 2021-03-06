@@ -1,33 +1,55 @@
-// TODO: Tasks pending completion -@flyte at 05/03/2021, 12:20:04
-// Handle events passed up when a title is added, so that we can build a TOC
-
 const converter = new showdown.Converter()
 
-tocEntry = {
-    props: ["toc_entry"],
+schemaTOCEntry = {
+    props: ["toc_entry", "section"],
     template: `
         <li>
             <a :href="tocLink(toc_entry.id)">{{ toc_entry.name }}</a>
-            <ul v-if="toc_entry.children">
+            <ul v-if="toc.entry.name == section && toc_entry.children">
                 <toc-entry v-for="entry in toc_entry.children" :key="entry.id" :toc_entry="entry" />
             </ul>
         </li>
     `,
     methods: {
         tocLink(id) {
-            return `${window.location.hash}?id=${id}`
+            return `${window.location.hash}?id=${id}&schemasection=${section}`
         }
     }
 }
 
-
-schemaDocumentation = {
+schemaTOC = {
     props: ["section"],
     template: `
+        <ul>
+            <toc-entry
+                v-for="entry in schemaTOCSection"
+                v-bind:key="entry.id"
+                :toc_entry="entry"
+                :section="section"
+            />
+        </ul>
+    `,
+    computed: {
+        schemaTOCSection() {
+            if (this.$store.state.configSchemaTOC == null) {
+                return null
+            }
+            if (this.section == null) {
+                return this.$store.state.configSchema
+            }
+            if (this.$store.state.configSchema[this.section] == null) {
+                return null
+            }
+            let ret = {}
+            ret[this.section] = this.$store.state.configSchemaTOC[this.section]
+            return ret
+        }
+    }
+}
+
+schemaDocumentation = {
+    template: `
         <div>
-            <ul>
-                <toc-entry v-for="entry in toc" v-bind:key="entry.id" :toc_entry="entry" />
-            </ul>
             <schema-section
                 v-if="schemaSection !== null"
                 v-on:new-title-id="addTitleToTOC"
@@ -40,6 +62,17 @@ schemaDocumentation = {
             toc: {},
         }
     },
+    created() {
+        const search = window.location.hash.split("?")[1]
+        if (search == null) {
+            return
+        }
+        const urlParams = new URLSearchParams(search);
+        const schemaSection = urlParams.get("schemasection");
+        if (schemaSection !== null) {
+            this.$store.commit("setConfigSchemaSection", schemaSection)
+        }
+    },
     methods: {
         addTitleToTOC(id, entryName, parentNames) {
             let parentTOCEntry = this.toc
@@ -48,21 +81,28 @@ schemaDocumentation = {
                 parentTOCEntry = parentTOCEntry[name]["children"]
             }
             Vue.set(parentTOCEntry, entryName, {id: id, name: entryName, children: {}})
-            // parentTOCEntry[entryName] = {id: id, name: entryName, children: {}}
+            this.$store.commit("setConfigSchemaTOC", this.toc)
         }
     },
-    asyncComputed: {
-        async schemaSection() {
-            let resp = await fetch("schema.json")
-            let schema = await resp.json()
-            if (this.section === undefined) {
-                return schema
+    computed: {
+        schemaSection() {
+            let section = this.$store.state.configSchemaSection
+
+            if (this.$store.state.configSchema == null) {
+                return null
+            }
+            if (section == null) {
+                return this.$store.state.configSchema
+            }
+            if (this.$store.state.configSchema[section] == null) {
+                console.log("this.$store.state.configSchema[section] == null")
+                return null
             }
             let ret = {}
-            ret[this.section] = schema[this.section]
+            ret[section] = this.$store.state.configSchema[section]
             return ret
         }
-    }
+    },
 }
 
 schemaSection = {
@@ -115,12 +155,17 @@ cerberusSection = {
     props: ["entry_name", "cerberus_section", "parent_titles"],
     template: `
         <div :style="'margin-left: ' + (parent_titles.length * 10) + ';'">
-        <h2 :id="titleId" v-html="title"></h2>
+            <h2 :id="titleId" v-html="title"></h2>
+            
             <div v-if="description" v-html="description"></div>
-            <pre>{{ details }}</pre>
+            
+            <pre><code v-html="details"></code></pre>
+            
             <div style="background-color: #f8f8f8;" v-if="extraInfo" v-html="extraInfo"></div>
+            
             <strong v-if="yamlExample">Example:</strong>
-            <pre v-if="yamlExample" data-lang="yaml">{{ yamlExample }}</pre>
+            <pre v-if="yamlExample" data-lang="yaml"><code v-html="yamlExample"></code></pre>
+            
             <cerberus-section
                 v-if="childHasType"
                 v-on="$listeners"
@@ -128,6 +173,7 @@ cerberusSection = {
                 :cerberus_section="childSchema"
                 :parent_titles="parentTitles"
             />
+            
             <schema-section
                 v-else-if="childSchema !== null"
                 v-on="$listeners"
@@ -205,11 +251,11 @@ cerberusSection = {
             if ("allow_unknown" in cs) {
                 str += `\nUnlisted entries accepted: ${cs.allow_unknown}`
             }
-            if ("default" in cs) {
+            if ("default" in cs && cs.default !== null && cs.default !== "") {
                 str += `\nDefault: ${cs.default}`
             }
 
-            return str
+            return Prism.highlight(str, Prism.languages.yaml, "yaml")
         },
         description() {
             return this.metaEntryMarkdown("description")
@@ -222,7 +268,7 @@ cerberusSection = {
             if (example === null) {
                 return null
             }
-            return example
+            return Prism.highlight(example, Prism.languages.yaml, "yaml")
         }
     }
 }

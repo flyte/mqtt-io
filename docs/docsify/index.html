@@ -12,9 +12,45 @@
   <div id="app"></div>
   <script src="//cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
   <script src="//unpkg.com/vue-async-computed@3.9.0"></script>
+  <script src="//unpkg.com/vuex@3.6.2/dist/vuex.js"></script>
   <script src="//unpkg.com/showdown/dist/showdown.min.js"></script>
   <script src="_js/schema.js"></script>
   <script>
+    Vue.use(Vuex)
+
+    const store = new Vuex.Store({
+      state() {
+        return {
+          configSchema: null,
+          configSchemaTOC: null,
+          configSchemaSection: null,
+          configSchemaTOCSections: [],
+        }
+      },
+      mutations: {
+        setConfigSchema(state, schema) {
+          state.configSchema = schema
+          const sections = Object.keys(schema)
+          state.configSchemaTOCSections = []
+          for (let i = 0; i < sections.length; i++) {
+            state.configSchemaTOCSections.push(sections[i])
+          }
+        },
+        setConfigSchemaTOC(state, toc) {
+          state.configSchemaTOC = toc
+        },
+        setConfigSchemaSection(state, section) {
+          state.configSchemaSection = section
+        },
+      },
+    })
+
+    fetch("schema.json").then(function(resp) {
+      resp.json().then(function(schema) {
+        store.commit("setConfigSchema", schema)
+      })
+    })
+    
     window.$docsify = {
       repo: "flyte/mqtt-io",
       loadSidebar: true,
@@ -22,11 +58,15 @@
       maxLevel: 2,
       subMaxLevel: 4,
       vueComponents: {
-        "toc-entry": tocEntry,
+        "schema-toc-entry": schemaTOCEntry,
+        "schema-toc": schemaTOC,
         "schema-documentation": schemaDocumentation,
         "schema-section": schemaSection,
         "cerberus-section": cerberusSection,
       },
+      vueGlobalOptions: {
+        store: store
+      }
     }
   </script>
   <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
