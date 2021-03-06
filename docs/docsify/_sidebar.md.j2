@@ -1,0 +1,32 @@
+- [**MQTT IO**](/)
+
+- Configuration
+
+  - [Usage Scenarios](config/scenarios.md)
+  - [Interrupts](config/interrupts.md)
+  - [Home Assistant Discovery](config/ha_discovery.md)
+  - [Validation](config/validation.md)
+  - Section Reference
+  {%- for ref_section in ref_sections %}
+    - [{{ ref_section["title"] }}]({{ ref_section["path"] }})
+    {%- if ref_section["title"] == section %}
+      {%- for child in ref_section["children"] %}
+      {{ "  " * child["depth"] }}- [- {{ child["title"] }}]({{ child["path"] }})
+      {%- endfor %}
+    {%- endif %}
+  {%- endfor %}
+
+- Modules
+
+  - Nothing!
+
+- Development
+
+  - [Config Schema](dev/config_schema.md)
+
+  - Modules
+
+    - [Overview](dev/modules/overview.md)
+    - [GPIO](dev/modules/gpio.md)
+    - [Sensors](dev/modules/sensors.md)
+    - [Streams](dev/modules/streams.md)

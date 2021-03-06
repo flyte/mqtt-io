@@ -1,37 +1,18 @@
 const converter = new showdown.Converter()
 
-schemaTOCEntry = {
-    props: ["toc_entry", "section"],
-    template: `
-        <li>
-            <a :href="tocLink(toc_entry.id)">{{ toc_entry.name }}</a>
-            <ul v-if="toc.entry.name == section && toc_entry.children">
-                <toc-entry v-for="entry in toc_entry.children" :key="entry.id" :toc_entry="entry" />
-            </ul>
-        </li>
-    `,
-    methods: {
-        tocLink(id) {
-            return `${window.location.hash}?id=${id}&schemasection=${section}`
-        }
-    }
-}
-
-schemaTOC = {
+schemaDocumentation = {
     props: ["section"],
     template: `
-        <ul>
-            <toc-entry
-                v-for="entry in schemaTOCSection"
-                v-bind:key="entry.id"
-                :toc_entry="entry"
-                :section="section"
+        <div>
+            <schema-section
+                v-if="schemaSection !== null"
+                :schema_section="schemaSection"
             />
-        </ul>
+        </div>
     `,
     computed: {
-        schemaTOCSection() {
-            if (this.$store.state.configSchemaTOC == null) {
+        schemaSection() {
+            if (this.$store.state.configSchema == null) {
                 return null
             }
             if (this.section == null) {
@@ -41,65 +22,7 @@ schemaTOC = {
                 return null
             }
             let ret = {}
-            ret[this.section] = this.$store.state.configSchemaTOC[this.section]
-            return ret
-        }
-    }
-}
-
-schemaDocumentation = {
-    template: `
-        <div>
-            <schema-section
-                v-if="schemaSection !== null"
-                v-on:new-title-id="addTitleToTOC"
-                :schema_section="schemaSection"
-            />
-        </div>
-    `,
-    data() {
-        return {
-            toc: {},
-        }
-    },
-    created() {
-        const search = window.location.hash.split("?")[1]
-        if (search == null) {
-            return
-        }
-        const urlParams = new URLSearchParams(search);
-        const schemaSection = urlParams.get("schemasection");
-        if (schemaSection !== null) {
-            this.$store.commit("setConfigSchemaSection", schemaSection)
-        }
-    },
-    methods: {
-        addTitleToTOC(id, entryName, parentNames) {
-            let parentTOCEntry = this.toc
-            for (let i = 0; i < parentNames.length; i++) {
-                const name = parentNames[i]
-                parentTOCEntry = parentTOCEntry[name]["children"]
-            }
-            Vue.set(parentTOCEntry, entryName, {id: id, name: entryName, children: {}})
-            this.$store.commit("setConfigSchemaTOC", this.toc)
-        }
-    },
-    computed: {
-        schemaSection() {
-            let section = this.$store.state.configSchemaSection
-
-            if (this.$store.state.configSchema == null) {
-                return null
-            }
-            if (section == null) {
-                return this.$store.state.configSchema
-            }
-            if (this.$store.state.configSchema[section] == null) {
-                console.log("this.$store.state.configSchema[section] == null")
-                return null
-            }
-            let ret = {}
-            ret[section] = this.$store.state.configSchema[section]
+            ret[this.section] = this.$store.state.configSchema[this.section]
             return ret
         }
     },
@@ -201,11 +124,10 @@ cerberusSection = {
         titleId() {
             let titleId = ""
             if (this.parent_titles.length > 0) {
-                titleId += this.parent_titles.join("-").replace("*", "star") + "-"
+                titleId += this.parent_titles.join("-") + "-"
             }
             titleId += this.entry_name
-            this.$emit("new-title-id", titleId, this.entry_name, this.parent_titles)
-            return titleId
+            return titleId.replaceAll("*", "star")
         },
         title() {
             let title = ""

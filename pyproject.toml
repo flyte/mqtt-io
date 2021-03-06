@@ -25,6 +25,7 @@ md-toc = "^7.1.0"
 Sphinx = "^3.5.1"
 sphinx-autoapi = "^1.7.0"
 recommonmark = "^0.7.1"
+Jinja2 = "^2.11.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
