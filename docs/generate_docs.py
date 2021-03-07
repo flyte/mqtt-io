@@ -1,5 +1,6 @@
 import json
 import os
+from importlib import import_module
 from os.path import join
 from typing import Any, Dict, List, Optional
 
@@ -10,8 +11,7 @@ from mqtt_io.types import ConfigType
 CONFIG_SCHEMA_PATH = "../mqtt_io/config/config.schema.yml"
 DOCS_DIR = "docsify"
 SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
-TOC_LIST: List[Dict[str, Any]] = []
-TOC_ENTRIES: Dict[str, Dict[str, Any]] = {}
+REF_TOC_ENTRIES: Dict[str, Dict[str, Any]] = {}
 
 
 def title_id(entry_name: str, parents: List[str]) -> str:
@@ -75,7 +75,7 @@ class ConfigSchemaParser:
         path = f"config/reference/{toplevel_name}/"
         if parents:
             path += f"?id={tid}"
-            TOC_ENTRIES[toplevel_name]["children"].append(
+            REF_TOC_ENTRIES[toplevel_name]["children"].append(
                 dict(
                     title=entry_name,
                     element_id=tid,
@@ -96,6 +96,18 @@ class ConfigSchemaParser:
                 ConfigSchemaParser.parse_schema_section(child_schema, children, parents)
 
 
+def document_gpio_module() -> None:
+    # TODO: Tasks pending completion -@flyte at 07/03/2021, 11:19:04
+    # Continue writing this to document the modules in some way.
+    module = import_module("mqtt_io.modules.gpio.raspberrypi")
+    requirements = getattr(module, "REQUIREMENTS", None)
+    config_schema = getattr(module, "CONFIG_SCHEMA", None)
+    interrupt_support = getattr(module.GPIO, "INTERRUPT_SUPPORT", None)
+    pin_schema = getattr(module.GPIO, "PIN_SCHEMA", None)
+    input_schema = getattr(module.GPIO, "INPUT_SCHEMA", None)
+    output_schema = getattr(module.GPIO, "OUTPUT_SCHEMA", None)
+
+
 def main() -> None:
     print(f"Loading YAML config schema from '{CONFIG_SCHEMA_PATH}'...")
     with open(CONFIG_SCHEMA_PATH, "r") as config_schema_file:
@@ -108,7 +120,7 @@ def main() -> None:
     top_level_section_names: List[str] = list(config_schema.keys())
 
     for section_name in top_level_section_names:
-        TOC_ENTRIES[section_name] = dict(
+        REF_TOC_ENTRIES[section_name] = dict(
             title=section_name,
             orig_title=section_name,
             path=f"config/reference/{section_name}/",
@@ -117,14 +129,16 @@ def main() -> None:
 
     ConfigSchemaParser.parse_schema_section(config_schema, [])
 
+    ref_toc_list: List[Dict[str, Any]] = []
+
     for section_name in top_level_section_names:
-        TOC_LIST.append(TOC_ENTRIES[section_name])
+        ref_toc_list.append(REF_TOC_ENTRIES[section_name])
 
     main_sidebar_path = join(DOCS_DIR, "_sidebar.md")
     print(f"Writing main sidebar file '{main_sidebar_path}'...")
     with open(main_sidebar_path, "w") as main_sidebar_file:
         main_sidebar_file.write(
-            sidebar_template.render(dict(ref_sections=TOC_LIST, section=None))
+            sidebar_template.render(dict(ref_sections=ref_toc_list, section=None))
         )
 
     for tl_section in top_level_section_names:
@@ -139,13 +153,17 @@ def main() -> None:
         print(f"Making section sidebar file '{sidebar_path}'...")
         with open(sidebar_path, "w") as sb_file:
             sb_file.write(
-                sidebar_template.render(dict(ref_sections=TOC_LIST, section=tl_section))
+                sidebar_template.render(
+                    dict(ref_sections=ref_toc_list, section=tl_section)
+                )
             )
 
     json_schema_path = join(DOCS_DIR, "schema.json")
     print(f"Making JSON config schema file '{json_schema_path}'...")
     with open(json_schema_path, "w") as json_schema_file:
         json.dump(config_schema, json_schema_file, indent=2)
+
+    # generate_module_docs()
 
 
 if __name__ == "__main__":
