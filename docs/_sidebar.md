@@ -5,6 +5,7 @@
   - [Usage Scenarios](config/scenarios.md)
   - [Interrupts](config/interrupts.md)
   - [Home Assistant Discovery](config/ha_discovery.md)
+  - [V2 Changes](config/v2-changes.md)
   - Section Reference
     - [mqtt](config/reference/mqtt/)
     - [gpio_modules](config/reference/gpio_modules/)
@@ -23,3 +24,4 @@
 - Development
 
   - [Config Schema](dev/config_schema.md)
+  - [Changelog](CHANGELOG.md)

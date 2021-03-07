@@ -2,6 +2,7 @@ import ast
 import json
 import os
 import pathlib
+import shutil
 from importlib import import_module
 from os.path import join
 from typing import Any, Dict, List, Optional
@@ -147,6 +148,11 @@ def generate_readmes() -> None:
         )
 
 
+def generate_changelog() -> None:
+    print("Copying changelog...")
+    shutil.copyfile(join(THIS_DIR, "CHANGELOG.md"), join(DOCS_DIR, "CHANGELOG.md"))
+
+
 def document_gpio_module() -> None:
     # TODO: Tasks pending completion -@flyte at 07/03/2021, 11:19:04
     # Continue writing this to document the modules in some way.
@@ -206,6 +212,7 @@ def main() -> None:
 
     # generate_module_docs()
     generate_readmes()
+    generate_changelog()
 
 
 if __name__ == "__main__":
