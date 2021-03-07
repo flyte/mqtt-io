@@ -10,7 +10,10 @@ DO NOT EDIT README.md DIRECTLY, IT'S GENERATED FROM README.md.j2 USING generate_
 
 Exposes general purpose inputs and outputs (GPIO), hardware sensors and serial devices to an MQTT server. Ideal for single-board computers such as the Raspberry Pi.
 
+{% if repo -%}
 Visit the [documentation](https://flyte.github.io/mqtt-io/) for more detailed information.
+
+{% endif -%}
 
 ## Supported Hardware
 
@@ -55,7 +58,9 @@ _Requires Python 3.6+_
 
 Configuration is written in a YAML file which is passed as an argument to the server on startup.
 
+{% if repo -%}
 See the [full configuration documentation](https://github.com/flyte/pi-mqtt-gpio/wiki/Configuration) for details.
+{%- endif %}
 
 The following example will configure the software to do the following:
 

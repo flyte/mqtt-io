@@ -1,3 +1,9 @@
+<!--
+***************************************************************************************
+DO NOT EDIT README.md DIRECTLY, IT'S GENERATED FROM README.md.j2 USING generate_docs.py
+***************************************************************************************
+-->
+
 # MQTT IO
 
 [![Discord](https://img.shields.io/discord/713749043662290974.svg?label=Chat%20on%20Discord&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/gWyV9W4)
@@ -47,7 +53,7 @@ _Requires Python 3.6+_
 
 Configuration is written in a YAML file which is passed as an argument to the server on startup.
 
-See the [full configuration documentation](https://github.com/flyte/pi-mqtt-gpio/wiki/Configuration) for details.
+
 
 The following example will configure the software to do the following:
 
