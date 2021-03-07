@@ -2,14 +2,16 @@
   "mqtt": {
     "meta": {
       "description": "Contains the configuration data used for connecting to an MQTT server.\n",
-      "yaml_example": "mqtt:\n  host: test.mosquitto.org\n  port: 8883\n  topic_prefix: mqtt_io\n  ha_discovery:\n    enabled: yes\n  tls:\n    enabled: yes\n    ca_certs: mosquitto.org.crt\n    certfile: client.crt\n    keyfile: client.key\n"
+      "yaml_example": "mqtt:\n  host: test.mosquitto.org\n  port: 8883\n  topic_prefix: mqtt_io\n  ha_discovery:\n    enabled: yes\n  tls:\n    enabled: yes\n    ca_certs: mosquitto.org.crt\n    certfile: client.crt\n    keyfile: client.key\n",
+      "title_id": "mqtt"
     },
     "type": "dict",
     "required": true,
     "schema": {
       "host": {
         "meta": {
-          "description": "Host name or IP address of the MQTT server."
+          "description": "Host name or IP address of the MQTT server.",
+          "title_id": "mqtt-host"
         },
         "type": "string",
         "empty": false,
@@ -17,7 +19,8 @@
       },
       "port": {
         "meta": {
-          "description": "Port number to connect to on the MQTT server."
+          "description": "Port number to connect to on the MQTT server.",
+          "title_id": "mqtt-port"
         },
         "type": "integer",
         "min": 1,
@@ -27,7 +30,8 @@
       },
       "user": {
         "meta": {
-          "description": "Username to authenticate with on the MQTT server."
+          "description": "Username to authenticate with on the MQTT server.",
+          "title_id": "mqtt-user"
         },
         "type": "string",
         "required": false,
@@ -35,7 +39,8 @@
       },
       "password": {
         "meta": {
-          "description": "Password to authenticate with on the MQTT server."
+          "description": "Password to authenticate with on the MQTT server.",
+          "title_id": "mqtt-password"
         },
         "type": "string",
         "required": false,
@@ -43,7 +48,8 @@
       },
       "client_id": {
         "meta": {
-          "description": "[MQTT client ID](https://www.cloudmqtt.com/blog/2018-11-21-mqtt-what-is-client-id.html) to use on the MQTT server.\n"
+          "description": "[MQTT client ID](https://www.cloudmqtt.com/blog/2018-11-21-mqtt-what-is-client-id.html) to use on the MQTT server.\n",
+          "title_id": "mqtt-client_id"
         },
         "type": "string",
         "required": false,
@@ -52,7 +58,8 @@
       "topic_prefix": {
         "meta": {
           "description": "Prefix to use for all topics.",
-          "extra_info": "For example, a `topic_prefix` of `home/livingroom` would make a digital input\ncalled \"doorbell\" publish its changes to the `home/livingroom/input/doorbell`\ntopic.\n"
+          "extra_info": "For example, a `topic_prefix` of `home/livingroom` would make a digital input\ncalled \"doorbell\" publish its changes to the `home/livingroom/input/doorbell`\ntopic.\n",
+          "title_id": "mqtt-topic_prefix"
         },
         "type": "string",
         "required": false,
@@ -61,7 +68,8 @@
       },
       "clean_session": {
         "meta": {
-          "description": "Whether or not to start a\n[clean MQTT session](https://www.hivemq.com/blog/mqtt-essentials-part-7-persistent-session-queuing-messages/)\non every MQTT connection.\n"
+          "description": "Whether or not to start a\n[clean MQTT session](https://www.hivemq.com/blog/mqtt-essentials-part-7-persistent-session-queuing-messages/)\non every MQTT connection.\n",
+          "title_id": "mqtt-clean_session"
         },
         "type": "boolean",
         "required": false,
@@ -70,7 +78,8 @@
       "protocol": {
         "meta": {
           "description": "Version of the MQTT protocol to use.",
-          "extra_info": "This renders in the documentation as a float, but should always be set within quotes.\n"
+          "extra_info": "This renders in the documentation as a float, but should always be set within quotes.\n",
+          "title_id": "mqtt-protocol"
         },
         "type": "string",
         "required": false,
@@ -85,7 +94,8 @@
       "keepalive": {
         "meta": {
           "description": "How frequently in seconds to send\n[ping packets](https://www.hivemq.com/blog/mqtt-essentials-part-10-alive-client-take-over/)\nto the MQTT server.\n",
-          "unit": "seconds"
+          "unit": "seconds",
+          "title_id": "mqtt-keepalive"
         },
         "type": "integer",
         "min": 1,
@@ -95,7 +105,8 @@
       "status_topic": {
         "meta": {
           "description": "Topic on which to send messages about the running status of this software.",
-          "extra_info": "Sends the payloads configured in `status_payload_running`,\n`status_payload_stopped` and `status_payload_dead`.\n"
+          "extra_info": "Sends the payloads configured in `status_payload_running`,\n`status_payload_stopped` and `status_payload_dead`.\n",
+          "title_id": "mqtt-status_topic"
         },
         "type": "string",
         "required": false,
@@ -103,7 +114,8 @@
       },
       "status_payload_running": {
         "meta": {
-          "description": "Payload to send on the status topic when the software is running."
+          "description": "Payload to send on the status topic when the software is running.",
+          "title_id": "mqtt-status_payload_running"
         },
         "type": "string",
         "required": false,
@@ -111,7 +123,8 @@
       },
       "status_payload_stopped": {
         "meta": {
-          "description": "Payload to send on the status topic when the software has exited cleanly."
+          "description": "Payload to send on the status topic when the software has exited cleanly.",
+          "title_id": "mqtt-status_payload_stopped"
         },
         "type": "string",
         "required": false,
@@ -120,7 +133,8 @@
       "status_payload_dead": {
         "meta": {
           "description": "Payload to send on the status topic when the software has exited unexpectedly.",
-          "extra_info": "Uses [MQTT Last Will and Testament](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/)\nto make the server automatically send this payload if our connection fails.\n"
+          "extra_info": "Uses [MQTT Last Will and Testament](https://www.hivemq.com/blog/mqtt-essentials-part-9-last-will-and-testament/)\nto make the server automatically send this payload if our connection fails.\n",
+          "title_id": "mqtt-status_payload_dead"
         },
         "type": "string",
         "required": false,
@@ -129,7 +143,8 @@
       "client_module": {
         "meta": {
           "description": "MQTT Client implementation module path.",
-          "extra_info": "There's currently only one implementation, which uses the\n[asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.\n"
+          "extra_info": "There's currently only one implementation, which uses the\n[asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.\n",
+          "title_id": "mqtt-client_module"
         },
         "type": "string",
         "required": false,
@@ -141,14 +156,16 @@
         "schema": {
           "enabled": {
             "meta": {
-              "description": "Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)\nof our configured devices.\n"
+              "description": "Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)\nof our configured devices.\n",
+              "title_id": "mqtt-ha_discovery-enabled"
             },
             "type": "boolean",
             "required": true
           },
           "prefix": {
             "meta": {
-              "description": "Prefix for the Home Assistant MQTT discovery topic."
+              "description": "Prefix for the Home Assistant MQTT discovery topic.",
+              "title_id": "mqtt-ha_discovery-prefix"
             },
             "type": "string",
             "required": false,
@@ -157,18 +174,23 @@
           },
           "name": {
             "meta": {
-              "description": "Name to identify this \"device\" in Home Assistant."
+              "description": "Name to identify this \"device\" in Home Assistant.",
+              "title_id": "mqtt-ha_discovery-name"
             },
             "type": "string",
             "required": false,
             "default": "MQTT IO"
           }
+        },
+        "meta": {
+          "title_id": "mqtt-ha_discovery"
         }
       },
       "tls": {
         "meta": {
           "description": "TLS/SSL settings for connecting to the MQTT server over an encrypted connection.\n",
-          "yaml_example": "mqtt:\n  host: localhost\n  tls:\n    enabled: yes\n    ca_certs: mosquitto.org.crt\n    certfile: client.crt\n    keyfile: client.key\n"
+          "yaml_example": "mqtt:\n  host: localhost\n  tls:\n    enabled: yes\n    ca_certs: mosquitto.org.crt\n    certfile: client.crt\n    keyfile: client.key\n",
+          "title_id": "mqtt-tls"
         },
         "type": "dict",
         "required": false,
@@ -176,28 +198,32 @@
           "enabled": {
             "meta": {
               "description": "Enable a secure connection to the MQTT server.",
-              "extra_info": "Most of these options map directly to the\n[`tls_set()` arguments](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\non the Paho MQTT client.\n"
+              "extra_info": "Most of these options map directly to the\n[`tls_set()` arguments](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\non the Paho MQTT client.\n",
+              "title_id": "mqtt-tls-enabled"
             },
             "type": "boolean",
             "required": true
           },
           "ca_certs": {
             "meta": {
-              "description": "Path to the Certificate Authority certificate files that are to be treated\nas trusted by this client.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n"
+              "description": "Path to the Certificate Authority certificate files that are to be treated\nas trusted by this client.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n",
+              "title_id": "mqtt-tls-ca_certs"
             },
             "type": "string",
             "required": false
           },
           "certfile": {
             "meta": {
-              "description": "Path to the PEM encoded client certificate.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n"
+              "description": "Path to the PEM encoded client certificate.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n",
+              "title_id": "mqtt-tls-certfile"
             },
             "type": "string",
             "required": false
           },
           "keyfile": {
             "meta": {
-              "description": "Path to the PEM encoded client private key.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n"
+              "description": "Path to the PEM encoded client private key.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n",
+              "title_id": "mqtt-tls-keyfile"
             },
             "type": "string",
             "required": false
@@ -205,7 +231,8 @@
           "cert_reqs": {
             "meta": {
               "description": "Defines the certificate requirements that the client imposes on the MQTT server.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n",
-              "extra_info": "By default this is `CERT_REQUIRED`, which means that the broker must provide a certificate.\n"
+              "extra_info": "By default this is `CERT_REQUIRED`, which means that the broker must provide a certificate.\n",
+              "title_id": "mqtt-tls-cert_reqs"
             },
             "type": "string",
             "required": false,
@@ -219,14 +246,16 @@
           "tls_version": {
             "meta": {
               "description": "Specifies the version of the SSL/TLS protocol to be used.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n",
-              "extra_info": "By default the highest TLS version is detected.\n"
+              "extra_info": "By default the highest TLS version is detected.\n",
+              "title_id": "mqtt-tls-tls_version"
             },
             "type": "string",
             "required": false
           },
           "ciphers": {
             "meta": {
-              "description": "Which encryption ciphers are allowable for this connection.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n"
+              "description": "Which encryption ciphers are allowable for this connection.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-set)\n",
+              "title_id": "mqtt-tls-ciphers"
             },
             "type": "string",
             "required": false
@@ -234,7 +263,8 @@
           "insecure": {
             "meta": {
               "description": "Configure verification of the server hostname in the server certificate.\n[More info](https://www.eclipse.org/paho/index.php?page=clients/python/docs/index.php#tls-insecure-set)\n",
-              "extra_info": "If set to true, it is impossible to guarantee that the host you are\nconnecting to is not impersonating your server. This can be useful in\ninitial server testing, but makes it possible for a malicious third party\nto impersonate your server through DNS spoofing, for example.\nDo not use this function in a real system. Setting value to true means there\nis no point using encryption.\n"
+              "extra_info": "If set to true, it is impossible to guarantee that the host you are\nconnecting to is not impersonating your server. This can be useful in\ninitial server testing, but makes it possible for a malicious third party\nto impersonate your server through DNS spoofing, for example.\nDo not use this function in a real system. Setting value to true means there\nis no point using encryption.\n",
+              "title_id": "mqtt-tls-insecure"
             },
             "type": "boolean",
             "required": false,
@@ -248,7 +278,8 @@
     "meta": {
       "description": "List of GPIO modules to configure for use with inputs and/or outputs.\n",
       "extra_info": "Some modules require extra config entries, specified by the modules themselves.\nUntil the documentation is written for the individual modules, please refer to the\n`CONFIG_SCHEMA` value of the module's code in\n[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).\nTODO: Link this to the pending wiki pages on each module's requirements.\n",
-      "yaml_example": "gpio_modules:\n  - name: rpi_gpio\n    module: raspberrypi\n  \n  - name: pcf\n    module: pcf8574\n    i2c_bus_num: 1\n    chip_addr: 0x20\n"
+      "yaml_example": "gpio_modules:\n  - name: rpi_gpio\n    module: raspberrypi\n  \n  - name: pcf\n    module: pcf8574\n    i2c_bus_num: 1\n    chip_addr: 0x20\n",
+      "title_id": "gpio_modules"
     },
     "type": "list",
     "required": false,
@@ -259,7 +290,8 @@
       "schema": {
         "name": {
           "meta": {
-            "description": "Your name for this configuration of the module. Will be referred to by entries\nin the `digital_inputs` and/or `digital_outputs` sections.\n"
+            "description": "Your name for this configuration of the module. Will be referred to by entries\nin the `digital_inputs` and/or `digital_outputs` sections.\n",
+            "title_id": "gpio_modules-star-name"
           },
           "type": "string",
           "required": true,
@@ -267,7 +299,8 @@
         },
         "module": {
           "meta": {
-            "description": "Name of the module in the code. This is listed in the README's\n\"Supported Hardware\" section in brackets.\n"
+            "description": "Name of the module in the code. This is listed in the README's\n\"Supported Hardware\" section in brackets.\n",
+            "title_id": "gpio_modules-star-module"
           },
           "type": "string",
           "required": true,
@@ -275,12 +308,16 @@
         },
         "cleanup": {
           "meta": {
-            "description": "Whether to run the module's `cleanup()` method on exit."
+            "description": "Whether to run the module's `cleanup()` method on exit.",
+            "title_id": "gpio_modules-star-cleanup"
           },
           "type": "boolean",
           "required": false,
           "default": true
         }
+      },
+      "meta": {
+        "title_id": "gpio_modules-star"
       }
     }
   },
@@ -288,7 +325,8 @@
     "meta": {
       "description": "List of sensor modules to configure for use with sensor inputs.",
       "extra_info": "Some modules require extra config entries, specified by the modules themselves.\nUntil the documentation is written for the individual modules, please refer to the\n`CONFIG_SCHEMA` value of the module's code in\n[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).\nTODO: Link this to the pending wiki pages on each module's requirements.\n",
-      "yaml_example": "sensor_modules:\n  - name: dht\n    module: dht22\n    type: AM2302\n    pin: 4\n  \n  - name: ds\n    module: ds18b\n    type: DS18S20\n    address: 000803702e49\n"
+      "yaml_example": "sensor_modules:\n  - name: dht\n    module: dht22\n    type: AM2302\n    pin: 4\n  \n  - name: ds\n    module: ds18b\n    type: DS18S20\n    address: 000803702e49\n",
+      "title_id": "sensor_modules"
     },
     "type": "list",
     "required": false,
@@ -299,7 +337,8 @@
       "schema": {
         "name": {
           "meta": {
-            "description": "Your name for this configuration of the module. Will be referred to by entries\nin the `sensor_inputs` section.\n"
+            "description": "Your name for this configuration of the module. Will be referred to by entries\nin the `sensor_inputs` section.\n",
+            "title_id": "sensor_modules-star-name"
           },
           "type": "string",
           "required": true,
@@ -307,7 +346,8 @@
         },
         "module": {
           "meta": {
-            "description": "Name of the module in the code. This is listed in the README's\n\"Supported Hardware\" section in brackets.\n"
+            "description": "Name of the module in the code. This is listed in the README's\n\"Supported Hardware\" section in brackets.\n",
+            "title_id": "sensor_modules-star-module"
           },
           "type": "string",
           "required": true,
@@ -315,12 +355,16 @@
         },
         "cleanup": {
           "meta": {
-            "description": "Whether to run the module's `cleanup()` method on exit."
+            "description": "Whether to run the module's `cleanup()` method on exit.",
+            "title_id": "sensor_modules-star-cleanup"
           },
           "type": "boolean",
           "required": false,
           "default": true
         }
+      },
+      "meta": {
+        "title_id": "sensor_modules-star"
       }
     }
   },
@@ -328,7 +372,8 @@
     "meta": {
       "description": "List of stream modules to configure.",
       "extra_info": "Some modules require extra config entries, specified by the modules themselves.\nUntil the documentation is written for the individual modules, please refer to the\n`CONFIG_SCHEMA` value of the module's code in\n[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).\nTODO: Link this to the pending wiki pages on each module's requirements.\n",
-      "yaml_example": "stream_modules:\n  - name: network_switch\n    module: serial\n    device: /dev/ttyUSB1\n    baud: 115200\n    interval: 10\n\n  - name: ups\n    module: serial\n    type: /dev/ttyUSB0\n    baud: 9600\n    interval: 1\n"
+      "yaml_example": "stream_modules:\n  - name: network_switch\n    module: serial\n    device: /dev/ttyUSB1\n    baud: 115200\n    interval: 10\n\n  - name: ups\n    module: serial\n    type: /dev/ttyUSB0\n    baud: 9600\n    interval: 1\n",
+      "title_id": "stream_modules"
     },
     "type": "list",
     "required": false,
@@ -339,7 +384,8 @@
       "schema": {
         "name": {
           "meta": {
-            "description": "Your name for this configuration of the module. Will be used in the topic on\nwhich the stream's data is published and the topic on which messages can be\nsent for writing to the stream.\n"
+            "description": "Your name for this configuration of the module. Will be used in the topic on\nwhich the stream's data is published and the topic on which messages can be\nsent for writing to the stream.\n",
+            "title_id": "stream_modules-star-name"
           },
           "type": "string",
           "required": true,
@@ -347,7 +393,8 @@
         },
         "module": {
           "meta": {
-            "description": "Name of the module in the code. This is listed in the README's\n\"Supported Hardware\" section in brackets.\n"
+            "description": "Name of the module in the code. This is listed in the README's\n\"Supported Hardware\" section in brackets.\n",
+            "title_id": "stream_modules-star-module"
           },
           "type": "string",
           "required": true,
@@ -355,7 +402,8 @@
         },
         "cleanup": {
           "meta": {
-            "description": "Whether to run the module's `cleanup()` method on exit."
+            "description": "Whether to run the module's `cleanup()` method on exit.",
+            "title_id": "stream_modules-star-cleanup"
           },
           "type": "boolean",
           "required": false,
@@ -363,7 +411,8 @@
         },
         "retain": {
           "meta": {
-            "description": "Whether to set the `retain` flag on MQTT messages publishing data received\nfrom the stream.\n"
+            "description": "Whether to set the `retain` flag on MQTT messages publishing data received\nfrom the stream.\n",
+            "title_id": "stream_modules-star-retain"
           },
           "type": "boolean",
           "required": false,
@@ -372,7 +421,8 @@
         "read_interval": {
           "meta": {
             "description": "How long to wait between polling the stream for new data.",
-            "unit": "seconds"
+            "unit": "seconds",
+            "title_id": "stream_modules-star-read_interval"
           },
           "type": "float",
           "required": false,
@@ -381,7 +431,8 @@
         },
         "read": {
           "meta": {
-            "description": "Whether to poll this stream for incoming data and publish it on an MQTT topic.\n"
+            "description": "Whether to poll this stream for incoming data and publish it on an MQTT topic.\n",
+            "title_id": "stream_modules-star-read"
           },
           "type": "boolean",
           "required": false,
@@ -389,12 +440,16 @@
         },
         "write": {
           "meta": {
-            "description": "Whether to subscribe to MQTT messages on a topic and write messages received on it to the stream."
+            "description": "Whether to subscribe to MQTT messages on a topic and write messages received on it to the stream.",
+            "title_id": "stream_modules-star-write"
           },
           "type": "boolean",
           "required": false,
           "default": true
         }
+      },
+      "meta": {
+        "title_id": "stream_modules-star"
       }
     }
   },
@@ -402,7 +457,8 @@
     "meta": {
       "description": "List of digital inputs to configure.",
       "extra_info": "Some modules require extra config entries, specified by the modules themselves.\nUntil the documentation is written for the individual modules, please refer to the\n`PIN_SCHEMA` and `INPUT_SCHEMA` values of the module's code in\n[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).\nTODO: Link this to the pending wiki pages on each module's requirements.\n",
-      "yaml_example": "gpio_modules:\n  - name: rpi\n    module: raspberrypi\n\ndigital_inputs:\n  - name: gpio0\n    module: rpi\n    pin: 0\n\n  - name: gpio1\n    module: rpi\n    pin: 1\n"
+      "yaml_example": "gpio_modules:\n  - name: rpi\n    module: raspberrypi\n\ndigital_inputs:\n  - name: gpio0\n    module: rpi\n    pin: 0\n\n  - name: gpio1\n    module: rpi\n    pin: 1\n",
+      "title_id": "digital_inputs"
     },
     "type": "list",
     "required": false,
@@ -413,7 +469,8 @@
       "schema": {
         "name": {
           "meta": {
-            "description": "Name of the input. Used in the MQTT topic when publishing input changes.\n\nThe topic that input changes will be published to is:\n`<mqtt.topic_prefix>/input/<this name>`\n"
+            "description": "Name of the input. Used in the MQTT topic when publishing input changes.\n\nThe topic that input changes will be published to is:\n`<mqtt.topic_prefix>/input/<this name>`\n",
+            "title_id": "digital_inputs-star-name"
           },
           "type": "string",
           "required": true,
@@ -421,7 +478,8 @@
         },
         "module": {
           "meta": {
-            "description": "Name of the module configured in `gpio_modules` that this input is attached to.\n"
+            "description": "Name of the module configured in `gpio_modules` that this input is attached to.\n",
+            "title_id": "digital_inputs-star-module"
           },
           "type": "string",
           "required": true,
@@ -430,7 +488,8 @@
         "pin": {
           "meta": {
             "description": "Which of the GPIO module's pins this input refers to.",
-            "extra_info": "Depending on the GPIO module's implementation, this can be either a string\nor an integer.\n"
+            "extra_info": "Depending on the GPIO module's implementation, this can be either a string\nor an integer.\n",
+            "title_id": "digital_inputs-star-pin"
           },
           "type": [
             "string",
@@ -442,7 +501,8 @@
         "on_payload": {
           "meta": {
             "description": "Payload to be sent when the input changes to what is considered to be \"on\".\nSee `inverted` below for the definition of \"on\" and \"off\".\n",
-            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n"
+            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n",
+            "title_id": "digital_inputs-star-on_payload"
           },
           "type": "string",
           "required": false,
@@ -452,7 +512,8 @@
         "off_payload": {
           "meta": {
             "description": "Payload to be sent when the input changes to what is considered to be \"off\".\nSee `inverted` below for the definition of \"on\" and \"off\".\n",
-            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n"
+            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n",
+            "title_id": "digital_inputs-star-off_payload"
           },
           "type": "string",
           "required": false,
@@ -462,7 +523,8 @@
         "inverted": {
           "meta": {
             "description": "Invert the logic level so that \"low\" levels are considered to be \"on\" and\n\"high\" levels are considered \"off\".\n",
-            "extra_info": "This can be useful for when an input is pulled \"high\" with a resistor and a\ndevice (like a button or another IC) connects it to ground when it's \"active\".\n"
+            "extra_info": "This can be useful for when an input is pulled \"high\" with a resistor and a\ndevice (like a button or another IC) connects it to ground when it's \"active\".\n",
+            "title_id": "digital_inputs-star-inverted"
           },
           "type": "boolean",
           "required": false,
@@ -471,7 +533,8 @@
         "pullup": {
           "meta": {
             "description": "Enable the pull-up resistor for this input so that the logic level is pulled\n\"high\" by default.\n",
-            "extra_info": "Not all GPIO modules support pull-up resistors."
+            "extra_info": "Not all GPIO modules support pull-up resistors.",
+            "title_id": "digital_inputs-star-pullup"
           },
           "type": "boolean",
           "required": false,
@@ -480,7 +543,8 @@
         "pulldown": {
           "meta": {
             "description": "Enable the pull-down resistor for this input so that the logic level is pulled\n\"low\" by default.\n",
-            "extra_info": "Not all GPIO modules support pull-down resistors."
+            "extra_info": "Not all GPIO modules support pull-down resistors.",
+            "title_id": "digital_inputs-star-pulldown"
           },
           "type": "boolean",
           "required": false,
@@ -489,7 +553,8 @@
         "interrupt": {
           "meta": {
             "description": "Configure this pin to trigger an interrupt when the logic level is \"rising\",\n\"falling\" or \"both\".\n",
-            "extra_info": "Not all GPIO modules support interrupts, and those that do may do so in\nvarious ways.\nTODO: Add link to interrupt documentation.\n"
+            "extra_info": "Not all GPIO modules support interrupts, and those that do may do so in\nvarious ways.\nTODO: Add link to interrupt documentation.\n",
+            "title_id": "digital_inputs-star-interrupt"
           },
           "type": "string",
           "required": false,
@@ -501,20 +566,25 @@
         },
         "interrupt_for": {
           "meta": {
-            "description": "List of other pin names that this pin is an interrupt for.\n\nThis is generally used on GPIO modules that provide software callbacks on\ninterrupts, so that we can attach another \"remote\" module's interrupt output\npin (one that changes logic level when one of its pins triggers an interrupt)\nto this input and use the callback to get the value of the \"remote\" pin and\npublish it on MQTT.\n\nTODO: Add link to interrupt documentation.\n"
+            "description": "List of other pin names that this pin is an interrupt for.\n\nThis is generally used on GPIO modules that provide software callbacks on\ninterrupts, so that we can attach another \"remote\" module's interrupt output\npin (one that changes logic level when one of its pins triggers an interrupt)\nto this input and use the callback to get the value of the \"remote\" pin and\npublish it on MQTT.\n\nTODO: Add link to interrupt documentation.\n",
+            "title_id": "digital_inputs-star-interrupt_for"
           },
           "type": "list",
           "required": false,
           "minlength": 1,
           "schema": {
             "type": "string",
-            "required": true
+            "required": true,
+            "meta": {
+              "title_id": "digital_inputs-star-interrupt_for-star"
+            }
           }
         },
         "bouncetime": {
           "meta": {
             "description": "Don't trigger interrupts more frequently than once per `bouncetime`.\n",
-            "unit": "milliseconds"
+            "unit": "milliseconds",
+            "title_id": "digital_inputs-star-bouncetime"
           },
           "type": "integer",
           "required": false,
@@ -523,7 +593,8 @@
         },
         "retain": {
           "meta": {
-            "description": "Set the retain flag on MQTT messages published on input change."
+            "description": "Set the retain flag on MQTT messages published on input change.",
+            "title_id": "digital_inputs-star-retain"
           },
           "type": "boolean",
           "required": false,
@@ -533,7 +604,8 @@
           "meta": {
             "description": "How long to wait between checking the value of this input.",
             "unit": "seconds",
-            "extra_info": "When the pin is configured as an interrupt, the pin is no longer polled.\nThe only exception to this is if the pin is configured as an interrupt for\nanother pin. In this case, whether or not we poll is decided by the\n`poll_when_interrupt_for` setting below.\n"
+            "extra_info": "When the pin is configured as an interrupt, the pin is no longer polled.\nThe only exception to this is if the pin is configured as an interrupt for\nanother pin. In this case, whether or not we poll is decided by the\n`poll_when_interrupt_for` setting below.\n",
+            "title_id": "digital_inputs-star-poll_interval"
           },
           "type": "float",
           "required": false,
@@ -542,7 +614,8 @@
         "poll_when_interrupt_for": {
           "meta": {
             "description": "Poll this pin when it's configured as an interrupt for another pin.",
-            "extra_info": "Polling the pin when it's configured as an interrupt for another pin is useful\nin order to make sure that if we somehow miss an interrupt on this pin (the\nremote module's interrupt output pin goes low (\"triggered\")), we\ndon't end up stuck in that state where we don't handle the remote module's\ninterrupt at all. If we poll the \"triggered\" value on this pin and our\ninterrupt handling hasn't dealt with it, then we'll handle it here.\n"
+            "extra_info": "Polling the pin when it's configured as an interrupt for another pin is useful\nin order to make sure that if we somehow miss an interrupt on this pin (the\nremote module's interrupt output pin goes low (\"triggered\")), we\ndon't end up stuck in that state where we don't handle the remote module's\ninterrupt at all. If we poll the \"triggered\" value on this pin and our\ninterrupt handling hasn't dealt with it, then we'll handle it here.\n",
+            "title_id": "digital_inputs-star-poll_when_interrupt_for"
           },
           "type": "boolean",
           "required": false,
@@ -551,14 +624,16 @@
         "ha_discovery": {
           "meta": {
             "description": "Configures the\n[Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)\nfor this pin.\n\nAny values entered into this section will be sent as part of the discovery\nconfig payload. See the above link for documentation.\n",
-            "yaml_example": "digital_inputs:\n  - name: livingroom_motion\n    module: rpi\n    ha_discovery:\n      component: binary_sensor\n      name: Living Room Motion\n      device_class: motion\n"
+            "yaml_example": "digital_inputs:\n  - name: livingroom_motion\n    module: rpi\n    ha_discovery:\n      component: binary_sensor\n      name: Living Room Motion\n      device_class: motion\n",
+            "title_id": "digital_inputs-star-ha_discovery"
           },
           "type": "dict",
           "allow_unknown": true,
           "schema": {
             "component": {
               "meta": {
-                "description": "Type of component to report this input as to Home Assistant."
+                "description": "Type of component to report this input as to Home Assistant.",
+                "title_id": "digital_inputs-star-ha_discovery-component"
               },
               "type": "string",
               "required": false,
@@ -567,6 +642,9 @@
             }
           }
         }
+      },
+      "meta": {
+        "title_id": "digital_inputs-star"
       }
     }
   },
@@ -574,7 +652,8 @@
     "meta": {
       "description": "List of digital outputs to configure.",
       "extra_info": "Some modules require extra config entries, specified by the modules themselves.\nUntil the documentation is written for the individual modules, please refer to the\n`PIN_SCHEMA` and `OUTPUT_SCHEMA` values of the module's code in\n[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).\nTODO: Link this to the pending wiki pages on each module's requirements.\n",
-      "yaml_example": "gpio_modules:\n  - name: rpi\n    module: raspberrypi\n\ndigital_outputs:\n  - name: gpio0\n    module: rpi\n    pin: 0\n\n  - name: gpio1\n    module: rpi\n    pin: 1\n"
+      "yaml_example": "gpio_modules:\n  - name: rpi\n    module: raspberrypi\n\ndigital_outputs:\n  - name: gpio0\n    module: rpi\n    pin: 0\n\n  - name: gpio1\n    module: rpi\n    pin: 1\n",
+      "title_id": "digital_outputs"
     },
     "type": "list",
     "required": false,
@@ -585,14 +664,16 @@
       "schema": {
         "name": {
           "meta": {
-            "description": "Name of the output. Used in the MQTT topics that are subscribed to in order to\nchange the output value according to received MQTT messages, as well as in the\nMQTT topic for publishing output changes.\n\nThe topics subscribed to for each output are:\n- `<mqtt.topic_prefix>/output/<this name>/set`\n- `<mqtt.topic_prefix>/output/<this name>/set_on_ms`\n- `<mqtt.topic_prefix>/output/<this name>/set_off_ms`\n\nThe topic that output changes will be published to is:\n`<mqtt.topic_prefix>/output/<this name>`\n"
+            "description": "Name of the output. Used in the MQTT topics that are subscribed to in order to\nchange the output value according to received MQTT messages, as well as in the\nMQTT topic for publishing output changes.\n\nThe topics subscribed to for each output are:\n- `<mqtt.topic_prefix>/output/<this name>/set`\n- `<mqtt.topic_prefix>/output/<this name>/set_on_ms`\n- `<mqtt.topic_prefix>/output/<this name>/set_off_ms`\n\nThe topic that output changes will be published to is:\n`<mqtt.topic_prefix>/output/<this name>`\n",
+            "title_id": "digital_outputs-star-name"
           },
           "type": "string",
           "required": true
         },
         "module": {
           "meta": {
-            "description": "Name of the module configured in `gpio_modules` that this output is attached to.\n"
+            "description": "Name of the module configured in `gpio_modules` that this output is attached to.\n",
+            "title_id": "digital_outputs-star-module"
           },
           "type": "string",
           "required": true
@@ -600,7 +681,8 @@
         "pin": {
           "meta": {
             "description": "Which of the GPIO module's pins this output refers to.",
-            "extra_info": "Depending on the GPIO module's implementation, this can be either a string\nor an integer.\n"
+            "extra_info": "Depending on the GPIO module's implementation, this can be either a string\nor an integer.\n",
+            "title_id": "digital_outputs-star-pin"
           },
           "type": [
             "string",
@@ -612,7 +694,8 @@
         "on_payload": {
           "meta": {
             "description": "Payload to consider as \"on\" when received to the `/set` topic for this output.\nSee `inverted` below for the definition of \"on\" and \"off\".\n",
-            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n"
+            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n",
+            "title_id": "digital_outputs-star-on_payload"
           },
           "type": "string",
           "required": false,
@@ -622,7 +705,8 @@
         "off_payload": {
           "meta": {
             "description": "Payload to consider as \"off\" when received to the `/set` topic for this output.\nSee `inverted` below for the definition of \"on\" and \"off\".\n",
-            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n"
+            "extra_info": "Make sure to avoid YAML's automatic boolean type conversion when setting this\noption by surrounding potential booleans with quotes.\nSee the \"Regexp\" section of the\n[YAML bool docs](https://yaml.org/type/bool.html) for all of the values that\nwill be parsed as boolean.\n",
+            "title_id": "digital_outputs-star-off_payload"
           },
           "type": "string",
           "required": false,
@@ -632,7 +716,8 @@
         "inverted": {
           "meta": {
             "description": "Invert the logic level so that \"low\" levels are considered to be \"on\" and\n\"high\" levels are considered \"off\".\n",
-            "extra_info": "This can be useful for when an output turns something on when its output is\n\"low\".\n"
+            "extra_info": "This can be useful for when an output turns something on when its output is\n\"low\".\n",
+            "title_id": "digital_outputs-star-inverted"
           },
           "type": "boolean",
           "required": false,
@@ -642,7 +727,8 @@
           "meta": {
             "description": "How long to set an output to the desired value on receipt of an MQTT message\nto the `/set` topic before then setting it back to the opposite value.\n",
             "unit": "milliseconds",
-            "extra_info": "This may be useful if the output controls a device where leaving the ouput\n\"on\" for too long would be detrimental. Using this option means that you don't\nhave to rely on a second \"off\" message getting through MQTT for the output to\nreturn to a safe state.\n"
+            "extra_info": "This may be useful if the output controls a device where leaving the ouput\n\"on\" for too long would be detrimental. Using this option means that you don't\nhave to rely on a second \"off\" message getting through MQTT for the output to\nreturn to a safe state.\n",
+            "title_id": "digital_outputs-star-timed_set_ms"
           },
           "type": "integer",
           "required": false,
@@ -650,7 +736,8 @@
         },
         "initial": {
           "meta": {
-            "description": "Set the output to an initial \"high\" or \"low\" state when the software starts.\n"
+            "description": "Set the output to an initial \"high\" or \"low\" state when the software starts.\n",
+            "title_id": "digital_outputs-star-initial"
           },
           "type": "string",
           "required": false,
@@ -661,7 +748,8 @@
         },
         "publish_initial": {
           "meta": {
-            "description": "Whether to publish an MQTT message for the initial \"high\" or \"low\" state set\nabove.\n"
+            "description": "Whether to publish an MQTT message for the initial \"high\" or \"low\" state set\nabove.\n",
+            "title_id": "digital_outputs-star-publish_initial"
           },
           "type": "boolean",
           "required": false,
@@ -669,7 +757,8 @@
         },
         "retain": {
           "meta": {
-            "description": "Set the retain flag on MQTT messages published on output change."
+            "description": "Set the retain flag on MQTT messages published on output change.",
+            "title_id": "digital_outputs-star-retain"
           },
           "type": "boolean",
           "required": false,
@@ -678,14 +767,16 @@
         "ha_discovery": {
           "meta": {
             "description": "Configures the\n[Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)\nfor this pin.\n\nAny values entered into this section will be sent as part of the discovery\nconfig payload. See the above link for documentation.\n",
-            "yaml_example": "digital_outputs:\n  - name: garage_door1\n    module: rpi\n    ha_discovery:\n      component: switch\n      name: Ferrari Garage Door\n      device_class: garage_door\n"
+            "yaml_example": "digital_outputs:\n  - name: garage_door1\n    module: rpi\n    ha_discovery:\n      component: switch\n      name: Ferrari Garage Door\n      device_class: garage_door\n",
+            "title_id": "digital_outputs-star-ha_discovery"
           },
           "type": "dict",
           "allow_unknown": true,
           "schema": {
             "component": {
               "meta": {
-                "description": "Type of component to report this output as to Home Assistant."
+                "description": "Type of component to report this output as to Home Assistant.",
+                "title_id": "digital_outputs-star-ha_discovery-component"
               },
               "type": "string",
               "required": false,
@@ -694,6 +785,9 @@
             }
           }
         }
+      },
+      "meta": {
+        "title_id": "digital_outputs-star"
       }
     }
   },
@@ -701,7 +795,8 @@
     "meta": {
       "description": "List of sensor inputs to configure.",
       "extra_info": "Some modules require extra config entries, specified by the modules themselves.\nUntil the documentation is written for the individual modules, please refer to the\n`MODULE_SCHEMA` values of the module's code in\n[the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).\nTODO: Link this to the pending wiki pages on each module's requirements.\n",
-      "yaml_example": "sensor_modules:\n  - name: dht\n    module: dht22\n    type: AM2302\n    pin: 4\n\nsensor_inputs:\n  - name: workshop_temp\n    module: dht\n    type: temperature\n    interval: 30\n\n  - name: workshop_humidity\n    module: dht\n    type: humidity\n    interval: 60\n"
+      "yaml_example": "sensor_modules:\n  - name: dht\n    module: dht22\n    type: AM2302\n    pin: 4\n\nsensor_inputs:\n  - name: workshop_temp\n    module: dht\n    type: temperature\n    interval: 30\n\n  - name: workshop_humidity\n    module: dht\n    type: humidity\n    interval: 60\n",
+      "title_id": "sensor_inputs"
     },
     "type": "list",
     "required": false,
@@ -712,7 +807,8 @@
       "schema": {
         "name": {
           "meta": {
-            "description": "Name of the sensor. Used in the MQTT topic when publishing sensor values.\n\nThe topic that sensor values will be published to is:\n`<mqtt.topic_prefix>/sensor/<this name>`\n"
+            "description": "Name of the sensor. Used in the MQTT topic when publishing sensor values.\n\nThe topic that sensor values will be published to is:\n`<mqtt.topic_prefix>/sensor/<this name>`\n",
+            "title_id": "sensor_inputs-star-name"
           },
           "type": "string",
           "required": true,
@@ -720,7 +816,8 @@
         },
         "module": {
           "meta": {
-            "description": "Name of the module configured in `sensor_modules` that this sensor reading\ncomes from.\n"
+            "description": "Name of the module configured in `sensor_modules` that this sensor reading\ncomes from.\n",
+            "title_id": "sensor_inputs-star-module"
           },
           "type": "string",
           "required": true,
@@ -728,7 +825,8 @@
         },
         "retain": {
           "meta": {
-            "description": "Set the retain flag on MQTT messages published on sensor read."
+            "description": "Set the retain flag on MQTT messages published on sensor read.",
+            "title_id": "sensor_inputs-star-retain"
           },
           "type": "boolean",
           "required": false,
@@ -737,7 +835,8 @@
         "interval": {
           "meta": {
             "description": "How long to wait between checking the value of this sensor.",
-            "unit": "seconds"
+            "unit": "seconds",
+            "title_id": "sensor_inputs-star-interval"
           },
           "type": "integer",
           "required": false,
@@ -746,7 +845,8 @@
         },
         "digits": {
           "meta": {
-            "description": "How many decimal places to round the sensor reading to."
+            "description": "How many decimal places to round the sensor reading to.",
+            "title_id": "sensor_inputs-star-digits"
           },
           "type": "integer",
           "required": false,
@@ -756,14 +856,16 @@
         "ha_discovery": {
           "meta": {
             "description": "Configures the\n[Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)\nfor this sensor.\n\nAny values entered into this section will be sent as part of the discovery\nconfig payload. See the above link for documentation.\n",
-            "yaml_example": "sensor_inputs:\n  - name: workshop_temp\n    module: dht\n    type: temperature\n    ha_discovery:\n      name: Workshop Temperature\n      device_class: temperature\n\n  - name: workshop_humidity\n    module: dht\n    type: humidity\n    ha_discovery:\n      name: Workshop Humidity\n      device_class: humidity\n"
+            "yaml_example": "sensor_inputs:\n  - name: workshop_temp\n    module: dht\n    type: temperature\n    ha_discovery:\n      name: Workshop Temperature\n      device_class: temperature\n\n  - name: workshop_humidity\n    module: dht\n    type: humidity\n    ha_discovery:\n      name: Workshop Humidity\n      device_class: humidity\n",
+            "title_id": "sensor_inputs-star-ha_discovery"
           },
           "type": "dict",
           "allow_unknown": true,
           "schema": {
             "component": {
               "meta": {
-                "description": "Type of component to report this sensor as to Home Assistant."
+                "description": "Type of component to report this sensor as to Home Assistant.",
+                "title_id": "sensor_inputs-star-ha_discovery-component"
               },
               "type": "string",
               "required": false,
@@ -773,7 +875,8 @@
             "expire_after": {
               "meta": {
                 "description": "How long after receiving a sensor update to declare it invalid.",
-                "extra_info": "Defaults to `interval` * 2 + 5\n"
+                "extra_info": "Defaults to `interval` * 2 + 5\n",
+                "title_id": "sensor_inputs-star-ha_discovery-expire_after"
               },
               "type": "integer",
               "required": false,
@@ -781,12 +884,16 @@
             }
           }
         }
+      },
+      "meta": {
+        "title_id": "sensor_inputs-star"
       }
     }
   },
   "logging": {
     "meta": {
-      "description": "Config to pass directly to\n[Python's logging module](https://docs.python.org/3/library/logging.config.html#logging-config-dictschema)\nto influence the logging output of the software.\n"
+      "description": "Config to pass directly to\n[Python's logging module](https://docs.python.org/3/library/logging.config.html#logging-config-dictschema)\nto influence the logging output of the software.\n",
+      "title_id": "logging"
     },
     "type": "dict",
     "required": false,

@@ -122,12 +122,7 @@ cerberusSection = {
     },
     computed: {
         titleId() {
-            let titleId = ""
-            if (this.parent_titles.length > 0) {
-                titleId += this.parent_titles.join("-") + "-"
-            }
-            titleId += this.entry_name
-            return titleId.replaceAll("*", "star")
+            return this.metaEntry("title_id")
         },
         title() {
             let title = ""
