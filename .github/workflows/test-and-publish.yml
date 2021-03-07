@@ -3,7 +3,7 @@ on:
   - push
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
@@ -18,10 +18,27 @@ jobs:
         run: |
           pip install poetry
           poetry install
-          poetry run pip install hbmqtt
       - name: Lint with pylint
         run: poetry run pylint -d fixme mqtt_io
       - name: Lint with mypy
         run: poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
       - name: Test with behave
         run: poetry run behave mqtt_io/tests/features
+  publish:
+    name: Publish to PyPI if tagged
+    runs-on: ubuntu-20.04
+    needs: test
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Install poetry
+        run: pip install poetry
+      - name: Build packages
+        run: poetry build
+      - name: Publish packages
+        uses: pypa/gh-action-pypi-publish@master
+        if: startsWith(github.ref, 'refs/tags')
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
