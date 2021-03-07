@@ -1,18 +1,21 @@
 import json
 import os
+import pathlib
 from importlib import import_module
 from os.path import join
 from typing import Any, Dict, List, Optional
 
 import yaml
 from jinja2 import Template
+
 from mqtt_io.types import ConfigType
 
-CONFIG_SCHEMA_PATH = "mqtt_io/config/config.schema.yml"
-DOCS_DIR = "docs"
+THIS_DIR = pathlib.Path(__file__).parent.absolute()
+CONFIG_SCHEMA_PATH = join(THIS_DIR, "mqtt_io/config/config.schema.yml")
+DOCS_DIR = join(THIS_DIR, "docs")
 SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_DIR, "config/reference.md.j2")
-README_TEMPLATE = "README.md.j2"
+README_TEMPLATE = join(THIS_DIR, "README.md.j2")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 
@@ -105,10 +108,10 @@ def generate_readmes() -> None:
     with open(README_TEMPLATE) as readme_template_file:
         readme_template: Template = Template(readme_template_file.read())
 
-    with open("README.md", "w") as readme_file:
+    with open(join(THIS_DIR, "README.md"), "w") as readme_file:
         readme_file.write(readme_template.render(dict(repo=True)))
 
-    with open("docs/README.md", "w") as readme_file:
+    with open(join(DOCS_DIR, "README.md"), "w") as readme_file:
         readme_file.write(readme_template.render(dict(repo=False)))
 
 
