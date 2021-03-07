@@ -1,5 +1,5 @@
 """
-Stream module for sending to and receiving from serial ports.
+Serial port
 """
 
 from typing import Optional

@@ -1,5 +1,5 @@
 """
-GPIO module for Beaglebone.
+Beaglebone GPIO
 """
 from typing import Optional
 

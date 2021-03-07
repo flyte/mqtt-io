@@ -1,5 +1,5 @@
 """
-Sensor module for DS18B.
+DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors
 """
 
 from typing import Dict, cast

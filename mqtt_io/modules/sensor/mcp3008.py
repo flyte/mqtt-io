@@ -1,5 +1,5 @@
 """
-Sensor module for MCP3008.
+MCP3008 analog to digital converter
 """
 
 import logging

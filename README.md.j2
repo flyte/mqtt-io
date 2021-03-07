@@ -18,31 +18,13 @@ Visit the [documentation](https://flyte.github.io/mqtt-io/) for more detailed in
 ## Supported Hardware
 
 Hardware support is provided by specific GPIO, Sensor and Stream modules. It's easy to add support for new hardware and the list is growing fast.
+{%- for module_type, modules in supported_hardware|dictsort %}
 
-### GPIO Modules
-
-- Raspberry Pi GPIO (`raspberrypi`)
-- Orange Pi GPIO (`orangepi`)
-- PCF8574 IO chip (`pcf8574`)
-- PCF8575 IO chip (`pcf8575`)
-- PiFaceDigital 2 IO board (`piface2`)
-- Beaglebone GPIO (`beaglebone`)
-- Linux Kernel 4.8+ libgpiod (`gpiod`)
-
-### Sensors
-
-- LM75 i2c temperature sensor (`lm75`)
-- DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
-- BH1750 light level sensor (`bh1750`)
-- DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
-- HC-SR04 ultrasonic distance sensor (`hcsr04`)
-- MCP3008 analog digital converter (`mcp3008`)
-- BME280 temperature, humidity and pressure sensor (`bme280`)
-- BME680 temperature, humidity and pressure sensor (`bme680`)
-
-### Streams
-
-- Serial port (`serial`)
+### {{ module_type }}
+{% for module_name, description in modules|dictsort %}
+  - {{ description }} (`{{ module_name }}`)
+{%- endfor %}
+{%- endfor %}
 
 ## Installation
 

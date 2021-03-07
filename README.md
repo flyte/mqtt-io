@@ -18,28 +18,30 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 
 ### GPIO Modules
 
-- Raspberry Pi GPIO (`raspberrypi`)
-- Orange Pi GPIO (`orangepi`)
-- PCF8574 IO chip (`pcf8574`)
-- PCF8575 IO chip (`pcf8575`)
-- PiFaceDigital 2 IO board (`piface2`)
-- Beaglebone GPIO (`beaglebone`)
-- Linux Kernel 4.8+ libgpiod (`gpiod`)
+  - Beaglebone GPIO (`beaglebone`)
+  - Linux Kernel 4.8+ libgpiod (`gpiod`)
+  - MCP23017 IO expander (`mcp23017`)
+  - Orange Pi GPIO (`orangepi`)
+  - PCF8574 IO expander (`pcf8574`)
+  - PCF8575 IO expander (`pcf8575`)
+  - PiFace Digital IO 2 (`piface2`)
+  - Raspberry Pi GPIO (`raspberrypi`)
 
 ### Sensors
 
-- LM75 i2c temperature sensor (`lm75`)
-- DHT11 DHT22 AM2302 temperature/humidity sensor (`dht22`)
-- BH1750 light level sensor (`bh1750`)
-- DS18S20, DS1822, DS18B20, DS1825, DS28EA00, MAX31850K one-wire temperature sensors: (`ds18b`)
-- HC-SR04 ultrasonic distance sensor (`hcsr04`)
-- MCP3008 analog digital converter (`mcp3008`)
-- BME280 temperature, humidity and pressure sensor (`bme280`)
-- BME680 temperature, humidity and pressure sensor (`bme680`)
+  - AHT20 temperature and humidity sensor (`aht20`)
+  - BH1750 light level sensor (`bh1750`)
+  - BME280 temperature, humidity and pressure sensor (`bme280`)
+  - BME680 temperature, humidity and pressure sensor (`bme680`)
+  - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
+  - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
+  - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
+  - LM75 temperature sensor (`lm75`)
+  - MCP3008 analog to digital converter (`mcp3008`)
 
 ### Streams
 
-- Serial port (`serial`)
+  - Serial port (`serial`)
 
 ## Installation
 

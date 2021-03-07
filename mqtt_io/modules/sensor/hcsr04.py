@@ -1,5 +1,5 @@
 """
-Sensor module for HCSR04 connected to the Raspberry Pi on-board GPIO.
+HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO)
 """
 
 import time

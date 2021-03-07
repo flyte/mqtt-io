@@ -1,5 +1,5 @@
 """
-Sensor module for LM75.
+LM75 temperature sensor
 """
 
 from mqtt_io.types import ConfigType, SensorValueType

@@ -1,5 +1,5 @@
 """
-Sensor module for BME280.
+BME280 temperature, humidity and pressure sensor
 """
 
 from typing import cast

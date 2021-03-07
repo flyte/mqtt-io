@@ -1,5 +1,5 @@
 """
-GPIO module for libgpiod.
+Linux Kernel 4.8+ libgpiod
 """
 import threading
 from datetime import datetime, timedelta

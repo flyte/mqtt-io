@@ -1,5 +1,5 @@
 """
-GPIO module for Raspberry Pi on-board GPIO.
+Raspberry Pi GPIO
 """
 
 import logging

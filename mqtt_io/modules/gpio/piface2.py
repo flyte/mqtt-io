@@ -1,5 +1,5 @@
 """
-GPIO module for PiFace 2.
+PiFace Digital IO 2
 """
 
 from typing import Optional

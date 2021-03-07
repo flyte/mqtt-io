@@ -1,5 +1,5 @@
 """
-Sensor module for DHT22.
+DHT11/DHT22/AM2302 temperature and humidity sensors
 """
 
 from ...exceptions import RuntimeConfigError

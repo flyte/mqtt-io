@@ -1,5 +1,5 @@
 """
-GPIO module for OrangePI on-board GPIO.
+Orange Pi GPIO
 """
 
 from typing import Optional

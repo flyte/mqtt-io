@@ -1,5 +1,5 @@
 """
-GPIO module for MCP23017.
+MCP23017 IO expander
 """
 
 from __future__ import absolute_import

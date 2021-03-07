@@ -1,5 +1,5 @@
 """
-Sensor module for AHT20.
+AHT20 temperature and humidity sensor
 """
 
 from typing import cast

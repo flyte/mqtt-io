@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import pathlib
@@ -12,10 +13,12 @@ from mqtt_io.types import ConfigType
 
 THIS_DIR = pathlib.Path(__file__).parent.absolute()
 CONFIG_SCHEMA_PATH = join(THIS_DIR, "mqtt_io/config/config.schema.yml")
+README_TEMPLATE = join(THIS_DIR, "README.md.j2")
+MODULES_DIR = join(THIS_DIR, "mqtt_io/modules")
+
 DOCS_DIR = join(THIS_DIR, "docs")
 SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_DIR, "config/reference.md.j2")
-README_TEMPLATE = join(THIS_DIR, "README.md.j2")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 
@@ -105,14 +108,43 @@ class ConfigSchemaParser:
 
 
 def generate_readmes() -> None:
+    blacklist = ("__init__", "mock", "stdio")
+    modules_and_titles = (
+        ("gpio", "GPIO Modules"),
+        ("sensor", "Sensors"),
+        ("stream", "Streams"),
+    )
+    module_strings: Dict[str, Dict[str, str]] = {}
+    for module_type, title in modules_and_titles:
+        for file_name, ext in [
+            os.path.splitext(x) for x in os.listdir(join(MODULES_DIR, module_type))
+        ]:
+            if ext != ".py" or file_name in blacklist:
+                continue
+            with open(join(MODULES_DIR, module_type, file_name + ext)) as module_file:
+                parsed = ast.parse(module_file.read())
+            expr = parsed.body[0]
+            assert (
+                expr.lineno == 1
+                and isinstance(expr, ast.Expr)
+                and hasattr(expr, "value")
+                and isinstance(expr.value, ast.Constant)
+                and isinstance(expr.value.value, str)
+            ), f"The {module_type}.{file_name} module should have a docstring at the top"
+            module_strings.setdefault(title, {})[file_name] = expr.value.value.strip()
+
     with open(README_TEMPLATE) as readme_template_file:
         readme_template: Template = Template(readme_template_file.read())
 
     with open(join(THIS_DIR, "README.md"), "w") as readme_file:
-        readme_file.write(readme_template.render(dict(repo=True)))
+        readme_file.write(
+            readme_template.render(dict(repo=True, supported_hardware=module_strings))
+        )
 
     with open(join(DOCS_DIR, "README.md"), "w") as readme_file:
-        readme_file.write(readme_template.render(dict(repo=False)))
+        readme_file.write(
+            readme_template.render(dict(repo=False, supported_hardware=module_strings))
+        )
 
 
 def document_gpio_module() -> None:

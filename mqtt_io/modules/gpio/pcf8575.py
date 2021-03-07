@@ -1,5 +1,5 @@
 """
-GPIO module for PCF8575.
+PCF8575 IO expander
 """
 
 from typing import Optional, cast

@@ -1,4 +1,6 @@
-"""BH1750 Light Intensity Sensor."""
+"""
+BH1750 light level sensor
+"""
 from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
