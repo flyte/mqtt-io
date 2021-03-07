@@ -43,10 +43,6 @@
     - [sensor_inputs](config/reference/sensor_inputs/)
     - [logging](config/reference/logging/)
 
-- Modules
-
-  - Nothing!
-
 - Development
 
   - [Config Schema](dev/config_schema.md)

@@ -25,10 +25,6 @@
           - [- expire_after](config/reference/sensor_inputs/?id=sensor_inputs-star-ha_discovery-expire_after)
     - [logging](config/reference/logging/)
 
-- Modules
-
-  - Nothing!
-
 - Development
 
   - [Config Schema](dev/config_schema.md)
