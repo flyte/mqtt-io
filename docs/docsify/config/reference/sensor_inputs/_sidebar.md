@@ -25,6 +25,11 @@
           - [- expire_after](config/reference/sensor_inputs/?id=sensor_inputs-star-ha_discovery-expire_after)
     - [logging](config/reference/logging/)
 
+- Deployment
+
+  - [Supervisor](deployment/supervisor.md)
+  - [Docker](deployment/docker.md)
+
 - Development
 
   - [Config Schema](dev/config_schema.md)

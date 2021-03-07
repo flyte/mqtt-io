@@ -43,6 +43,11 @@
     - [sensor_inputs](config/reference/sensor_inputs/)
     - [logging](config/reference/logging/)
 
+- Deployment
+
+  - [Supervisor](deployment/supervisor.md)
+  - [Docker](deployment/docker.md)
+
 - Development
 
   - [Config Schema](dev/config_schema.md)
