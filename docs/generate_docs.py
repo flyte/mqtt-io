@@ -14,6 +14,12 @@ SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
 REF_TOC_ENTRIES: Dict[str, Dict[str, Any]] = {}
 
 
+# TODO: Tasks pending completion -@flyte at 07/03/2021, 11:35:42
+# Generate main repo readme and top level docs readme from the same template.
+# Only add links to the documentation to the repo readme.
+# Generate list of supported hardware from the modules themselves.
+
+
 def title_id(entry_name: str, parents: List[str]) -> str:
     tid = ""
     if parents:
