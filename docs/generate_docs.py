@@ -14,15 +14,6 @@ TOC_LIST: List[Dict[str, Any]] = []
 TOC_ENTRIES: Dict[str, Dict[str, Any]] = {}
 
 
-# def titleify(name: str) -> str:
-#     name = name.replace("_", " ").title()
-#     words: List[str] = name.split(" ")
-#     for i, word in enumerate(words):
-#         if word.lower() in ("mqtt", "gpio"):
-#             words[i] = word.upper()
-#     return " ".join(words)
-
-
 def title_id(entry_name: str, parents: List[str]) -> str:
     tid = ""
     if parents:
@@ -66,16 +57,17 @@ class ConfigSchemaParser:
         child_schema = section.get("schema")
 
         children: List[Dict[str, Any]] = []
+        toplevel_name = parents[0] if parents else entry_name
+
+        depth = len([x for x in parents if x != "*"])
         container.append(
             dict(
                 title=entry_name,
                 children=children,
-                depth=len(parents),
-                path="config/reference/xxx/",
+                depth=depth,
+                path=f"config/reference/{toplevel_name}/",
             )
         )
-
-        toplevel_name = parents[0] if parents else entry_name
 
         tid = title_id(entry_name, parents)
         section.setdefault("meta", {})["title_id"] = tid
@@ -88,7 +80,7 @@ class ConfigSchemaParser:
                     title=entry_name,
                     element_id=tid,
                     orig_title=entry_name,
-                    depth=len(parents),
+                    depth=depth,
                     path=path,
                     parents_str=".".join(parents),
                 )
