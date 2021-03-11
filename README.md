@@ -51,7 +51,7 @@ _Requires Python 3.6+_
 
 ## Execution
 
-`python3 -m mqtt-io config.yml`
+`python3 -m mqtt_io config.yml`
 
 ## Configuration Example
 
