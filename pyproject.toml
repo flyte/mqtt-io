@@ -5,6 +5,7 @@ description = "Expose GPIO modules (Raspberry Pi, Beaglebone, PCF8754, PiFace2 e
 readme = "README.md"
 authors = ["Ellis Percival <mqtt-io@failcode.co.uk>"]
 license = "MIT"
+documentation = "https://flyte.github.io/mqtt-io/"
 
 [tool.poetry.dependencies]
 python = "^3.6"
