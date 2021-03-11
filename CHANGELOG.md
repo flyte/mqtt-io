@@ -1,3 +1,7 @@
+v2.0.1 - 2021-03-11
+===================
+- Fix bug where sensor config was retrieved from the wrong place https://github.com/flyte/mqtt-io/issues/185
+
 v2.0.0 - 2021-03-07
 ===================
 - Rewrite core with asyncio
