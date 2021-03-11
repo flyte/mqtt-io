@@ -6,7 +6,7 @@ import logging.config
 import sys
 from copy import deepcopy
 from hashlib import sha256
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from mqtt_io.types import ConfigType
 
