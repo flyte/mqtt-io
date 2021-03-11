@@ -489,7 +489,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
     def _init_sensor_inputs(self) -> None:
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
-            sens_conf = self.sensor_configs[event.sensor_name]
+            sens_conf = self.sensor_input_configs[event.sensor_name]
             digits: int = sens_conf["digits"]
             self.mqtt_task_queue.put_nowait(
                 PriorityCoro(
