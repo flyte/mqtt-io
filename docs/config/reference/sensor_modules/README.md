@@ -1,73 +1,4 @@
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 # sensor_modules :id=sensor_modules
-
 
 List of sensor modules to configure for use with sensor inputs.
 
@@ -82,6 +13,7 @@ Until the documentation is written for the individual modules, please refer to t
 `CONFIG_SCHEMA` value of the module's code in
 [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
 TODO: Link this to the pending wiki pages on each module's requirements.
+
 
 **Example**:
 
@@ -99,15 +31,9 @@ sensor_modules:
 
 ```
 
-
-
-  
-
-  
 ## sensor_modules.* :id=sensor_modules-star
+
 *sensor_modules*.**&ast;**
-
-
 
 ```yaml
 Type: dict
@@ -115,12 +41,8 @@ Required:
 Unlisted entries accepted: True
 ```
 
-
-
-  
-
-  
 ## name :id=sensor_modules-star-name
+
 *sensor_modules.&ast;*.**name**
 
 Your name for this configuration of the module. Will be referred to by entries
@@ -132,12 +54,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## module :id=sensor_modules-star-module
+
 *sensor_modules.&ast;*.**module**
 
 Name of the module in the code. This is listed in the README's
@@ -149,12 +67,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## cleanup :id=sensor_modules-star-cleanup
+
 *sensor_modules.&ast;*.**cleanup**
 
 Whether to run the module's `cleanup()` method on exit.
@@ -165,114 +79,3 @@ Required: False
 Default: True
 ```
 
-
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  

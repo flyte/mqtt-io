@@ -6,7 +6,7 @@ import logging.config
 import sys
 from copy import deepcopy
 from hashlib import sha256
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from mqtt_io.types import ConfigType
 
@@ -57,7 +57,7 @@ def main() -> None:
     if config["logging"]:
         logging.config.dictConfig(config["logging"])
 
-    if config["reporting"]:
+    if config.get("reporting", {}).get("enabled"):
         # pylint: disable=import-outside-toplevel
         try:
             import sentry_sdk  # type: ignore
@@ -65,12 +65,16 @@ def main() -> None:
             install_missing_requirements(["sentry-sdk"])
             import sentry_sdk  # type: ignore
 
+        issue_id: Optional[int] = config["reporting"].get("issue_id")
+
         sentry_sdk.init(
             "https://e3db7fd828ff468fb6caebd3953a69a2@o549418.ingest.sentry.io/5672194",
             traces_sample_rate=1.0,
             release=VERSION,
         )
         sentry_sdk.set_context("config", redact_config(config))
+        if issue_id is not None:
+            sentry_sdk.set_tag("issue_id", issue_id)
 
     mqtt_gpio = MqttIo(config)
     mqtt_gpio.run()

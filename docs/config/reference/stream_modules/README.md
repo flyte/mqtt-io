@@ -1,83 +1,4 @@
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 # stream_modules :id=stream_modules
-
 
 List of stream modules to configure.
 
@@ -92,6 +13,7 @@ Until the documentation is written for the individual modules, please refer to t
 `CONFIG_SCHEMA` value of the module's code in
 [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
 TODO: Link this to the pending wiki pages on each module's requirements.
+
 
 **Example**:
 
@@ -111,15 +33,9 @@ stream_modules:
 
 ```
 
-
-
-  
-
-  
 ## stream_modules.* :id=stream_modules-star
+
 *stream_modules*.**&ast;**
-
-
 
 ```yaml
 Type: dict
@@ -127,12 +43,8 @@ Required:
 Unlisted entries accepted: True
 ```
 
-
-
-  
-
-  
 ## name :id=stream_modules-star-name
+
 *stream_modules.&ast;*.**name**
 
 Your name for this configuration of the module. Will be used in the topic on
@@ -145,12 +57,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## module :id=stream_modules-star-module
+
 *stream_modules.&ast;*.**module**
 
 Name of the module in the code. This is listed in the README's
@@ -162,12 +70,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## cleanup :id=stream_modules-star-cleanup
+
 *stream_modules.&ast;*.**cleanup**
 
 Whether to run the module's `cleanup()` method on exit.
@@ -178,12 +82,8 @@ Required: False
 Default: True
 ```
 
-
-
-  
-
-  
 ## retain :id=stream_modules-star-retain
+
 *stream_modules.&ast;*.**retain**
 
 Whether to set the `retain` flag on MQTT messages publishing data received
@@ -196,12 +96,8 @@ Required: False
 Default: False
 ```
 
-
-
-  
-
-  
 ## read_interval :id=stream_modules-star-read_interval
+
 *stream_modules.&ast;*.**read_interval**
 
 How long to wait between polling the stream for new data.
@@ -213,12 +109,8 @@ Unit: seconds
 Default: 60
 ```
 
-
-
-  
-
-  
 ## read :id=stream_modules-star-read
+
 *stream_modules.&ast;*.**read**
 
 Whether to poll this stream for incoming data and publish it on an MQTT topic.
@@ -230,12 +122,8 @@ Required: False
 Default: True
 ```
 
-
-
-  
-
-  
 ## write :id=stream_modules-star-write
+
 *stream_modules.&ast;*.**write**
 
 Whether to subscribe to MQTT messages on a topic and write messages received on it to the stream.
@@ -246,96 +134,3 @@ Required: False
 Default: True
 ```
 
-
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  

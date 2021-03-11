@@ -926,12 +926,31 @@
   },
   "reporting": {
     "meta": {
-      "description": "Enable error reporting back to the developers to help diagnose issues.",
-      "extra_info": "Your config file is included in the report, but has the host, port and username\nhashed and the password removed. Sentry's SDK automatically removes `password` data,\nbut the other values may still be exposed within the Python traceback context.\n",
+      "description": "Configuration for reporting back to the developers using\n[Sentry](https://sentry.io/welcome/) to help diagnose issues.\n\n*This is **not** enabled by default*\n",
+      "extra_info": "Your config file is included in the report, but has the host, port and username\nhashed and the password removed. Sentry's SDK automatically attempts to remove\npassword data, but the other values may still be exposed within the Python traceback\ncontext.\n",
+      "yaml_example": "reporting:\n  enabled: yes\n  issue_id: 123\n",
       "title_id": "reporting"
     },
-    "type": "boolean",
+    "type": "dict",
     "required": false,
-    "default": false
+    "schema": {
+      "enabled": {
+        "meta": {
+          "description": "Enable the sending of error reports to the developers if the software crashes.\n",
+          "title_id": "reporting-enabled"
+        },
+        "type": "boolean",
+        "required": true
+      },
+      "issue_id": {
+        "meta": {
+          "description": "The GitHub Issue ID that the specific error relates to.",
+          "extra_info": "This is useful if you've reported a specific issue on the project repository and\nwant to provide additional context to help the developers diagnose the issue.\n",
+          "title_id": "reporting-issue_id"
+        },
+        "type": "integer",
+        "required": false
+      }
+    }
   }
 }

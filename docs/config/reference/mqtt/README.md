@@ -1,7 +1,4 @@
-
-  
 # mqtt :id=mqtt
-
 
 Contains the configuration data used for connecting to an MQTT server.
 
@@ -10,7 +7,6 @@ Contains the configuration data used for connecting to an MQTT server.
 Type: dict
 Required: True
 ```
-
 
 **Example**:
 
@@ -29,12 +25,8 @@ mqtt:
 
 ```
 
-
-
-  
-
-  
 ## host :id=mqtt-host
+
 *mqtt*.**host**
 
 Host name or IP address of the MQTT server.
@@ -44,12 +36,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## port :id=mqtt-port
+
 *mqtt*.**port**
 
 Port number to connect to on the MQTT server.
@@ -60,12 +48,8 @@ Required: False
 Default: 1883
 ```
 
-
-
-  
-
-  
 ## user :id=mqtt-user
+
 *mqtt*.**user**
 
 Username to authenticate with on the MQTT server.
@@ -76,12 +60,8 @@ Required: False
 Default: 
 ```
 
-
-
-  
-
-  
 ## password :id=mqtt-password
+
 *mqtt*.**password**
 
 Password to authenticate with on the MQTT server.
@@ -92,12 +72,8 @@ Required: False
 Default: 
 ```
 
-
-
-  
-
-  
 ## client_id :id=mqtt-client_id
+
 *mqtt*.**client_id**
 
 [MQTT client ID](https://www.cloudmqtt.com/blog/2018-11-21-mqtt-what-is-client-id.html) to use on the MQTT server.
@@ -109,12 +85,8 @@ Required: False
 Default: 
 ```
 
-
-
-  
-
-  
 ## topic_prefix :id=mqtt-topic_prefix
+
 *mqtt*.**topic_prefix**
 
 Prefix to use for all topics.
@@ -130,10 +102,8 @@ called "doorbell" publish its changes to the `home/livingroom/input/doorbell`
 topic.
 
 
-  
-
-  
 ## clean_session :id=mqtt-clean_session
+
 *mqtt*.**clean_session**
 
 Whether or not to start a
@@ -147,12 +117,8 @@ Required: False
 Default: False
 ```
 
-
-
-  
-
-  
 ## protocol :id=mqtt-protocol
+
 *mqtt*.**protocol**
 
 Version of the MQTT protocol to use.
@@ -167,10 +133,8 @@ Default: 3.1.1
 ?> This renders in the documentation as a float, but should always be set within quotes.
 
 
-  
-
-  
 ## keepalive :id=mqtt-keepalive
+
 *mqtt*.**keepalive**
 
 How frequently in seconds to send
@@ -185,12 +149,8 @@ Unit: seconds
 Default: 10
 ```
 
-
-
-  
-
-  
 ## status_topic :id=mqtt-status_topic
+
 *mqtt*.**status_topic**
 
 Topic on which to send messages about the running status of this software.
@@ -205,10 +165,8 @@ Default: status
 `status_payload_stopped` and `status_payload_dead`.
 
 
-  
-
-  
 ## status_payload_running :id=mqtt-status_payload_running
+
 *mqtt*.**status_payload_running**
 
 Payload to send on the status topic when the software is running.
@@ -219,12 +177,8 @@ Required: False
 Default: running
 ```
 
-
-
-  
-
-  
 ## status_payload_stopped :id=mqtt-status_payload_stopped
+
 *mqtt*.**status_payload_stopped**
 
 Payload to send on the status topic when the software has exited cleanly.
@@ -235,12 +189,8 @@ Required: False
 Default: stopped
 ```
 
-
-
-  
-
-  
 ## status_payload_dead :id=mqtt-status_payload_dead
+
 *mqtt*.**status_payload_dead**
 
 Payload to send on the status topic when the software has exited unexpectedly.
@@ -255,10 +205,8 @@ Default: dead
 to make the server automatically send this payload if our connection fails.
 
 
-  
-
-  
 ## client_module :id=mqtt-client_module
+
 *mqtt*.**client_module**
 
 MQTT Client implementation module path.
@@ -273,25 +221,17 @@ Default: mqtt_io.mqtt.asyncio_mqtt
 [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.
 
 
-  
-
-  
 ## ha_discovery :id=mqtt-ha_discovery
+
 *mqtt*.**ha_discovery**
-
-
 
 ```yaml
 Type: dict
 Required: False
 ```
 
-
-
-  
-
-  
 ### enabled :id=mqtt-ha_discovery-enabled
+
 *mqtt.ha_discovery*.**enabled**
 
 Enable [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/)
@@ -303,12 +243,8 @@ Type: boolean
 Required: True
 ```
 
-
-
-  
-
-  
 ### prefix :id=mqtt-ha_discovery-prefix
+
 *mqtt.ha_discovery*.**prefix**
 
 Prefix for the Home Assistant MQTT discovery topic.
@@ -319,12 +255,8 @@ Required: False
 Default: homeassistant
 ```
 
-
-
-  
-
-  
 ### name :id=mqtt-ha_discovery-name
+
 *mqtt.ha_discovery*.**name**
 
 Name to identify this "device" in Home Assistant.
@@ -335,12 +267,8 @@ Required: False
 Default: MQTT IO
 ```
 
-
-
-  
-
-  
 ## tls :id=mqtt-tls
+
 *mqtt*.**tls**
 
 TLS/SSL settings for connecting to the MQTT server over an encrypted connection.
@@ -350,7 +278,6 @@ TLS/SSL settings for connecting to the MQTT server over an encrypted connection.
 Type: dict
 Required: False
 ```
-
 
 **Example**:
 
@@ -365,12 +292,8 @@ mqtt:
 
 ```
 
-
-
-  
-
-  
 ### enabled :id=mqtt-tls-enabled
+
 *mqtt.tls*.**enabled**
 
 Enable a secure connection to the MQTT server.
@@ -385,10 +308,8 @@ Required: True
 on the Paho MQTT client.
 
 
-  
-
-  
 ### ca_certs :id=mqtt-tls-ca_certs
+
 *mqtt.tls*.**ca_certs**
 
 Path to the Certificate Authority certificate files that are to be treated
@@ -401,12 +322,8 @@ Type: string
 Required: False
 ```
 
-
-
-  
-
-  
 ### certfile :id=mqtt-tls-certfile
+
 *mqtt.tls*.**certfile**
 
 Path to the PEM encoded client certificate.
@@ -418,12 +335,8 @@ Type: string
 Required: False
 ```
 
-
-
-  
-
-  
 ### keyfile :id=mqtt-tls-keyfile
+
 *mqtt.tls*.**keyfile**
 
 Path to the PEM encoded client private key.
@@ -435,12 +348,8 @@ Type: string
 Required: False
 ```
 
-
-
-  
-
-  
 ### cert_reqs :id=mqtt-tls-cert_reqs
+
 *mqtt.tls*.**cert_reqs**
 
 Defines the certificate requirements that the client imposes on the MQTT server.
@@ -457,10 +366,8 @@ Default: CERT_REQUIRED
 ?> By default this is `CERT_REQUIRED`, which means that the broker must provide a certificate.
 
 
-  
-
-  
 ### tls_version :id=mqtt-tls-tls_version
+
 *mqtt.tls*.**tls_version**
 
 Specifies the version of the SSL/TLS protocol to be used.
@@ -475,10 +382,8 @@ Required: False
 ?> By default the highest TLS version is detected.
 
 
-  
-
-  
 ### ciphers :id=mqtt-tls-ciphers
+
 *mqtt.tls*.**ciphers**
 
 Which encryption ciphers are allowable for this connection.
@@ -490,12 +395,8 @@ Type: string
 Required: False
 ```
 
-
-
-  
-
-  
 ### insecure :id=mqtt-tls-insecure
+
 *mqtt.tls*.**insecure**
 
 Configure verification of the server hostname in the server certificate.
@@ -516,132 +417,3 @@ Do not use this function in a real system. Setting value to true means there
 is no point using encryption.
 
 
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  

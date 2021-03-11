@@ -1,101 +1,4 @@
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 # digital_inputs :id=digital_inputs
-
 
 List of digital inputs to configure.
 
@@ -110,6 +13,7 @@ Until the documentation is written for the individual modules, please refer to t
 `PIN_SCHEMA` and `INPUT_SCHEMA` values of the module's code in
 [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
 TODO: Link this to the pending wiki pages on each module's requirements.
+
 
 **Example**:
 
@@ -129,15 +33,9 @@ digital_inputs:
 
 ```
 
-
-
-  
-
-  
 ## digital_inputs.* :id=digital_inputs-star
+
 *digital_inputs*.**&ast;**
-
-
 
 ```yaml
 Type: dict
@@ -145,12 +43,8 @@ Required:
 Unlisted entries accepted: True
 ```
 
-
-
-  
-
-  
 ## name :id=digital_inputs-star-name
+
 *digital_inputs.&ast;*.**name**
 
 Name of the input. Used in the MQTT topic when publishing input changes.
@@ -164,12 +58,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## module :id=digital_inputs-star-module
+
 *digital_inputs.&ast;*.**module**
 
 Name of the module configured in `gpio_modules` that this input is attached to.
@@ -180,12 +70,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## pin :id=digital_inputs-star-pin
+
 *digital_inputs.&ast;*.**pin**
 
 Which of the GPIO module's pins this input refers to.
@@ -199,10 +85,8 @@ Required: True
 or an integer.
 
 
-  
-
-  
 ## on_payload :id=digital_inputs-star-on_payload
+
 *digital_inputs.&ast;*.**on_payload**
 
 Payload to be sent when the input changes to what is considered to be "on".
@@ -222,10 +106,8 @@ See the "Regexp" section of the
 will be parsed as boolean.
 
 
-  
-
-  
 ## off_payload :id=digital_inputs-star-off_payload
+
 *digital_inputs.&ast;*.**off_payload**
 
 Payload to be sent when the input changes to what is considered to be "off".
@@ -245,10 +127,8 @@ See the "Regexp" section of the
 will be parsed as boolean.
 
 
-  
-
-  
 ## inverted :id=digital_inputs-star-inverted
+
 *digital_inputs.&ast;*.**inverted**
 
 Invert the logic level so that "low" levels are considered to be "on" and
@@ -265,10 +145,8 @@ Default: False
 device (like a button or another IC) connects it to ground when it's "active".
 
 
-  
-
-  
 ## pullup :id=digital_inputs-star-pullup
+
 *digital_inputs.&ast;*.**pullup**
 
 Enable the pull-up resistor for this input so that the logic level is pulled
@@ -283,10 +161,8 @@ Default: False
 
 ?> Not all GPIO modules support pull-up resistors.
 
-  
-
-  
 ## pulldown :id=digital_inputs-star-pulldown
+
 *digital_inputs.&ast;*.**pulldown**
 
 Enable the pull-down resistor for this input so that the logic level is pulled
@@ -301,10 +177,8 @@ Default: False
 
 ?> Not all GPIO modules support pull-down resistors.
 
-  
-
-  
 ## interrupt :id=digital_inputs-star-interrupt
+
 *digital_inputs.&ast;*.**interrupt**
 
 Configure this pin to trigger an interrupt when the logic level is "rising",
@@ -322,10 +196,8 @@ various ways.
 TODO: Add link to interrupt documentation.
 
 
-  
-
-  
 ## interrupt_for :id=digital_inputs-star-interrupt_for
+
 *digital_inputs.&ast;*.**interrupt_for**
 
 List of other pin names that this pin is an interrupt for.
@@ -344,27 +216,17 @@ Type: list
 Required: False
 ```
 
-
-
-  
-
-  
 ### interrupt_for.* :id=digital_inputs-star-interrupt_for-star
+
 *digital_inputs.&ast;.interrupt_for*.**&ast;**
-
-
 
 ```yaml
 Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## bouncetime :id=digital_inputs-star-bouncetime
+
 *digital_inputs.&ast;*.**bouncetime**
 
 Don't trigger interrupts more frequently than once per `bouncetime`.
@@ -377,12 +239,8 @@ Unit: milliseconds
 Default: 100
 ```
 
-
-
-  
-
-  
 ## retain :id=digital_inputs-star-retain
+
 *digital_inputs.&ast;*.**retain**
 
 Set the retain flag on MQTT messages published on input change.
@@ -393,12 +251,8 @@ Required: False
 Default: False
 ```
 
-
-
-  
-
-  
 ## poll_interval :id=digital_inputs-star-poll_interval
+
 *digital_inputs.&ast;*.**poll_interval**
 
 How long to wait between checking the value of this input.
@@ -416,10 +270,8 @@ another pin. In this case, whether or not we poll is decided by the
 `poll_when_interrupt_for` setting below.
 
 
-  
-
-  
 ## poll_when_interrupt_for :id=digital_inputs-star-poll_when_interrupt_for
+
 *digital_inputs.&ast;*.**poll_when_interrupt_for**
 
 Poll this pin when it's configured as an interrupt for another pin.
@@ -438,10 +290,8 @@ interrupt at all. If we poll the "triggered" value on this pin and our
 interrupt handling hasn't dealt with it, then we'll handle it here.
 
 
-  
-
-  
 ## ha_discovery :id=digital_inputs-star-ha_discovery
+
 *digital_inputs.&ast;*.**ha_discovery**
 
 Configures the
@@ -458,7 +308,6 @@ Required:
 Unlisted entries accepted: True
 ```
 
-
 **Example**:
 
 ```yaml
@@ -472,12 +321,8 @@ digital_inputs:
 
 ```
 
-
-
-  
-
-  
 ### component :id=digital_inputs-star-ha_discovery-component
+
 *digital_inputs.&ast;.ha_discovery*.**component**
 
 Type of component to report this input as to Home Assistant.
@@ -488,58 +333,3 @@ Required: False
 Default: binary_sensor
 ```
 
-
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  

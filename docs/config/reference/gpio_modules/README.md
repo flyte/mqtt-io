@@ -1,63 +1,4 @@
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
 # gpio_modules :id=gpio_modules
-
 
 List of GPIO modules to configure for use with inputs and/or outputs.
 
@@ -74,6 +15,7 @@ Until the documentation is written for the individual modules, please refer to t
 [the repository](https://github.com/flyte/pi-mqtt-gpio/tree/feature/asyncio/mqtt_io/modules).
 TODO: Link this to the pending wiki pages on each module's requirements.
 
+
 **Example**:
 
 ```yaml
@@ -88,15 +30,9 @@ gpio_modules:
 
 ```
 
-
-
-  
-
-  
 ## gpio_modules.* :id=gpio_modules-star
+
 *gpio_modules*.**&ast;**
-
-
 
 ```yaml
 Type: dict
@@ -104,12 +40,8 @@ Required:
 Unlisted entries accepted: True
 ```
 
-
-
-  
-
-  
 ## name :id=gpio_modules-star-name
+
 *gpio_modules.&ast;*.**name**
 
 Your name for this configuration of the module. Will be referred to by entries
@@ -121,12 +53,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## module :id=gpio_modules-star-module
+
 *gpio_modules.&ast;*.**module**
 
 Name of the module in the code. This is listed in the README's
@@ -138,12 +66,8 @@ Type: string
 Required: True
 ```
 
-
-
-  
-
-  
 ## cleanup :id=gpio_modules-star-cleanup
+
 *gpio_modules.&ast;*.**cleanup**
 
 Whether to run the module's `cleanup()` method on exit.
@@ -154,124 +78,3 @@ Required: False
 Default: True
 ```
 
-
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
-
-  
