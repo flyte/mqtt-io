@@ -56,7 +56,7 @@ from .home_assistant import (
     hass_announce_digital_output,
     hass_announce_sensor_input,
 )
-from .modules import install_missing_requirements
+from .modules import install_missing_module_requirements
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .modules.sensor import GenericSensor
 from .modules.stream import GenericStream
@@ -112,7 +112,7 @@ def _init_module(
     # Add the module's config schema to the base schema
     module_schema.update(getattr(module, "CONFIG_SCHEMA", {}))
     module_config = validate_and_normalise_config(module_config, module_schema)
-    install_missing_requirements(module)
+    install_missing_module_requirements(module)
     module_class: Type[Union[GenericGPIO, GenericSensor, GenericStream]] = getattr(
         module, MODULE_CLASS_NAMES[module_type]
     )

@@ -962,3 +962,14 @@ logging:
         handlers:
           - console
         propagate: yes
+
+reporting:
+  meta:
+    description: Enable error reporting back to the developers to help diagnose issues.
+    extra_info: |
+      Your config file is included in the report, but has the host, port and username
+      hashed and the password removed. Sentry's SDK automatically removes `password` data,
+      but the other values may still be exposed within the Python traceback context.
+  type: boolean
+  required: no
+  default: no

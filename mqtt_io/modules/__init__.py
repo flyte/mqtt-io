@@ -6,6 +6,7 @@ import logging
 import sys
 from subprocess import CalledProcessError, check_call
 from types import ModuleType
+from typing import List
 
 import pkg_resources
 
@@ -14,7 +15,14 @@ from ..exceptions import CannotInstallModuleRequirements
 _LOG = logging.getLogger(__name__)
 
 
-def install_missing_requirements(module: ModuleType) -> None:
+def install_missing_requirements(pkgs_required: List[str]) -> None:
+    """
+    Use pip to install the list of requirements.
+    """
+    check_call([sys.executable, "-m", "pip", "install"] + pkgs_required)
+
+
+def install_missing_module_requirements(module: ModuleType) -> None:
     """
     Some of the modules require external packages to be installed. This gets
     the list from the `REQUIREMENTS` module attribute and attempts to
@@ -40,7 +48,7 @@ def install_missing_requirements(module: ModuleType) -> None:
         return
 
     try:
-        check_call([sys.executable, "-m", "pip", "install"] + pkgs_required)
+        install_missing_requirements(pkgs_required)
     except CalledProcessError as err:
         raise CannotInstallModuleRequirements(
             "Unable to install packages for module %r (%s): %s"
