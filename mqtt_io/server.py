@@ -1074,7 +1074,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             except KeyError:
                 continue
 
-            async def reset_timer() -> None:
+            async def reset_timer(out_conf: ConfigType = out_conf) -> None:
                 """
                 Reset the output to the opposite value after x ms.
                 """
