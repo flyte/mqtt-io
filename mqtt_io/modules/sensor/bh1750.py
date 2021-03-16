@@ -51,4 +51,6 @@ class Sensor(GenericSensor):
         Get the light value from the sensor.
         """
         with self.SMBus(self.bus_num) as bus:
-            return float(bus.read_word_data(self.address, ONE_TIME_HIGH_RES_MODE_1)) / 1.2
+            data = bus.read_i2c_block_data(self.address, ONE_TIME_HIGH_RES_MODE_1, 2)
+            result = (data[1] + (256 * data[0])) / 1.2
+            return float(result)
