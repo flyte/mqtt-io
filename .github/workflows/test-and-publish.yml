@@ -23,7 +23,7 @@ jobs:
       - name: Lint with mypy
         run: poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
       - name: Test with behave
-        run: poetry run behave mqtt_io/tests/features
+        run: poetry run behave -t ~skip mqtt_io/tests/features
   publish:
     name: Publish to PyPI if tagged
     runs-on: ubuntu-20.04
