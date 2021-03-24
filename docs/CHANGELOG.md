@@ -1,3 +1,11 @@
+v2.1.2 - 2021-03-24
+===================
+- Remove config validation that checks usage of the same numbered pin used twice. #191
+
+v2.1.1 - 2021-03-16
+===================
+- Fix bodged BH1750 sensor value reading code. #189
+
 v2.1.0 - 2021-03-11
 ===================
 - Add *OPT-IN* error reporting to sentry. Bumps minor version because it adds a config entry.
