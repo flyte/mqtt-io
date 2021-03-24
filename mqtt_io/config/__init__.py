@@ -152,7 +152,7 @@ def custom_validate_main_config(config: ConfigType) -> ConfigType:
     validate_gpio_modules_have_io_sections(bad_configs, config)
 
     # Make sure all GPIO modules' pins are only configured once
-    validate_gpio_pins_only_configured_once(bad_configs, config)
+    # validate_gpio_pins_only_configured_once(bad_configs, config)
 
     # Make sure all digital inputs listed in 'interrupt_for' lists are configured
     # as interrupts themselves.
