@@ -11,6 +11,7 @@ from typing import Any, Dict
 from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_SUFFIX
 from .mqtt import MQTTClientOptions, MQTTMessageSend
 from .types import ConfigType
+from . import VERSION
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ def get_common_config(
             payload_not_available=mqtt_conf["status_payload_dead"],
             device=dict(
                 manufacturer="MQTT IO",
+                model=f"v{VERSION}",
                 identifiers=["mqtt-io", mqtt_options.client_id],
                 name=disco_conf["name"],
             ),
