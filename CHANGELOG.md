@@ -1,3 +1,7 @@
+v2.1.3 - 2021-03-26
+===================
+- Add missing `spi_device` config schema entry for MCP3008 sensor module. #194
+
 v2.1.2 - 2021-03-24
 ===================
 - Remove config validation that checks usage of the same numbered pin used twice. #191
