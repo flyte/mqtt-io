@@ -13,6 +13,7 @@ REQUIREMENTS = ("adafruit-mcp3008",)
 
 CONFIG_SCHEMA = {
     "spi_port": dict(type="integer", required=False, empty=False, default=0),
+    "spi_device": dict(type="integer", required=False, empty=False, default=0),
     "chip_addr": dict(type="integer", required=False, empty=False, default=0),
 }
 
