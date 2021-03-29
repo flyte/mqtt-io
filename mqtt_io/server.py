@@ -112,7 +112,8 @@ def _init_module(
     # Add the module's config schema to the base schema
     module_schema.update(getattr(module, "CONFIG_SCHEMA", {}))
     module_config = validate_and_normalise_config(module_config, module_schema)
-    install_missing_module_requirements(module)
+    if module_config.get('install_requirements', True):
+        install_missing_module_requirements(module)
     module_class: Type[Union[GenericGPIO, GenericSensor, GenericStream]] = getattr(
         module, MODULE_CLASS_NAMES[module_type]
     )
