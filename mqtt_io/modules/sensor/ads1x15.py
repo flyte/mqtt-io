@@ -60,11 +60,11 @@ class Sensor(GenericSensor):
         # Create the ADC object using the I2C bus
         if self.config["type"] == SENSOR_ADS1015:
             from adafruit_ads1x15.ads1015 import ADS1015
-            ADS = ADS1015
+            AdSensor = ADS1015
         else:
             from adafruit_ads1x15.ads1115 import ADS1115
-            ADS = ADS1115
-        self.ads = ADS(self.i2c, gain=self.config["gain"], address=self.config["chip_addr"])
+            AdSensor = ADS1115
+        self.ads = AdSensor(self.i2c, gain=self.config["gain"], address=self.config["chip_addr"])
 
         # Create single-ended input on channel 0
         self.chan = AnalogIn(self.ads, self.config["pin"])
