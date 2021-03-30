@@ -53,6 +53,7 @@ class Sensor(GenericSensor):
         import board
         import busio
         from adafruit_ads1x15.analog_in import AnalogIn
+        from adafruit_ads1x15.ads1x15 import ADS1x15
 
         # Create the I2C bus
         self.i2c = busio.I2C(board.SCL, board.SDA)
@@ -60,11 +61,13 @@ class Sensor(GenericSensor):
         # Create the ADC object using the I2C bus
         if self.config["type"] == SENSOR_ADS1015:
             from adafruit_ads1x15.ads1015 import ADS1015
-            AdSensor = ADS1015
+            ad_sensor_class = ADS1015
         else:
             from adafruit_ads1x15.ads1115 import ADS1115
-            AdSensor = ADS1115
-        self.ads = AdSensor(self.i2c, gain=self.config["gain"], address=self.config["chip_addr"])
+            ad_sensor_class = ADS1115
+        self.ads: ADS1x15 = ad_sensor_class(self.i2c,
+                                            gain=self.config["gain"],
+                                            address=self.config["chip_addr"])
 
         # Create single-ended input on channel 0
         self.chan = AnalogIn(self.ads, self.config["pin"])
