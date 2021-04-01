@@ -34,7 +34,6 @@ sensor_inputs:
     module: dht
     type: humidity
     interval: 60
-
 ```
 
 ## sensor_inputs.* :id=sensor_inputs-star
@@ -147,7 +146,6 @@ sensor_inputs:
     ha_discovery:
       name: Workshop Humidity
       device_class: humidity
-
 ```
 
 ### component :id=sensor_inputs-star-ha_discovery-component

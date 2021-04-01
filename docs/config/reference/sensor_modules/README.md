@@ -28,7 +28,6 @@ sensor_modules:
     module: ds18b
     type: DS18S20
     address: 000803702e49
-
 ```
 
 ## sensor_modules.* :id=sensor_modules-star

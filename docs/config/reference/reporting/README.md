@@ -23,7 +23,6 @@ context.
 reporting:
   enabled: yes
   issue_id: 123
-
 ```
 
 ## enabled :id=reporting-enabled

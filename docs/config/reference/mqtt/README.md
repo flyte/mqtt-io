@@ -22,7 +22,6 @@ mqtt:
     ca_certs: mosquitto.org.crt
     certfile: client.crt
     keyfile: client.key
-
 ```
 
 ## host :id=mqtt-host
@@ -289,7 +288,6 @@ mqtt:
     ca_certs: mosquitto.org.crt
     certfile: client.crt
     keyfile: client.key
-
 ```
 
 ### enabled :id=mqtt-tls-enabled

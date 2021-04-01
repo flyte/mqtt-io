@@ -16,6 +16,7 @@
     - [sensor_inputs](config/reference/sensor_inputs/)
     - [logging](config/reference/logging/)
     - [reporting](config/reference/reporting/)
+    - [options](config/reference/options/)
 
 - Deployment
 

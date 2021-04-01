@@ -7,6 +7,8 @@ from typing import Optional
 from ...types import ConfigType, PinType
 from . import GenericGPIO, PinDirection, PinPUD
 
+REQUIREMENTS = ("numpy",)
+
 
 class GPIO(GenericGPIO):
     """

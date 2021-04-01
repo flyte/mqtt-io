@@ -27,7 +27,6 @@ gpio_modules:
     module: pcf8574
     i2c_bus_num: 1
     chip_addr: 0x20
-
 ```
 
 ## gpio_modules.* :id=gpio_modules-star

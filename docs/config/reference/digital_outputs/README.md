@@ -30,7 +30,6 @@ digital_outputs:
   - name: gpio1
     module: rpi
     pin: 1
-
 ```
 
 ## digital_outputs.* :id=digital_outputs-star
@@ -239,7 +238,6 @@ digital_outputs:
       component: switch
       name: Ferrari Garage Door
       device_class: garage_door
-
 ```
 
 ### component :id=digital_outputs-star-ha_discovery-component

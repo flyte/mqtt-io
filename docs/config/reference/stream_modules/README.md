@@ -30,7 +30,6 @@ stream_modules:
     type: /dev/ttyUSB0
     baud: 9600
     interval: 1
-
 ```
 
 ## stream_modules.* :id=stream_modules-star

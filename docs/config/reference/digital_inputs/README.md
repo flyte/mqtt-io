@@ -30,7 +30,6 @@ digital_inputs:
   - name: gpio1
     module: rpi
     pin: 1
-
 ```
 
 ## digital_inputs.* :id=digital_inputs-star
@@ -318,7 +317,6 @@ digital_inputs:
       component: binary_sensor
       name: Living Room Motion
       device_class: motion
-
 ```
 
 ### component :id=digital_inputs-star-ha_discovery-component
