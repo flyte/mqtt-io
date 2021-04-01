@@ -49,21 +49,21 @@ class Sensor(GenericSensor):
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
         # pylint: disable=import-error,no-member
-        import board
-        import busio
-        from adafruit_ads1x15.analog_in import AnalogIn
-        from adafruit_ads1x15.ads1x15 import ADS1x15
+        import board  # type: ignore
+        import busio  # type: ignore
+        from adafruit_ads1x15.analog_in import AnalogIn  # type: ignore
+        from adafruit_ads1x15.ads1x15 import ADS1x15  # type: ignore
 
         # Create the I2C bus
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
         # Create the ADC object using the I2C bus
         if self.config["type"] == SENSOR_ADS1015:
-            from adafruit_ads1x15.ads1015 import ADS1015
+            from adafruit_ads1x15.ads1015 import ADS1015  # type: ignore
 
             ad_sensor_class = ADS1015
         else:
-            from adafruit_ads1x15.ads1115 import ADS1115
+            from adafruit_ads1x15.ads1115 import ADS1115  # type: ignore
 
             ad_sensor_class = ADS1115
         self.ads: ADS1x15 = ad_sensor_class(
