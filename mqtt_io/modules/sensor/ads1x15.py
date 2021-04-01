@@ -1,5 +1,5 @@
 """
-Adafruit ADS1x15 analog to digital converters
+ADS1x15 analog to digital converters
 """
 
 from typing import cast
