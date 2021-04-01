@@ -1,3 +1,7 @@
+v2.1.5 - 2021-04-01
+===================
+- Update PyYAML version to 5.4 CVE-2020-14343
+
 v2.1.4 - 2021-03-26
 ===================
 - Add version to 'model' field of HA Discovery config payload. #196 @pbill2003
