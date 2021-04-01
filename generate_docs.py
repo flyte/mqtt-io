@@ -24,8 +24,6 @@ REF_ENTRIES: List[Dict[str, Any]] = []
 
 
 # TODO: Tasks pending completion -@flyte at 07/03/2021, 11:35:42
-# Generate main repo readme and top level docs readme from the same template.
-# Only add links to the documentation to the repo readme.
 # Generate list of supported hardware from the modules themselves.
 
 

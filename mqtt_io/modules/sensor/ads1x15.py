@@ -1,5 +1,5 @@
 """
-Adafruit ADS1x15 analog digital converters
+Adafruit ADS1x15 analog to digital converters
 """
 
 from typing import cast
@@ -13,23 +13,21 @@ SENSOR_TYPES = [SENSOR_ADS1015, SENSOR_ADS1115]
 
 REQUIREMENTS = ("adafruit-circuitpython-ads1x15",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr":
-        dict(type="integer", required=False, empty=False, default=0x48),
-    "type":
-        dict(
-            type="string",
-            required=True,
-            empty=False,
-            allowed=SENSOR_TYPES,
-        ),
-    "pin":
-        dict(type="integer", required=True, empty=False, allowed=[0, 1, 2, 3]),
-    "gain":
-        dict(type="integer",
-             required=False,
-             empty=False,
-             allowed=[2 / 3, 1, 2, 4, 8, 16],
-             default=1),
+    "chip_addr": dict(type="integer", required=False, empty=False, default=0x48),
+    "type": dict(
+        type="string",
+        required=True,
+        empty=False,
+        allowed=SENSOR_TYPES,
+    ),
+    "pin": dict(type="integer", required=True, empty=False, allowed=[0, 1, 2, 3]),
+    "gain": dict(
+        type="integer",
+        required=False,
+        empty=False,
+        allowed=[2 / 3, 1, 2, 4, 8, 16],
+        default=1,
+    ),
 }
 
 
@@ -39,12 +37,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type":
-            dict(type="string",
-                 required=False,
-                 empty=False,
-                 allowed=["value", "voltage"],
-                 default="value"),
+        "type": dict(
+            type="string",
+            required=False,
+            empty=False,
+            allowed=["value", "voltage"],
+            default="value",
+        ),
     }
 
     def setup_module(self) -> None:
@@ -61,13 +60,15 @@ class Sensor(GenericSensor):
         # Create the ADC object using the I2C bus
         if self.config["type"] == SENSOR_ADS1015:
             from adafruit_ads1x15.ads1015 import ADS1015
+
             ad_sensor_class = ADS1015
         else:
             from adafruit_ads1x15.ads1115 import ADS1115
+
             ad_sensor_class = ADS1115
-        self.ads: ADS1x15 = ad_sensor_class(self.i2c,
-                                            gain=self.config["gain"],
-                                            address=self.config["chip_addr"])
+        self.ads: ADS1x15 = ad_sensor_class(
+            self.i2c, gain=self.config["gain"], address=self.config["chip_addr"]
+        )
 
         # Create single-ended input on channel 0
         self.chan = AnalogIn(self.ads, self.config["pin"])
