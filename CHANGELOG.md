@@ -1,3 +1,7 @@
+v2.1.7 - 2021-04-01
+===================
+- Add install_requirements config option to skip installing missing module requirements. #199
+
 v2.1.6 - 2021-04-01
 ===================
 - Add ADS1x15 module. #200 @r00tat

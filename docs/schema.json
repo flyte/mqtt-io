@@ -961,6 +961,7 @@
     },
     "type": "dict",
     "required": false,
+    "default": {},
     "schema": {
       "install_requirements": {
         "meta": {

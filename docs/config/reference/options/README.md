@@ -5,6 +5,7 @@ Miscellaneous options regarding the runtime behaviour of MQTT IO.
 ```yaml
 Type: dict
 Required: False
+Default: {}
 ```
 
 **Example**:
