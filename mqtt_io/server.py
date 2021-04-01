@@ -19,6 +19,7 @@ from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
 
+import backoff  # type: ignore
 from typing_extensions import Literal
 
 from .config import (
@@ -67,7 +68,7 @@ from .mqtt import (
     MQTTTLSOptions,
     MQTTWill,
 )
-from .types import ConfigType, PinType
+from .types import ConfigType, PinType, SensorValueType
 from .utils import PriorityCoro, create_unawaited_task_threadsafe
 
 _LOG = logging.getLogger(__name__)
@@ -539,8 +540,27 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 sensor_module: GenericSensor = sensor_module,
                 sens_conf: ConfigType = sens_conf,
             ) -> None:
+                @backoff.on_exception(  # type: ignore
+                    backoff.expo, Exception, max_time=sens_conf["interval"]
+                )
+                @backoff.on_predicate(  # type: ignore
+                    backoff.expo, lambda x: x is None, max_time=sens_conf["interval"]
+                )
+                async def get_sensor_value(
+                    sensor_module: GenericSensor = sensor_module,
+                    sens_conf: ConfigType = sens_conf,
+                ) -> SensorValueType:
+                    return await sensor_module.async_get_value(sens_conf)
+
                 while True:
-                    value = await sensor_module.async_get_value(sens_conf)
+                    value = None
+                    try:
+                        value = await get_sensor_value()
+                    except Exception:  # pylint: disable=broad-except
+                        _LOG.exception(
+                            "Exception when retrieving value from sensor %r:",
+                            sens_conf["name"],
+                        )
                     if value is not None:
                         value = round(value, sens_conf["digits"])
                         _LOG.info(
