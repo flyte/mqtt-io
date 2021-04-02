@@ -497,7 +497,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             if out_conf["publish_initial"]:
                 self.event_bus.fire(
                     DigitalOutputChangedEvent(
-                        out_conf["name"], out_conf["initial"] == "high"
+                        out_conf["name"], out_conf["initial"] == (
+                            "low" if out_conf["inverted"] else "high")
                     )
                 )
 
