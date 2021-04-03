@@ -8,6 +8,7 @@ from os.path import join
 from typing import Any, Dict, List, Optional
 
 import yaml
+from ast_to_xml import module_source
 from jinja2 import Template
 
 from mqtt_io.types import ConfigType
@@ -20,6 +21,7 @@ MODULES_DIR = join(THIS_DIR, "mqtt_io/modules")
 DOCS_DIR = join(THIS_DIR, "docs")
 SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_DIR, "config/reference.md.j2")
+MODULES_DOC_TEMPLATE = join(DOCS_DIR, "dev/modules/README.md.j2")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 
@@ -163,6 +165,42 @@ def document_gpio_module() -> None:
     output_schema = getattr(module.GPIO, "OUTPUT_SCHEMA", None)
 
 
+# def get_source(path: str) -> str:
+#     module_path, member_path = re.match(r"([\w\.]+):?(.*)", path).groups()
+#     module = import_module(module_path)
+#     module_filepath = pathlib.Path(module.__file__)
+#     url = f"https://github.com/flyte/mqtt-io/blob/develop/{module_filepath.relative_to(THIS_DIR)}"
+#     if not member_path:
+#         return f"[`{path}`]({url}):\n\n```python\n{inspect.getsource(module)}```"
+#     target = module
+#     for member in member_path.split("."):
+#         target = getattr(target, member)
+#     _, lineno = inspect.getsourcelines(target)
+#     url += f"#L{lineno}"
+#     return f"[`{path}`]({url}):\n\n```python\n{dedent(inspect.getsource(target))}```"
+
+
+def get_source(module_path: str, xpath: str, title: str) -> str:
+    module = import_module(module_path)
+    module_filepath = pathlib.Path(module.__file__)
+    src, attrib = module_source(module, xpath)[0]
+    url = "https://github.com/flyte/mqtt-io/blob/develop/%s#L%s" % (
+        module_filepath.relative_to(THIS_DIR),
+        attrib["lineno"],
+    )
+    return f"[{title}]({url}):\n\n```python\n{src.rstrip()}\n```"
+
+
+def generate_modules_doc() -> None:
+    ctx = dict(source=get_source)
+
+    with open(MODULES_DOC_TEMPLATE) as modules_doc_template_file:
+        modules_doc_template: Template = Template(modules_doc_template_file.read())
+
+    with open(join(DOCS_DIR, "dev/modules/README.md"), "w") as readme_file:
+        readme_file.write(modules_doc_template.render(ctx))
+
+
 def main() -> None:
     print(f"Loading YAML config schema from '{CONFIG_SCHEMA_PATH}'...")
     with open(CONFIG_SCHEMA_PATH, "r") as config_schema_file:
@@ -211,6 +249,7 @@ def main() -> None:
     # generate_module_docs()
     generate_readmes()
     generate_changelog()
+    generate_modules_doc()
 
 
 if __name__ == "__main__":
