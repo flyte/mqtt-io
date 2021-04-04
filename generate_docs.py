@@ -3,9 +3,10 @@ import json
 import os
 import pathlib
 import shutil
+import textwrap
 from importlib import import_module
 from os.path import join
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 from ast_to_xml import module_source
@@ -191,8 +192,41 @@ def get_source(module_path: str, xpath: str, title: str) -> str:
     return f"[{title}]({url}):\n\n```python\n{src.rstrip()}\n```"
 
 
+def get_source_link(module_path: str, xpath: str, title: str) -> str:
+    module = import_module(module_path)
+    module_filepath = pathlib.Path(module.__file__)
+    _, attrib = module_source(module, xpath)[0]
+    url = "https://github.com/flyte/mqtt-io/blob/develop/%s#L%s" % (
+        module_filepath.relative_to(THIS_DIR),
+        attrib["lineno"],
+    )
+    return f"[{title}]({url}):"
+
+
+def get_source_raw(
+    module_path: str, xpath: str, until_xpath: Optional[str] = None, dedent: bool = False
+) -> str:
+    module = import_module(module_path)
+    src, _ = module_source(module, xpath, until_xpath=until_xpath, dedent=dedent)[0]
+    return src
+
+
+def get_sources_raw(
+    sources_spec: List[Tuple[str, str, Optional[str]]], dedent: bool = False
+) -> str:
+    src = "\n".join(get_source_raw(*x, dedent=False) for x in sources_spec)
+    if dedent:
+        src = textwrap.dedent(src)
+    return src
+
+
 def generate_modules_doc() -> None:
-    ctx = dict(source=get_source)
+    ctx = dict(
+        source=get_source,
+        source_link=get_source_link,
+        source_raw=get_source_raw,
+        sources_raw=get_sources_raw,
+    )
 
     with open(MODULES_DOC_TEMPLATE) as modules_doc_template_file:
         modules_doc_template: Template = Template(modules_doc_template_file.read())

@@ -138,6 +138,39 @@ def setup_module(self) -> None:
     gpio.setmode(gpio.BCM)
 ```
 
+#### Polling Loop
+
+If a digital input is not configured as an [interrupt](config/interrupts.md) (or even [sometimes if it is](config/reference/digital_inputs/?id=digital_inputs-star-interrupt_for)), then a loop will be created which polls the pin's current value and publishes a `DigitalInputChangedEvent` event when it does. As part of the initialisation of each pin, a callback function to publish the new value on MQTT will be subscribed to this event.
+
+[mqtt_io.server.MqttIo._init_digital_inputs](https://github.com/flyte/mqtt-io/blob/develop/mqtt_io/server.py#L343):
+
+```python
+def _init_digital_inputs(self) -> None:
+    async def publish_callback(event: DigitalInputChangedEvent) -> None:
+        in_conf = self.digital_input_configs[event.input_name]
+        value = event.to_value != in_conf["inverted"]
+        val = in_conf["on_payload"] if value else in_conf["off_payload"]
+        self.mqtt_task_queue.put_nowait(
+            PriorityCoro(
+                self._mqtt_publish(
+                    MQTTMessageSend(
+                        "/".join(
+                            (
+                                self.config["mqtt"]["topic_prefix"],
+                                INPUT_TOPIC,
+                                event.input_name,
+                            )
+                        ),
+                        val.encode("utf8"),
+                        retain=in_conf["retain"],
+                    )
+                ),
+                MQTT_PUB_PRIORITY,
+            )
+        )
+    self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
+```
+
 #### `setup_pin()`
 
 For each of the entries in `digital_inputs` and `digital_outputs`, `setup_pin()` will be called. This step is for configuring the hardware's pins to be input or outputs, or anything else that must be set at pin level.
@@ -179,7 +212,7 @@ digital_outputs:
     pin: 3
 ```
 
-Here's the `raspberrypi` GPIO module's implementation:
+Here's the `raspberrypi` GPIO module's `setup_pin()` implementation:
 
 [mqtt_io.modules.gpio.raspberrypi:GPIO.setup_pin](https://github.com/flyte/mqtt-io/blob/develop/mqtt_io/modules/gpio/raspberrypi.py#L44):
 

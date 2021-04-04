@@ -91,6 +91,39 @@ The `raspberrypi` GPIO module is a good example of the above:
     "mqtt_io.modules.gpio.raspberrypi:GPIO.setup_module"
 ) }}
 
+#### Polling Loop
+
+If a digital input is not configured as an [interrupt](config/interrupts.md) (or even [sometimes if it is](config/reference/digital_inputs/?id=digital_inputs-star-interrupt_for)), then a loop will be created which polls the pin's current value and publishes a `DigitalInputChangedEvent` event when it does. As part of the initialisation of each pin, a callback function to publish the new value on MQTT will be subscribed to this event.
+
+{{ source_link(
+    "mqtt_io.server",
+    "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']",
+    "mqtt_io.server.MqttIo._init_digital_inputs"
+)}}
+
+```python
+{{ sources_raw(
+    [
+        (
+            "mqtt_io.server",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']/body/*[1]"
+        ),
+        (
+            "mqtt_io.server",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']//AsyncFunctionDef[name='publish_callback']",
+            None
+        ),
+        (
+            "mqtt_io.server",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']//Call[args//id='DigitalInputChangedEvent']",
+            None
+        )
+    ],
+    dedent=True
+)}}
+```
+
 #### `setup_pin()`
 
 For each of the entries in `digital_inputs` and `digital_outputs`, `setup_pin()` will be called. This step is for configuring the hardware's pins to be input or outputs, or anything else that must be set at pin level.
@@ -119,7 +152,7 @@ digital_outputs:
     pin: 3
 ```
 
-Here's the `raspberrypi` GPIO module's implementation:
+Here's the `raspberrypi` GPIO module's `setup_pin()` implementation:
 
 {{ source(
     "mqtt_io.modules.gpio.raspberrypi",
