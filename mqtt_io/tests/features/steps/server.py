@@ -5,6 +5,7 @@ from unittest.mock import Mock
 
 import yaml
 from behave import given, then, when  # type: ignore
+from behave.api.async_step import async_run_until_complete  # type: ignore
 from mqtt_io.exceptions import ConfigValidationFailed
 from mqtt_io.mqtt import MQTTMessage, MQTTMessageSend
 from mqtt_io.server import MqttIo
@@ -53,6 +54,12 @@ def step(context: Any, lock_unlock: str, pin_name: str) -> None:
         lock.release()
 
 
+@when("we run async tasks")  # type: ignore[no-redef]
+@async_run_until_complete(loop="loop")
+async def step(context: Any):
+    pass
+
+
 @then("interrupt lock for {pin_name} should be {locked_unlocked}")  # type: ignore[no-redef]
 def step(context: Any, locked_unlocked: str, pin_name: str) -> None:
     assert locked_unlocked in ("locked", "unlocked")
@@ -81,6 +88,7 @@ def step(context: Any, method_name: str):
 def step(context: Any):
     mock: Union[Mock, AsyncMock] = context.data["mocks"]["mqttio._mqtt_publish"]
     data = yaml.safe_load(context.text)
+    assert mock.called, "_mqtt_publish should have been called"
     msg: MQTTMessageSend = mock.call_args.args[0]
     assert isinstance(msg, MQTTMessageSend), "Should have been called with an MQTTMessage"
     if "topic" in data:
