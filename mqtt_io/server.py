@@ -19,7 +19,7 @@ from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
 
-import asyncio_mqtt
+import asyncio_mqtt  # type: ignore
 import backoff  # type: ignore
 from typing_extensions import Literal
 
