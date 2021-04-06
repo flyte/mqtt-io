@@ -19,6 +19,7 @@ from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
 
+import asyncio_mqtt
 import backoff  # type: ignore
 from typing_extensions import Literal
 
@@ -1171,34 +1172,44 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self._init_stream_modules()
 
         async def run() -> None:
-            try:
-                await self._connect_mqtt()
-
-                self.critical_tasks = [
-                    self.loop.create_task(coro)
-                    for coro in (
-                        self._mqtt_task_loop(),
-                        self._mqtt_rx_loop(),
-                        self._remove_finished_transient_tasks(),
-                    )
-                ]
-
-                self.running.set()
-
-                if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
-                    self._ha_discovery_announce()
-
+            counter = self.config['mqtt'].get('reconnect-count')
+            while True:
                 try:
-                    await asyncio.gather(*self.critical_tasks)
+                    await self._connect_mqtt()
+                    # Reset counter
+                    counter = self.config['mqtt'].get('reconnect-count')
+                    self.critical_tasks = [
+                        self.loop.create_task(coro)
+                        for coro in (
+                            self._mqtt_task_loop(),
+                            self._mqtt_rx_loop(),
+                            self._remove_finished_transient_tasks(),
+                        )
+                    ]
+
+                    self.running.set()
+
+                    if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
+                        self._ha_discovery_announce()
+
+                    try:
+                        await asyncio.gather(*self.critical_tasks)
+                    except asyncio.CancelledError:
+                        break
+                    except Exception:  # pylint: disable=broad-except
+                        _LOG.exception("Exception in critical task:")
                 except asyncio.CancelledError:
-                    pass
-                except Exception:  # pylint: disable=broad-except
-                    _LOG.exception("Exception in critical task:")
-            except asyncio.CancelledError:
-                pass
-            finally:
-                self.running.clear()
-                await self.shutdown()
+                    break
+                except asyncio_mqtt.error.MqttError:
+                    if counter > 0:
+                        counter -= 1
+                    _LOG.exception('Connection to MQTT-Broker failed')
+                    if counter == 0:
+                        break
+                    await asyncio.sleep(self.config['mqtt'].get('reconnect-delay'))
+                finally:
+                    self.running.clear()
+            await self.shutdown()
 
         self._main_task = self.loop.create_task(run())
 

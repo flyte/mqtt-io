@@ -250,7 +250,24 @@ mqtt:
           type: boolean
           required: no
           default: false
-
+    reconnect-delay:
+      meta:
+        description: |
+          Time in seconds to wait between reconnect attempts.
+      type: integer
+      required: no
+      default: 2
+      min: 1
+    reconnect-count:
+      meta:
+        description: |
+          Max number of retries of connections before giving up (and exiting).
+          -1 means infinite reconnects.
+          The counter is reset if a connection was established successfully.
+      type: integer
+      required: no
+      default: 0
+      min: -1
 gpio_modules:
   meta:
     description: |
