@@ -17,7 +17,7 @@ CONFIG_SCHEMA = {
     "chip_addr": dict(type="integer", required=False, empty=False, default=0),
 }
 
-_LOG = logging.getLogger("mqtt_gpio")
+_LOG = logging.getLogger(__name__)
 
 
 class Sensor(GenericSensor):

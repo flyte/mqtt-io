@@ -16,6 +16,8 @@ from .exceptions import ConfigValidationFailed
 from .modules import install_missing_requirements
 from .server import MqttIo
 
+_LOG = logging.getLogger('mqtt_io.__main__')
+
 
 def hashed(value: Any) -> str:
     """
@@ -75,9 +77,12 @@ def main() -> None:
         sentry_sdk.set_context("config", redact_config(config))
         if issue_id is not None:
             sentry_sdk.set_tag("issue_id", issue_id)
-
-    mqtt_gpio = MqttIo(config)
-    mqtt_gpio.run()
+    try:
+        mqtt_gpio = MqttIo(config)
+        mqtt_gpio.run()
+    except BaseException:
+        _LOG.exception('MqttIo crashed!')
+        raise
 
 
 if __name__ == "__main__":
