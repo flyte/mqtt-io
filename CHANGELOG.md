@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- Fix inversion not taken into account when publishing initial digital output value. #203 @r00tat
 - Fix #198 where Future wasn't created from the right thread. #205 @fipwmaqzufheoxq92ebc
 
 v2.1.7 - 2021-04-01

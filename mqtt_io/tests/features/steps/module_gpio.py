@@ -185,7 +185,7 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
     await mqttio._handle_digital_input_value(in_conf, value, last_value)
 
 
-@when("we set digital output {pin_name} to {on_off}")
+@when("we set digital output {pin_name} to {on_off}")  # type: ignore[no-redef]
 @async_run_until_complete(loop="loop")
 async def step(context: Any, pin_name: str, on_off: str) -> None:
     assert on_off in ("on", "off")

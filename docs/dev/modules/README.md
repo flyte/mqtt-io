@@ -231,3 +231,8 @@ def setup_pin(
     initial_int = {None: -1, "low": 0, "high": 1}[initial]
     self.io.setup(pin, direction, pull_up_down=pullup, initial=initial_int)
 ```
+
+
+## TODO
+
+- Define when 'inverted' values are expected to be inverted or raw.
