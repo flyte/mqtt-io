@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures
 from typing import Any, Dict, Type
 
 import yaml
@@ -35,6 +36,20 @@ async def step(context: Any, event_type_name: str) -> None:
     task_futures = mqttio.event_bus.fire(event)
     await asyncio.gather(*task_futures)
 
+
+@when("we fire a new {event_type_name} event from another thread with")  # type: ignore[no-redef]
+@async_run_until_complete(loop="loop")
+async def step(context: Any, event_type_name: str) -> None:
+    data: Dict[str, Any] = yaml.safe_load(context.text)
+    assert isinstance(data, dict), "Data provided to this step must be a YAML dict"
+    mqttio: MqttIo = context.data["mqttio"]
+    event_type: Type[events.Event] = getattr(events, event_type_name)
+    event = event_type(**data)
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(lambda: mqttio.event_bus.fire(event))
+        task_futures = future.result()
+    await asyncio.gather(*task_futures)
 
 @then("{func_name} function should be subscribed to {event_type_name}")  # type: ignore[no-redef]
 def step(context: Any, func_name: str, event_type_name: str) -> None:

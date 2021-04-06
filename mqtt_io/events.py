@@ -109,7 +109,7 @@ class EventBus:
         for listener in listeners:
             # Pass in a future on which the asyncio.Task will be set when the coro
             # has been scheduled on the loop.
-            fut: "asyncio.Future[asyncio.Task[Any]]" = asyncio.Future()
+            fut: "asyncio.Future[asyncio.Task[Any]]" = self._loop.create_future()
             task_futures.append(fut)
             # Run threadsafe in case we're firing events from interrupt callback threads
             create_unawaited_task_threadsafe(
