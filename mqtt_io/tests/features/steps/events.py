@@ -51,6 +51,7 @@ async def step(context: Any, event_type_name: str) -> None:
         task_futures = future.result()
     await asyncio.gather(*task_futures)
 
+
 @then("{func_name} function should be subscribed to {event_type_name}")  # type: ignore[no-redef]
 def step(context: Any, func_name: str, event_type_name: str) -> None:
     mqttio = context.data["mqttio"]

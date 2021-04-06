@@ -144,7 +144,7 @@ Feature: GPIO module runtime
         # Mock this to stop the digital_input_poller from firing events too
         And we mock _handle_digital_input_value on MqttIo
         And we mock _mqtt_publish on MqttIo
-                And we fire a new DigitalInputChangedEvent event from another thread with
+        And we fire a new DigitalInputChangedEvent event from another thread with
             """
             input_name: mock0
             from_value: false
