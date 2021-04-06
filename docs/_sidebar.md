@@ -26,4 +26,5 @@
 - Development
 
   - [Config Schema](dev/config_schema.md)
+  - [Modules](dev/modules/README.md)
   - [Changelog](CHANGELOG.md)
