@@ -183,3 +183,13 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
     value = value_map[value_str]
     last_value = value_map[last_value_str]
     await mqttio._handle_digital_input_value(in_conf, value, last_value)
+
+
+@when("we set digital output {pin_name} to {on_off}")
+@async_run_until_complete(loop="loop")
+async def step(context: Any, pin_name: str, on_off: str) -> None:
+    assert on_off in ("on", "off")
+    mqttio: MqttIo = context.data["mqttio"]
+    out_conf = mqttio.digital_output_configs[pin_name]
+    module = mqttio.gpio_modules[out_conf["module"]]
+    await mqttio.set_digital_output(module, out_conf, on_off == "on")
