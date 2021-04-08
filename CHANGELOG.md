@@ -1,5 +1,6 @@
 Unreleased
 ==========
+- Fix broken hcsr04 sensor that I (@flyte) broke when rewriting for v2.x. #211 @r00tat
 - Fix inversion not taken into account when publishing initial digital output value. #203 @r00tat
 - Fix #198 where Future wasn't created from the right thread. #205 @fipwmaqzufheoxq92ebc
 
