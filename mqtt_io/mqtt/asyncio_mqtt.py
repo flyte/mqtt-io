@@ -6,7 +6,7 @@ import asyncio
 import logging
 from asyncio.queues import QueueFull
 from functools import wraps
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple, TypeVar, Callable, cast
 
 from asyncio_mqtt.client import Client, Will  # type: ignore
 from paho.mqtt import client as paho  # type: ignore
@@ -21,16 +21,18 @@ from . import (
 
 _LOG = logging.getLogger(__name__)
 
+Func = TypeVar('Func', bound=Callable[..., Any])
 
-def _map_exception(func):
+
+def _map_exception(func: Func) -> Func:
     @wraps(func)
-    async def inner(*args, **kwargs):
+    async def inner(*args: Any, **kwargs: Any) -> Any:
         try:
             await func(*args, **kwargs)
         except Exception as exc:
             raise MQTTException from exc
 
-    return inner
+    return cast(Func, inner)
 
 
 class MQTTClient(AbstractMQTTClient):
