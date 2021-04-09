@@ -8,7 +8,7 @@ from asyncio.queues import QueueFull
 from functools import wraps
 from typing import Any, List, Optional, Tuple, TypeVar, Callable, cast
 
-from asyncio_mqtt.client import Client, Will  # type: ignore
+from asyncio_mqtt.client import Client, Will, MqttError  # type: ignore
 from paho.mqtt import client as paho  # type: ignore
 
 from . import (
@@ -29,7 +29,7 @@ def _map_exception(func: Func) -> Func:
     async def inner(*args: Any, **kwargs: Any) -> Any:
         try:
             await func(*args, **kwargs)
-        except Exception as exc:
+        except MqttError as exc:
             raise MQTTException from exc
 
     return cast(Func, inner)
