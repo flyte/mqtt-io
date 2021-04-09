@@ -19,7 +19,6 @@ from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
 
-import asyncio_mqtt  # type: ignore
 import backoff  # type: ignore
 from typing_extensions import Literal
 
@@ -67,7 +66,7 @@ from .mqtt import (
     MQTTClientOptions,
     MQTTMessageSend,
     MQTTTLSOptions,
-    MQTTWill,
+    MQTTWill, MQTTException,
 )
 from .types import ConfigType, PinType, SensorValueType
 from .utils import PriorityCoro, create_unawaited_task_threadsafe
@@ -1175,7 +1174,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     _LOG.exception("Exception in critical task:")
             except asyncio.CancelledError:
                 break
-            except asyncio_mqtt.error.MqttError:
+            except MQTTException:
                 if counter > 0:
                     counter -= 1
                 _LOG.exception('Connection to MQTT-Broker failed')

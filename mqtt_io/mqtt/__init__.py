@@ -162,3 +162,7 @@ class AbstractMQTTClient(abc.ABC):
         client: Type[AbstractMQTTClient]
         client = client_module.MQTTClient  # type: ignore[attr-defined]
         return client
+
+
+class MQTTException(Exception):
+    pass
