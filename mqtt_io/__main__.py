@@ -10,7 +10,7 @@ from typing import Any, Optional
 
 import yaml
 
-from confp import render
+from confp import render  # type: ignore
 
 from mqtt_io.types import ConfigType
 
@@ -43,13 +43,13 @@ def redact_config(config: ConfigType) -> ConfigType:
     return ret
 
 
-def load_config(args):
+def load_config(config: str, render_config: str) -> Any:
     """
     Loads the config, and uses confp to render it if necessary.
     """
-    with open(args.config, "r") as stream:
-        if args.render:
-            rendered = render(args.render, stream.read())
+    with open(config, "r") as stream:
+        if render_config:
+            rendered = render(render_config, stream.read())
             raw_config = yaml.safe_load(rendered)
         else:
             raw_config = yaml.safe_load(stream)
@@ -70,7 +70,7 @@ def main() -> None:
 
     # Load, validate and normalise config, or quit.
     try:
-        raw_config = load_config(args)
+        raw_config = load_config(args.config, args.render)
         config = validate_and_normalise_main_config(raw_config)
     except ConfigValidationFailed as exc:
         print(str(exc), file=sys.stderr)
