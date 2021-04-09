@@ -80,7 +80,7 @@ def main() -> None:
     try:
         mqtt_gpio = MqttIo(config)
         mqtt_gpio.run()
-    except BaseException:
+    except Exception:
         _LOG.exception('MqttIo crashed!')
         raise
 
