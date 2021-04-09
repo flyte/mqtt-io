@@ -44,6 +44,9 @@ def redact_config(config: ConfigType) -> ConfigType:
 
 
 def load_config(args):
+    """
+    Loads the config, and uses confp to render it if necessary.
+    """
     with open(args.config, "r") as stream:
         if args.render:
             rendered = render(args.render, stream.read())
