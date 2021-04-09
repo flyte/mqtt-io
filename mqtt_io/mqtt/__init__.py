@@ -165,4 +165,6 @@ class AbstractMQTTClient(abc.ABC):
 
 
 class MQTTException(Exception):
-    pass
+    """
+    An Exception which should be raised on errors in implementations of AbstractMQTTClient
+    """

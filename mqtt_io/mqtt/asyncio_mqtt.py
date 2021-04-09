@@ -27,8 +27,8 @@ def _map_exception(func):
     async def inner(*args, **kwargs):
         try:
             await func(*args, **kwargs)
-        except Exception as e:
-            raise MQTTException from e
+        except Exception as exc:
+            raise MQTTException from exc
 
     return inner
 
