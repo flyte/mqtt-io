@@ -1147,12 +1147,12 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
 
     async def _main_loop(self) -> None:
-        counter = self.config['mqtt'].get('reconnect-count')
+        counter = self.config['mqtt'].get('reconnect_count')
         while True:
             try:
                 await self._connect_mqtt()
                 # Reset counter
-                counter = self.config['mqtt'].get('reconnect-count')
+                counter = self.config['mqtt'].get('reconnect_count')
                 self.critical_tasks = [
                     self.loop.create_task(coro)
                     for coro in (
@@ -1181,7 +1181,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 _LOG.exception('Connection to MQTT-Broker failed')
                 if counter == 0:
                     break
-                await asyncio.sleep(self.config['mqtt'].get('reconnect-delay'))
+                await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
             finally:
                 self.running.clear()
         await self.shutdown()

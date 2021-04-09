@@ -250,7 +250,7 @@ mqtt:
           type: boolean
           required: no
           default: false
-    reconnect-delay:
+    reconnect_delay:
       meta:
         description: |
           Time in seconds to wait between reconnect attempts.
@@ -258,7 +258,7 @@ mqtt:
       required: no
       default: 2
       min: 1
-    reconnect-count:
+    reconnect_count:
       meta:
         description: |
           Max number of retries of connections before giving up (and exiting).
