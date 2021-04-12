@@ -37,7 +37,8 @@ class GPIO(GenericGPIO):
         # pylint: disable=import-outside-toplevel,import-error
         import gpiozero
         self.io = gpiozero
-        self._pins: Dict[PinType, Any] = {}
+        self._in_pins: Dict[PinType, gpiozero.InputDevice] = {}
+        self._out_pins: Dict[PinType, gpiozero.OutputDevice] = {}
         self.pullup_map = {
             PinPUD.OFF: None,
             PinPUD.UP: True,
@@ -56,24 +57,24 @@ class GPIO(GenericGPIO):
         if direction == PinDirection.OUTPUT:
             pin_config.setdefault('initial_value', initial)
             cls = getattr(self.io, pin_config.get('class', 'LED'))
-            self._pins[pin] = cls(pin, **pin_config.get('kwargs', {}))
+            self._out_pins[pin] = cls(pin, **pin_config.get('kwargs', {}))
         elif direction == PinDirection.INPUT:
             cls = getattr(self.io, pin_config.get('class', 'Button'))
             pin_config.setdefault('pull_up', self.pullup_map[pullup])
             pin_config.setdefault('active_state', True if pin_config['pull_up'] is None else None)
             pin_config.setdefault('initial_value', initial)
-            self._pins[pin] = cls(pin, **pin_config.get('kwargs', {}))
+            self._in_pins[pin] = cls(pin, **pin_config.get('kwargs', {}))
         else:
             raise ValueError('Invalid PinDirection')
 
     def set_pin(self, pin: PinType, value: bool) -> None:
         if value:
-            self._pins[pin].on()
+            self._out_pins[pin].on()
         else:
-            self._pins[pin].off()
+            self._out_pins[pin].off()
 
     def get_pin(self, pin: PinType) -> bool:
-        return cast(bool, self._pins[pin].is_active)
+        return cast(bool, self._in_pins[pin].is_active)
 
     def setup_interrupt_callback(
             self,
@@ -87,9 +88,9 @@ class GPIO(GenericGPIO):
         )
 
         if edge in (InterruptEdge.BOTH, InterruptEdge.RISING):
-            self._pins[pin].when_activated = partial(callback, True)
+            self._in_pins[pin].when_activated = partial(callback, True)
         if edge in (InterruptEdge.BOTH, InterruptEdge.FALLING):
-            self._pins[pin].when_deactivated = partial(callback, False)
+            self._in_pins[pin].when_deactivated = partial(callback, False)
         self.interrupt_edges[pin] = edge
 
     def get_interrupt_value(self, pin: PinType, *args: Any, **kwargs: Any) -> bool:
