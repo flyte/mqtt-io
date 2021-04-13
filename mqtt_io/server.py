@@ -1147,7 +1147,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
     async def _main_loop(self) -> None:
         counter = self.config['mqtt'].get('reconnect_count')
-        while True:
+        reconnect = True
+        while reconnect:
             try:
                 await self._connect_mqtt()
                 # Reset counter
@@ -1175,14 +1176,16 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             except asyncio.CancelledError:
                 break
             except MQTTException:
-                if counter == 0:
-                    break
+                reconnect = counter > 0
                 if counter > 0:
                     counter -= 1
                 _LOG.exception('Connection to MQTT-Broker failed')
-                await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
+
             finally:
                 self.running.clear()
+                self.mqtt_connected.clear()
+            if reconnect:
+                await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
         await self.shutdown()
 
     # Main entry point
