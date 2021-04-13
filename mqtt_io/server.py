@@ -1175,11 +1175,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             except asyncio.CancelledError:
                 break
             except MQTTException:
+                if counter == 0:
+                    break
                 if counter > 0:
                     counter -= 1
                 _LOG.exception('Connection to MQTT-Broker failed')
-                if counter == 0:
-                    break
                 await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
             finally:
                 self.running.clear()
