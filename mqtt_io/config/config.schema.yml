@@ -262,11 +262,11 @@ mqtt:
       meta:
         description: |
           Max number of retries of connections before giving up (and exiting).
-          -1 means infinite reconnects.
+          -1 (the default) means infinite reconnects.
           The counter is reset if a connection was established successfully.
       type: integer
       required: no
-      default: 0
+      default: -1
       min: -1
 gpio_modules:
   meta:
