@@ -1184,6 +1184,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             finally:
                 self.running.clear()
                 self.mqtt_connected.clear()
+                if self.critical_tasks:
+                    asyncio.gather(*self.critical_tasks, return_exceptions=True).cancel()
             if reconnect:
                 await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
         await self.shutdown()
