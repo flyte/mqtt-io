@@ -5,21 +5,34 @@ Implementation of AbstractMQTTClient using asyncio-mqtt client.
 import asyncio
 import logging
 from asyncio.queues import QueueFull
-from typing import Any, List, Optional, Tuple
+from functools import wraps
+from typing import Any, List, Optional, Tuple, TypeVar, Callable, cast
 
+from asyncio_mqtt.client import Client, Will, MqttError  # type: ignore
 from paho.mqtt import client as paho  # type: ignore
-
-from asyncio_mqtt.client import Client, Will  # type: ignore
 
 from . import (
     AbstractMQTTClient,
     MQTTClientOptions,
     MQTTMessage,
     MQTTMessageSend,
-    MQTTProtocol,
+    MQTTProtocol, MQTTException,
 )
 
 _LOG = logging.getLogger(__name__)
+
+Func = TypeVar('Func', bound=Callable[..., Any])
+
+
+def _map_exception(func: Func) -> Func:
+    @wraps(func)
+    async def inner(*args: Any, **kwargs: Any) -> Any:
+        try:
+            await func(*args, **kwargs)
+        except MqttError as exc:
+            raise MQTTException from exc
+
+    return cast(Func, inner)
 
 
 class MQTTClient(AbstractMQTTClient):
@@ -59,18 +72,22 @@ class MQTTClient(AbstractMQTTClient):
         )
         self._message_queue: Optional[asyncio.Queue[MQTTMessage]] = None
 
+    @_map_exception
     async def connect(self, timeout: int = 10) -> None:
         await self._client.connect(timeout=timeout)
 
+    @_map_exception
     async def disconnect(self) -> None:
         try:
             await self._client.disconnect()
         except TimeoutError:
             await self._client.force_disconnect()
 
+    @_map_exception
     async def subscribe(self, topics: List[Tuple[str, int]]) -> None:
         await self._client.subscribe(topics)
 
+    @_map_exception
     async def publish(self, msg: MQTTMessageSend) -> None:
         await self._client.publish(
             topic=msg.topic, payload=msg.payload, qos=msg.qos, retain=msg.retain

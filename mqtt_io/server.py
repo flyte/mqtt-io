@@ -66,7 +66,7 @@ from .mqtt import (
     MQTTClientOptions,
     MQTTMessageSend,
     MQTTTLSOptions,
-    MQTTWill,
+    MQTTWill, MQTTException,
 )
 from .types import ConfigType, PinType, SensorValueType
 from .utils import PriorityCoro, create_unawaited_task_threadsafe
@@ -1146,6 +1146,51 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             else:
                 self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
 
+    async def _main_loop(self) -> None:
+        counter = self.config['mqtt'].get('reconnect_count')
+        reconnect = True
+        while reconnect:
+            try:
+                await self._connect_mqtt()
+                # Reset counter
+                counter = self.config['mqtt'].get('reconnect_count')
+                self.critical_tasks = [
+                    self.loop.create_task(coro)
+                    for coro in (
+                        self._mqtt_task_loop(),
+                        self._mqtt_rx_loop(),
+                        self._remove_finished_transient_tasks(),
+                    )
+                ]
+
+                self.running.set()
+
+                if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
+                    self._ha_discovery_announce()
+
+                try:
+                    await asyncio.gather(*self.critical_tasks)
+                except asyncio.CancelledError:
+                    break
+                except Exception:  # pylint: disable=broad-except
+                    _LOG.exception("Exception in critical task:")
+            except asyncio.CancelledError:
+                break
+            except MQTTException:
+                reconnect = counter > 0
+                if counter > 0:
+                    counter -= 1
+                _LOG.exception('Connection to MQTT-Broker failed')
+
+            finally:
+                self.running.clear()
+                self.mqtt_connected.clear()
+                if self.critical_tasks:
+                    asyncio.gather(*self.critical_tasks, return_exceptions=True).cancel()
+            if reconnect:
+                await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
+        await self.shutdown()
+
     # Main entry point
 
     def run(self) -> None:
@@ -1171,37 +1216,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self._init_sensor_inputs()
         self._init_stream_modules()
 
-        async def run() -> None:
-            try:
-                await self._connect_mqtt()
-
-                self.critical_tasks = [
-                    self.loop.create_task(coro)
-                    for coro in (
-                        self._mqtt_task_loop(),
-                        self._mqtt_rx_loop(),
-                        self._remove_finished_transient_tasks(),
-                    )
-                ]
-
-                self.running.set()
-
-                if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
-                    self._ha_discovery_announce()
-
-                try:
-                    await asyncio.gather(*self.critical_tasks)
-                except asyncio.CancelledError:
-                    pass
-                except Exception:  # pylint: disable=broad-except
-                    _LOG.exception("Exception in critical task:")
-            except asyncio.CancelledError:
-                pass
-            finally:
-                self.running.clear()
-                await self.shutdown()
-
-        self._main_task = self.loop.create_task(run())
+        self._main_task = self.loop.create_task(self._main_loop())
 
         _LOG.debug("Going Asynchronous")
         try:
