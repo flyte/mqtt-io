@@ -1,3 +1,7 @@
+Unreleased
+==========
+- Auto-reconnect to MQTT server on disconnection. #207 @fipwmaqzufheoxq92ebc
+
 v2.1.8 - 2021-04-21
 ===================
 - Fix broken hcsr04 sensor that I (@flyte) broke when rewriting for v2.x. #211 @r00tat
