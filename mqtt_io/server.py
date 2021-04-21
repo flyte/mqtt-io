@@ -1030,6 +1030,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
             try:
                 await entry.coro
+            except MQTTException:
+                raise
             except Exception:  # pylint: disable=broad-except
                 _LOG.exception("Exception while handling MQTT task:")
             self.mqtt_task_queue.task_done()
@@ -1149,13 +1151,12 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
 
     async def _main_loop(self) -> None:
-        counter = self.config["mqtt"].get("reconnect_count")
         reconnect = True
+        reconnect_delay = self.config["mqtt"]["reconnect_delay"]
         while reconnect:
             try:
                 await self._connect_mqtt()
-                # Reset counter
-                counter = self.config["mqtt"].get("reconnect_count")
+                reconnects_remaining = self.config["mqtt"]["reconnect_count"]
                 self.critical_tasks = [
                     self.loop.create_task(coro)
                     for coro in (
@@ -1179,18 +1180,29 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             except asyncio.CancelledError:
                 break
             except MQTTException:
-                reconnect = counter > 0
-                if counter > 0:
-                    counter -= 1
+                if reconnects_remaining is not None:
+                    reconnect = reconnects_remaining > 0
+                    reconnects_remaining -= 1
                 _LOG.exception("Connection to MQTT broker failed")
 
             finally:
+                _LOG.debug("Clearing events and cancelling 'critical_tasks'")
                 self.running.clear()
                 self.mqtt_connected.clear()
                 if self.critical_tasks:
-                    asyncio.gather(*self.critical_tasks, return_exceptions=True).cancel()
+                    for task in self.critical_tasks:
+                        task.cancel()
+                    await asyncio.gather(*self.critical_tasks, return_exceptions=True)
+                    _LOG.debug("'critical_tasks' cancelled and gathered")
             if reconnect:
-                await asyncio.sleep(self.config["mqtt"].get("reconnect_delay"))
+                _LOG.debug(
+                    "Waiting for MQTT reconnect delay (%s second(s))", reconnect_delay
+                )
+                await asyncio.sleep(reconnect_delay)
+                _LOG.info(
+                    "Reconnecting to MQTT broker (%s retries remaining)",
+                    "infinite" if reconnects_remaining is None else reconnects_remaining,
+                )
         await self.shutdown()
 
     # Main entry point

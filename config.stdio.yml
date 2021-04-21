@@ -1,8 +1,11 @@
 mqtt:
-  host: test.mosquitto.org
+  host: localhost
   topic_prefix: mqtt_io
   clean_session: yes
   protocol: 3.1.1
+  keepalive: 10
+  reconnect_delay: 4
+  reconnect_count: 4
 
 gpio_modules:
   - name: stdio
@@ -25,6 +28,7 @@ digital_inputs:
     interrupt: rising
     interrupt_for:
       - test
+    poll_interval: 2
 
 digital_outputs:
   - name: bell
@@ -34,6 +38,15 @@ digital_outputs:
     off_payload: "OFF"
     publish_initial: yes
     initial: high
+
+sensor_modules:
+  - name: mock
+    module: mock
+
+sensor_inputs:
+  - name: mock_sensor
+    module: mock
+    interval: 2
 
 logging:
   version: 1

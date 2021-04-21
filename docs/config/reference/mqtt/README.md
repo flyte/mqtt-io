@@ -433,13 +433,13 @@ Default: 2
 *mqtt*.**reconnect_count**
 
 Max number of retries of connections before giving up and exiting.
--1 (the default) means infinite reconnects.
+Null value means infinite reconnects (default).
 The counter is reset when the connection is reestablished successfully.
 
 
 ```yaml
 Type: integer
 Required: False
-Default: -1
+Default: None
 ```
 

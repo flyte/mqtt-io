@@ -66,6 +66,7 @@ class MQTTClient(AbstractMQTTClient):
             username=options.username,
             password=options.password,
             client_id=options.client_id,
+            # keepalive=options.keepalive,  # This isn't implemented yet on 0.8.1
             tls_context=tls_context,
             protocol=protocol_map[options.protocol],
             will=will,

@@ -12,12 +12,12 @@ graphs:
 	dot -Tsvg -O interrupt_callbacks.dot
 
 coverage:
-	coverage run --source "." --omit "mqtt_io/tests/*,mqtt_io/modules/*" -m behave mqtt_io/tests/features -t ~skip
-	coverage report -m
+	poetry run coverage run --source "." --omit "mqtt_io/tests/*,mqtt_io/modules/*" -m behave mqtt_io/tests/features -t ~skip
+	poetry run coverage report -m
 
 lint:
-	pylint -d fixme mqtt_io
-	mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
+	poetry run pylint -d fixme mqtt_io
+	poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
 
 build:
 	poetry build

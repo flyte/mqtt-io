@@ -284,13 +284,14 @@
       },
       "reconnect_count": {
         "meta": {
-          "description": "Max number of retries of connections before giving up and exiting.\n-1 (the default) means infinite reconnects.\nThe counter is reset when the connection is reestablished successfully.\n",
+          "description": "Max number of retries of connections before giving up and exiting.\nNull value means infinite reconnects (default).\nThe counter is reset when the connection is reestablished successfully.\n",
           "title_id": "mqtt-reconnect_count"
         },
         "type": "integer",
         "required": false,
-        "default": -1,
-        "min": -1
+        "default": null,
+        "nullable": true,
+        "min": 0
       }
     }
   },
