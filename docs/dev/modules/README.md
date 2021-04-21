@@ -142,7 +142,7 @@ def setup_module(self) -> None:
 
 If a digital input is not configured as an [interrupt](config/interrupts.md) (or even [sometimes if it is](config/reference/digital_inputs/?id=digital_inputs-star-interrupt_for)), then a loop will be created which polls the pin's current value and publishes a `DigitalInputChangedEvent` event when it does. As part of the initialisation of each pin, a callback function to publish the new value on MQTT will be subscribed to this event.
 
-[mqtt_io.server.MqttIo._init_digital_inputs](https://github.com/flyte/mqtt-io/blob/develop/mqtt_io/server.py#L343):
+[mqtt_io.server.MqttIo._init_digital_inputs](https://github.com/flyte/mqtt-io/blob/develop/mqtt_io/server.py#L344):
 
 ```python
 def _init_digital_inputs(self) -> None:

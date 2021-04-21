@@ -64,9 +64,10 @@ from .modules.stream import GenericStream
 from .mqtt import (
     AbstractMQTTClient,
     MQTTClientOptions,
+    MQTTException,
     MQTTMessageSend,
     MQTTTLSOptions,
-    MQTTWill, MQTTException,
+    MQTTWill,
 )
 from .types import ConfigType, PinType, SensorValueType
 from .utils import PriorityCoro, create_unawaited_task_threadsafe
@@ -497,8 +498,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             if out_conf["publish_initial"]:
                 self.event_bus.fire(
                     DigitalOutputChangedEvent(
-                        out_conf["name"], out_conf["initial"] == (
-                            "low" if out_conf["inverted"] else "high")
+                        out_conf["name"],
+                        out_conf["initial"]
+                        == ("low" if out_conf["inverted"] else "high"),
                     )
                 )
 
@@ -1147,13 +1149,13 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
 
     async def _main_loop(self) -> None:
-        counter = self.config['mqtt'].get('reconnect_count')
+        counter = self.config["mqtt"].get("reconnect_count")
         reconnect = True
         while reconnect:
             try:
                 await self._connect_mqtt()
                 # Reset counter
-                counter = self.config['mqtt'].get('reconnect_count')
+                counter = self.config["mqtt"].get("reconnect_count")
                 self.critical_tasks = [
                     self.loop.create_task(coro)
                     for coro in (
@@ -1180,7 +1182,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 reconnect = counter > 0
                 if counter > 0:
                     counter -= 1
-                _LOG.exception('Connection to MQTT-Broker failed')
+                _LOG.exception("Connection to MQTT broker failed")
 
             finally:
                 self.running.clear()
@@ -1188,7 +1190,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 if self.critical_tasks:
                     asyncio.gather(*self.critical_tasks, return_exceptions=True).cancel()
             if reconnect:
-                await asyncio.sleep(self.config['mqtt'].get('reconnect_delay'))
+                await asyncio.sleep(self.config["mqtt"].get("reconnect_delay"))
         await self.shutdown()
 
     # Main entry point

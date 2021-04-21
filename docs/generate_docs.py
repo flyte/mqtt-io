@@ -14,12 +14,12 @@ from jinja2 import Template
 
 from mqtt_io.types import ConfigType
 
-THIS_DIR = pathlib.Path(__file__).parent.absolute()
-CONFIG_SCHEMA_PATH = join(THIS_DIR, "mqtt_io/config/config.schema.yml")
-README_TEMPLATE = join(THIS_DIR, "README.md.j2")
-MODULES_DIR = join(THIS_DIR, "mqtt_io/modules")
+WORKSPACE_DIR = pathlib.Path(__file__).parent.parent.absolute()
+CONFIG_SCHEMA_PATH = join(WORKSPACE_DIR, "mqtt_io/config/config.schema.yml")
+README_TEMPLATE = join(WORKSPACE_DIR, "README.md.j2")
+MODULES_DIR = join(WORKSPACE_DIR, "mqtt_io/modules")
 
-DOCS_DIR = join(THIS_DIR, "docs")
+DOCS_DIR = join(WORKSPACE_DIR, "docs")
 SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_DIR, "config/reference.md.j2")
 MODULES_DOC_TEMPLATE = join(DOCS_DIR, "dev/modules/README.md.j2")
@@ -138,7 +138,7 @@ def generate_readmes() -> None:
     with open(README_TEMPLATE) as readme_template_file:
         readme_template: Template = Template(readme_template_file.read())
 
-    with open(join(THIS_DIR, "README.md"), "w") as readme_file:
+    with open(join(WORKSPACE_DIR, "README.md"), "w") as readme_file:
         readme_file.write(
             readme_template.render(dict(repo=True, supported_hardware=module_strings))
         )
@@ -151,7 +151,7 @@ def generate_readmes() -> None:
 
 def generate_changelog() -> None:
     print("Copying changelog...")
-    shutil.copyfile(join(THIS_DIR, "CHANGELOG.md"), join(DOCS_DIR, "CHANGELOG.md"))
+    shutil.copyfile(join(WORKSPACE_DIR, "CHANGELOG.md"), join(DOCS_DIR, "CHANGELOG.md"))
 
 
 def document_gpio_module() -> None:
@@ -186,7 +186,7 @@ def get_source(module_path: str, xpath: str, title: str) -> str:
     module_filepath = pathlib.Path(module.__file__)
     src, attrib = module_source(module, xpath)[0]
     url = "https://github.com/flyte/mqtt-io/blob/develop/%s#L%s" % (
-        module_filepath.relative_to(THIS_DIR),
+        module_filepath.relative_to(WORKSPACE_DIR),
         attrib["lineno"],
     )
     return f"[{title}]({url}):\n\n```python\n{src.rstrip()}\n```"
@@ -197,7 +197,7 @@ def get_source_link(module_path: str, xpath: str, title: str) -> str:
     module_filepath = pathlib.Path(module.__file__)
     _, attrib = module_source(module, xpath)[0]
     url = "https://github.com/flyte/mqtt-io/blob/develop/%s#L%s" % (
-        module_filepath.relative_to(THIS_DIR),
+        module_filepath.relative_to(WORKSPACE_DIR),
         attrib["lineno"],
     )
     return f"[{title}]({url}):"

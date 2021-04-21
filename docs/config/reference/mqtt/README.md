@@ -415,3 +415,31 @@ Do not use this function in a real system. Setting value to true means there
 is no point using encryption.
 
 
+## reconnect_delay :id=mqtt-reconnect_delay
+
+*mqtt*.**reconnect_delay**
+
+Time in seconds to wait between reconnect attempts.
+
+
+```yaml
+Type: integer
+Required: False
+Default: 2
+```
+
+## reconnect_count :id=mqtt-reconnect_count
+
+*mqtt*.**reconnect_count**
+
+Max number of retries of connections before giving up and exiting.
+-1 (the default) means infinite reconnects.
+The counter is reset when the connection is reestablished successfully.
+
+
+```yaml
+Type: integer
+Required: False
+Default: -1
+```
+

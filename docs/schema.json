@@ -271,6 +271,26 @@
             "default": false
           }
         }
+      },
+      "reconnect_delay": {
+        "meta": {
+          "description": "Time in seconds to wait between reconnect attempts.\n",
+          "title_id": "mqtt-reconnect_delay"
+        },
+        "type": "integer",
+        "required": false,
+        "default": 2,
+        "min": 1
+      },
+      "reconnect_count": {
+        "meta": {
+          "description": "Max number of retries of connections before giving up and exiting.\n-1 (the default) means infinite reconnects.\nThe counter is reset when the connection is reestablished successfully.\n",
+          "title_id": "mqtt-reconnect_count"
+        },
+        "type": "integer",
+        "required": false,
+        "default": -1,
+        "min": -1
       }
     }
   },

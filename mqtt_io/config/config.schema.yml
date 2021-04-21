@@ -261,9 +261,9 @@ mqtt:
     reconnect_count:
       meta:
         description: |
-          Max number of retries of connections before giving up (and exiting).
+          Max number of retries of connections before giving up and exiting.
           -1 (the default) means infinite reconnects.
-          The counter is reset if a connection was established successfully.
+          The counter is reset when the connection is reestablished successfully.
       type: integer
       required: no
       default: -1

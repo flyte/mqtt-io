@@ -31,8 +31,15 @@ class HCSR04:
     attached to the Raspberry Pi's GPIO pins.
     """
 
-    def __init__(self, gpio: Any, name: str, pin_echo: int, pin_trigger: int, burst: int,
-                 **kwargs: Any):
+    def __init__(
+        self,
+        gpio: Any,
+        name: str,
+        pin_echo: int,
+        pin_trigger: int,
+        burst: int,
+        **kwargs: Any
+    ):
         self.gpio = gpio
         self.name = name
         self.pin_echo = pin_echo
@@ -59,7 +66,9 @@ class HCSR04:
                 delta = time.time() - self.start
                 self.distance = delta * SPEED_2
 
-        self.gpio.add_event_detect(self.pin_echo, self.gpio.BOTH, callback=measure_callback)
+        self.gpio.add_event_detect(
+            self.pin_echo, self.gpio.BOTH, callback=measure_callback
+        )
 
     def pulse(self) -> None:
         """
@@ -88,7 +97,9 @@ class HCSR04:
             measurements.append(cast(float, self.distance))
             time.sleep(0.05)
         if not measurements:
-            raise RuntimeError("Unable to measure range on HC-SR04 sensor '%s'" % self.name)
+            raise RuntimeError(
+                "Unable to measure range on HC-SR04 sensor '%s'" % self.name
+            )
         return mean(measurements)
 
 
@@ -98,21 +109,9 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "pin_echo": {
-            "type": "integer",
-            "required": True,
-            "empty": False
-        },
-        "pin_trigger": {
-            "type": "integer",
-            "required": True,
-            "empty": False
-        },
-        "burst": {
-            "type": "integer",
-            "required": True,
-            "empty": False
-        },
+        "pin_echo": {"type": "integer", "required": True, "empty": False},
+        "pin_trigger": {"type": "integer", "required": True, "empty": False},
+        "burst": {"type": "integer", "required": True, "empty": False},
     }
 
     def setup_module(self) -> None:
