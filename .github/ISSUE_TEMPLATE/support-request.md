@@ -11,7 +11,7 @@ Please consider joining the [Discord server](https://discord.gg/gWyV9W4) in orde
 
 If you'd still like to add your support request as a GitHub Issue, please fill in the following template as best you can:
 
-- [ ] I have read the [README.md](https://github.com/flyte/pi-mqtt-gpio/blob/develop/README.md) file and visited the [Github Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki) to see if the information there helps.
+- [ ] I have read the [README.md](https://github.com/flyte/pi-mqtt-gpio/blob/develop/README.md) file and visited the [Documentation](https://mqtt-io.app/) to see if the information there helps.
 
 **Action description**
 A clear and concise description of what you're trying to achieve.

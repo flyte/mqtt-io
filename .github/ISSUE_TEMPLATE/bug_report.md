@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-- [ ] I have read the [README.md](https://github.com/flyte/pi-mqtt-gpio/blob/develop/README.md) file and visited the [Github Wiki](https://github.com/flyte/pi-mqtt-gpio/wiki) to see if the information there helps.
+- [ ] I have read the [README.md](https://github.com/flyte/pi-mqtt-gpio/blob/develop/README.md) file and visited the [Documentation](https://mqtt-io.app/) to see if the information there helps.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
