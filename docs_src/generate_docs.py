@@ -45,10 +45,20 @@ BUILD_DIR = get_build_dir()
 
 def commit_to_gh_pages_branch() -> None:
     src_branch = REPO.active_branch
-    REPO.heads["gh-pages"].checkout()
+    if REPO_WAS_DIRTY:
+        print("Stashing dirty repo...")
+        REPO.git.stash()
+    print("Checking out 'gh-pages'...")
+    REPO.heads["gh-pages"].checkout(force=True)
+    print(f"Adding '{BUILD_DIR}' to git index...")
     REPO.index.add([BUILD_DIR])
+    print("Committing...")
     REPO.index.commit(f"Generate {src_branch.name} docs")
+    print(f"Checking out '{src_branch.name}'...")
     src_branch.checkout()
+    if REPO_WAS_DIRTY:
+        print("Popping stashed changes...")
+        REPO.git.stash("pop")
 
 
 def copy_docs_src() -> None:
@@ -320,7 +330,8 @@ def main() -> None:
     generate_changelog()
     generate_modules_doc()
 
-    if env.get("CI") == "true" and not REPO_WAS_DIRTY:
+    # if env.get("CI") == "true" and not REPO_WAS_DIRTY:
+    if env.get("CI") == "true":
         commit_to_gh_pages_branch()
 
 
