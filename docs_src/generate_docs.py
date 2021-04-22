@@ -28,6 +28,7 @@ DOCS_DIR = join(WORKSPACE_DIR, "docs")
 SIDEBAR_TEMPLATE = join(DOCS_SRC_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_SRC_DIR, "config/reference.md.j2")
 MODULES_DOC_TEMPLATE = join(DOCS_SRC_DIR, "dev/modules/README.md.j2")
+MAIN_INDEX = join(DOCS_DIR, "index.html")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 REPO = Repo(str(WORKSPACE_DIR))
@@ -51,7 +52,7 @@ def commit_to_gh_pages_branch() -> None:
     print("Checking out 'gh-pages'...")
     REPO.heads["gh-pages"].checkout(force=True)
     print(f"Adding '{BUILD_DIR}' to git index...")
-    REPO.index.add([BUILD_DIR])
+    REPO.index.add([BUILD_DIR, MAIN_INDEX])
     print("Committing...")
     REPO.index.commit(f"Generate {src_branch.name} docs")
     print(f"Checking out '{src_branch.name}'...")
@@ -63,6 +64,18 @@ def commit_to_gh_pages_branch() -> None:
 
 def copy_docs_src() -> None:
     shutil.copytree(DOCS_SRC_DIR, BUILD_DIR, dirs_exist_ok=True)
+
+
+def generate_main_index() -> None:
+    index_content = f"""\
+<html>
+  <head>
+    <meta http-equiv="refresh" content="0; URL={REPO.active_branch.name}" />
+  </head>
+</html>
+"""
+    with open(MAIN_INDEX, "w") as index_file:
+        index_file.write(index_content)
 
 
 def title_id(entry_name: str, parents: List[str]) -> str:
@@ -329,6 +342,10 @@ def main() -> None:
     generate_readmes()
     generate_changelog()
     generate_modules_doc()
+
+    # TODO: Tasks pending completion -@flyte at 23/04/2021, 00:12:41
+    # Only do this if we want to change the default index to this build.
+    generate_main_index()
 
     # if env.get("CI") == "true" and not REPO_WAS_DIRTY:
     if env.get("CI") == "true":
