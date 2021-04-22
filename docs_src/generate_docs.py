@@ -51,6 +51,10 @@ def commit_to_gh_pages_branch() -> None:
     src_branch.checkout()
 
 
+def copy_docs_src() -> None:
+    shutil.copytree(DOCS_SRC_DIR, BUILD_DIR, dirs_exist_ok=True)
+
+
 def title_id(entry_name: str, parents: List[str]) -> str:
     tid = ""
     if parents:
@@ -253,9 +257,11 @@ def generate_modules_doc() -> None:
         sources_raw=get_sources_raw,
     )
 
+    print("Loading modules doc template...")
     with open(MODULES_DOC_TEMPLATE) as modules_doc_template_file:
         modules_doc_template: Template = Template(modules_doc_template_file.read())
 
+    print("Generating modules doc...")
     modules_dir = join(BUILD_DIR, "dev/modules")
     os.makedirs(modules_dir, exist_ok=True)
     with open(join(modules_dir, "README.md"), "w") as readme_file:
@@ -277,6 +283,8 @@ def main() -> None:
 
     top_level_section_names: List[str] = list(config_schema.keys())
     ConfigSchemaParser.parse_schema_section(config_schema, [])
+
+    copy_docs_src()
 
     main_sidebar_path = join(BUILD_DIR, "_sidebar.md")
     print(f"Writing main sidebar file '{main_sidebar_path}'...")
