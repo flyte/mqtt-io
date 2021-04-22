@@ -5,6 +5,7 @@ import pathlib
 import shutil
 import textwrap
 from importlib import import_module
+from os import environ as env
 from os.path import join
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -15,27 +16,39 @@ from jinja2 import Template
 
 from mqtt_io.types import ConfigType
 
+GITHUB_REPO = "https://github.com/flyte/mqtt-io"
+
 WORKSPACE_DIR = pathlib.Path(__file__).parent.parent.absolute()
 CONFIG_SCHEMA_PATH = join(WORKSPACE_DIR, "mqtt_io/config/config.schema.yml")
 README_TEMPLATE = join(WORKSPACE_DIR, "README.md.j2")
 MODULES_DIR = join(WORKSPACE_DIR, "mqtt_io/modules")
 
+DOCS_SRC_DIR = join(WORKSPACE_DIR, "docs_src")
 DOCS_DIR = join(WORKSPACE_DIR, "docs")
-SIDEBAR_TEMPLATE = join(DOCS_DIR, "_sidebar.md.j2")
-CONTENT_TEMPLATE = join(DOCS_DIR, "config/reference.md.j2")
-MODULES_DOC_TEMPLATE = join(DOCS_DIR, "dev/modules/README.md.j2")
+SIDEBAR_TEMPLATE = join(DOCS_SRC_DIR, "_sidebar.md.j2")
+CONTENT_TEMPLATE = join(DOCS_SRC_DIR, "config/reference.md.j2")
+MODULES_DOC_TEMPLATE = join(DOCS_SRC_DIR, "dev/modules/README.md.j2")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
+REPO = Repo(str(WORKSPACE_DIR))
+REPO_WAS_DIRTY = REPO.is_dirty()
 
-# TODO: Tasks pending completion -@flyte at 07/03/2021, 11:35:42
-# Generate list of supported hardware from the modules themselves.
 
-
-def get_docs_dir():
-    repo = Repo(WORKSPACE_DIR)
-    docs_dir = join(DOCS_DIR, repo.active_branch.name)
+def get_build_dir() -> str:
+    docs_dir = join(DOCS_DIR, REPO.active_branch.name)
     os.makedirs(docs_dir, exist_ok=True)
     return docs_dir
+
+
+BUILD_DIR = get_build_dir()
+
+
+def commit_to_gh_pages_branch() -> None:
+    src_branch = REPO.active_branch
+    REPO.heads["gh-pages"].checkout()
+    REPO.index.add([BUILD_DIR])
+    REPO.index.commit(f"Generate {src_branch.name} docs")
+    src_branch.checkout()
 
 
 def title_id(entry_name: str, parents: List[str]) -> str:
@@ -151,7 +164,7 @@ def generate_readmes() -> None:
             readme_template.render(dict(repo=True, supported_hardware=module_strings))
         )
 
-    with open(join(DOCS_DIR, "README.md"), "w") as readme_file:
+    with open(join(BUILD_DIR, "README.md"), "w") as readme_file:
         readme_file.write(
             readme_template.render(dict(repo=False, supported_hardware=module_strings))
         )
@@ -159,7 +172,7 @@ def generate_readmes() -> None:
 
 def generate_changelog() -> None:
     print("Copying changelog...")
-    shutil.copyfile(join(WORKSPACE_DIR, "CHANGELOG.md"), join(DOCS_DIR, "CHANGELOG.md"))
+    shutil.copyfile(join(WORKSPACE_DIR, "CHANGELOG.md"), join(BUILD_DIR, "CHANGELOG.md"))
 
 
 def document_gpio_module() -> None:
@@ -193,7 +206,9 @@ def get_source(module_path: str, xpath: str, title: str) -> str:
     module = import_module(module_path)
     module_filepath = pathlib.Path(module.__file__)
     src, attrib = module_source(module, xpath)[0]
-    url = "https://github.com/flyte/mqtt-io/blob/develop/%s#L%s" % (
+    url = "%s/blob/%s/%s#L%s" % (
+        GITHUB_REPO,
+        REPO.active_branch.commit.hexsha,
         module_filepath.relative_to(WORKSPACE_DIR),
         attrib["lineno"],
     )
@@ -204,7 +219,9 @@ def get_source_link(module_path: str, xpath: str, title: str) -> str:
     module = import_module(module_path)
     module_filepath = pathlib.Path(module.__file__)
     _, attrib = module_source(module, xpath)[0]
-    url = "https://github.com/flyte/mqtt-io/blob/develop/%s#L%s" % (
+    url = "%s/blob/%s/%s#L%s" % (
+        GITHUB_REPO,
+        REPO.active_branch.commit.hexsha,
         module_filepath.relative_to(WORKSPACE_DIR),
         attrib["lineno"],
     )
@@ -239,7 +256,9 @@ def generate_modules_doc() -> None:
     with open(MODULES_DOC_TEMPLATE) as modules_doc_template_file:
         modules_doc_template: Template = Template(modules_doc_template_file.read())
 
-    with open(join(DOCS_DIR, "dev/modules/README.md"), "w") as readme_file:
+    modules_dir = join(BUILD_DIR, "dev/modules")
+    os.makedirs(modules_dir, exist_ok=True)
+    with open(join(modules_dir, "README.md"), "w") as readme_file:
         readme_file.write(modules_doc_template.render(ctx))
 
 
@@ -259,7 +278,7 @@ def main() -> None:
     top_level_section_names: List[str] = list(config_schema.keys())
     ConfigSchemaParser.parse_schema_section(config_schema, [])
 
-    main_sidebar_path = join(DOCS_DIR, "_sidebar.md")
+    main_sidebar_path = join(BUILD_DIR, "_sidebar.md")
     print(f"Writing main sidebar file '{main_sidebar_path}'...")
     with open(main_sidebar_path, "w") as main_sidebar_file:
         main_sidebar_file.write(
@@ -269,7 +288,7 @@ def main() -> None:
         )
 
     for tl_section in top_level_section_names:
-        section_path = join(DOCS_DIR, f"config/reference/{tl_section}")
+        section_path = join(BUILD_DIR, f"config/reference/{tl_section}")
         md_path = join(section_path, "README.md")
 
         print(f"Making directory (if not exists) '{section_path}'...")
@@ -283,7 +302,7 @@ def main() -> None:
                 )
             )
 
-    json_schema_path = join(DOCS_DIR, "schema.json")
+    json_schema_path = join(BUILD_DIR, "schema.json")
     print(f"Making JSON config schema file '{json_schema_path}'...")
     with open(json_schema_path, "w") as json_schema_file:
         json.dump(config_schema, json_schema_file, indent=2)
@@ -292,6 +311,9 @@ def main() -> None:
     generate_readmes()
     generate_changelog()
     generate_modules_doc()
+
+    if env.get("CI") == "true" and not REPO_WAS_DIRTY:
+        commit_to_gh_pages_branch()
 
 
 if __name__ == "__main__":
