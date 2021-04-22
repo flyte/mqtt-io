@@ -1,0 +1,41 @@
+mqtt:
+  host: test.mosquitto.org
+  topic_prefix: mqtt_io
+  clean_session: yes
+  protocol: 3.1.1
+
+sensor_modules:
+  - name: mock
+    module: mock
+
+sensor_inputs:
+  - name: mock0
+    module: mock
+
+logging:
+  version: 1
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      level: DEBUG
+  formatters:
+    default:
+      format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+  loggers:
+    paho:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    mqtt:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    mqtt_io:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
