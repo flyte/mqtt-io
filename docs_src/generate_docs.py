@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 from ast_to_xml import module_source
+from git import Repo
 from jinja2 import Template
 
 from mqtt_io.types import ConfigType
@@ -28,6 +29,13 @@ REF_ENTRIES: List[Dict[str, Any]] = []
 
 # TODO: Tasks pending completion -@flyte at 07/03/2021, 11:35:42
 # Generate list of supported hardware from the modules themselves.
+
+
+def get_docs_dir():
+    repo = Repo(WORKSPACE_DIR)
+    docs_dir = join(DOCS_DIR, repo.active_branch.name)
+    os.makedirs(docs_dir, exist_ok=True)
+    return docs_dir
 
 
 def title_id(entry_name: str, parents: List[str]) -> str:
