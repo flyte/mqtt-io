@@ -371,11 +371,11 @@ def generate_modules_doc(docs_path: str) -> None:
 
 def generate_versions(versions: Set[str]) -> str:
     release_versions = sort_semver_versions(versions)
-    other_versions = set()
+    other_versions_set = set()
     for version in versions:
         if version not in release_versions:
-            other_versions.add(version)
-    other_versions = sorted(list(other_versions))
+            other_versions_set.add(version)
+    other_versions: List[str] = sorted(list(other_versions_set))
 
     ctx = dict(releases=release_versions, other_versions=other_versions)
 
