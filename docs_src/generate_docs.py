@@ -91,7 +91,7 @@ def commit_to_gh_pages_branch(
 ) -> None:
     with gh_pages_branch():
         print("Pulling gh-pages branch...")
-        REPO.git("pull")
+        REPO.git.pull()
         print("Writing versions file...")
         with open(VERSIONS_FILE, "w") as versions_file:
             versions_file.write(versions_contents)
