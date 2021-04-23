@@ -2,12 +2,14 @@ import ast
 import json
 import os
 import pathlib
+import re
 import shutil
 import textwrap
+from contextlib import contextmanager
 from importlib import import_module
 from os import environ as env
 from os.path import join
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Generator, Iterator, List, Optional, Set, Tuple
 
 import yaml
 from ast_to_xml import module_source
@@ -28,7 +30,9 @@ DOCS_DIR = join(WORKSPACE_DIR, "docs")
 SIDEBAR_TEMPLATE = join(DOCS_SRC_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_SRC_DIR, "config/reference.md.j2")
 MODULES_DOC_TEMPLATE = join(DOCS_SRC_DIR, "dev/modules/README.md.j2")
+VERSIONS_TEMPLATE = join(DOCS_SRC_DIR, "versions.md.j2")
 MAIN_INDEX = join(DOCS_DIR, "index.html")
+VERSIONS_FILE = join(DOCS_DIR, "versions.md")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 REPO = Repo(str(WORKSPACE_DIR))
@@ -44,22 +48,36 @@ def get_build_dir() -> str:
 BUILD_DIR = get_build_dir()
 
 
-def commit_to_gh_pages_branch() -> None:
+@contextmanager
+def gh_pages_branch() -> Iterator[None]:
     src_branch = REPO.active_branch
     if REPO_WAS_DIRTY:
         print("Stashing dirty repo...")
         REPO.git.stash()
     print("Checking out 'gh-pages'...")
     REPO.heads["gh-pages"].checkout(force=True)
-    print(f"Adding '{BUILD_DIR}' to git index...")
-    REPO.index.add([BUILD_DIR, MAIN_INDEX])
-    print("Committing...")
-    REPO.index.commit(f"Generate {src_branch.name} docs")
-    print(f"Checking out '{src_branch.name}'...")
-    src_branch.checkout()
-    if REPO_WAS_DIRTY:
-        print("Popping stashed changes...")
-        REPO.git.stash("pop")
+    try:
+        yield
+    finally:
+        print(f"Checking out '{src_branch.name}'...")
+        src_branch.checkout()
+        if REPO_WAS_DIRTY:
+            print("Popping stashed changes...")
+            REPO.git.stash("pop")
+
+
+def get_version_list() -> List[str]:
+    with gh_pages_branch():
+        return next(os.walk(DOCS_DIR))[1]
+
+
+def commit_to_gh_pages_branch() -> None:
+    src_branch = REPO.active_branch
+    with gh_pages_branch():
+        print(f"Adding '{BUILD_DIR}' to git index...")
+        REPO.index.add([BUILD_DIR, MAIN_INDEX, VERSIONS_FILE])
+        print("Committing...")
+        REPO.index.commit(f"Generate {src_branch.name} docs")
 
 
 def copy_docs_src() -> None:
@@ -68,10 +86,21 @@ def copy_docs_src() -> None:
 
 def generate_main_index() -> None:
     index_content = f"""\
-<html>
+<!DOCTYPE html>
+<html data-destination="{REPO.active_branch.name}/">
   <head>
-    <meta http-equiv="refresh" content="0; URL={REPO.active_branch.name}" />
+    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={REPO.active_branch.name}/"></noscript>
   </head>
+
+  <body>
+    Redirecting to '{REPO.active_branch.name}' documentation version...
+
+  <!-- Redirect in JavaScript with meta refresh fallback above in noscript -->
+  <script>
+  var destination = document.documentElement.getAttribute('data-destination');
+  window.location.href = destination + (window.location.search || '') + (window.location.hash || '');
+  </script>
+  </body>
 </html>
 """
     with open(MAIN_INDEX, "w") as index_file:
@@ -186,15 +215,13 @@ def generate_readmes() -> None:
     with open(README_TEMPLATE) as readme_template_file:
         readme_template: Template = Template(readme_template_file.read())
 
+    ctx = dict(supported_hardware=module_strings, version=REPO.active_branch.name)
+
     with open(join(WORKSPACE_DIR, "README.md"), "w") as readme_file:
-        readme_file.write(
-            readme_template.render(dict(repo=True, supported_hardware=module_strings))
-        )
+        readme_file.write(readme_template.render(dict(**ctx, repo=True)))
 
     with open(join(BUILD_DIR, "README.md"), "w") as readme_file:
-        readme_file.write(
-            readme_template.render(dict(repo=False, supported_hardware=module_strings))
-        )
+        readme_file.write(readme_template.render(dict(**ctx, repo=False)))
 
 
 def generate_changelog() -> None:
@@ -291,6 +318,16 @@ def generate_modules_doc() -> None:
         readme_file.write(modules_doc_template.render(ctx))
 
 
+def generate_versions(versions: Set[str]) -> None:
+    ctx = dict(versions=versions)
+
+    with open(VERSIONS_TEMPLATE) as versions_template_file:
+        versions_template: Template = Template(versions_template_file.read())
+
+    with open(VERSIONS_FILE, "w") as versions_file:
+        versions_file.write(versions_template.render(ctx))
+
+
 def main() -> None:
     print(f"Loading YAML config schema from '{CONFIG_SCHEMA_PATH}'...")
     with open(CONFIG_SCHEMA_PATH, "r") as config_schema_file:
@@ -306,6 +343,9 @@ def main() -> None:
 
     top_level_section_names: List[str] = list(config_schema.keys())
     ConfigSchemaParser.parse_schema_section(config_schema, [])
+
+    versions = set(get_version_list())
+    versions.add(REPO.active_branch.name)
 
     copy_docs_src()
 
@@ -342,10 +382,11 @@ def main() -> None:
     generate_readmes()
     generate_changelog()
     generate_modules_doc()
+    generate_versions(versions)
 
-    # TODO: Tasks pending completion -@flyte at 23/04/2021, 00:12:41
-    # Only do this if we want to change the default index to this build.
-    generate_main_index()
+    # Update the main index to redirect to this tag
+    if re.match(r"\d+\.\d+\.\d+\.", REPO.active_branch.name):
+        generate_main_index()
 
     # if env.get("CI") == "true" and not REPO_WAS_DIRTY:
     if env.get("CI") == "true":
