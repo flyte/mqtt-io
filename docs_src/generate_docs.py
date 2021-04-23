@@ -101,6 +101,7 @@ def copy_docs_src() -> None:
 
 
 def generate_main_index() -> None:
+    print(f"Generating main index to redirect to {REF_NAME}")
     index_content = f"""\
 <!DOCTYPE html>
 <html data-destination="{REF_NAME}/">
@@ -401,7 +402,7 @@ def main() -> None:
     generate_versions(versions)
 
     # Update the main index to redirect to this tag
-    if re.match(r"\d+\.\d+\.\d+\.", REF_NAME):
+    if re.match(r"\d+\.\d+\.\d+", REF_NAME):
         generate_main_index()
 
     # if env.get("CI") == "true" and not REPO_WAS_DIRTY:
