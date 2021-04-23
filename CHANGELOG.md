@@ -1,3 +1,11 @@
+v2.2.3 - 2021-04-23
+===================
+- Add docs root index to git separately
+
+v2.2.2 - 2021-04-23
+===================
+- Fix version regex for docs index generation
+
 v2.2.1 - 2021-04-23
 ===================
 - Handle tags in generate docs script.

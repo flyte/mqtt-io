@@ -88,8 +88,9 @@ def get_version_list() -> List[str]:
 
 def commit_to_gh_pages_branch() -> None:
     with gh_pages_branch():
-        print(f"Adding '{BUILD_DIR}' to git index...")
-        REPO.index.add([BUILD_DIR, MAIN_INDEX, VERSIONS_FILE])
+        for path in (BUILD_DIR, MAIN_INDEX, VERSIONS_FILE):
+            print(f"Adding '{path}' to git index...")
+            REPO.index.add([path])
         print("Committing...")
         REPO.index.commit(f"Generate {REF_NAME} docs")
         print("Pushing gh-pages branch to origin...")
