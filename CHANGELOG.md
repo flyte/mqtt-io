@@ -1,3 +1,7 @@
+v2.2.5 - 2021-04-23
+===================
+- Sort versions in docs. Use git pull properly.
+
 v2.2.4 - 2021-04-23
 ===================
 - Generate docs versions and root index to strings and write them after switching branches
