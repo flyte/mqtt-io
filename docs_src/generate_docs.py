@@ -86,8 +86,19 @@ def get_version_list() -> List[str]:
         return next(os.walk(DOCS_DIR))[1]
 
 
-def commit_to_gh_pages_branch() -> None:
+def commit_to_gh_pages_branch(
+    versions_contents: str, main_index_contents: Optional[str]
+) -> None:
     with gh_pages_branch():
+        print("Pulling gh-pages branch...")
+        REPO.git("pull")
+        print("Writing versions file...")
+        with open(VERSIONS_FILE, "w") as versions_file:
+            versions_file.write(versions_contents)
+        if main_index_contents is not None:
+            print("Writing main index file...")
+            with open(MAIN_INDEX, "w") as main_index_file:
+                main_index_file.write(main_index_contents)
         for path in (BUILD_DIR, MAIN_INDEX, VERSIONS_FILE):
             print(f"Adding '{path}' to git index...")
             REPO.index.add([path])
@@ -101,9 +112,9 @@ def copy_docs_src() -> None:
     shutil.copytree(DOCS_SRC_DIR, BUILD_DIR, dirs_exist_ok=True)
 
 
-def generate_main_index() -> None:
+def generate_main_index() -> str:
     print(f"Generating main index to redirect to {REF_NAME}")
-    index_content = f"""\
+    return f"""\
 <!DOCTYPE html>
 <html data-destination="{REF_NAME}/">
   <head>
@@ -121,8 +132,8 @@ def generate_main_index() -> None:
   </body>
 </html>
 """
-    with open(MAIN_INDEX, "w") as index_file:
-        index_file.write(index_content)
+    # with open(MAIN_INDEX, "w") as index_file:
+    #     index_file.write(index_content)
 
 
 def title_id(entry_name: str, parents: List[str]) -> str:
@@ -336,14 +347,15 @@ def generate_modules_doc() -> None:
         readme_file.write(modules_doc_template.render(ctx))
 
 
-def generate_versions(versions: Set[str]) -> None:
+def generate_versions(versions: Set[str]) -> str:
     ctx = dict(versions=versions)
 
     with open(VERSIONS_TEMPLATE) as versions_template_file:
         versions_template: Template = Template(versions_template_file.read())
 
-    with open(VERSIONS_FILE, "w") as versions_file:
-        versions_file.write(versions_template.render(ctx))
+    # with open(VERSIONS_FILE, "w") as versions_file:
+    #     versions_file.write(versions_template.render(ctx))
+    return versions_template.render(ctx)
 
 
 def main() -> None:
@@ -400,15 +412,15 @@ def main() -> None:
     generate_readmes()
     generate_changelog()
     generate_modules_doc()
-    generate_versions(versions)
+    versions_contents = generate_versions(versions)
 
     # Update the main index to redirect to this tag
+    main_index_contents = None
     if re.match(r"\d+\.\d+\.\d+", REF_NAME):
-        generate_main_index()
+        main_index_contents = generate_main_index()
 
-    # if env.get("CI") == "true" and not REPO_WAS_DIRTY:
     if env.get("CI") == "true":
-        commit_to_gh_pages_branch()
+        commit_to_gh_pages_branch(versions_contents, main_index_contents)
 
 
 if __name__ == "__main__":

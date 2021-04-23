@@ -1,3 +1,7 @@
+v2.2.4 - 2021-04-23
+===================
+- Generate docs versions and root index to strings and write them after switching branches
+
 v2.2.3 - 2021-04-23
 ===================
 - Add docs root index to git separately
