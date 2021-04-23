@@ -1,5 +1,9 @@
 - [**MQTT IO**](/)
 
+- Documentation
+
+  - [Versions](../versions.md)
+
 - Configuration
 
   - [Usage Scenarios](config/scenarios.md)
