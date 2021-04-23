@@ -46,6 +46,7 @@ jobs:
 
   generate_docs:
     name: Generate Documentation
+    concurrency: generate_docs
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
