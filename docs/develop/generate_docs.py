@@ -12,6 +12,7 @@ from os.path import join
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
+import semver
 import yaml
 from ast_to_xml import module_source
 from git import Repo
@@ -120,17 +121,32 @@ def copy_docs_src(docs_path: str) -> None:
     shutil.copytree(DOCS_SRC_DIR, docs_path, dirs_exist_ok=True)
 
 
-def generate_main_index() -> str:
-    print(f"Generating main index to redirect to {REF_NAME}")
+def sort_semver_versions(versions: Set[str]) -> List[str]:
+    semver_versions = set()
+    for v in versions:
+        try:
+            semver_versions.add(semver.VersionInfo.parse(v))
+        except ValueError:
+            continue
+    return list(map(str, sorted(list(semver_versions), reverse=True)))
+
+
+def generate_main_index(versions: Set[str]) -> str:
+    semver_versions = sort_semver_versions(versions)
+    try:
+        highest_version = semver_versions[0]
+    except IndexError:
+        highest_version = REF_NAME
+    print(f"Generating main index to redirect to {highest_version}")
     return f"""\
 <!DOCTYPE html>
-<html data-destination="{REF_NAME}/">
+<html data-destination="{highest_version}/">
   <head>
-    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={REF_NAME}/"></noscript>
+    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={highest_version}/"></noscript>
   </head>
 
   <body>
-    Redirecting to '{REF_NAME}' documentation version...
+    Redirecting to '{highest_version}' documentation version...
 
   <!-- Redirect in JavaScript with meta refresh fallback above in noscript -->
   <script>
@@ -354,7 +370,14 @@ def generate_modules_doc(docs_path: str) -> None:
 
 
 def generate_versions(versions: Set[str]) -> str:
-    ctx = dict(versions=versions)
+    release_versions = sort_semver_versions(versions)
+    other_versions = set()
+    for version in versions:
+        if version not in release_versions:
+            other_versions.add(version)
+    other_versions = sorted(list(other_versions))
+
+    ctx = dict(releases=release_versions, other_versions=other_versions)
 
     with open(VERSIONS_TEMPLATE) as versions_template_file:
         versions_template: Template = Template(versions_template_file.read())
@@ -418,11 +441,7 @@ def generate_docs(docs_path: str) -> None:
     generate_modules_doc(docs_path)
 
     versions_contents = generate_versions(versions)
-
-    # Update the main index to redirect to this tag
-    main_index_contents = None
-    if re.match(r"\d+\.\d+\.\d+", REF_NAME):
-        main_index_contents = generate_main_index()
+    main_index_contents = generate_main_index(versions)
 
     commit_to_gh_pages_branch(docs_path, versions_contents, main_index_contents)
 

@@ -1,5 +1,14 @@
 # Documentation Versions
 
-{% for ver in versions|sort %}
+## Releases
+
+{% for ver in releases %}
 - <a href="/{{ ver }}" target="_self">{{ ver }}</a>
-{% endfor %}
+{%- endfor %}
+
+## Other Versions
+
+{% for ver in other_versions %}
+- <a href="/{{ ver }}" target="_self">{{ ver }}</a>
+{%- endfor %}
+
