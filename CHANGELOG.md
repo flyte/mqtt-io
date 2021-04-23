@@ -1,3 +1,7 @@
+v2.2.1 - 2021-04-23
+===================
+- Handle tags in generate docs script.
+
 v2.2.0 - 2021-04-23
 ===================
 - Multi-versioned documentation.
