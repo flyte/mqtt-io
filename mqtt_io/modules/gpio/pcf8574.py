@@ -22,7 +22,7 @@ class GPIO(GenericGPIO):
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
         # pylint: disable=no-name-in-module
-        self.pullup_map = {PinPUD.UP: True, PinPUD.DOWN: False}
+        self.pullup_map = {PinPUD.OFF: None, PinPUD.UP: True, PinPUD.DOWN: False}
         from pcf8574 import PCF8574  # type: ignore
 
         self.io = PCF8574(self.config["i2c_bus_num"], self.config["chip_addr"])
