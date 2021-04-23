@@ -39,8 +39,22 @@ REPO = Repo(str(WORKSPACE_DIR))
 REPO_WAS_DIRTY = REPO.is_dirty()
 
 
+def head() -> Any:
+    try:
+        ret = REPO.active_branch
+    except TypeError:
+        ret = next((tag for tag in REPO.tags if tag.commit == REPO.head.commit), None)
+        if ret is None:
+            ret = REPO.head
+    return ret
+
+
+HEAD = head()
+REF_NAME = str(HEAD)
+
+
 def get_build_dir() -> str:
-    docs_dir = join(DOCS_DIR, REPO.active_branch.name)
+    docs_dir = join(DOCS_DIR, REF_NAME)
     os.makedirs(docs_dir, exist_ok=True)
     return docs_dir
 
@@ -50,7 +64,8 @@ BUILD_DIR = get_build_dir()
 
 @contextmanager
 def gh_pages_branch() -> Iterator[None]:
-    src_branch = REPO.active_branch
+    previous_head = head()
+
     if REPO_WAS_DIRTY:
         print("Stashing dirty repo...")
         REPO.git.stash()
@@ -59,8 +74,8 @@ def gh_pages_branch() -> Iterator[None]:
     try:
         yield
     finally:
-        print(f"Checking out '{src_branch.name}'...")
-        src_branch.checkout()
+        print(f"Checking out '{previous_head}'...")
+        REPO.git.checkout(REF_NAME)
         if REPO_WAS_DIRTY:
             print("Popping stashed changes...")
             REPO.git.stash("pop")
@@ -72,12 +87,11 @@ def get_version_list() -> List[str]:
 
 
 def commit_to_gh_pages_branch() -> None:
-    src_branch = REPO.active_branch
     with gh_pages_branch():
         print(f"Adding '{BUILD_DIR}' to git index...")
         REPO.index.add([BUILD_DIR, MAIN_INDEX, VERSIONS_FILE])
         print("Committing...")
-        REPO.index.commit(f"Generate {src_branch.name} docs")
+        REPO.index.commit(f"Generate {REF_NAME} docs")
         print("Pushing gh-pages branch to origin...")
         REPO.remotes.origin.push()
 
@@ -89,13 +103,13 @@ def copy_docs_src() -> None:
 def generate_main_index() -> None:
     index_content = f"""\
 <!DOCTYPE html>
-<html data-destination="{REPO.active_branch.name}/">
+<html data-destination="{REF_NAME}/">
   <head>
-    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={REPO.active_branch.name}/"></noscript>
+    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={REF_NAME}/"></noscript>
   </head>
 
   <body>
-    Redirecting to '{REPO.active_branch.name}' documentation version...
+    Redirecting to '{REF_NAME}' documentation version...
 
   <!-- Redirect in JavaScript with meta refresh fallback above in noscript -->
   <script>
@@ -217,7 +231,7 @@ def generate_readmes() -> None:
     with open(README_TEMPLATE) as readme_template_file:
         readme_template: Template = Template(readme_template_file.read())
 
-    ctx = dict(supported_hardware=module_strings, version=REPO.active_branch.name)
+    ctx = dict(supported_hardware=module_strings, version=REF_NAME)
 
     with open(join(WORKSPACE_DIR, "README.md"), "w") as readme_file:
         readme_file.write(readme_template.render(dict(**ctx, repo=True)))
@@ -264,7 +278,7 @@ def get_source(module_path: str, xpath: str, title: str) -> str:
     src, attrib = module_source(module, xpath)[0]
     url = "%s/blob/%s/%s#L%s" % (
         GITHUB_REPO,
-        REPO.active_branch.commit.hexsha,
+        HEAD.commit.hexsha,
         module_filepath.relative_to(WORKSPACE_DIR),
         attrib["lineno"],
     )
@@ -277,7 +291,7 @@ def get_source_link(module_path: str, xpath: str, title: str) -> str:
     _, attrib = module_source(module, xpath)[0]
     url = "%s/blob/%s/%s#L%s" % (
         GITHUB_REPO,
-        REPO.active_branch.commit.hexsha,
+        HEAD.commit.hexsha,
         module_filepath.relative_to(WORKSPACE_DIR),
         attrib["lineno"],
     )
@@ -347,7 +361,7 @@ def main() -> None:
     ConfigSchemaParser.parse_schema_section(config_schema, [])
 
     versions = set(get_version_list())
-    versions.add(REPO.active_branch.name)
+    versions.add(REF_NAME)
 
     copy_docs_src()
 
@@ -387,7 +401,7 @@ def main() -> None:
     generate_versions(versions)
 
     # Update the main index to redirect to this tag
-    if re.match(r"\d+\.\d+\.\d+\.", REPO.active_branch.name):
+    if re.match(r"\d+\.\d+\.\d+\.", REF_NAME):
         generate_main_index()
 
     # if env.get("CI") == "true" and not REPO_WAS_DIRTY:
