@@ -43,7 +43,7 @@ VERSIONS_FILE = join(DOCS_DIR, "versions.md")
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 REPO = Repo(str(WORKSPACE_DIR))
-REPO_WAS_DIRTY = REPO.is_dirty()
+# REPO_WAS_DIRTY = REPO.is_dirty()
 
 
 def head() -> Any:
@@ -72,8 +72,8 @@ BUILD_DIR = get_build_dir()
 @contextmanager
 def gh_pages_branch() -> Iterator[None]:
     previous_head = head()
-
-    if REPO_WAS_DIRTY:
+    repo_was_dirty = REPO.is_dirty()
+    if repo_was_dirty:
         print("Stashing dirty repo...")
         REPO.git.stash()
     print("Checking out 'gh-pages'...")
@@ -83,7 +83,7 @@ def gh_pages_branch() -> Iterator[None]:
     finally:
         print(f"Checking out '{previous_head}'...")
         REPO.git.checkout(REF_NAME)
-        if REPO_WAS_DIRTY:
+        if repo_was_dirty:
             print("Popping stashed changes...")
             REPO.git.stash("pop")
 
