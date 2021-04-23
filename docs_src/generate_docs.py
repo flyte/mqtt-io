@@ -78,6 +78,8 @@ def commit_to_gh_pages_branch() -> None:
         REPO.index.add([BUILD_DIR, MAIN_INDEX, VERSIONS_FILE])
         print("Committing...")
         REPO.index.commit(f"Generate {src_branch.name} docs")
+        print("Pushing gh-pages branch to origin...")
+        REPO.remotes.origin.push()
 
 
 def copy_docs_src() -> None:

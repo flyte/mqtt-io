@@ -1,5 +1,6 @@
-Unreleased
-==========
+v2.2.0 - 2021-04-23
+===================
+- Multi-versioned documentation.
 - Auto-reconnect to MQTT server on disconnection. #207 @fipwmaqzufheoxq92ebc
 
 v2.1.8 - 2021-04-21
