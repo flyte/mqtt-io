@@ -9,8 +9,10 @@ from contextlib import contextmanager
 from importlib import import_module
 from os import environ as env
 from os.path import join
-from typing import Any, Dict, Generator, Iterator, List, Optional, Set, Tuple
+from tempfile import TemporaryDirectory
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
+import semver
 import yaml
 from ast_to_xml import module_source
 from git import Repo
@@ -21,18 +23,23 @@ from mqtt_io.types import ConfigType
 GITHUB_REPO = "https://github.com/flyte/mqtt-io"
 
 WORKSPACE_DIR = pathlib.Path(__file__).parent.parent.absolute()
+
 CONFIG_SCHEMA_PATH = join(WORKSPACE_DIR, "mqtt_io/config/config.schema.yml")
 README_TEMPLATE = join(WORKSPACE_DIR, "README.md.j2")
 MODULES_DIR = join(WORKSPACE_DIR, "mqtt_io/modules")
 
 DOCS_SRC_DIR = join(WORKSPACE_DIR, "docs_src")
+
 DOCS_DIR = join(WORKSPACE_DIR, "docs")
+
 SIDEBAR_TEMPLATE = join(DOCS_SRC_DIR, "_sidebar.md.j2")
 CONTENT_TEMPLATE = join(DOCS_SRC_DIR, "config/reference.md.j2")
 MODULES_DOC_TEMPLATE = join(DOCS_SRC_DIR, "dev/modules/README.md.j2")
 VERSIONS_TEMPLATE = join(DOCS_SRC_DIR, "versions.md.j2")
+
 MAIN_INDEX = join(DOCS_DIR, "index.html")
 VERSIONS_FILE = join(DOCS_DIR, "versions.md")
+
 REF_ENTRIES: List[Dict[str, Any]] = []
 
 REPO = Repo(str(WORKSPACE_DIR))
@@ -87,7 +94,7 @@ def get_version_list() -> List[str]:
 
 
 def commit_to_gh_pages_branch(
-    versions_contents: str, main_index_contents: Optional[str]
+    docs_path: str, versions_contents: str, main_index_contents: Optional[str]
 ) -> None:
     with gh_pages_branch():
         print("Pulling gh-pages branch...")
@@ -99,6 +106,8 @@ def commit_to_gh_pages_branch(
             print("Writing main index file...")
             with open(MAIN_INDEX, "w") as main_index_file:
                 main_index_file.write(main_index_contents)
+        shutil.rmtree(BUILD_DIR)
+        shutil.copytree(docs_path, BUILD_DIR)
         for path in (BUILD_DIR, MAIN_INDEX, VERSIONS_FILE):
             print(f"Adding '{path}' to git index...")
             REPO.index.add([path])
@@ -108,21 +117,36 @@ def commit_to_gh_pages_branch(
         REPO.remotes.origin.push()
 
 
-def copy_docs_src() -> None:
-    shutil.copytree(DOCS_SRC_DIR, BUILD_DIR, dirs_exist_ok=True)
+def copy_docs_src(docs_path: str) -> None:
+    shutil.copytree(DOCS_SRC_DIR, docs_path, dirs_exist_ok=True)
 
 
-def generate_main_index() -> str:
-    print(f"Generating main index to redirect to {REF_NAME}")
+def sort_semver_versions(versions: Set[str]) -> List[str]:
+    semver_versions = set()
+    for v in versions:
+        try:
+            semver_versions.add(semver.VersionInfo.parse(v))
+        except ValueError:
+            continue
+    return list(map(str, sorted(list(semver_versions), reverse=True)))
+
+
+def generate_main_index(versions: Set[str]) -> str:
+    semver_versions = sort_semver_versions(versions)
+    try:
+        highest_version = semver_versions[0]
+    except IndexError:
+        highest_version = REF_NAME
+    print(f"Generating main index to redirect to {highest_version}")
     return f"""\
 <!DOCTYPE html>
-<html data-destination="{REF_NAME}/">
+<html data-destination="{highest_version}/">
   <head>
-    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={REF_NAME}/"></noscript>
+    <noscript><meta id="redirect" http-equiv="refresh" content="0; url={highest_version}/"></noscript>
   </head>
 
   <body>
-    Redirecting to '{REF_NAME}' documentation version...
+    Redirecting to '{highest_version}' documentation version...
 
   <!-- Redirect in JavaScript with meta refresh fallback above in noscript -->
   <script>
@@ -132,8 +156,6 @@ def generate_main_index() -> str:
   </body>
 </html>
 """
-    # with open(MAIN_INDEX, "w") as index_file:
-    #     index_file.write(index_content)
 
 
 def title_id(entry_name: str, parents: List[str]) -> str:
@@ -215,7 +237,7 @@ class ConfigSchemaParser:
                 ConfigSchemaParser.parse_schema_section(child_schema, children, parents)
 
 
-def generate_readmes() -> None:
+def generate_readmes(docs_path: str) -> None:
     blacklist = ("__init__", "mock", "stdio")
     modules_and_titles = (
         ("gpio", "GPIO Modules"),
@@ -249,13 +271,13 @@ def generate_readmes() -> None:
     with open(join(WORKSPACE_DIR, "README.md"), "w") as readme_file:
         readme_file.write(readme_template.render(dict(**ctx, repo=True)))
 
-    with open(join(BUILD_DIR, "README.md"), "w") as readme_file:
+    with open(join(docs_path, "README.md"), "w") as readme_file:
         readme_file.write(readme_template.render(dict(**ctx, repo=False)))
 
 
-def generate_changelog() -> None:
+def generate_changelog(docs_path: str) -> None:
     print("Copying changelog...")
-    shutil.copyfile(join(WORKSPACE_DIR, "CHANGELOG.md"), join(BUILD_DIR, "CHANGELOG.md"))
+    shutil.copyfile(join(WORKSPACE_DIR, "CHANGELOG.md"), join(docs_path, "CHANGELOG.md"))
 
 
 def document_gpio_module() -> None:
@@ -328,7 +350,7 @@ def get_sources_raw(
     return src
 
 
-def generate_modules_doc() -> None:
+def generate_modules_doc(docs_path: str) -> None:
     ctx = dict(
         source=get_source,
         source_link=get_source_link,
@@ -341,24 +363,29 @@ def generate_modules_doc() -> None:
         modules_doc_template: Template = Template(modules_doc_template_file.read())
 
     print("Generating modules doc...")
-    modules_dir = join(BUILD_DIR, "dev/modules")
+    modules_dir = join(docs_path, "dev/modules")
     os.makedirs(modules_dir, exist_ok=True)
     with open(join(modules_dir, "README.md"), "w") as readme_file:
         readme_file.write(modules_doc_template.render(ctx))
 
 
 def generate_versions(versions: Set[str]) -> str:
-    ctx = dict(versions=versions)
+    release_versions = sort_semver_versions(versions)
+    other_versions = set()
+    for version in versions:
+        if version not in release_versions:
+            other_versions.add(version)
+    other_versions = sorted(list(other_versions))
+
+    ctx = dict(releases=release_versions, other_versions=other_versions)
 
     with open(VERSIONS_TEMPLATE) as versions_template_file:
         versions_template: Template = Template(versions_template_file.read())
 
-    # with open(VERSIONS_FILE, "w") as versions_file:
-    #     versions_file.write(versions_template.render(ctx))
     return versions_template.render(ctx)
 
 
-def main() -> None:
+def generate_docs(docs_path: str) -> None:
     print(f"Loading YAML config schema from '{CONFIG_SCHEMA_PATH}'...")
     with open(CONFIG_SCHEMA_PATH, "r") as config_schema_file:
         config_schema: ConfigType = yaml.safe_load(config_schema_file)
@@ -377,9 +404,9 @@ def main() -> None:
     versions = set(get_version_list())
     versions.add(REF_NAME)
 
-    copy_docs_src()
+    copy_docs_src(docs_path)
 
-    main_sidebar_path = join(BUILD_DIR, "_sidebar.md")
+    main_sidebar_path = join(docs_path, "_sidebar.md")
     print(f"Writing main sidebar file '{main_sidebar_path}'...")
     with open(main_sidebar_path, "w") as main_sidebar_file:
         main_sidebar_file.write(
@@ -389,7 +416,7 @@ def main() -> None:
         )
 
     for tl_section in top_level_section_names:
-        section_path = join(BUILD_DIR, f"config/reference/{tl_section}")
+        section_path = join(docs_path, f"config/reference/{tl_section}")
         md_path = join(section_path, "README.md")
 
         print(f"Making directory (if not exists) '{section_path}'...")
@@ -403,24 +430,25 @@ def main() -> None:
                 )
             )
 
-    json_schema_path = join(BUILD_DIR, "schema.json")
+    json_schema_path = join(docs_path, "schema.json")
     print(f"Making JSON config schema file '{json_schema_path}'...")
     with open(json_schema_path, "w") as json_schema_file:
         json.dump(config_schema, json_schema_file, indent=2)
 
     # generate_module_docs()
-    generate_readmes()
-    generate_changelog()
-    generate_modules_doc()
+    generate_readmes(docs_path)
+    generate_changelog(docs_path)
+    generate_modules_doc(docs_path)
+
     versions_contents = generate_versions(versions)
+    main_index_contents = generate_main_index(versions)
 
-    # Update the main index to redirect to this tag
-    main_index_contents = None
-    if re.match(r"\d+\.\d+\.\d+", REF_NAME):
-        main_index_contents = generate_main_index()
+    commit_to_gh_pages_branch(docs_path, versions_contents, main_index_contents)
 
-    if env.get("CI") == "true":
-        commit_to_gh_pages_branch(versions_contents, main_index_contents)
+
+def main() -> None:
+    with TemporaryDirectory() as tempdir:
+        generate_docs(tempdir)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,7 @@
+v2.2.6 - 2021-04-23
+===================
+- Create docs in a tempdir to stop them from being clobbered when changing branches.
+
 v2.2.5 - 2021-04-23
 ===================
 - Sort versions in docs. Use git pull properly.
