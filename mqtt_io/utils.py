@@ -2,7 +2,9 @@
 Utils for MQTT IO project.
 """
 import asyncio
-from typing import Any, Coroutine, List, Optional, cast
+from typing import Any, Coroutine, Optional, cast
+
+from mqtt_io.tasks import TransientTaskManager
 
 
 class PriorityCoro:
@@ -23,7 +25,7 @@ class PriorityCoro:
 
 def create_unawaited_task_threadsafe(
     loop: asyncio.AbstractEventLoop,
-    transient_tasks: List["asyncio.Task[Any]"],
+    transient_tasks: "TransientTaskManager",
     coro: Coroutine[Any, Any, None],
     task_future: Optional["asyncio.Future[asyncio.Task[Any]]"] = None,
 ) -> None:
@@ -33,7 +35,7 @@ def create_unawaited_task_threadsafe(
 
     def callback() -> None:
         task = loop.create_task(coro)
-        transient_tasks.append(task)
+        transient_tasks.add_task(task)
         if task_future is not None:
             task_future.set_result(task)
 

@@ -69,6 +69,7 @@ from .mqtt import (
     MQTTTLSOptions,
     MQTTWill,
 )
+from .tasks import TransientTaskManager
 from .types import ConfigType, PinType, SensorValueType
 from .utils import PriorityCoro, create_unawaited_task_threadsafe
 
@@ -178,9 +179,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.loop = loop or asyncio.get_event_loop()
         self._main_task: Optional["asyncio.Task[None]"] = None
         self.critical_tasks: List["asyncio.Task[Any]"] = []
-        self.transient_tasks: List["asyncio.Task[Any]"] = []
 
-        self.event_bus = EventBus(self.loop, self.transient_tasks)
+        self._transient_task_queue: "TransientTaskManager" = TransientTaskManager()
+
+        self.event_bus = EventBus(self.loop, self._transient_task_queue)
         self.mqtt: Optional[AbstractMQTTClient] = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
 
@@ -296,7 +298,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
             self.stream_modules[stream_conf["name"]] = stream_module
 
-            self.transient_tasks.append(
+            self._transient_task_queue.add_task(
                 self.loop.create_task(self.stream_poller(stream_module, stream_conf))
             )
 
@@ -312,7 +314,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.loop.run_until_complete(create_stream_output_queue())
 
             # Queue a stream output loop task
-            self.transient_tasks.append(
+            self._transient_task_queue.add_task(
                 self.loop.create_task(
                     # Use partial to avoid late binding closure
                     partial(
@@ -394,7 +396,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             if interrupt is None or (
                 interrupt_for and in_conf["poll_when_interrupt_for"]
             ):
-                self.transient_tasks.append(
+                self._transient_task_queue.add_task(
                     self.loop.create_task(
                         partial(self.digital_input_poller, gpio_module, in_conf)()
                     )
@@ -467,7 +469,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 self.loop.run_until_complete(create_digital_output_queue())
 
                 # Use partial to avoid late binding closure
-                self.transient_tasks.append(
+                self._transient_task_queue.add_task(
                     self.loop.create_task(
                         partial(
                             self.digital_output_loop,
@@ -572,7 +574,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
                     await asyncio.sleep(sens_conf["interval"])
 
-            self.transient_tasks.append(self.loop.create_task(poll_sensor()))
+            self._transient_task_queue.add_task(self.loop.create_task(poll_sensor()))
 
     async def _connect_mqtt(self) -> None:
         config: ConfigType = self.config["mqtt"]
@@ -882,7 +884,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 interrupt_lock.release()
 
         create_unawaited_task_threadsafe(
-            self.loop, self.transient_tasks, await_remote_interrupts()
+            self.loop, self._transient_task_queue, await_remote_interrupts()
         )
 
     async def _handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
@@ -980,7 +982,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 await self.set_digital_output(module, out_conf, not desired_value)
 
             task = self.loop.create_task(set_ms())
-            self.transient_tasks.append(task)
+            self._transient_task_queue.add_task(task)
 
     async def _handle_stream_send_msg(self, topic: str, payload: bytes) -> None:
         try:
@@ -1062,22 +1064,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             await self._handle_mqtt_msg(msg.topic, msg.payload)
 
     async def _remove_finished_transient_tasks(self) -> None:
-        while True:
-            await asyncio.sleep(1)
-            finished_tasks = [x for x in self.transient_tasks if x.done()]
-            if not finished_tasks:
-                continue
-            results = await asyncio.gather(*finished_tasks, return_exceptions=True)
-            for i, exception in [
-                x for x in enumerate(results) if isinstance(x[1], Exception)
-            ]:
-                task = finished_tasks[i]
-                try:
-                    raise exception
-                except Exception:  # pylint: disable=broad-except
-                    _LOG.exception("Exception in task: %r:", task)
-                finally:
-                    self.transient_tasks.remove(task)
+        await self._transient_task_queue.loop()
 
     async def digital_output_loop(
         self, module: GenericGPIO, queue: "asyncio.Queue[Tuple[ConfigType, str]]"
@@ -1128,7 +1115,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 await self.set_digital_output(module, out_conf, not value)
 
             task = self.loop.create_task(reset_timer())
-            self.transient_tasks.append(task)
+            self._transient_task_queue.add_task(task)
 
     async def stream_output_loop(
         self,
@@ -1255,8 +1242,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         Shut down all of the tasks involved in running the server.
         """
+
         # Cancel our tasks
-        our_tasks: List["asyncio.Task[Any]"] = self.critical_tasks + self.transient_tasks
+        our_tasks: List["asyncio.Task[Any]"] = self.critical_tasks
         for task in our_tasks:
             task.cancel()
 
@@ -1294,3 +1282,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             _LOG.info("Disconnecting from MQTT...")
             await self.mqtt.disconnect()
             _LOG.info("MQTT disconnected")
+
+    @property
+    def transient_tasks(self):
+        return self._transient_task_queue.tasks

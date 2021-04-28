@@ -8,6 +8,7 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Type
 
+from .tasks import TransientTaskManager
 from .utils import create_unawaited_task_threadsafe
 
 _LOG = logging.getLogger(__name__)
@@ -83,7 +84,7 @@ class EventBus:
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
-        transient_tasks: List["asyncio.Task[Any]"],
+        transient_tasks: "TransientTaskManager",
     ):
         self._loop = loop
         self._transient_tasks = transient_tasks
