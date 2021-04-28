@@ -1,5 +1,7 @@
 import asyncio
-from typing import Any
+import sys
+from asyncio import AbstractEventLoop, Task
+from typing import Any, Optional, Set
 
 from behave import given, then, when  # type: ignore
 from behave.api.async_step import async_run_until_complete  # type: ignore
@@ -11,6 +13,24 @@ from mqtt_io.server import MqttIo
 
 # TODO: Tasks pending completion -@flyte at 22/02/2021, 16:56:52
 # Add a test to go through all of the modules in the gpio dir and test them for compliance
+
+
+def all_tasks(loop: Optional[AbstractEventLoop]) -> "Set[Task[Any]]":
+    """
+    Return a set of all tasks for the loop.
+
+    Wrapper around asyncio.Task.all_tasks or asyncio.all_tasks depending on version
+
+    TODO: Remove/inline function if only >=3.7 is supported.
+
+    asyncio.Task.all_tasks is deprecated since 3.7 (and removed in 3.9),
+    but the alternative asyncio.all_tasks is only available in 3.7.
+    Currently, mqtt-io also supports 3.6
+    """
+    if sys.version_info >= (3, 7):
+        return asyncio.all_tasks(loop)
+    else:
+        return asyncio.Task.all_tasks(loop)
 
 
 def get_coro(task: "asyncio.Task[Any]") -> Any:
@@ -102,7 +122,7 @@ def step(context: Any, is_isnt: str, pin_name: str):
 
     poller_task_pin_names = {
         get_coro(task).cr_frame.f_locals["in_conf"]["name"]
-        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        for task in all_tasks(loop=mqttio.loop)
         if get_coro(task).__name__ == "digital_input_poller"
     }
     if is_isnt == "is":
@@ -137,7 +157,7 @@ def step(context: Any, is_isnt: str, module_name: str):
 
     task_modules = {
         get_coro(task).cr_frame.f_locals["module"]
-        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        for task in all_tasks(loop=mqttio.loop)
         if get_coro(task).__name__ == "digital_output_loop"
     }
     if is_isnt == "is":
