@@ -258,6 +258,26 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 sens_config, "sensor", self.config["options"]["install_requirements"]
             )
 
+    def new_publish_task(self, name, retain, data, typ):
+        self.mqtt_task_queue.put_nowait(
+            PriorityCoro(
+                self._mqtt_publish(
+                    MQTTMessageSend(
+                        "/".join(
+                            (
+                                self.config["mqtt"]["topic_prefix"],
+                                typ,
+                                name,
+                            )
+                        ),
+                        data,
+                        retain=retain,
+                    )
+                ),
+                MQTT_PUB_PRIORITY,
+            )
+        )
+
     def _init_stream_modules(self) -> None:
         """
         Initialise Stream modules.
@@ -268,24 +288,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
             stream_conf = self.stream_configs[event.stream_name]
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(
-                    self._mqtt_publish(
-                        MQTTMessageSend(
-                            "/".join(
-                                (
-                                    self.config["mqtt"]["topic_prefix"],
-                                    STREAM_TOPIC,
-                                    stream_conf["name"],
-                                )
-                            ),
-                            event.data,
-                            retain=stream_conf["retain"],
-                        )
-                    ),
-                    MQTT_PUB_PRIORITY,
-                )
-            )
+            self.new_publish_task(stream_conf["name"], event.data, stream_conf["retain"], STREAM_TOPIC)
 
         self.event_bus.subscribe(StreamDataReadEvent, publish_stream_data_callback)
 
@@ -360,24 +363,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             in_conf = self.digital_input_configs[event.input_name]
             value = event.to_value != in_conf["inverted"]
             val = in_conf["on_payload"] if value else in_conf["off_payload"]
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(
-                    self._mqtt_publish(
-                        MQTTMessageSend(
-                            "/".join(
-                                (
-                                    self.config["mqtt"]["topic_prefix"],
-                                    INPUT_TOPIC,
-                                    event.input_name,
-                                )
-                            ),
-                            val.encode("utf8"),
-                            retain=in_conf["retain"],
-                        )
-                    ),
-                    MQTT_PUB_PRIORITY,
-                )
-            )
+            self.new_publish_task(event.input_name, in_conf["retain"], val.encode("utf8"), INPUT_TOPIC)
 
         self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
 
@@ -426,24 +412,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(
-                    self._mqtt_publish(
-                        MQTTMessageSend(
-                            "/".join(
-                                (
-                                    self.config["mqtt"]["topic_prefix"],
-                                    "output",
-                                    event.output_name,
-                                )
-                            ),
-                            val.encode("utf8"),
-                            retain=out_conf["retain"],
-                        )
-                    ),
-                    MQTT_PUB_PRIORITY,
-                )
-            )
+            self.new_publish_task(event.output_name, out_conf["retain"], val.encode('utf8'), "output")
 
         self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
 
@@ -510,24 +479,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
             sens_conf = self.sensor_input_configs[event.sensor_name]
             digits: int = sens_conf["digits"]
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(
-                    self._mqtt_publish(
-                        MQTTMessageSend(
-                            "/".join(
-                                (
-                                    self.config["mqtt"]["topic_prefix"],
-                                    SENSOR_TOPIC,
-                                    event.sensor_name,
-                                )
-                            ),
-                            f"{event.value:.{digits}f}".encode("utf8"),
-                            retain=sens_conf["retain"],
-                        )
-                    ),
-                    MQTT_PUB_PRIORITY,
-                )
-            )
+            self.new_publish_task(event.sensor_name, sens_conf["retain"], f"{event.value:.{digits}f}".encode("utf8"), SENSOR_TOPIC)
 
         self.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
 
