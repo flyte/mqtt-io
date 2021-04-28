@@ -607,20 +607,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         if self.mqtt is None:
             raise RuntimeError("MQTT client was None when trying to publish.")
 
-        if msg.payload is None:
-            _LOG.debug("Publishing MQTT message on topic %r with no payload", msg.topic)
-        else:
-            try:
-                payload_str = msg.payload.decode("utf8")
-            except UnicodeDecodeError:
-                _LOG.debug(
-                    "Publishing MQTT message on topic %r with non-unicode payload",
-                    msg.topic,
-                )
-            else:
-                _LOG.debug(
-                    "Publishing MQTT message on topic %r: %r", msg.topic, payload_str
-                )
+        msg.debug()
 
         await self.mqtt.publish(msg)
 
