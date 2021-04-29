@@ -25,7 +25,7 @@ class PriorityCoro:
 
 def create_unawaited_task_threadsafe(
     loop: asyncio.AbstractEventLoop,
-    transient_tasks: "TransientTaskManager",
+    transient_tasks: TransientTaskManager,
     coro: Coroutine[Any, Any, None],
     task_future: Optional["asyncio.Future[asyncio.Task[Any]]"] = None,
 ) -> None:

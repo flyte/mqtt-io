@@ -84,7 +84,7 @@ class EventBus:
     def __init__(
         self,
         loop: asyncio.AbstractEventLoop,
-        transient_tasks: "TransientTaskManager",
+        transient_tasks: TransientTaskManager,
     ):
         self._loop = loop
         self._transient_tasks = transient_tasks

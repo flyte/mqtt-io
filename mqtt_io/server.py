@@ -258,7 +258,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 sens_config, "sensor", self.config["options"]["install_requirements"]
             )
 
-    def new_publish_task(self, name, retain, data, typ):
+    def new_publish_task(self, name: str, retain: bool, data: Any, typ: str) -> None:
+        """
+        Puts a new Task to publish a message in the mqtt_task_queue
+        """
         self.mqtt_task_queue.put_nowait(
             PriorityCoro(
                 self._mqtt_publish(
@@ -288,7 +291,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
             stream_conf = self.stream_configs[event.stream_name]
-            self.new_publish_task(stream_conf["name"], event.data, stream_conf["retain"], STREAM_TOPIC)
+            self.new_publish_task(
+                stream_conf["name"], stream_conf["retain"], event.data, STREAM_TOPIC
+            )
 
         self.event_bus.subscribe(StreamDataReadEvent, publish_stream_data_callback)
 
@@ -363,7 +368,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             in_conf = self.digital_input_configs[event.input_name]
             value = event.to_value != in_conf["inverted"]
             val = in_conf["on_payload"] if value else in_conf["off_payload"]
-            self.new_publish_task(event.input_name, in_conf["retain"], val.encode("utf8"), INPUT_TOPIC)
+            self.new_publish_task(
+                event.input_name, in_conf["retain"], val.encode("utf8"), INPUT_TOPIC
+            )
 
         self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
 
@@ -412,7 +419,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
-            self.new_publish_task(event.output_name, out_conf["retain"], val.encode('utf8'), "output")
+            self.new_publish_task(
+                event.output_name, out_conf["retain"], val.encode('utf8'), "output"
+            )
 
         self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
 
@@ -479,7 +488,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
             sens_conf = self.sensor_input_configs[event.sensor_name]
             digits: int = sens_conf["digits"]
-            self.new_publish_task(event.sensor_name, sens_conf["retain"], f"{event.value:.{digits}f}".encode("utf8"), SENSOR_TOPIC)
+            self.new_publish_task(
+                event.sensor_name, sens_conf["retain"],
+                f"{event.value:.{digits}f}".encode("utf8"),
+                SENSOR_TOPIC
+            )
 
         self.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
 
@@ -1223,5 +1236,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             _LOG.info("MQTT disconnected")
 
     @property
-    def transient_tasks(self):
+    def transient_tasks(self) -> List["asyncio.Task[Any]"]:
+        """
+        A list of running transient tasks.
+        """
         return self._transient_task_queue.tasks
