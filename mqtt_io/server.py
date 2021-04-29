@@ -330,6 +330,14 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         await self.transient_task_queue.loop()
 
     async def _main_loop(self) -> None:
+        self._task_loop = self.loop.create_task(self._remove_finished_transient_tasks())
+        self._connection_loop_task = self.loop.create_task(self._connection_loop())
+        await asyncio.gather(
+            self._task_loop,
+            self._connection_loop_task
+        )
+
+    async def _connection_loop(self) -> None:
         reconnect = True
         reconnect_delay = self.config["mqtt"]["reconnect_delay"]
         reconnects_remaining = self.config["mqtt"]["reconnect_count"]
@@ -342,7 +350,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     for coro in (
                         self._mqtt_task_loop(),
                         self._mqtt_rx_loop(),
-                        self._remove_finished_transient_tasks(),
                     )
                 ]
 
@@ -427,7 +434,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         Shut down all of the tasks involved in running the server.
         """
-
+        self._task_loop.cancel()
+        try:
+            await self._task_loop
+        except asyncio.CancelledError:
+            pass
         # Cancel our tasks
         our_tasks: List["asyncio.Task[Any]"] = self.critical_tasks
         for task in our_tasks:
