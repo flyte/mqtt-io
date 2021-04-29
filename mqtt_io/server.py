@@ -332,6 +332,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     async def _main_loop(self) -> None:
         reconnect = True
         reconnect_delay = self.config["mqtt"]["reconnect_delay"]
+        reconnects_remaining = self.config["mqtt"]["reconnect_count"]
         while reconnect:
             try:
                 await self._connect_mqtt()
@@ -354,6 +355,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     await asyncio.gather(*self.critical_tasks)
                 except asyncio.CancelledError:
                     break
+                except MQTTException:
+                    raise
                 except Exception:  # pylint: disable=broad-except
                     _LOG.exception("Exception in critical task:")
             except asyncio.CancelledError:
