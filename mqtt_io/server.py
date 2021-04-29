@@ -86,8 +86,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.mqtt_task_queue: "asyncio.PriorityQueue[PriorityCoro]"
         self.mqtt_connected: asyncio.Event
 
-        self._task_loop: "asyncio.Task[Any]"
-        self._connection_loop_task: "asyncio.Task[Any]"
+        self._task_loop: Optional["asyncio.Task[Any]"] = None
+        self._connection_loop_task: Optional["asyncio.Task[Any]"] = None
 
         async def create_loop_resources() -> None:
             """
@@ -440,13 +440,13 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             task.cancel()
             # let the transient task manager handle the await
             self.transient_task_queue.add_task(task)
-
-        self._task_loop.cancel()
-        _LOG.info("Waiting for our tasks to complete...")
-        try:
-            await self._task_loop
-        except asyncio.CancelledError:
-            pass
+        if self._task_loop:
+            self._task_loop.cancel()
+            _LOG.info("Waiting for our tasks to complete...")
+            try:
+                await self._task_loop
+            except asyncio.CancelledError:
+                pass
 
         # Close any remaining unscheduled mqtt coroutines
         while True:
