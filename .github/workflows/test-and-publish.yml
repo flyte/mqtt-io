@@ -2,13 +2,14 @@ name: MQTT IO CI
 on:
   - push
   - pull_request
+  - release
 jobs:
   test:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-      
+
     steps:
       - uses: actions/checkout@v2
       - name: Setup Python ${{ matrix.python-version }}
@@ -26,7 +27,8 @@ jobs:
       - name: Test with behave
         run: poetry run behave -t ~skip mqtt_io/tests/features
   publish:
-    name: Publish to PyPI if tagged
+    name: Publish to PyPI
+    if: github.event_name == "release" && github.event.action == "created"
     runs-on: ubuntu-20.04
     needs: test
     steps:
@@ -40,12 +42,13 @@ jobs:
         run: poetry build
       - name: Publish packages
         uses: pypa/gh-action-pypi-publish@master
-        if: startsWith(github.ref, 'refs/tags')
+        # if: startsWith(github.ref, 'refs/tags')
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   generate_docs:
     name: Generate Documentation
+    if: github.event_name == "push"
     concurrency: generate_docs
     runs-on: ubuntu-20.04
     steps:
