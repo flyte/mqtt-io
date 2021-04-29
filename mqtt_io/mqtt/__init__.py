@@ -3,11 +3,15 @@ Abstraction layer for MQTT clients to enable easier switching out.
 """
 import abc
 import asyncio
+import logging
 import ssl
 from dataclasses import dataclass
 from enum import Enum, auto
 from importlib import import_module
 from typing import List, Optional, Tuple, Type
+
+
+_LOG = logging.getLogger(__name__)
 
 
 class MQTTProtocol(Enum):
@@ -38,6 +42,25 @@ class MQTTMessageSend(MQTTMessage):
 
     qos: int = 0
     retain: bool = False
+
+    def debug(self) -> None:
+        """
+        Simple helper to log some debug info about this message
+        """
+        if self.payload is None:
+            _LOG.debug("Publishing MQTT message on topic %r with no payload", self.topic)
+        else:
+            try:
+                payload_str = self.payload.decode("utf8")
+            except UnicodeDecodeError:
+                _LOG.debug(
+                    "Publishing MQTT message on topic %r with non-unicode payload",
+                    self.topic,
+                )
+            else:
+                _LOG.debug(
+                    "Publishing MQTT message on topic %r: %r", self.topic, payload_str
+                )
 
 
 @dataclass

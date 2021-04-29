@@ -1,5 +1,7 @@
 import asyncio
-from typing import Any
+import sys
+from asyncio import AbstractEventLoop, Task
+from typing import Any, Optional, Set
 
 from behave import given, then, when  # type: ignore
 from behave.api.async_step import async_run_until_complete  # type: ignore
@@ -11,6 +13,24 @@ from mqtt_io.server import MqttIo
 
 # TODO: Tasks pending completion -@flyte at 22/02/2021, 16:56:52
 # Add a test to go through all of the modules in the gpio dir and test them for compliance
+
+
+def all_tasks(loop: Optional[AbstractEventLoop]) -> "Set[Task[Any]]":
+    """
+    Return a set of all tasks for the loop.
+
+    Wrapper around asyncio.Task.all_tasks or asyncio.all_tasks depending on version
+
+    TODO: Remove/inline function if only >=3.7 is supported.
+
+    asyncio.Task.all_tasks is deprecated since 3.7 (and removed in 3.9),
+    but the alternative asyncio.all_tasks is only available in 3.7.
+    Currently, mqtt-io also supports 3.6
+    """
+    if sys.version_info >= (3, 7):
+        return asyncio.all_tasks(loop)
+    else:
+        return asyncio.Task.all_tasks(loop)
 
 
 def get_coro(task: "asyncio.Task[Any]") -> Any:
@@ -28,14 +48,14 @@ def get_coro(task: "asyncio.Task[Any]") -> Any:
 @then("GPIO module {module_name} should have a pin config for {pin_name}")
 def step(context: Any, module_name: str, pin_name: str) -> None:
     mqttio = context.data["mqttio"]
-    module = mqttio.gpio_modules[module_name]
+    module = mqttio.gpio.gpio_modules[module_name]
     assert pin_name in {x["name"] for x in module.pin_configs.values()}
 
 
 @then("GPIO module {module_name} should have a setup_pin() call for {pin_name}")  # type: ignore[no-redef]
 def step(context: Any, module_name: str, pin_name: str) -> None:
     mqttio = context.data["mqttio"]
-    module = mqttio.gpio_modules[module_name]
+    module = mqttio.gpio.gpio_modules[module_name]
     call_pin_names = {
         kwargs["pin_config"]["name"] for _, kwargs in module.setup_pin.call_args_list
     }
@@ -46,8 +66,8 @@ def step(context: Any, module_name: str, pin_name: str) -> None:
 def step(context: Any, pin_name: str, io_dir: str) -> None:
     assert io_dir in ("input", "output")
     mqttio = context.data["mqttio"]
-    io_conf = getattr(mqttio, f"digital_{io_dir}_configs")[pin_name]
-    module = mqttio.gpio_modules[io_conf["module"]]
+    io_conf = getattr(mqttio.gpio, f"digital_{io_dir}_configs")[pin_name]
+    module = mqttio.gpio.gpio_modules[io_conf["module"]]
     pin_dirs = {
         kwargs["pin_config"]["name"]: args[1]
         for args, kwargs in module.setup_pin.call_args_list
@@ -68,7 +88,7 @@ def step(
 ) -> None:
     assert should_shouldnt in ("should", "shouldn't")
     mqttio = context.data["mqttio"]
-    module = mqttio.gpio_modules[module_name]
+    module = mqttio.gpio.gpio_modules[module_name]
     relevant_call_args = None
     for call_args, _ in getattr(module, setup_func_name).call_args_list:  # type: ignore[attr-defined]
         if call_args[2]["name"] == pin_name:
@@ -102,7 +122,7 @@ def step(context: Any, is_isnt: str, pin_name: str):
 
     poller_task_pin_names = {
         get_coro(task).cr_frame.f_locals["in_conf"]["name"]
-        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        for task in all_tasks(loop=mqttio.loop)
         if get_coro(task).__name__ == "digital_input_poller"
     }
     if is_isnt == "is":
@@ -119,7 +139,7 @@ def step(context: Any, is_isnt: str, pin_name: str):
 def step(context: Any, is_isnt: str, module_name: str):
     assert is_isnt in ("is", "isn't")
     mqttio = context.data["mqttio"]
-    module = mqttio.gpio_modules[module_name]
+    module = mqttio.gpio.gpio_modules[module_name]
     task_modules = {
         get_coro(task).cr_frame.f_locals["module"]
         for task in mqttio.transient_tasks
@@ -137,7 +157,7 @@ def step(context: Any, is_isnt: str, module_name: str):
 
     task_modules = {
         get_coro(task).cr_frame.f_locals["module"]
-        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        for task in all_tasks(loop=mqttio.loop)
         if get_coro(task).__name__ == "digital_output_loop"
     }
     if is_isnt == "is":
@@ -154,8 +174,8 @@ def step(context: Any, is_isnt: str, module_name: str):
 def step(context: Any, pin_name: str, should_shouldnt: str):
     assert should_shouldnt in ("should", "shouldn't")
     mqttio = context.data["mqttio"]
-    in_conf = mqttio.digital_input_configs[pin_name]
-    module = mqttio.gpio_modules[in_conf["module"]]
+    in_conf = mqttio.gpio.digital_input_configs[pin_name]
+    module = mqttio.gpio.gpio_modules[in_conf["module"]]
     is_remote_interrupt = module.remote_interrupt_for(in_conf["pin"])
     if should_shouldnt == "should":
         assert is_remote_interrupt
@@ -166,8 +186,8 @@ def step(context: Any, pin_name: str, should_shouldnt: str):
 @then("{pin_name} should be configured as a {direction_str} interrupt")  # type: ignore[no-redef]
 def step(context: Any, pin_name: str, direction_str: str):
     mqttio = context.data["mqttio"]
-    in_conf = mqttio.digital_input_configs[pin_name]
-    module = mqttio.gpio_modules[in_conf["module"]]
+    in_conf = mqttio.gpio.digital_input_configs[pin_name]
+    module = mqttio.gpio.gpio_modules[in_conf["module"]]
     direction = module.interrupt_edges[in_conf["pin"]]
     assert direction == getattr(InterruptEdge, direction_str.upper())
 
@@ -179,10 +199,10 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
     assert last_value_str in ("null", "true", "false")
     value_map = dict(true=True, false=False, null=None)
     mqttio: MqttIo = context.data["mqttio"]
-    in_conf = mqttio.digital_input_configs[pin_name]
+    in_conf = mqttio.gpio.digital_input_configs[pin_name]
     value = value_map[value_str]
     last_value = value_map[last_value_str]
-    await mqttio._handle_digital_input_value(in_conf, value, last_value)
+    await mqttio.gpio._handle_digital_input_value(in_conf, value, last_value)
 
 
 @when("we set digital output {pin_name} to {on_off}")  # type: ignore[no-redef]
@@ -190,6 +210,6 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
 async def step(context: Any, pin_name: str, on_off: str) -> None:
     assert on_off in ("on", "off")
     mqttio: MqttIo = context.data["mqttio"]
-    out_conf = mqttio.digital_output_configs[pin_name]
-    module = mqttio.gpio_modules[out_conf["module"]]
-    await mqttio.set_digital_output(module, out_conf, on_off == "on")
+    out_conf = mqttio.gpio.digital_output_configs[pin_name]
+    module = mqttio.gpio.gpio_modules[out_conf["module"]]
+    await mqttio.gpio.set_digital_output(module, out_conf, on_off == "on")

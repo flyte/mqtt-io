@@ -16,7 +16,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         When we validate the main config
         And we instantiate MqttIo
         And we initialise GPIO modules
-        Then GPIO module mock should be initialised
+        Then gpio module mock should be initialised
         And GPIO module mock should have 1 call(s) to setup_module
         And GPIO config mock should contain
             """

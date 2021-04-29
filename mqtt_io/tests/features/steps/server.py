@@ -6,8 +6,9 @@ from unittest.mock import Mock
 import yaml
 from behave import given, then, when  # type: ignore
 from behave.api.async_step import async_run_until_complete  # type: ignore
+
 from mqtt_io.exceptions import ConfigValidationFailed
-from mqtt_io.mqtt import MQTTMessage, MQTTMessageSend
+from mqtt_io.mqtt import MQTTMessageSend
 from mqtt_io.server import MqttIo
 
 try:
@@ -32,19 +33,31 @@ def step(context: Any, target: str) -> None:
         context.data["validation_error"] = exc
 
 
-@when("we mock {method_name} on MqttIo")  # type: ignore[no-redef]
-def step(context: Any, method_name: str) -> None:
+@when("we mock {method_name} on {mod}")  # type: ignore[no-redef]
+def step(context: Any, method_name: str, mod: str) -> None:
+
     mqttio: MqttIo = context.data["mqttio"]
-    mock = AsyncMock() if iscoroutinefunction(getattr(mqttio, method_name)) else Mock()
+    if mod == 'MqttIo':
+        obj = mqttio
+    elif mod == 'GPIOIo':
+        obj = mqttio.gpio
+    elif mod == 'SensorIo':
+        obj = mqttio.sensor
+    elif mod == 'StreamIo':
+        obj = mqttio.stream
+    else:
+        raise ValueError('Invalid module')
+
+    mock = AsyncMock() if iscoroutinefunction(getattr(obj, method_name)) else Mock()
     context.data["mocks"][f"mqttio.{method_name}"] = mock
-    setattr(mqttio, method_name, mock)
+    setattr(obj, method_name, mock)
 
 
 @when("we {lock_unlock} interrupt lock for {pin_name}")  # type: ignore[no-redef]
 def step(context: Any, lock_unlock: str, pin_name: str) -> None:
     assert lock_unlock in ("lock", "unlock")
     mqttio: MqttIo = context.data["mqttio"]
-    lock = mqttio.interrupt_locks[pin_name]
+    lock = mqttio.gpio.interrupt_locks[pin_name]
     locked = lock.locked()
     if lock_unlock == "lock":
         assert not locked, "Can't lock an already locked lock"
@@ -64,7 +77,7 @@ async def step(context: Any):
 def step(context: Any, locked_unlocked: str, pin_name: str) -> None:
     assert locked_unlocked in ("locked", "unlocked")
     mqttio: MqttIo = context.data["mqttio"]
-    lock = mqttio.interrupt_locks[pin_name]
+    lock = mqttio.gpio.interrupt_locks[pin_name]
     locked = lock.locked()
     assert locked if locked_unlocked == "locked" else not locked
 
@@ -115,23 +128,37 @@ def step(context: Any, method_name: str, should_shouldnt: str):
         mock.assert_not_called()
 
 
-@then("{module} module {name} should be initialised")  # type: ignore[no-redef]
-def step(context: Any, module: str, name: str) -> None:
+@then("gpio module {name} should be initialised") # type: ignore[no-redef]
+def step(context: Any, name: str) -> None:
     mqttio = context.data["mqttio"]
-    assert name in getattr(mqttio, f"{module.lower()}_modules")
+    assert name in getattr(mqttio.gpio, f"gpio_modules")
+
+
+@then("sensor module {name} should be initialised") # type: ignore[no-redef]
+def step(context: Any, name: str) -> None:
+    mqttio = context.data["mqttio"]
+    assert name in getattr(mqttio.sensor, f"sensor_modules")
 
 
 @then("{module} module {name} should have {count:d} call(s) to {attribute}")  # type: ignore[no-redef]
 def step(context: Any, module: str, name: str, count: int, attribute: str) -> None:
     mqttio = context.data["mqttio"]
-    module = getattr(mqttio, f"{module.lower()}_modules")[name]
+    module = getattr(getattr(mqttio, f"{module.lower()}"), f"{module.lower()}_modules")[name]
     assert getattr(module, attribute).call_count == count
 
 
 @then("{target} config {name} should exist")  # type: ignore[no-redef]
 def step(context: Any, target: str, name: str) -> None:
     mqttio = context.data["mqttio"]
-    assert getattr(mqttio, f"{target.lower().replace(' ', '_')}_configs")[name]
+    attr_name = f"{target.lower().replace(' ', '_')}_configs"
+    assert getattr(
+        mqttio, attr_name,
+        getattr(
+            mqttio.gpio, attr_name, getattr(
+                mqttio.sensor, attr_name, getattr(mqttio.stream, attr_name, None)
+            )
+        )
+    )[name]
 
 
 @then("{target} config {name} should contain")  # type: ignore[no-redef]
@@ -141,7 +168,10 @@ def step(context: Any, target: str, name: str) -> None:
         data, dict
     ), "Data passed to this step should be a YAML formatted dict"
     mqttio = context.data["mqttio"]
-    target_config = getattr(mqttio, f"{target.lower().replace(' ', '_')}_configs")[name]
+    target_config = getattr(
+        getattr(mqttio, f"{target.lower().replace(' ', '_')}"),
+        f"{target.lower().replace(' ', '_')}_configs"
+    )[name]
     for key, value in data.items():
         assert target_config[key] == value
 
@@ -152,8 +182,8 @@ def step(context: Any, module_name: str, should_shouldnt: str) -> None:
     mqttio = context.data["mqttio"]
     test = all(
         (
-            "mock" in mqttio.gpio_output_queues,
-            isinstance(mqttio.gpio_output_queues.get("mock"), asyncio.Queue),
+            "mock" in mqttio.gpio.gpio_output_queues,
+            isinstance(mqttio.gpio.gpio_output_queues.get("mock"), asyncio.Queue),
         )
     )
 
