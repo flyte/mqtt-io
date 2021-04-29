@@ -128,13 +128,13 @@ def step(context: Any, method_name: str, should_shouldnt: str):
         mock.assert_not_called()
 
 
-@then("gpio module {name} should be initialised")
+@then("gpio module {name} should be initialised") # type: ignore[no-redef]
 def step(context: Any, name: str) -> None:
     mqttio = context.data["mqttio"]
     assert name in getattr(mqttio.gpio, f"gpio_modules")
 
 
-@then("sensor module {name} should be initialised")
+@then("sensor module {name} should be initialised") # type: ignore[no-redef]
 def step(context: Any, name: str) -> None:
     mqttio = context.data["mqttio"]
     assert name in getattr(mqttio.sensor, f"sensor_modules")
