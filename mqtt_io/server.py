@@ -366,6 +366,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             except asyncio.CancelledError:
                 break
             except MQTTException:
+                self.mqtt = None
                 if reconnects_remaining is not None:
                     reconnect = reconnects_remaining > 0
                     reconnects_remaining -= 1
@@ -375,7 +376,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 break
 
             finally:
-                self.mqtt = None
                 _LOG.debug("Clearing events and cancelling 'critical_tasks'")
                 self.running.clear()
                 self.mqtt_connected.clear()
