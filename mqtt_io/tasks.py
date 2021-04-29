@@ -48,7 +48,7 @@ class TransientTaskManager:
                     watch_task = asyncio.create_task(event.wait())
             try:
                 done, _ = await asyncio.wait(
-                    tasks + [cast(asyncio.Task[bool], watch_task)],
+                    tasks + [cast("asyncio.Task[bool]", watch_task)],
                     return_when=asyncio.FIRST_COMPLETED
                 )
             except asyncio.CancelledError:
@@ -56,7 +56,7 @@ class TransientTaskManager:
                 self._shut_down = True
                 for task in tasks:
                     task.cancel()
-
+                watch_task.cancel()
                 continue
             if watch_task in done:
                 watch_task = None
