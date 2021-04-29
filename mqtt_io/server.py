@@ -139,6 +139,131 @@ def output_name_from_topic(topic: str, prefix: str, topic_type: str) -> str:
     return match.group(1)
 
 
+class StreamIo:
+    def __init__(self, config, server: "MqttIo", ):
+        """
+        Initialise Stream modules.
+        """
+        self.server = server
+        # Stream
+        self.stream_configs: Dict[str, ConfigType] = {}
+        self.stream_modules: Dict[str, GenericStream] = {}
+        self.stream_output_queues = {}  # type: Dict[str, asyncio.Queue[bytes]]
+
+        self.config = config
+
+    async def main(self):
+        server = self.server
+        # TODO: Tasks pending completion -@flyte at 01/03/2021, 14:40:10
+        # Only publish if read: true and only subscribe if write: true
+
+        async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
+            stream_conf = self.stream_configs[event.stream_name]
+            server.new_publish_task(
+                stream_conf["name"], stream_conf["retain"], event.data, STREAM_TOPIC
+            )
+
+        server.event_bus.subscribe(StreamDataReadEvent, publish_stream_data_callback)
+
+        self.stream_configs = {x["name"]: x for x in self.config["stream_modules"]}
+        self.stream_modules = {}
+        sub_topics: List[str] = []
+        for stream_conf in self.config["stream_modules"]:
+            stream_module = _init_module(
+                stream_conf, "stream", self.config["options"]["install_requirements"]
+            )
+            self.stream_modules[stream_conf["name"]] = stream_module
+
+            server._transient_task_queue.add_task(
+                server.loop.create_task(self.stream_poller(stream_module, stream_conf))
+            )
+
+            """
+            Set up a stream output queue.
+            """
+            queue = asyncio.Queue()  # type: asyncio.Queue[bytes]
+            self.stream_output_queues[stream_conf["name"]] = queue
+
+            # Queue a stream output loop task
+            server._transient_task_queue.add_task(
+                self.loop.create_task(
+                    # Use partial to avoid late binding closure
+                    partial(
+                        self.stream_output_loop,
+                        stream_module,
+                        stream_conf,
+                        self.stream_output_queues[stream_conf["name"]],
+                    )()
+                )
+            )
+
+            sub_topics.append(
+                "/".join(
+                    (
+                        self.config["mqtt"]["topic_prefix"],
+                        STREAM_TOPIC,
+                        stream_conf["name"],
+                        SEND_SUFFIX,
+                    )
+                )
+            )
+
+        # Subscribe to stream send topics
+        if sub_topics:
+            server.mqtt_task_queue.put_nowait(
+                PriorityCoro(server._mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
+            )
+
+    async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:
+        """
+        Poll a stream at a given interval and fire the StreamDataReadEvent with read data.
+        """
+        while True:
+            try:
+                data = await module.async_read()
+            except Exception:  # pylint: disable=broad-except
+                _LOG.exception(
+                    "Exception while polling stream '%s':", stream_conf["name"]
+                )
+            else:
+                if data is not None:
+                    self.server.event_bus.fire(StreamDataReadEvent(stream_conf["name"], data))
+            await asyncio.sleep(stream_conf["read_interval"])
+
+    async def stream_output_loop(
+            self,
+            module: GenericStream,
+            stream_conf: ConfigType,
+            queue: "asyncio.Queue[bytes]",
+    ) -> None:
+        """
+        Wait for data to appear on the queue, then send it to the stream.
+        """
+        while True:
+            data = await queue.get()
+            try:
+                await module.async_write(data)
+            except Exception:  # pylint: disable=broad-except
+                _LOG.exception(
+                    "Exception while sending data to stream '%s':", stream_conf["name"]
+                )
+            else:
+                self.server.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
+
+    async def handle_stream_send_msg(self, topic: str, payload: bytes) -> None:
+        try:
+            stream_name = output_name_from_topic(
+                topic, self.config["mqtt"]["topic_prefix"], STREAM_TOPIC
+            )
+        except ValueError as exc:
+            _LOG.warning("Unable to parse stream name from topic: %s", exc)
+            return
+        try:
+            self.stream_output_queues[stream_name].put_nowait(payload)
+        except KeyError:
+            _LOG.warning("No stream output queue found named %r", stream_name)
+
+
 class MqttIo:  # pylint: disable=too-many-instance-attributes
     """
     The main class that represents the business logic of the server. This is instantiated
@@ -167,10 +292,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.sensor_input_configs: Dict[str, ConfigType] = {}
         self.sensor_modules: Dict[str, GenericSensor] = {}
 
-        # Stream
-        self.stream_configs: Dict[str, ConfigType] = {}
-        self.stream_modules: Dict[str, GenericStream] = {}
-        self.stream_output_queues = {}  # type: Dict[str, asyncio.Queue[bytes]]
+        self.stream = StreamIo(config, self)
 
         self.gpio_output_queues = (
             {}
@@ -280,76 +402,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 MQTT_PUB_PRIORITY,
             )
         )
-
-    def _init_stream_modules(self) -> None:
-        """
-        Initialise Stream modules.
-        """
-
-        # TODO: Tasks pending completion -@flyte at 01/03/2021, 14:40:10
-        # Only publish if read: true and only subscribe if write: true
-
-        async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
-            stream_conf = self.stream_configs[event.stream_name]
-            self.new_publish_task(
-                stream_conf["name"], stream_conf["retain"], event.data, STREAM_TOPIC
-            )
-
-        self.event_bus.subscribe(StreamDataReadEvent, publish_stream_data_callback)
-
-        self.stream_configs = {x["name"]: x for x in self.config["stream_modules"]}
-        self.stream_modules = {}
-        sub_topics: List[str] = []
-        for stream_conf in self.config["stream_modules"]:
-            stream_module = _init_module(
-                stream_conf, "stream", self.config["options"]["install_requirements"]
-            )
-            self.stream_modules[stream_conf["name"]] = stream_module
-
-            self._transient_task_queue.add_task(
-                self.loop.create_task(self.stream_poller(stream_module, stream_conf))
-            )
-
-            async def create_stream_output_queue(
-                stream_conf: ConfigType = stream_conf,
-            ) -> None:
-                """
-                Set up a stream output queue.
-                """
-                queue = asyncio.Queue()  # type: asyncio.Queue[bytes]
-                self.stream_output_queues[stream_conf["name"]] = queue
-
-            self.loop.run_until_complete(create_stream_output_queue())
-
-            # Queue a stream output loop task
-            self._transient_task_queue.add_task(
-                self.loop.create_task(
-                    # Use partial to avoid late binding closure
-                    partial(
-                        self.stream_output_loop,
-                        stream_module,
-                        stream_conf,
-                        self.stream_output_queues[stream_conf["name"]],
-                    )()
-                )
-            )
-
-            sub_topics.append(
-                "/".join(
-                    (
-                        self.config["mqtt"]["topic_prefix"],
-                        STREAM_TOPIC,
-                        stream_conf["name"],
-                        SEND_SUFFIX,
-                    )
-                )
-            )
-
-        # Subscribe to stream send topics
-        if sub_topics:
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(self._mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
-            )
 
     def _init_digital_inputs(self) -> None:
         """
@@ -700,22 +752,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             last_value = value
             await asyncio.sleep(in_conf["poll_interval"])
 
-    async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:
-        """
-        Poll a stream at a given interval and fire the StreamDataReadEvent with read data.
-        """
-        while True:
-            try:
-                data = await module.async_read()
-            except Exception:  # pylint: disable=broad-except
-                _LOG.exception(
-                    "Exception while polling stream '%s':", stream_conf["name"]
-                )
-            else:
-                if data is not None:
-                    self.event_bus.fire(StreamDataReadEvent(stream_conf["name"], data))
-            await asyncio.sleep(stream_conf["read_interval"])
-
     def interrupt_callback(
         self,
         module: GenericGPIO,
@@ -872,7 +908,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         # Handle stream send message
         if topic.endswith("/send"):
-            await self._handle_stream_send_msg(topic, payload)
+            await self.stream.handle_stream_send_msg(topic, payload)
 
         # Ignore unknown topics, although we shouldn't get here, because we only subscribe
         # to ones we know.
@@ -935,19 +971,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
             task = self.loop.create_task(set_ms())
             self._transient_task_queue.add_task(task)
-
-    async def _handle_stream_send_msg(self, topic: str, payload: bytes) -> None:
-        try:
-            stream_name = output_name_from_topic(
-                topic, self.config["mqtt"]["topic_prefix"], STREAM_TOPIC
-            )
-        except ValueError as exc:
-            _LOG.warning("Unable to parse stream name from topic: %s", exc)
-            return
-        try:
-            self.stream_output_queues[stream_name].put_nowait(payload)
-        except KeyError:
-            _LOG.warning("No stream output queue found named %r", stream_name)
 
     async def set_digital_output(
         self, module: GenericGPIO, output_config: ConfigType, value: bool
@@ -1068,26 +1091,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
             task = self.loop.create_task(reset_timer())
             self._transient_task_queue.add_task(task)
-
-    async def stream_output_loop(
-        self,
-        module: GenericStream,
-        stream_conf: ConfigType,
-        queue: "asyncio.Queue[bytes]",
-    ) -> None:
-        """
-        Wait for data to appear on the queue, then send it to the stream.
-        """
-        while True:
-            data = await queue.get()
-            try:
-                await module.async_write(data)
-            except Exception:  # pylint: disable=broad-except
-                _LOG.exception(
-                    "Exception while sending data to stream '%s':", stream_conf["name"]
-                )
-            else:
-                self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
 
     async def _main_loop(self) -> None:
         reconnect = True
