@@ -264,6 +264,88 @@ class StreamIo:
             _LOG.warning("No stream output queue found named %r", stream_name)
 
 
+class SensorIo:
+    def __init__(self, config, server: "MqttIo"):
+        self.config = config
+        self.server = server
+        # Sensor
+        self.sensor_configs: Dict[str, ConfigType] = {}
+        self.sensor_input_configs: Dict[str, ConfigType] = {}
+        self.sensor_modules: Dict[str, GenericSensor] = {}
+
+    def init(self):
+        self._init_sensor_modules()
+        self._init_sensor_inputs()
+
+    def _init_sensor_modules(self) -> None:
+        """
+        Initialise Sensor modules.
+        """
+        self.sensor_configs = {x["name"]: x for x in self.config["sensor_modules"]}
+        self.sensor_modules = {}
+        for sens_config in self.config["sensor_modules"]:
+            self.sensor_modules[sens_config["name"]] = _init_module(
+                sens_config, "sensor", self.config["options"]["install_requirements"]
+            )
+
+    def _init_sensor_inputs(self) -> None:
+        async def publish_sensor_callback(event: SensorReadEvent) -> None:
+            sens_conf = self.sensor_input_configs[event.sensor_name]
+            digits: int = sens_conf["digits"]
+            self.new_publish_task(
+                event.sensor_name, sens_conf["retain"],
+                f"{event.value:.{digits}f}".encode("utf8"),
+                SENSOR_TOPIC
+            )
+
+        self.server.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
+
+        for sens_conf in self.config["sensor_inputs"]:
+            sensor_module = self.sensor_modules[sens_conf["module"]]
+            sens_conf = validate_and_normalise_sensor_input_config(
+                sens_conf, sensor_module
+            )
+            self.sensor_input_configs[sens_conf["name"]] = sens_conf
+
+            sensor_module.setup_sensor(sens_conf)
+
+            # Use default args to the function to get around the late binding closures
+            async def poll_sensor(
+                sensor_module: GenericSensor = sensor_module,
+                sens_conf: ConfigType = sens_conf,
+            ) -> None:
+                @backoff.on_exception(  # type: ignore
+                    backoff.expo, Exception, max_time=sens_conf["interval"]
+                )
+                @backoff.on_predicate(  # type: ignore
+                    backoff.expo, lambda x: x is None, max_time=sens_conf["interval"]
+                )
+                async def get_sensor_value(
+                    sensor_module: GenericSensor = sensor_module,
+                    sens_conf: ConfigType = sens_conf,
+                ) -> SensorValueType:
+                    return await sensor_module.async_get_value(sens_conf)
+
+                while True:
+                    value = None
+                    try:
+                        value = await get_sensor_value()
+                    except Exception:  # pylint: disable=broad-except
+                        _LOG.exception(
+                            "Exception when retrieving value from sensor %r:",
+                            sens_conf["name"],
+                        )
+                    if value is not None:
+                        value = round(value, sens_conf["digits"])
+                        _LOG.info(
+                            "Read sensor '%s' value of %s", sens_conf["name"], value
+                        )
+                        self.server.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
+                    await asyncio.sleep(sens_conf["interval"])
+
+            self.server._transient_task_queue.add_task(self.server.loop.create_task(poll_sensor()))
+
+
 class MqttIo:  # pylint: disable=too-many-instance-attributes
     """
     The main class that represents the business logic of the server. This is instantiated
@@ -287,10 +369,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.digital_output_configs: Dict[str, ConfigType] = {}
         self.gpio_modules: Dict[str, GenericGPIO] = {}
 
-        # Sensor
-        self.sensor_configs: Dict[str, ConfigType] = {}
-        self.sensor_input_configs: Dict[str, ConfigType] = {}
-        self.sensor_modules: Dict[str, GenericSensor] = {}
+        self.sensor = SensorIo(config, self)
 
         self.stream = StreamIo(config, self)
 
@@ -367,17 +446,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         for gpio_config in self.config["gpio_modules"]:
             self.gpio_modules[gpio_config["name"]] = _init_module(
                 gpio_config, "gpio", self.config["options"]["install_requirements"]
-            )
-
-    def _init_sensor_modules(self) -> None:
-        """
-        Initialise Sensor modules.
-        """
-        self.sensor_configs = {x["name"]: x for x in self.config["sensor_modules"]}
-        self.sensor_modules = {}
-        for sens_config in self.config["sensor_modules"]:
-            self.sensor_modules[sens_config["name"]] = _init_module(
-                sens_config, "sensor", self.config["options"]["install_requirements"]
             )
 
     def new_publish_task(self, name: str, retain: bool, data: Any, typ: str) -> None:
@@ -536,63 +604,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     )
                 )
 
-    def _init_sensor_inputs(self) -> None:
-        async def publish_sensor_callback(event: SensorReadEvent) -> None:
-            sens_conf = self.sensor_input_configs[event.sensor_name]
-            digits: int = sens_conf["digits"]
-            self.new_publish_task(
-                event.sensor_name, sens_conf["retain"],
-                f"{event.value:.{digits}f}".encode("utf8"),
-                SENSOR_TOPIC
-            )
-
-        self.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
-
-        for sens_conf in self.config["sensor_inputs"]:
-            sensor_module = self.sensor_modules[sens_conf["module"]]
-            sens_conf = validate_and_normalise_sensor_input_config(
-                sens_conf, sensor_module
-            )
-            self.sensor_input_configs[sens_conf["name"]] = sens_conf
-
-            sensor_module.setup_sensor(sens_conf)
-
-            # Use default args to the function to get around the late binding closures
-            async def poll_sensor(
-                sensor_module: GenericSensor = sensor_module,
-                sens_conf: ConfigType = sens_conf,
-            ) -> None:
-                @backoff.on_exception(  # type: ignore
-                    backoff.expo, Exception, max_time=sens_conf["interval"]
-                )
-                @backoff.on_predicate(  # type: ignore
-                    backoff.expo, lambda x: x is None, max_time=sens_conf["interval"]
-                )
-                async def get_sensor_value(
-                    sensor_module: GenericSensor = sensor_module,
-                    sens_conf: ConfigType = sens_conf,
-                ) -> SensorValueType:
-                    return await sensor_module.async_get_value(sens_conf)
-
-                while True:
-                    value = None
-                    try:
-                        value = await get_sensor_value()
-                    except Exception:  # pylint: disable=broad-except
-                        _LOG.exception(
-                            "Exception when retrieving value from sensor %r:",
-                            sens_conf["name"],
-                        )
-                    if value is not None:
-                        value = round(value, sens_conf["digits"])
-                        _LOG.info(
-                            "Read sensor '%s' value of %s", sens_conf["name"], value
-                        )
-                        self.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
-                    await asyncio.sleep(sens_conf["interval"])
-
-            self._transient_task_queue.add_task(self.loop.create_task(poll_sensor()))
-
     async def _connect_mqtt(self) -> None:
         config: ConfigType = self.config["mqtt"]
         topic_prefix: str = config["topic_prefix"]
@@ -638,7 +649,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     out_conf, mqtt_config, self.mqtt_client_options
                 )
             )
-        for sens_conf in self.sensor_input_configs.values():
+        for sens_conf in self.sensor.sensor_input_configs.values():
             messages.append(
                 hass_announce_sensor_input(
                     sens_conf, mqtt_config, self.mqtt_client_options
@@ -1168,9 +1179,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self._init_gpio_modules()
         self._init_digital_inputs()
         self._init_digital_outputs()
-        self._init_sensor_modules()
-        self._init_sensor_inputs()
-        self._init_stream_modules()
+
+        self.sensor.init()
 
         self._main_task = self.loop.create_task(self._main_loop())
 
@@ -1180,15 +1190,15 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         finally:
             self.loop.close()
             _LOG.debug("Loop closed")
-            for module_type in ("gpio", "sensor", "stream"):
-                for module in getattr(self, f"{module_type}_modules").values():
+            for mod in [self.gpio_modules, self.sensor.sensor_modules, self.stream.stream_modules]:
+                for module in mod.values():
                     _LOG.debug("Running cleanup on module %s", module)
                     try:
                         module.cleanup()
                     except Exception:  # pylint: disable=broad-except
                         _LOG.exception(
                             "Exception while cleaning up %s module %s",
-                            module_type,
+                            mod,
                             module,
                         )
         _LOG.debug("run() complete")
