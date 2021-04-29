@@ -1,3 +1,7 @@
+Unreleased
+==========
+- Log uncaught exceptions to configured logging handlers. #206 @fipwmaqzufheoxq92ebc
+
 v2.2.6 - 2021-04-23
 ===================
 - Create docs in a tempdir to stop them from being clobbered when changing branches.

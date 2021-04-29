@@ -26,4 +26,4 @@ publish: build
 	poetry publish
 
 docs:
-	poetry run python docs/generate_docs.py
+	poetry run python docs_src/generate_docs.py
