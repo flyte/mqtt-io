@@ -56,7 +56,8 @@ class TransientTaskManager:
                 self._shut_down = True
                 for task in tasks:
                     task.cancel()
-                watch_task.cancel()
+                if watch_task:
+                    watch_task.cancel()
                 continue
             if watch_task in done:
                 watch_task = None
