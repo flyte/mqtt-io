@@ -86,6 +86,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.mqtt_task_queue: "asyncio.PriorityQueue[PriorityCoro]"
         self.mqtt_connected: asyncio.Event
 
+        self._task_loop: "asyncio.Task[Any]"
+        self._connection_loop_task: "asyncio.Task[Any]"
+
         async def create_loop_resources() -> None:
             """
             Create non-threadsafe resources on the loop we're going to use.
@@ -358,14 +361,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
                     self._ha_discovery_announce()
 
-                try:
-                    await asyncio.gather(*self.critical_tasks)
-                except asyncio.CancelledError:
-                    break
-                except MQTTException:
-                    raise
-                except Exception:  # pylint: disable=broad-except
-                    _LOG.exception("Exception in critical task:")
+                await asyncio.gather(*self.critical_tasks)
+
             except asyncio.CancelledError:
                 break
             except MQTTException:
@@ -373,6 +370,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     reconnect = reconnects_remaining > 0
                     reconnects_remaining -= 1
                 _LOG.exception("Connection to MQTT broker failed")
+            except Exception:  # pylint: disable=broad-except
+                _LOG.exception("Exception in critical task:")
+                break
 
             finally:
                 self.mqtt = None

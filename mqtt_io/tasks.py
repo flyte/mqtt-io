@@ -45,7 +45,7 @@ class TransientTaskManager:
             event.clear()
             if not self._shut_down:
                 if not watch_task:
-                    watch_task = asyncio.create_task(event.wait())
+                    watch_task = asyncio.get_event_loop().create_task(event.wait())
             try:
                 done, _ = await asyncio.wait(
                     tasks + [cast("asyncio.Task[bool]", watch_task)],
