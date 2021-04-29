@@ -157,14 +157,14 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     async def _connect_mqtt(self) -> None:
         config: ConfigType = self.config["mqtt"]
         topic_prefix: str = config["topic_prefix"]
-        self.mqtt = AbstractMQTTClient.get_implementation(config["client_module"])(
+        mqtt = AbstractMQTTClient.get_implementation(config["client_module"])(
             self.mqtt_client_options
         )
 
         _LOG.info("Connecting to MQTT...")
-        await self.mqtt.connect()
+        await mqtt.connect()
         _LOG.info("Connected to MQTT")
-
+        self.mqtt = mqtt
         self.mqtt_task_queue.put_nowait(
             PriorityCoro(
                 self._mqtt_publish(
@@ -334,7 +334,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self._connection_loop_task = self.loop.create_task(self._connection_loop())
         await asyncio.gather(
             self._task_loop,
-            self._connection_loop_task
+            self._connection_loop_task,
         )
 
     async def _connection_loop(self) -> None:
@@ -375,6 +375,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 _LOG.exception("Connection to MQTT broker failed")
 
             finally:
+                self.mqtt = None
                 _LOG.debug("Clearing events and cancelling 'critical_tasks'")
                 self.running.clear()
                 self.mqtt_connected.clear()
@@ -434,23 +435,18 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         Shut down all of the tasks involved in running the server.
         """
+        # Cancel our tasks
+        for task in self.critical_tasks:
+            task.cancel()
+            # let the transient task manager handle the await
+            self.transient_task_queue.add_task(task)
+
         self._task_loop.cancel()
+        _LOG.info("Waiting for our tasks to complete...")
         try:
             await self._task_loop
         except asyncio.CancelledError:
             pass
-        # Cancel our tasks
-        our_tasks: List["asyncio.Task[Any]"] = self.critical_tasks
-        for task in our_tasks:
-            task.cancel()
-
-        _LOG.info("Waiting for our tasks to complete...")
-        results = await asyncio.gather(*our_tasks, return_exceptions=True)
-        for i, result in enumerate(results):
-            if isinstance(result, asyncio.CancelledError):
-                continue
-            if isinstance(result, Exception):
-                _LOG.error("Task %s raised an exception: %s", results[i], result)
 
         # Close any remaining unscheduled mqtt coroutines
         while True:
