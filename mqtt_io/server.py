@@ -346,96 +346,25 @@ class SensorIo:
             self.server._transient_task_queue.add_task(self.server.loop.create_task(poll_sensor()))
 
 
-class MqttIo:  # pylint: disable=too-many-instance-attributes
-    """
-    The main class that represents the business logic of the server. This is instantiated
-    once per config file, of which there is generally only one.
-    """
-
-    def __init__(
-        self, config: Dict[str, Any], loop: Optional[asyncio.AbstractEventLoop] = None
-    ) -> None:
+class GPIOIo:
+    def __init__(self, config, server: "MqttIo"):
         self.config = config
-        self._init_mqtt_config()
+        self.server = server
 
-        # Synchronisation
-        # We've completed our initialisation, connected to MQTT and are ready to send and
-        # receive messages.
-        self.running: threading.Event = threading.Event()
-
-        # GPIO
         self.gpio_configs: Dict[str, ConfigType] = {}
         self.digital_input_configs: Dict[str, ConfigType] = {}
         self.digital_output_configs: Dict[str, ConfigType] = {}
         self.gpio_modules: Dict[str, GenericGPIO] = {}
 
-        self.sensor = SensorIo(config, self)
-
-        self.stream = StreamIo(config, self)
-
         self.gpio_output_queues = (
             {}
         )  # type: Dict[str, asyncio.Queue[Tuple[ConfigType, str]]]
-
-        self.loop = loop or asyncio.get_event_loop()
-        self._main_task: Optional["asyncio.Task[None]"] = None
-        self.critical_tasks: List["asyncio.Task[Any]"] = []
-
-        self._transient_task_queue: "TransientTaskManager" = TransientTaskManager()
-
-        self.event_bus = EventBus(self.loop, self._transient_task_queue)
-        self.mqtt: Optional[AbstractMQTTClient] = None
         self.interrupt_locks: Dict[str, threading.Lock] = {}
 
-        self.mqtt_task_queue: "asyncio.PriorityQueue[PriorityCoro]"
-        self.mqtt_connected: asyncio.Event
-
-        async def create_loop_resources() -> None:
-            """
-            Create non-threadsafe resources on the loop we're going to use.
-            """
-            self.mqtt_task_queue = asyncio.PriorityQueue()
-            self.mqtt_connected = asyncio.Event()
-
-        self.loop.run_until_complete(create_loop_resources())
-
-    def _init_mqtt_config(self) -> None:
-        config: ConfigType = self.config["mqtt"]
-        topic_prefix: str = config["topic_prefix"]
-
-        client_id: Optional[str] = config["client_id"]
-        if not client_id:
-            client_id = "mqtt-io-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
-
-        tls_enabled: bool = config.get("tls", {}).get("enabled")
-
-        tls_options = None
-        if tls_enabled:
-            tls_options = MQTTTLSOptions(
-                ca_certs=config["tls"].get("ca_certs"),
-                certfile=config["tls"].get("certfile"),
-                keyfile=config["tls"].get("keyfile"),
-                ciphers=config["tls"].get("ciphers"),
-            )
-
-        self.mqtt_client_options = MQTTClientOptions(
-            hostname=config["host"],
-            port=config["port"],
-            username=config["user"],
-            password=config["password"],
-            client_id=client_id,
-            keepalive=config["keepalive"],
-            clean_session=config["clean_session"],
-            tls_options=tls_options,
-            will=MQTTWill(
-                topic="/".join((topic_prefix, config["status_topic"])),
-                payload=config["status_payload_dead"].encode("utf8"),
-                qos=1,
-                retain=True,
-            ),
-        )
-
-    # Init methods
+    def init(self):
+        self._init_gpio_modules()
+        self._init_digital_inputs()
+        self._init_digital_outputs()
 
     def _init_gpio_modules(self) -> None:
         """
@@ -447,29 +376,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             self.gpio_modules[gpio_config["name"]] = _init_module(
                 gpio_config, "gpio", self.config["options"]["install_requirements"]
             )
-
-    def new_publish_task(self, name: str, retain: bool, data: Any, typ: str) -> None:
-        """
-        Puts a new Task to publish a message in the mqtt_task_queue
-        """
-        self.mqtt_task_queue.put_nowait(
-            PriorityCoro(
-                self._mqtt_publish(
-                    MQTTMessageSend(
-                        "/".join(
-                            (
-                                self.config["mqtt"]["topic_prefix"],
-                                typ,
-                                name,
-                            )
-                        ),
-                        data,
-                        retain=retain,
-                    )
-                ),
-                MQTT_PUB_PRIORITY,
-            )
-        )
 
     def _init_digital_inputs(self) -> None:
         """
@@ -488,11 +394,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             in_conf = self.digital_input_configs[event.input_name]
             value = event.to_value != in_conf["inverted"]
             val = in_conf["on_payload"] if value else in_conf["off_payload"]
-            self.new_publish_task(
+            self.server.new_publish_task(
                 event.input_name, in_conf["retain"], val.encode("utf8"), INPUT_TOPIC
             )
 
-        self.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
+        self.server.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
 
         for in_conf in self.config["digital_inputs"]:
             gpio_module = self.gpio_modules[in_conf["module"]]
@@ -509,8 +415,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             if interrupt is None or (
                 interrupt_for and in_conf["poll_when_interrupt_for"]
             ):
-                self._transient_task_queue.add_task(
-                    self.loop.create_task(
+                self.server._transient_task_queue.add_task(
+                    self.server.loop.create_task(
                         partial(self.digital_input_poller, gpio_module, in_conf)()
                     )
                 )
@@ -535,15 +441,17 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 )
 
     def _init_digital_outputs(self) -> None:
+        server = self.server
+
         # Set up MQTT publish callback for output event
         async def publish_callback(event: DigitalOutputChangedEvent) -> None:
             out_conf = self.digital_output_configs[event.output_name]
             val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
-            self.new_publish_task(
+            server.new_publish_task(
                 event.output_name, out_conf["retain"], val.encode('utf8'), "output"
             )
 
-        self.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
+        server.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
 
         for out_conf in self.config["digital_outputs"]:
             gpio_module = self.gpio_modules[out_conf["module"]]
@@ -564,11 +472,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     queue = asyncio.Queue()  # type: asyncio.Queue[Tuple[ConfigType, str]]
                     self.gpio_output_queues[out_conf["module"]] = queue
 
-                self.loop.run_until_complete(create_digital_output_queue())
+                server.loop.run_until_complete(create_digital_output_queue())
 
                 # Use partial to avoid late binding closure
-                self._transient_task_queue.add_task(
-                    self.loop.create_task(
+                server._transient_task_queue.add_task(
+                    server.loop.create_task(
                         partial(
                             self.digital_output_loop,
                             gpio_module,
@@ -590,104 +498,19 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         )
                     )
                 )
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(self._mqtt_subscribe(topics), MQTT_SUB_PRIORITY)
+            server.mqtt_task_queue.put_nowait(
+                PriorityCoro(server._mqtt_subscribe(topics), MQTT_SUB_PRIORITY)
             )
 
             # Fire DigitalOutputChangedEvents for initial values of outputs if required
             if out_conf["publish_initial"]:
-                self.event_bus.fire(
+                server.event_bus.fire(
                     DigitalOutputChangedEvent(
                         out_conf["name"],
                         out_conf["initial"]
                         == ("low" if out_conf["inverted"] else "high"),
                     )
                 )
-
-    async def _connect_mqtt(self) -> None:
-        config: ConfigType = self.config["mqtt"]
-        topic_prefix: str = config["topic_prefix"]
-        self.mqtt = AbstractMQTTClient.get_implementation(config["client_module"])(
-            self.mqtt_client_options
-        )
-
-        _LOG.info("Connecting to MQTT...")
-        await self.mqtt.connect()
-        _LOG.info("Connected to MQTT")
-
-        self.mqtt_task_queue.put_nowait(
-            PriorityCoro(
-                self._mqtt_publish(
-                    MQTTMessageSend(
-                        "/".join((topic_prefix, config["status_topic"])),
-                        config["status_payload_running"].encode("utf8"),
-                        qos=1,
-                        retain=True,
-                    )
-                ),
-                MQTT_PUB_PRIORITY,
-            )
-        )
-        self.mqtt_connected.set()
-
-    def _ha_discovery_announce(self) -> None:
-        """
-        Publish Home Assistant Discovery messages.
-        """
-        messages: List[MQTTMessageSend] = []
-        mqtt_config: ConfigType = self.config["mqtt"]
-
-        for in_conf in self.digital_input_configs.values():
-            messages.append(
-                hass_announce_digital_input(
-                    in_conf, mqtt_config, self.mqtt_client_options
-                )
-            )
-        for out_conf in self.digital_output_configs.values():
-            messages.append(
-                hass_announce_digital_output(
-                    out_conf, mqtt_config, self.mqtt_client_options
-                )
-            )
-        for sens_conf in self.sensor.sensor_input_configs.values():
-            messages.append(
-                hass_announce_sensor_input(
-                    sens_conf, mqtt_config, self.mqtt_client_options
-                )
-            )
-        for msg in messages:
-            self.mqtt_task_queue.put_nowait(
-                PriorityCoro(self._mqtt_publish(msg), MQTT_ANNOUNCE_PRIORITY)
-            )
-
-    async def _mqtt_subscribe(self, topics: List[str]) -> None:
-        """
-        Subscribe to MQTT topics and output to log for each.
-        """
-        if not self.mqtt_connected.is_set():
-            _LOG.debug("_mqtt_subscribe awaiting MQTT connection")
-            await self.mqtt_connected.wait()
-            _LOG.debug("_mqtt_subscribe unblocked after MQTT connection")
-        if self.mqtt is None:
-            raise RuntimeError("MQTT client was None when trying to subscribe.")
-        await self.mqtt.subscribe([(topic, 1) for topic in topics])
-        for topic in topics:
-            _LOG.info("Subscribed to topic: %r", topic)
-
-    async def _mqtt_publish(self, msg: MQTTMessageSend, wait: bool = True) -> None:
-        if not self.mqtt_connected.is_set():
-            if wait:
-                _LOG.debug("_mqtt_publish awaiting MQTT connection")
-                await self.mqtt_connected.wait()
-                _LOG.debug("_mqtt_publish unblocked after MQTT connection")
-        if self.mqtt is None:
-            raise RuntimeError("MQTT client was None when trying to publish.")
-
-        msg.debug()
-
-        await self.mqtt.publish(msg)
-
-    # Runtime methods
 
     async def _handle_digital_input_value(
         self,
@@ -712,7 +535,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         if value != last_value:
             _LOG.info("Digital input '%s' value changed to %s", in_conf["name"], value)
-            self.event_bus.fire(
+            self.server.event_bus.fire(
                 DigitalInputChangedEvent(in_conf["name"], last_value, value)
             )
         # If the value is now the same as the 'interrupt' value (falling, rising)
@@ -785,7 +608,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         This can potentially be called from any thread.
         """
         pin_name = module.pin_configs[pin]["name"]
-        if not self.running.is_set():
+        if not self.server.running.is_set():
             # Not yet ready to handle interrupts
             _LOG.warning(
                 "Ignored interrupt from pin %r as we're not fully initialised", pin_name
@@ -820,7 +643,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 return
             _LOG.debug("Interrupt is for the '%s' pin itself", pin_name)
             value = module.get_interrupt_value(pin, *args, **kwargs)
-            self.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
+            self.server.event_bus.fire(DigitalInputChangedEvent(pin_name, None, value))
         finally:
             if not remote_interrupt_for_pin_names:
                 interrupt_lock.release()
@@ -866,7 +689,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 interrupt_values = await remote_module.get_interrupt_values_remote(pins)
                 for pin, value in interrupt_values.items():
                     remote_pin_name = remote_module.pin_configs[pin]["name"]
-                    self.event_bus.fire(
+                    self.server.event_bus.fire(
                         DigitalInputChangedEvent(remote_pin_name, None, value)
                     )
 
@@ -883,46 +706,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 interrupt_lock.release()
 
         create_unawaited_task_threadsafe(
-            self.loop, self._transient_task_queue, await_remote_interrupts()
+            self.server.loop, self.server._transient_task_queue, await_remote_interrupts()
         )
-
-    async def _handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
-        """
-        Parse all MQTT messages received on our subscriptions and dispatch actions
-        such as changing outputs and sending data to streams accordingly.
-        """
-
-        if not any(
-            topic.endswith(f"/{x}")
-            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX, SEND_SUFFIX)
-        ):
-            _LOG.debug(
-                "Ignoring message to topic '%s' which doesn't end with a known suffix",
-                topic,
-            )
-            return
-
-        # Handle digital output message
-        if any(
-            topic.endswith(f"/{x}")
-            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX)
-        ):
-            try:
-                payload_str = payload.decode("utf8")
-            except UnicodeDecodeError:
-                _LOG.warning(
-                    "Received MQTT message to a digital output topic '%s' that wasn't unicode.",
-                    topic,
-                )
-                return
-            await self._handle_digital_output_msg(topic, payload_str)
-
-        # Handle stream send message
-        if topic.endswith("/send"):
-            await self.stream.handle_stream_send_msg(topic, payload)
-
-        # Ignore unknown topics, although we shouldn't get here, because we only subscribe
-        # to ones we know.
 
     async def _handle_digital_output_msg(self, topic: str, payload: str) -> None:
         """
@@ -980,8 +765,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 )
                 await self.set_digital_output(module, out_conf, not desired_value)
 
-            task = self.loop.create_task(set_ms())
-            self._transient_task_queue.add_task(task)
+            task = self.server.loop.create_task(set_ms())
+            self.server._transient_task_queue.add_task(task)
 
     async def set_digital_output(
         self, module: GenericGPIO, output_config: ConfigType, value: bool
@@ -998,7 +783,288 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             set_value,
             "on" if value else "off",
         )
-        self.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], value))
+        self.server.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], value))
+
+    async def digital_output_loop(
+        self, module: GenericGPIO, queue: "asyncio.Queue[Tuple[ConfigType, str]]"
+    ) -> None:
+        """
+        Handle digital output MQTT messages for a specific GPIO module.
+        An instance of this loop will be created for each individual GPIO module so that
+        when messages come in via MQTT, we don't have to wait for some other module's
+        action to complete before carrying out this one.
+
+        It may seem like we should use this loop to handle /set_on_ms and /set_off_ms
+        messages, but it's actually better that we don't, since any timed stuff would
+        hold up /set messages that need to take place immediately.
+        """
+        while True:
+            out_conf, payload = await queue.get()
+            if payload not in (out_conf["on_payload"], out_conf["off_payload"]):
+                _LOG.warning(
+                    "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed.",
+                    payload,
+                    out_conf["name"],
+                    out_conf["on_payload"],
+                    out_conf["off_payload"],
+                )
+                continue
+
+            value = payload == out_conf["on_payload"]
+            await self.set_digital_output(module, out_conf, value)
+
+            try:
+                msec = out_conf["timed_set_ms"]
+            except KeyError:
+                continue
+
+            async def reset_timer(out_conf: ConfigType = out_conf) -> None:
+                """
+                Reset the output to the opposite value after x ms.
+                """
+                await asyncio.sleep(msec / 1000.0)
+                _LOG.info(
+                    (
+                        "Setting digital output '%s' back to its previous value after "
+                        "configured 'timed_set_ms' delay of %sms"
+                    ),
+                    out_conf["name"],
+                    msec,
+                )
+                await self.set_digital_output(module, out_conf, not value)
+
+            task = self.server.loop.create_task(reset_timer())
+            self.server._transient_task_queue.add_task(task)
+
+
+class MqttIo:  # pylint: disable=too-many-instance-attributes
+    """
+    The main class that represents the business logic of the server. This is instantiated
+    once per config file, of which there is generally only one.
+    """
+
+    def __init__(
+        self, config: Dict[str, Any], loop: Optional[asyncio.AbstractEventLoop] = None
+    ) -> None:
+        self.config = config
+        self._init_mqtt_config()
+
+        # Synchronisation
+        # We've completed our initialisation, connected to MQTT and are ready to send and
+        # receive messages.
+        self.running: threading.Event = threading.Event()
+
+        # GPIO
+        self.gpio = GPIOIo(config, self)
+
+        self.sensor = SensorIo(config, self)
+
+        self.stream = StreamIo(config, self)
+
+
+        self.loop = loop or asyncio.get_event_loop()
+        self._main_task: Optional["asyncio.Task[None]"] = None
+        self.critical_tasks: List["asyncio.Task[Any]"] = []
+
+        self._transient_task_queue: "TransientTaskManager" = TransientTaskManager()
+
+        self.event_bus = EventBus(self.loop, self._transient_task_queue)
+        self.mqtt: Optional[AbstractMQTTClient] = None
+
+
+        self.mqtt_task_queue: "asyncio.PriorityQueue[PriorityCoro]"
+        self.mqtt_connected: asyncio.Event
+
+        async def create_loop_resources() -> None:
+            """
+            Create non-threadsafe resources on the loop we're going to use.
+            """
+            self.mqtt_task_queue = asyncio.PriorityQueue()
+            self.mqtt_connected = asyncio.Event()
+
+        self.loop.run_until_complete(create_loop_resources())
+
+    def _init_mqtt_config(self) -> None:
+        config: ConfigType = self.config["mqtt"]
+        topic_prefix: str = config["topic_prefix"]
+
+        client_id: Optional[str] = config["client_id"]
+        if not client_id:
+            client_id = "mqtt-io-%s" % sha1(topic_prefix.encode("utf8")).hexdigest()
+
+        tls_enabled: bool = config.get("tls", {}).get("enabled")
+
+        tls_options = None
+        if tls_enabled:
+            tls_options = MQTTTLSOptions(
+                ca_certs=config["tls"].get("ca_certs"),
+                certfile=config["tls"].get("certfile"),
+                keyfile=config["tls"].get("keyfile"),
+                ciphers=config["tls"].get("ciphers"),
+            )
+
+        self.mqtt_client_options = MQTTClientOptions(
+            hostname=config["host"],
+            port=config["port"],
+            username=config["user"],
+            password=config["password"],
+            client_id=client_id,
+            keepalive=config["keepalive"],
+            clean_session=config["clean_session"],
+            tls_options=tls_options,
+            will=MQTTWill(
+                topic="/".join((topic_prefix, config["status_topic"])),
+                payload=config["status_payload_dead"].encode("utf8"),
+                qos=1,
+                retain=True,
+            ),
+        )
+
+    def new_publish_task(self, name: str, retain: bool, data: Any, typ: str) -> None:
+        """
+        Puts a new Task to publish a message in the mqtt_task_queue
+        """
+        self.mqtt_task_queue.put_nowait(
+            PriorityCoro(
+                self._mqtt_publish(
+                    MQTTMessageSend(
+                        "/".join(
+                            (
+                                self.config["mqtt"]["topic_prefix"],
+                                typ,
+                                name,
+                            )
+                        ),
+                        data,
+                        retain=retain,
+                    )
+                ),
+                MQTT_PUB_PRIORITY,
+            )
+        )
+
+    async def _connect_mqtt(self) -> None:
+        config: ConfigType = self.config["mqtt"]
+        topic_prefix: str = config["topic_prefix"]
+        self.mqtt = AbstractMQTTClient.get_implementation(config["client_module"])(
+            self.mqtt_client_options
+        )
+
+        _LOG.info("Connecting to MQTT...")
+        await self.mqtt.connect()
+        _LOG.info("Connected to MQTT")
+
+        self.mqtt_task_queue.put_nowait(
+            PriorityCoro(
+                self._mqtt_publish(
+                    MQTTMessageSend(
+                        "/".join((topic_prefix, config["status_topic"])),
+                        config["status_payload_running"].encode("utf8"),
+                        qos=1,
+                        retain=True,
+                    )
+                ),
+                MQTT_PUB_PRIORITY,
+            )
+        )
+        self.mqtt_connected.set()
+
+    def _ha_discovery_announce(self) -> None:
+        """
+        Publish Home Assistant Discovery messages.
+        """
+        messages: List[MQTTMessageSend] = []
+        mqtt_config: ConfigType = self.config["mqtt"]
+
+        for in_conf in self.gpio.digital_input_configs.values():
+            messages.append(
+                hass_announce_digital_input(
+                    in_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
+        for out_conf in self.gpio.digital_output_configs.values():
+            messages.append(
+                hass_announce_digital_output(
+                    out_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
+        for sens_conf in self.sensor.sensor_input_configs.values():
+            messages.append(
+                hass_announce_sensor_input(
+                    sens_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
+        for msg in messages:
+            self.mqtt_task_queue.put_nowait(
+                PriorityCoro(self._mqtt_publish(msg), MQTT_ANNOUNCE_PRIORITY)
+            )
+
+    async def _mqtt_subscribe(self, topics: List[str]) -> None:
+        """
+        Subscribe to MQTT topics and output to log for each.
+        """
+        if not self.mqtt_connected.is_set():
+            _LOG.debug("_mqtt_subscribe awaiting MQTT connection")
+            await self.mqtt_connected.wait()
+            _LOG.debug("_mqtt_subscribe unblocked after MQTT connection")
+        if self.mqtt is None:
+            raise RuntimeError("MQTT client was None when trying to subscribe.")
+        await self.mqtt.subscribe([(topic, 1) for topic in topics])
+        for topic in topics:
+            _LOG.info("Subscribed to topic: %r", topic)
+
+    async def _mqtt_publish(self, msg: MQTTMessageSend, wait: bool = True) -> None:
+        if not self.mqtt_connected.is_set():
+            if wait:
+                _LOG.debug("_mqtt_publish awaiting MQTT connection")
+                await self.mqtt_connected.wait()
+                _LOG.debug("_mqtt_publish unblocked after MQTT connection")
+        if self.mqtt is None:
+            raise RuntimeError("MQTT client was None when trying to publish.")
+
+        msg.debug()
+
+        await self.mqtt.publish(msg)
+
+    # Runtime methods
+
+    async def _handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
+        """
+        Parse all MQTT messages received on our subscriptions and dispatch actions
+        such as changing outputs and sending data to streams accordingly.
+        """
+
+        if not any(
+            topic.endswith(f"/{x}")
+            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX, SEND_SUFFIX)
+        ):
+            _LOG.debug(
+                "Ignoring message to topic '%s' which doesn't end with a known suffix",
+                topic,
+            )
+            return
+
+        # Handle digital output message
+        if any(
+            topic.endswith(f"/{x}")
+            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX)
+        ):
+            try:
+                payload_str = payload.decode("utf8")
+            except UnicodeDecodeError:
+                _LOG.warning(
+                    "Received MQTT message to a digital output topic '%s' that wasn't unicode.",
+                    topic,
+                )
+                return
+            await self.gpio.handle_digital_output_msg(topic, payload_str)
+
+        # Handle stream send message
+        if topic.endswith("/send"):
+            await self.stream.handle_stream_send_msg(topic, payload)
+
+        # Ignore unknown topics, although we shouldn't get here, because we only subscribe
+        # to ones we know.
 
     # Tasks
 
@@ -1051,57 +1117,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
     async def _remove_finished_transient_tasks(self) -> None:
         await self._transient_task_queue.loop()
-
-    async def digital_output_loop(
-        self, module: GenericGPIO, queue: "asyncio.Queue[Tuple[ConfigType, str]]"
-    ) -> None:
-        """
-        Handle digital output MQTT messages for a specific GPIO module.
-        An instance of this loop will be created for each individual GPIO module so that
-        when messages come in via MQTT, we don't have to wait for some other module's
-        action to complete before carrying out this one.
-
-        It may seem like we should use this loop to handle /set_on_ms and /set_off_ms
-        messages, but it's actually better that we don't, since any timed stuff would
-        hold up /set messages that need to take place immediately.
-        """
-        while True:
-            out_conf, payload = await queue.get()
-            if payload not in (out_conf["on_payload"], out_conf["off_payload"]):
-                _LOG.warning(
-                    "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed.",
-                    payload,
-                    out_conf["name"],
-                    out_conf["on_payload"],
-                    out_conf["off_payload"],
-                )
-                continue
-
-            value = payload == out_conf["on_payload"]
-            await self.set_digital_output(module, out_conf, value)
-
-            try:
-                msec = out_conf["timed_set_ms"]
-            except KeyError:
-                continue
-
-            async def reset_timer(out_conf: ConfigType = out_conf) -> None:
-                """
-                Reset the output to the opposite value after x ms.
-                """
-                await asyncio.sleep(msec / 1000.0)
-                _LOG.info(
-                    (
-                        "Setting digital output '%s' back to its previous value after "
-                        "configured 'timed_set_ms' delay of %sms"
-                    ),
-                    out_conf["name"],
-                    msec,
-                )
-                await self.set_digital_output(module, out_conf, not value)
-
-            task = self.loop.create_task(reset_timer())
-            self._transient_task_queue.add_task(task)
 
     async def _main_loop(self) -> None:
         reconnect = True
@@ -1254,3 +1269,15 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         A list of running transient tasks.
         """
         return self._transient_task_queue.tasks
+
+    def _init_sensor_modules(self):
+        self.sensor.init()
+
+    def _init_gpio_modules(self):
+        self.gpio._init_gpio_modules()
+
+    def _init_digital_outputs(self):
+        self.gpio._init_digital_outputs()
+
+    def _init_digital_inputs(self):
+        self.gpio._init_digital_inputs()
