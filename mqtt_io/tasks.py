@@ -84,3 +84,4 @@ class TransientTaskManager:
         if self._shut_down:
             raise RuntimeError('Tried to add a new task to a stopping TransientTaskManager!')
         self.tasks.append(task)
+        self._event.set()
