@@ -59,10 +59,13 @@ class TransientTaskManager:
                 if watch_task:
                     watch_task.cancel()
                 continue
-            if watch_task in done:
-                watch_task = None
             for ready_task in done:
                 if ready_task is watch_task:
+                    try:
+                        await ready_task
+                    except asyncio.CancelledError:
+                        pass
+                    watch_task = None
                     continue
                 try:
                     await ready_task
