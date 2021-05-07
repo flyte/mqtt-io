@@ -1,5 +1,10 @@
 Unreleased
 ==========
+- Add INA219 sensor module. #221 @birdie1
+- Implement PinPUD.OFF for pcf8574/5. #217 @IlmLV
+- Ensure HCSR04 distance cannot be None. #215 @joseffallman
+- Add GPIOZero module. #212 @fipwmaqzufheoxq92ebc
+- Render config with confp to allow dynamic configuration based on environment/redis/etcd vars. #210 @fipwmaqzufheoxq92ebc
 - Log uncaught exceptions to configured logging handlers. #206 @fipwmaqzufheoxq92ebc
 
 v2.2.6 - 2021-04-23
