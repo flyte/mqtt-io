@@ -83,7 +83,7 @@ class Sensor(GenericSensor):
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         # pylint: disable=import-outside-toplevel,import-error
-        from ina219 import DeviceRangeError
+        from ina219 import DeviceRangeError  # type: ignore
 
         sens_type = sens_conf["type"]
 
