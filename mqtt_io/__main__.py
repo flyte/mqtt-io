@@ -8,10 +8,14 @@ from copy import deepcopy
 from hashlib import sha256
 from typing import Any, Optional
 
+import yaml
+
+from confp import render  # type: ignore
+
 from mqtt_io.types import ConfigType
 
 from . import VERSION
-from .config import load_main_config
+from .config import validate_and_normalise_main_config
 from .exceptions import ConfigValidationFailed
 from .modules import install_missing_requirements
 from .server import MqttIo
@@ -41,17 +45,35 @@ def redact_config(config: ConfigType) -> ConfigType:
     return ret
 
 
+def load_config(config: str, render_config: str) -> Any:
+    """
+    Loads the config, and uses confp to render it if necessary.
+    """
+    with open(config, "r") as stream:
+        if render_config:
+            rendered = render(render_config, stream.read())
+            raw_config = yaml.safe_load(rendered)
+        else:
+            raw_config = yaml.safe_load(stream)
+    return raw_config
+
+
 def main() -> None:
     """
     Main entrypoint function.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("config")
+    parser.add_argument("--render", help="""
+    A config file for confp for preprocessing the config file.
+    Doesn't need to contain a template section.
+    """)
     args = parser.parse_args()
 
     # Load, validate and normalise config, or quit.
     try:
-        config = load_main_config(args.config)
+        raw_config = load_config(args.config, args.render)
+        config = validate_and_normalise_main_config(raw_config)
     except ConfigValidationFailed as exc:
         print(str(exc), file=sys.stderr)
         sys.exit(1)
