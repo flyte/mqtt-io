@@ -93,8 +93,8 @@ class HCSR04:
                 if time.time() > timeout:
                     break
                 time.sleep(0.04)
-            # There's no way that self.distance can be None now. Thanks, GIL!
-            measurements.append(cast(float, self.distance))
+            if self.distance is not None:
+                measurements.append(float, self.distance)
             time.sleep(0.05)
         if not measurements:
             raise RuntimeError(
