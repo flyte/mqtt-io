@@ -52,6 +52,11 @@ jobs:
     concurrency: generate_docs
     runs-on: ubuntu-20.04
     steps:
+      - name: Dump Context
+        env:
+          GH_EVENT: ${{ toJson(github.event) }}
+          GH_EVENT_NAME: ${{ github.event_name }}
+        run: echo "$GH_EVENT_NAME" && echo "$GH_EVENT"
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
