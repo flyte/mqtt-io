@@ -13,3 +13,4 @@
 
 
 - <a href="/develop" target="_self">develop</a>
+- <a href="/pr-test" target="_self">pr-test</a>
