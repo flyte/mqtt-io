@@ -28,7 +28,7 @@ jobs:
         run: poetry run behave -t ~skip mqtt_io/tests/features
   publish:
     name: Publish to PyPI
-    if: github.event_name == 'release" && github.event.action == 'created'
+    if: github.event_name == 'release' && github.event.action == 'created'
     runs-on: ubuntu-20.04
     needs: test
     steps:
