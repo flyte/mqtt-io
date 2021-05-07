@@ -85,7 +85,7 @@ class HCSR04:
                     break
                 time.sleep(0.04)
             if self.distance is not None:
-                measurements.append(cast(float, self.distance))
+                measurements.append(float, self.distance)
             time.sleep(0.05)
         if not measurements:
             raise RuntimeError("Unable to measure range on HC-SR04 sensor '%s'" % self.name)
