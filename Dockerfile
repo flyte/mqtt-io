@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir wheel setuptools-rust && \
     fi && \
     pip install --no-cache-dir poetry
 
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml ./
 RUN poetry export -o /requirements.txt && \
     mkdir -p /home/mqtt_io && \
     python -m venv /home/mqtt_io/venv && \
