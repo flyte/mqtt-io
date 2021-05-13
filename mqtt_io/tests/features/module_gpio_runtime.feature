@@ -52,7 +52,7 @@ Feature: GPIO module runtime
         And we instantiate MqttIo
         And we initialise GPIO modules
         And we initialise digital inputs
-        And we mock handle_remote_interrupt on MqttIo
+        And we mock handle_remote_interrupt on GPIOIo
         And mock1 reads a value of false with a last value of true
         Then handle_remote_interrupt on MqttIo should be called with
             """
@@ -88,7 +88,7 @@ Feature: GPIO module runtime
         And we instantiate MqttIo
         And we initialise GPIO modules
         And we initialise digital inputs
-        And we mock handle_remote_interrupt on MqttIo
+        And we mock handle_remote_interrupt on GPIOIo
         And we lock interrupt lock for mock1
         And mock1 reads a value of false with a last value of true
         Then handle_remote_interrupt on MqttIo shouldn't be called
@@ -111,7 +111,7 @@ Feature: GPIO module runtime
         And we initialise GPIO modules
         And we initialise digital inputs
         # Mock this to stop the digital_input_poller from firing events too
-        And we mock _handle_digital_input_value on MqttIo
+        And we mock _handle_digital_input_value on GPIOIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
@@ -142,7 +142,7 @@ Feature: GPIO module runtime
         And we initialise GPIO modules
         And we initialise digital inputs
         # Mock this to stop the digital_input_poller from firing events too
-        And we mock _handle_digital_input_value on MqttIo
+        And we mock _handle_digital_input_value on GPIOIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event from another thread with
             """
@@ -174,7 +174,7 @@ Feature: GPIO module runtime
         And we initialise GPIO modules
         And we initialise digital inputs
         # Mock this to stop the digital_input_poller from firing events too
-        And we mock _handle_digital_input_value on MqttIo
+        And we mock _handle_digital_input_value on GPIOIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
@@ -205,7 +205,7 @@ Feature: GPIO module runtime
         And we initialise GPIO modules
         And we initialise digital inputs
         # Mock this to stop the digital_input_poller from firing events too
-        And we mock _handle_digital_input_value on MqttIo
+        And we mock _handle_digital_input_value on GPIOIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
@@ -237,7 +237,7 @@ Feature: GPIO module runtime
         And we initialise GPIO modules
         And we initialise digital inputs
         # Mock this to stop the digital_input_poller from firing events too
-        And we mock _handle_digital_input_value on MqttIo
+        And we mock _handle_digital_input_value on GPIOIo
         And we mock _mqtt_publish on MqttIo
         And we fire a new DigitalInputChangedEvent event with
             """
