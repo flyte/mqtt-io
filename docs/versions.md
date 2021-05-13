@@ -14,5 +14,4 @@
 
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
-- <a href="/feature/refactor-2021-05" target="_self">feature/refactor-2021-05</a>
 - <a href="/pr-test" target="_self">pr-test</a>
