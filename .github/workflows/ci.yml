@@ -48,7 +48,7 @@ jobs:
 
   build_docker_image:
     name: Build Docker Image
-    # if: github.event_name == 'release' && github.event.action == 'created'
+    if: (github.event_name == 'release' && github.event.action == 'created') || github.event_name == 'push'
     runs-on: ubuntu-20.04
     needs: test
     steps:
@@ -60,7 +60,12 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - run: docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io --push --build-arg BUILDX_QEMU_ENV=true .
+      - if: github.event_name == 'release' && github.event.action == 'created'
+        run: |
+          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:10} -t flyte/mqtt-io:latest --push --build-arg BUILDX_QEMU_ENV=true .
+      - if: github.event_name == 'push'
+        run: |
+          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:11} --push --build-arg BUILDX_QEMU_ENV=true .
 
   generate_docs:
     name: Generate Documentation
