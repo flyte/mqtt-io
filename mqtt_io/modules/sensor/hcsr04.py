@@ -4,7 +4,7 @@ HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO)
 
 import time
 from statistics import mean
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
@@ -93,8 +93,8 @@ class HCSR04:
                 if time.time() > timeout:
                     break
                 time.sleep(0.04)
-            # There's no way that self.distance can be None now. Thanks, GIL!
-            measurements.append(cast(float, self.distance))
+            if self.distance is not None:
+                measurements.append(self.distance)
             time.sleep(0.05)
         if not measurements:
             raise RuntimeError(
