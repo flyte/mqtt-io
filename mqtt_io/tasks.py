@@ -15,6 +15,7 @@ class TransientTaskManager:
     List is cleaned up in loop().
     new tasks can be added by add_task()
     """
+
     def __init__(self) -> None:
         self._ev: Optional[asyncio.Event] = None
         self._shut_down = False
@@ -49,7 +50,7 @@ class TransientTaskManager:
             try:
                 done, _ = await asyncio.wait(
                     tasks + [cast("asyncio.Task[bool]", watch_task)],
-                    return_when=asyncio.FIRST_COMPLETED
+                    return_when=asyncio.FIRST_COMPLETED,
                 )
             except asyncio.CancelledError:
                 # We got cancelled
@@ -73,7 +74,7 @@ class TransientTaskManager:
                     pass
                 except Exception:  # pylint: disable=broad-except
                     _LOG.exception("Exception in transient task %r", ready_task)
-                tasks.remove(cast(asyncio.Task[Any], ready_task))
+                tasks.remove(cast("asyncio.Task[Any]", ready_task))
         raise CancelledError()
 
     def add_task(self, task: "asyncio.Task[Any]") -> None:
@@ -82,6 +83,8 @@ class TransientTaskManager:
         Raises a RuntimeError if the loop was cancelled.
         """
         if self._shut_down:
-            raise RuntimeError('Tried to add a new task to a stopping TransientTaskManager!')
+            raise RuntimeError(
+                "Tried to add a new task to a stopping TransientTaskManager!"
+            )
         self.tasks.append(task)
         self._event.set()
