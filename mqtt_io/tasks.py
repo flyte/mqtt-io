@@ -4,7 +4,7 @@ Utils for working with transient tasks.
 import asyncio
 import logging
 from asyncio import CancelledError
-from typing import List, Optional, Any, cast
+from typing import List, Optional, Any, cast  # pylint: disable=unused-import
 
 _LOG = logging.getLogger(__name__)
 

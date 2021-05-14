@@ -1,5 +1,5 @@
 mqtt:
-  host: localhost
+  host: test.mosquitto.org
   topic_prefix: mqtt_io
   clean_session: yes
   protocol: 3.1.1
