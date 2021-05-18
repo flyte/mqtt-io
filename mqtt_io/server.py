@@ -67,11 +67,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         # receive messages.
         self.running: threading.Event = threading.Event()
 
-        # GPIO
+        # IO functionality
         self.gpio = GPIOIo(config, self)
-
         self.sensor = SensorIo(config, self)
-
         self.stream = StreamIo(config, self)
 
         self.loop = loop or asyncio.get_event_loop()

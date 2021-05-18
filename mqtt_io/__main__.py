@@ -19,8 +19,9 @@ from .config import validate_and_normalise_main_config
 from .exceptions import ConfigValidationFailed
 from .modules import install_missing_requirements
 from .server import MqttIo
+from .server_trio import MQTTIO
 
-_LOG = logging.getLogger('mqtt_io.__main__')
+_LOG = logging.getLogger("mqtt_io.__main__")
 
 
 def hashed(value: Any) -> str:
@@ -64,10 +65,13 @@ def main() -> None:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("config")
-    parser.add_argument("--render", help="""
+    parser.add_argument(
+        "--render",
+        help="""
     A config file for confp for preprocessing the config file.
     Doesn't need to contain a template section.
-    """)
+    """,
+    )
     args = parser.parse_args()
 
     # Load, validate and normalise config, or quit.
@@ -100,10 +104,10 @@ def main() -> None:
         if issue_id is not None:
             sentry_sdk.set_tag("issue_id", issue_id)
     try:
-        mqtt_gpio = MqttIo(config)
-        mqtt_gpio.run()
+        mqtt_io = MQTTIO(config)
+        mqtt_io.run()
     except Exception:
-        _LOG.exception('MqttIo crashed!')
+        _LOG.exception("MqttIo crashed!")
         raise
 
 
