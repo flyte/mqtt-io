@@ -39,7 +39,7 @@ class MQTTIO:
         self.gpio = GPIO(config, self)
         self.sensor = SensorIO(config, self)
         self.stream = StreamIO(config, self)
-        self.io_modules: Tuple[GenericIO] = (self.gpio, self.sensor, self.stream)
+        self.io_modules: List[GenericIO] = [self.gpio, self.sensor, self.stream]
 
     @property
     def nursery(self) -> trio.Nursery:
@@ -75,7 +75,7 @@ class MQTTIO:
 
             await self.gpio.init()
             await self.sensor.init()
-            # self.stream.init()
+            await self.stream.init()
 
     async def run_mqtt(
         self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
@@ -175,27 +175,3 @@ class MQTTIO:
                 retain=True,
             ),
         )
-
-    async def _handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
-        """
-        Parse all MQTT messages received on our subscriptions and dispatch actions
-        such as changing outputs and sending data to streams accordingly.
-        """
-
-        # if not any(
-        #     topic.endswith(f"/{x}")
-        #     for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX, SEND_SUFFIX)
-        # ):
-        #     _LOG.debug(
-        #         "Ignoring message to topic '%s' which doesn't end with a known suffix",
-        #         topic,
-        #     )
-        #     return
-
-        # # TODO: Put this in the StreamIO handle_mqtt_msg() method
-        # # Handle stream send message
-        # if topic.endswith("/send"):
-        #     await self.stream.handle_stream_send_msg(topic, payload)
-
-        # # Ignore unknown topics, although we shouldn't get here, because we only subscribe
-        # # to ones we know.

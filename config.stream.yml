@@ -1,15 +1,17 @@
 mqtt:
-  host: test.mosquitto.org
+  host: localhost
   port: 1883
-  topic_prefix: mqtt_gpio
+  topic_prefix: mqtt_io
   clean_session: yes
   protocol: 3.1.1
-  discovery: yes
+  keepalive: 10
+  reconnect_delay: 4
+  reconnect_count: 4
 
 stream_modules:
   - name: serial
     module: serial
-    device: /dev/pts/15
+    device: /dev/pts/24
     baud: 9600
     read_interval: 1
 
@@ -25,13 +27,24 @@ logging:
       format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
       datefmt: "%Y-%m-%d %H:%M:%S"
   loggers:
+    anyio_mqtt:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    paho:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    mqtt:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
     mqtt_io:
       level: DEBUG
       handlers:
         - console
       propagate: yes
-    asyncio:
-      level: DEBUG
-      handlers:
-        - console
-      propagate: yes
+

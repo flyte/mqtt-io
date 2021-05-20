@@ -27,3 +27,6 @@ publish: build
 
 docs:
 	poetry run python docs_src/generate_docs.py
+
+docker:
+	docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:`git rev-parse --short HEAD` --push --build-arg BUILDX_QEMU_ENV=true .

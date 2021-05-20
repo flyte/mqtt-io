@@ -1,10 +1,11 @@
 """
 Provides "StreamIo" which handles writing and reading streams.
 """
-import asyncio
 import logging
 from functools import partial
-from typing import TYPE_CHECKING, Dict, List
+from typing import TYPE_CHECKING, Dict, List, Tuple
+
+import trio
 
 from .abc import GenericIO
 from .constants import MQTT_SUB_PRIORITY, SEND_SUFFIX, STREAM_TOPIC
@@ -16,7 +17,7 @@ from .utils import PriorityCoro
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
-    from .server import MqttIo
+    from .server_trio import MQTTIO
 _LOG = logging.getLogger(__name__)
 
 
@@ -32,7 +33,7 @@ class StreamIO(GenericIO):
     def __init__(
         self,
         config: ConfigType,
-        server: "MqttIo",
+        server: "MQTTIO",
     ) -> None:
         """
         Initialise Stream modules.
@@ -41,58 +42,66 @@ class StreamIO(GenericIO):
         # Stream
         self.stream_configs: Dict[str, ConfigType] = {}
         self.stream_modules: Dict[str, GenericStream] = {}
-        self.stream_output_queues = {}  # type: Dict[str, asyncio.Queue[bytes]]
+        self.stream_output_channels: Dict[
+            str, Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]
+        ] = {}
 
         self.config = config
 
-    def init(self) -> None:
+    def _publish_data(
+        self, name: str, data: bytes, qos: int = 1, retain: bool = False
+    ) -> None:
+        self.server.mqtt.publish(
+            "/".join((self.server.config["mqtt"]["topic_prefix"], STREAM_TOPIC, name)),
+            data,
+            qos=qos,
+            retain=retain,
+        )
+
+    async def init(self) -> None:
         """
         Initialize the modules and starts task for polling.
         """
-        server = self.server
-
         # TODO: Tasks pending completion -@flyte at 01/03/2021, 14:40:10
         # Only publish if read: true and only subscribe if write: true
 
-        async def publish_stream_data_callback(event: StreamDataReadEvent) -> None:
-            stream_conf = self.stream_configs[event.stream_name]
-            server.new_publish_task(
-                stream_conf["name"], stream_conf["retain"], event.data, STREAM_TOPIC
-            )
+        async def publish_stream_data(
+            event_rx: trio.MemoryReceiveChannel,
+            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+        ) -> None:
+            event: StreamDataReadEvent
+            async with event_rx:
+                task_status.started()
+                async for event in event_rx:
+                    stream_conf = self.stream_configs[event.stream_name]
+                    self._publish_data(
+                        event.stream_name, event.data, retain=stream_conf["retain"]
+                    )
 
-        server.event_bus.subscribe(StreamDataReadEvent, publish_stream_data_callback)
+        event_rx = await self.server.event_bus.subscribe(StreamDataReadEvent)
+        await self.server.nursery.start(publish_stream_data, event_rx)
 
         self.stream_configs = {x["name"]: x for x in self.config["stream_modules"]}
         self.stream_modules = {}
-        sub_topics: List[str] = []
         for stream_conf in self.config["stream_modules"]:
-            stream_module = _init_module(
+            stream_module = await _init_module(
                 stream_conf, "stream", self.config["options"]["install_requirements"]
             )
             self.stream_modules[stream_conf["name"]] = stream_module
 
-            server.transient_task_queue.add_task(
-                server.loop.create_task(self.stream_poller(stream_module, stream_conf))
-            )
+            self.server.nursery.start_soon(self.stream_poller, stream_module, stream_conf)
 
-            # Set up a stream output queue.
-            queue = asyncio.Queue()  # type: asyncio.Queue[bytes]
-            self.stream_output_queues[stream_conf["name"]] = queue
+            # Set up a stream output channel.
+            tx_chan, rx_chan = trio.open_memory_channel(0)
+            self.stream_output_channels[stream_conf["name"]] = (tx_chan, rx_chan)
 
             # Queue a stream output loop task
-            server.transient_task_queue.add_task(
-                server.loop.create_task(
-                    # Use partial to avoid late binding closure
-                    partial(
-                        self.stream_output_loop,
-                        stream_module,
-                        stream_conf,
-                        self.stream_output_queues[stream_conf["name"]],
-                    )()
-                )
+            self.server.nursery.start_soon(
+                self.stream_output_loop, stream_module, stream_conf, rx_chan
             )
 
-            sub_topics.append(
+            # await trio.sleep(1)
+            await self.server.mqtt.subscribe(
                 "/".join(
                     (
                         self.config["mqtt"]["topic_prefix"],
@@ -101,12 +110,6 @@ class StreamIO(GenericIO):
                         SEND_SUFFIX,
                     )
                 )
-            )
-
-        # Subscribe to stream send topics
-        if sub_topics:
-            server.mqtt_task_queue.put_nowait(
-                PriorityCoro(server.mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
             )
 
     async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:
@@ -125,19 +128,19 @@ class StreamIO(GenericIO):
                     self.server.event_bus.fire(
                         StreamDataReadEvent(stream_conf["name"], data)
                     )
-            await asyncio.sleep(stream_conf["read_interval"])
+            await trio.sleep(stream_conf["read_interval"])
 
     async def stream_output_loop(
         self,
         module: GenericStream,
         stream_conf: ConfigType,
-        queue: "asyncio.Queue[bytes]",
+        data_rx: trio.MemoryReceiveChannel,
     ) -> None:
         """
         Wait for data to appear on the queue, then send it to the stream.
         """
-        while True:
-            data = await queue.get()
+        data: bytes
+        async for data in data_rx:
             try:
                 await module.async_write(data)
             except Exception:  # pylint: disable=broad-except
@@ -146,6 +149,11 @@ class StreamIO(GenericIO):
                 )
             else:
                 self.server.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
+
+    async def handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
+        # Handle stream send message
+        if topic.endswith("/send"):
+            await self.handle_stream_send_msg(topic, payload)
 
     async def handle_stream_send_msg(self, topic: str, payload: bytes) -> None:
         """
@@ -159,9 +167,16 @@ class StreamIO(GenericIO):
             _LOG.warning("Unable to parse stream name from topic: %s", exc)
             return
         try:
-            self.stream_output_queues[stream_name].put_nowait(payload)
+            tx_chan, _ = self.stream_output_channels[stream_name]
         except KeyError:
             _LOG.warning("No stream output queue found named %r", stream_name)
+        try:
+            tx_chan.send_nowait(payload)
+        except trio.WouldBlock:
+            _LOG.error(
+                "'%s' stream output channel full when handling stream send message",
+                stream_name,
+            )
 
     def cleanup(self) -> None:
         """

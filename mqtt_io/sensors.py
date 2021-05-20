@@ -10,7 +10,7 @@ import trio
 from .abc import GenericIO
 from .config import validate_and_normalise_sensor_input_config
 from .constants import SENSOR_TOPIC
-from .events import DigitalInputChangedEvent, SensorReadEvent
+from .events import SensorReadEvent
 from .helpers import _init_module
 from .modules.sensor import GenericSensor
 from .types import ConfigType, SensorValueType

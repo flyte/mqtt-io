@@ -2,10 +2,10 @@
 Contains the base class that is shared across all Stream modules.
 """
 
-import asyncio
 from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
+from typing import Optional, cast
+
+import trio
 
 from ...types import ConfigType
 
@@ -40,17 +40,15 @@ class GenericStream(ABC):
 
     async def async_read(self) -> Optional[bytes]:
         """
-        Use a ThreadPoolExecutor to call the module's synchronous read method.
+        Use trio.to_thread to call the module's synchronous read method.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.read)
+        return cast(bytes, await trio.to_thread.run_sync(self.read))
 
     async def async_write(self, data: bytes) -> None:
         """
-        Use a ThreadPoolExecutor to call the module's synchronous write method.
+        Use trio.to_thread to call the module's synchronous write method.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.write, data)
+        await trio.to_thread.run_sync(self.write, data)
 
     def cleanup(self) -> None:
         """
