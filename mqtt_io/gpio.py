@@ -1,12 +1,14 @@
 """
 Provides "StreamIo" which handles reading and writing to gpio-pins, interrupts on that pins, ...
 """
-import asyncio
 import logging
 import threading
 from functools import partial
-from typing import Any, Dict, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+import trio
+
+from .abc import GenericIO
 from .config import (
     validate_and_normalise_digital_input_config,
     validate_and_normalise_digital_output_config,
@@ -19,18 +21,20 @@ from .constants import (
     SET_ON_MS_SUFFIX,
     SET_SUFFIX,
 )
-from .events import (
-    DigitalInputChangedEvent,
-    DigitalOutputChangedEvent,
-)
-from .helpers import output_name_from_topic, _init_module
+from .events import DigitalInputChangedEvent, DigitalOutputChangedEvent, Event
+from .helpers import _init_module, output_name_from_topic
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .types import ConfigType, PinType
-from .utils import PriorityCoro, create_unawaited_task_threadsafe
+from .utils import (
+    PriorityCoro,
+    ResultNursery,
+    create_unawaited_task_threadsafe,
+    hold_channel_open,
+)
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
-    from .server import MqttIo
+    from .server_trio import MQTTIO
 _LOG = logging.getLogger(__name__)
 
 
@@ -38,12 +42,12 @@ _LOG = logging.getLogger(__name__)
 # pylint: disable=too-many-lines
 
 
-class GPIOIo:  # pylint: disable=too-many-instance-attributes
+class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
     """
     Handles GPIO-Modules
     """
 
-    def __init__(self, config: ConfigType, server: "MqttIo") -> None:
+    def __init__(self, config: ConfigType, server: "MQTTIO") -> None:
         self.config = config
         self.server = server
 
@@ -52,31 +56,42 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         self.digital_output_configs: Dict[str, ConfigType] = {}
         self.gpio_modules: Dict[str, GenericGPIO] = {}
 
-        self.gpio_output_queues = (
-            {}
-        )  # type: Dict[str, asyncio.Queue[Tuple[ConfigType, str]]]
+        self.gpio_output_channels: Dict[
+            str, Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]
+        ] = {}
+
         self.interrupt_locks: Dict[str, threading.Lock] = {}
 
-    def init(self) -> None:
+    async def init(self) -> None:
         """
         Initializes modules, inputs and outputs.
         """
-        self.init_gpio_modules()
-        self.init_digital_inputs()
-        self.init_digital_outputs()
+        await self.init_gpio_modules()
+        await self.init_digital_inputs()
+        await self.init_digital_outputs()
 
-    def init_gpio_modules(self) -> None:
+    async def init_gpio_modules(self) -> None:
         """
         Initialise GPIO modules.
         """
         self.gpio_configs = {x["name"]: x for x in self.config["gpio_modules"]}
         self.gpio_modules = {}
         for gpio_config in self.config["gpio_modules"]:
-            self.gpio_modules[gpio_config["name"]] = _init_module(
+            self.gpio_modules[gpio_config["name"]] = await _init_module(
                 gpio_config, "gpio", self.config["options"]["install_requirements"]
             )
 
-    def init_digital_inputs(self) -> None:
+    def _publish_io(
+        self, name: str, value: str, in_out_topic: str, qos: int = 1, retain: bool = False
+    ) -> None:
+        self.server.mqtt.publish(
+            "/".join((self.server.config["mqtt"]["topic_prefix"], in_out_topic, name)),
+            value.encode("utf8"),
+            qos=qos,
+            retain=retain,
+        )
+
+    async def init_digital_inputs(self) -> None:
         """
         Initialise all of the digital inputs by doing the following:
         - Create a closure function to publish an MQTT message on DigitalInputchangedEvent
@@ -88,24 +103,32 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
           if it's supported.
         """
 
-        # Set up MQTT publish callback for input event.
-        # Needs to be a function, not a method, hence the closure function.
-        async def publish_callback(event: DigitalInputChangedEvent) -> None:
-            in_conf = self.digital_input_configs[event.input_name]
-            value = event.to_value != in_conf["inverted"]
-            val = in_conf["on_payload"] if value else in_conf["off_payload"]
-            self.server.new_publish_task(
-                event.input_name, in_conf["retain"], val.encode("utf8"), INPUT_TOPIC
-            )
+        async def publish_input_changes(
+            event_rx: trio.MemoryReceiveChannel,
+            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+        ) -> None:
+            event: DigitalInputChangedEvent
+            async with event_rx:
+                task_status.started()
+                async for event in event_rx:
+                    in_conf = self.digital_input_configs[event.input_name]
+                    value = event.to_value != in_conf["inverted"]
+                    val = in_conf["on_payload"] if value else in_conf["off_payload"]
+                    self._publish_io(
+                        event.input_name, val, INPUT_TOPIC, retain=in_conf["retain"]
+                    )
 
-        self.server.event_bus.subscribe(DigitalInputChangedEvent, publish_callback)
+        event_rx = await self.server.event_bus.subscribe(DigitalInputChangedEvent)
+        await self.server.nursery.start(publish_input_changes, event_rx)
 
         for in_conf in self.config["digital_inputs"]:
             gpio_module = self.gpio_modules[in_conf["module"]]
             in_conf = validate_and_normalise_digital_input_config(in_conf, gpio_module)
             self.digital_input_configs[in_conf["name"]] = in_conf
 
-            gpio_module.setup_pin_internal(PinDirection.INPUT, in_conf)
+            await trio.to_thread.run_sync(
+                gpio_module.setup_pin_internal, PinDirection.INPUT, in_conf
+            )
 
             interrupt = in_conf.get("interrupt")
             interrupt_for = in_conf.get("interrupt_for")
@@ -113,12 +136,10 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
             # Only start the poller task if this _isn't_ set up with an interrupt, or if
             # it _is_ an interrupt, but it's used for triggering remote interrupts.
             if interrupt is None or (
-                    interrupt_for and in_conf["poll_when_interrupt_for"]
+                interrupt_for and in_conf["poll_when_interrupt_for"]
             ):
-                self.server.transient_task_queue.add_task(
-                    self.server.loop.create_task(
-                        partial(self.digital_input_poller, gpio_module, in_conf)()
-                    )
+                self.server.nursery.start_soon(
+                    self.digital_input_poller, gpio_module, in_conf
                 )
 
             if interrupt:
@@ -136,61 +157,63 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                     callback = partial(
                         self.interrupt_callback, gpio_module, in_conf["pin"]
                     )
-                gpio_module.setup_interrupt_internal(
-                    in_conf["pin"], edge, in_conf, callback=callback
+                await trio.to_thread.run_sync(
+                    gpio_module.setup_interrupt_internal,
+                    in_conf["pin"],
+                    edge,
+                    in_conf,
+                    callback,
                 )
 
-    def init_digital_outputs(self) -> None:
+    async def init_digital_outputs(self) -> None:
         """
         Initializes all outputs.
         """
-        server = self.server
 
-        # Set up MQTT publish callback for output event
-        async def publish_callback(event: DigitalOutputChangedEvent) -> None:
-            out_conf = self.digital_output_configs[event.output_name]
-            val = out_conf["on_payload"] if event.to_value else out_conf["off_payload"]
-            server.new_publish_task(
-                event.output_name, out_conf["retain"], val.encode('utf8'), "output"
-            )
+        async def publish_digital_outputs(
+            event_rx: trio.MemoryReceiveChannel,
+            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+        ) -> None:
+            event: DigitalOutputChangedEvent
+            async with event_rx:
+                task_status.started()
+                async for event in event_rx:
+                    out_conf = self.digital_output_configs[event.output_name]
+                    val = (
+                        out_conf["on_payload"]
+                        if event.to_value
+                        else out_conf["off_payload"]
+                    )
+                    self._publish_io(
+                        event.output_name, val, OUTPUT_TOPIC, retain=out_conf["retain"]
+                    )
 
-        server.event_bus.subscribe(DigitalOutputChangedEvent, publish_callback)
+        event_rx = await self.server.event_bus.subscribe(DigitalOutputChangedEvent)
+        await self.server.nursery.start(publish_digital_outputs, event_rx)
 
         for out_conf in self.config["digital_outputs"]:
             gpio_module = self.gpio_modules[out_conf["module"]]
             out_conf = validate_and_normalise_digital_output_config(out_conf, gpio_module)
             self.digital_output_configs[out_conf["name"]] = out_conf
 
-            gpio_module.setup_pin_internal(PinDirection.OUTPUT, out_conf)
+            await trio.to_thread.run_sync(
+                gpio_module.setup_pin_internal, PinDirection.OUTPUT, out_conf
+            )
 
-            # Create queues for each module with an output
-            if out_conf["module"] not in self.gpio_output_queues:
-                async def create_digital_output_queue(
-                        out_conf: ConfigType = out_conf,
-                ) -> None:
-                    """
-                    Create digital output queue on the right loop.
-                    """
-                    queue = asyncio.Queue()  # type: asyncio.Queue[Tuple[ConfigType, str]]
-                    self.gpio_output_queues[out_conf["module"]] = queue
+            # Create channels for each module with an output
+            if out_conf["module"] not in self.gpio_output_channels:
+                tx_chan, rx_chan = trio.open_memory_channel(0)
+                self.gpio_output_channels[out_conf["module"]] = (tx_chan, rx_chan)
+                await self.server.nursery.start(hold_channel_open, tx_chan)
 
-                server.loop.run_until_complete(create_digital_output_queue())
-
-                # Use partial to avoid late binding closure
-                server.transient_task_queue.add_task(
-                    server.loop.create_task(
-                        partial(
-                            self.digital_output_loop,
-                            gpio_module,
-                            self.gpio_output_queues[out_conf["module"]],
-                        )()
-                    )
+                self.server.nursery.start_soon(
+                    self.digital_output_loop,
+                    gpio_module,
+                    rx_chan,
                 )
 
-            # Add tasks to subscribe to outputs when MQTT is initialised
-            topics = []
             for suffix in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX):
-                topics.append(
+                self.server.mqtt.subscribe(
                     "/".join(
                         (
                             self.config["mqtt"]["topic_prefix"],
@@ -200,13 +223,10 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                         )
                     )
                 )
-            server.mqtt_task_queue.put_nowait(
-                PriorityCoro(server.mqtt_subscribe(topics), MQTT_SUB_PRIORITY)
-            )
 
             # Fire DigitalOutputChangedEvents for initial values of outputs if required
             if out_conf["publish_initial"]:
-                server.event_bus.fire(
+                self.server.event_bus.fire(
                     DigitalOutputChangedEvent(
                         out_conf["name"],
                         out_conf["initial"]
@@ -215,10 +235,10 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                 )
 
     async def _handle_digital_input_value(
-            self,
-            in_conf: ConfigType,
-            value: bool,
-            last_value: Optional[bool],
+        self,
+        in_conf: ConfigType,
+        value: bool,
+        last_value: Optional[bool],
     ) -> None:
         """
         Handles values read from a digital input.
@@ -247,13 +267,13 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         if not interrupt or not interrupt_for:
             return
         if not any(
-                (
-                        interrupt == "rising" and value,
-                        interrupt == "falling" and not value,
-                        # Doesn't work for 'both' because there's no one 'triggered' state
-                        # to check if we're stuck in.
-                        # interrupt == "both",
-                )
+            (
+                interrupt == "rising" and value,
+                interrupt == "falling" and not value,
+                # Doesn't work for 'both' because there's no one 'triggered' state
+                # to check if we're stuck in.
+                # interrupt == "both",
+            )
         ):
             return
         interrupt_lock = self.interrupt_locks[in_conf["name"]]
@@ -275,7 +295,7 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         self.handle_remote_interrupt(interrupt_for, interrupt_lock)
 
     async def digital_input_poller(
-            self, module: GenericGPIO, in_conf: ConfigType
+        self, module: GenericGPIO, in_conf: ConfigType
     ) -> None:
         """
         Polls a single digital input for changes and calls the handler function when it's
@@ -286,14 +306,14 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
             value = await module.async_get_pin(in_conf["pin"])
             await self._handle_digital_input_value(in_conf, value, last_value)
             last_value = value
-            await asyncio.sleep(in_conf["poll_interval"])
+            await trio.sleep(in_conf["poll_interval"])
 
     def interrupt_callback(
-            self,
-            module: GenericGPIO,
-            pin: PinType,
-            *args: Any,
-            **kwargs: Any,
+        self,
+        module: GenericGPIO,
+        pin: PinType,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         This function is passed in to any GPIO library that provides software callbacks
@@ -310,12 +330,6 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         This can potentially be called from any thread.
         """
         pin_name = module.pin_configs[pin]["name"]
-        if not self.server.running.is_set():
-            # Not yet ready to handle interrupts
-            _LOG.warning(
-                "Ignored interrupt from pin %r as we're not fully initialised", pin_name
-            )
-            return
         interrupt_lock = self.interrupt_locks[pin_name]
         if not interrupt_lock.acquire(blocking=False):
             # This will only happen when the pin is configured with interrupt_for, as we
@@ -351,7 +365,7 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                 interrupt_lock.release()
 
     def handle_remote_interrupt(
-            self, pin_names: List[str], interrupt_lock: threading.Lock
+        self, pin_names: List[str], interrupt_lock: threading.Lock
     ) -> None:
         """
         Adds tasks to the event loop to go off and get the values for the pin(s) which have
@@ -378,7 +392,7 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         for remote_module, pins in remote_modules_and_pins.items():
 
             async def handle_remote_interrupt_task(
-                    remote_module: GenericGPIO = remote_module, pins: List[PinType] = pins
+                remote_module: GenericGPIO = remote_module, pins: List[PinType] = pins
             ) -> None:
                 """
                 Ask the GPIO module to fetch the values of the specified pins, because
@@ -395,7 +409,7 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                         DigitalInputChangedEvent(remote_pin_name, None, value)
                     )
 
-            remote_interrupt_tasks.append(handle_remote_interrupt_task())
+            remote_interrupt_tasks.append(partial(handle_remote_interrupt_task)())
 
         async def await_remote_interrupts() -> None:
             """
@@ -403,13 +417,32 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
             lock afterwards.
             """
             try:
-                await asyncio.gather(*remote_interrupt_tasks)
+                async with trio.open_nursery() as nursery:
+                    for coro_func in remote_interrupt_tasks:
+                        nursery.start_soon(coro_func)
             finally:
                 interrupt_lock.release()
 
-        create_unawaited_task_threadsafe(
-            self.server.loop, self.server.transient_task_queue, await_remote_interrupts()
+        trio.from_thread.run_sync(
+            self.server.nursery.start_soon,
+            await_remote_interrupts,
+            trio_token=self.server.trio_token,
         )
+
+    async def handle_mqtt_msg(self, topic: str, payload: bytes) -> None:
+        if any(
+            topic.endswith(f"/{x}")
+            for x in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX)
+        ):
+            try:
+                payload_str = payload.decode("utf8")
+            except UnicodeDecodeError:
+                _LOG.warning(
+                    "Received MQTT message to a digital output topic '%s' that wasn't unicode.",
+                    topic,
+                )
+                return
+            await self.handle_digital_output_msg(topic, payload_str)
 
     async def handle_digital_output_msg(self, topic: str, payload: str) -> None:
         """
@@ -431,19 +464,30 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         except KeyError:
             _LOG.warning("No GPIO module config found named %r", out_conf["module"])
             return
+
         if topic.endswith("/%s" % SET_SUFFIX):
             # This is a message to set a digital output to a given value
-            self.gpio_output_queues[out_conf["module"]].put_nowait((out_conf, payload))
+            tx_chan, _ = self.gpio_output_channels[out_conf["module"]]
+            try:
+                tx_chan.send_nowait((out_conf, payload))
+            except trio.WouldBlock:
+                _LOG.error(
+                    "'%s' module output channel full when handling digital output msg",
+                    module,
+                )
         else:
             # This must be a set_on_ms or set_off_ms topic
             desired_value = topic.endswith("/%s" % SET_ON_MS_SUFFIX)
 
-            async def set_ms() -> None:
+            async def set_ms(
+                task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+            ) -> None:
                 """
                 Create this task to directly set the outputs, as we don't want to tie up
                 the set_digital_output loop. Creating a bespoke task for the job is the
                 simplest and most effective way of leveraging the asyncio framework.
                 """
+                task_status.started()
                 try:
                     secs = float(payload) / 1000
                 except ValueError:
@@ -458,7 +502,7 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                     secs,
                 )
                 await self.set_digital_output(module, out_conf, desired_value)
-                await asyncio.sleep(secs)
+                await trio.sleep(secs)
                 _LOG.info(
                     "Turning output '%s' %s after %s second(s) elapsed",
                     out_conf["name"],
@@ -467,11 +511,11 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                 )
                 await self.set_digital_output(module, out_conf, not desired_value)
 
-            task = self.server.loop.create_task(set_ms())
-            self.server.transient_task_queue.add_task(task)
+            # Timing sensitive task, so start it right away
+            await self.server.nursery.start(set_ms)
 
     async def set_digital_output(
-            self, module: GenericGPIO, output_config: ConfigType, value: bool
+        self, module: GenericGPIO, output_config: ConfigType, value: bool
     ) -> None:
         """
         Set a digital output, taking into account whether it's configured
@@ -485,10 +529,12 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
             set_value,
             "on" if value else "off",
         )
-        self.server.event_bus.fire(DigitalOutputChangedEvent(output_config["name"], value))
+        self.server.event_bus.fire(
+            DigitalOutputChangedEvent(output_config["name"], value)
+        )
 
     async def digital_output_loop(
-            self, module: GenericGPIO, queue: "asyncio.Queue[Tuple[ConfigType, str]]"
+        self, module: GenericGPIO, rx_chan: trio.MemoryReceiveChannel
     ) -> None:
         """
         Handle digital output MQTT messages for a specific GPIO module.
@@ -500,8 +546,9 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
         messages, but it's actually better that we don't, since any timed stuff would
         hold up /set messages that need to take place immediately.
         """
-        while True:
-            out_conf, payload = await queue.get()
+        output_action: Tuple[ConfigType, str]
+        async for output_action in rx_chan:
+            out_conf, payload = output_action
             if payload not in (out_conf["on_payload"], out_conf["off_payload"]):
                 _LOG.warning(
                     "'%s' is not a valid payload for output %s. Only '%s' and '%s' are allowed.",
@@ -512,19 +559,23 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                 )
                 continue
 
-            value = payload == out_conf["on_payload"]
+            value: bool = payload == out_conf["on_payload"]
             await self.set_digital_output(module, out_conf, value)
 
-            try:
-                msec = out_conf["timed_set_ms"]
-            except KeyError:
+            if "timed_set_ms" not in out_conf:
                 continue
 
-            async def reset_timer(out_conf: ConfigType = out_conf) -> None:
+            async def reset_timer(
+                out_conf: ConfigType = out_conf,
+                value: bool = value,
+                task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+            ) -> None:
                 """
                 Reset the output to the opposite value after x ms.
                 """
-                await asyncio.sleep(msec / 1000.0)
+                task_status.started()
+                msec: int = out_conf["timed_set_ms"]
+                await trio.sleep(msec / 1000.0)
                 _LOG.info(
                     (
                         "Setting digital output '%s' back to its previous value after "
@@ -535,8 +586,8 @@ class GPIOIo:  # pylint: disable=too-many-instance-attributes
                 )
                 await self.set_digital_output(module, out_conf, not value)
 
-            task = self.server.loop.create_task(reset_timer())
-            self.server.transient_task_queue.add_task(task)
+            # Timing sensitive task, so start it right away
+            await self.server.nursery.start(reset_timer)
 
     def cleanup(self) -> None:
         """

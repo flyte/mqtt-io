@@ -25,34 +25,34 @@ _LOG = logging.getLogger(__name__)
 
 
 @overload
-def _init_module(
-        module_config: Dict[str, Dict[str, Any]],
-        module_type: Literal["gpio"],
-        install_requirements: bool,
+async def _init_module(
+    module_config: Dict[str, Dict[str, Any]],
+    module_type: Literal["gpio"],
+    install_requirements: bool,
 ) -> GenericGPIO:
     ...  # pragma: no cover
 
 
 @overload
-def _init_module(
-        module_config: Dict[str, Dict[str, Any]],
-        module_type: Literal["sensor"],
-        install_requirements: bool,
+async def _init_module(
+    module_config: Dict[str, Dict[str, Any]],
+    module_type: Literal["sensor"],
+    install_requirements: bool,
 ) -> GenericSensor:
     ...  # pragma: no cover
 
 
 @overload
-def _init_module(
-        module_config: Dict[str, Dict[str, Any]],
-        module_type: Literal["stream"],
-        install_requirements: bool,
+async def _init_module(
+    module_config: Dict[str, Dict[str, Any]],
+    module_type: Literal["stream"],
+    install_requirements: bool,
 ) -> GenericStream:
     ...  # pragma: no cover
 
 
-def _init_module(
-        module_config: Dict[str, Dict[str, Any]], module_type: str, install_requirements: bool
+async def _init_module(
+    module_config: Dict[str, Dict[str, Any]], module_type: str, install_requirements: bool
 ) -> Union[GenericGPIO, GenericSensor, GenericStream]:
     """
     Initialise a GPIO module by:
@@ -70,7 +70,7 @@ def _init_module(
     module_schema.update(getattr(module, "CONFIG_SCHEMA", {}))
     module_config = validate_and_normalise_config(module_config, module_schema)
     if install_requirements:
-        install_missing_module_requirements(module)
+        await install_missing_module_requirements(module)
     module_class: Type[Union[GenericGPIO, GenericSensor, GenericStream]] = getattr(
         module, MODULE_CLASS_NAMES[module_type]
     )

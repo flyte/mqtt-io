@@ -4,21 +4,16 @@ Provides "StreamIo" which handles writing and reading streams.
 import asyncio
 import logging
 from functools import partial
-from typing import Dict, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List
 
-from .constants import (
-    MQTT_SUB_PRIORITY,
-    SEND_SUFFIX,
-    STREAM_TOPIC,
-)
-from .events import (
-    StreamDataReadEvent,
-    StreamDataSentEvent,
-)
-from .helpers import output_name_from_topic, _init_module
+from .abc import GenericIO
+from .constants import MQTT_SUB_PRIORITY, SEND_SUFFIX, STREAM_TOPIC
+from .events import StreamDataReadEvent, StreamDataSentEvent
+from .helpers import _init_module, output_name_from_topic
 from .modules.stream import GenericStream
 from .types import ConfigType
 from .utils import PriorityCoro
+
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
     from .server import MqttIo
@@ -28,11 +23,17 @@ _LOG = logging.getLogger(__name__)
 # pylint: enable=duplicate-code
 # pylint: disable=too-many-lines
 
-class StreamIo:
+
+class StreamIO(GenericIO):
     """
     Handles reading and writing to streams.
     """
-    def __init__(self, config: ConfigType, server: "MqttIo", ) -> None:
+
+    def __init__(
+        self,
+        config: ConfigType,
+        server: "MqttIo",
+    ) -> None:
         """
         Initialise Stream modules.
         """
@@ -121,14 +122,16 @@ class StreamIo:
                 )
             else:
                 if data is not None:
-                    self.server.event_bus.fire(StreamDataReadEvent(stream_conf["name"], data))
+                    self.server.event_bus.fire(
+                        StreamDataReadEvent(stream_conf["name"], data)
+                    )
             await asyncio.sleep(stream_conf["read_interval"])
 
     async def stream_output_loop(
-            self,
-            module: GenericStream,
-            stream_conf: ConfigType,
-            queue: "asyncio.Queue[bytes]",
+        self,
+        module: GenericStream,
+        stream_conf: ConfigType,
+        queue: "asyncio.Queue[bytes]",
     ) -> None:
         """
         Wait for data to appear on the queue, then send it to the stream.

@@ -1,15 +1,16 @@
 """
-Event framework for subscribing to and firing events with asyncio callbacks.
+Event framework for subscribing to and firing events.
 """
-
-import asyncio
 import logging
+import math
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any, Callable, Coroutine, Dict, List, Optional, Type
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Type
+
+import trio
 
 from .tasks import TransientTaskManager
-from .utils import create_unawaited_task_threadsafe
+from .utils import create_unawaited_task_threadsafe, hold_channel_open
 
 _LOG = logging.getLogger(__name__)
 
@@ -76,67 +77,102 @@ class StreamDataSentEvent(Event):
     data: bytes
 
 
+# class EventBus:
+#     """
+#     Event bus that handles subscribing to specific events and firing coroutine callbacks.
+#     """
+
+#     def __init__(self, nursery: trio.Nursery):
+#         self._nursery = nursery
+#         self._listeners: Dict[Type[Event], List[ListenerType]] = {}
+
+#     def fire(self, event: Event) -> None:
+#         """
+#         Add callback functions that have subscribed to this event type to the nursery.
+#         """
+#         event_class = type(event)
+#         try:
+#             listeners = self._listeners[event_class]
+#             _LOG.debug(
+#                 "Found %s listener(s) for event type %s",
+#                 len(listeners),
+#                 event_class.__name__,
+#             )
+#         except KeyError:
+#             _LOG.debug("No listeners for event type %s", event_class.__name__)
+#             return
+
+#         for listener in listeners:
+#             self._nursery.start_soon(listener, event)
+
+#     def subscribe(
+#         self,
+#         event_class: Type[Event],
+#         callback: ListenerType,
+#     ) -> Callable[[], None]:
+#         """
+#         Add a coroutine to be used as a callback when the given event class is fired.
+#         """
+#         if not isinstance(event_class, type):
+#             raise TypeError(
+#                 "event_class must be of type 'type'. Got type %s." % type(event_class)
+#             )
+#         if not Event in event_class.mro():
+#             raise TypeError("Event class must be a subclass of mqtt_io.events.Event")
+#         if not callable(callback):
+#             raise TypeError("callback must be callable. Got type %s." % type(callback))
+
+#         self._listeners.setdefault(event_class, []).append(callback)
+
+#         def remove_listener() -> None:
+#             self._listeners[event_class].remove(callback)
+
+#         return remove_listener
+
+
 class EventBus:
-    """
-    Event bus that handles subscribing to specific events and firing coroutine callbacks.
-    """
+    def __init__(self) -> None:
+        self._nursery: Optional[trio.Nursery] = None
+        self._channels: Dict[
+            Type[Event], List[Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]]
+        ] = {}
 
-    def __init__(
-        self,
-        loop: asyncio.AbstractEventLoop,
-        transient_tasks: TransientTaskManager,
-    ):
-        self._loop = loop
-        self._transient_tasks = transient_tasks
-        self._listeners: Dict[Type[Event], List[ListenerType]] = {}
+    async def run(
+        self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
+    ) -> None:
+        async with trio.open_nursery() as nursery:
+            self._nursery = nursery
+            nursery.start_soon(lambda: trio.sleep(math.inf))
+            task_status.started()
 
-    def fire(self, event: Event) -> List["asyncio.Future[asyncio.Task[Any]]"]:
-        """
-        Add callback functions that have subscribed to this event type to the task loop.
-        """
-        event_class = type(event)
-        try:
-            listeners = self._listeners[event_class]
-            _LOG.debug(
-                "Found %s listener(s) for event type %s",
-                len(listeners),
-                event_class.__name__,
-            )
-        except KeyError:
-            _LOG.debug("No listeners for event type %s", event_class.__name__)
-            return []
+    def close(self) -> None:
+        if self._nursery is None:
+            return
+        self._nursery.cancel_scope.cancel()
+        self._nursery = None
 
-        task_futures: "List[asyncio.Future[asyncio.Task[Any]]]" = []
-        for listener in listeners:
-            # Pass in a future on which the asyncio.Task will be set when the coro
-            # has been scheduled on the loop.
-            fut: "asyncio.Future[asyncio.Task[Any]]" = self._loop.create_future()
-            task_futures.append(fut)
-            # Run threadsafe in case we're firing events from interrupt callback threads
-            create_unawaited_task_threadsafe(
-                self._loop, self._transient_tasks, listener(event), fut
-            )
-        return task_futures
+    async def subscribe(
+        self, event_class: Type[Event], buffer_size: int = 0
+    ) -> trio.MemoryReceiveChannel:
+        if self._nursery is None:
+            raise trio.BrokenResourceError("The event bus is not running")
 
-    def subscribe(
-        self,
-        event_class: Type[Event],
-        callback: ListenerType,
-    ) -> Callable[[], None]:
-        """
-        Add a coroutine to be used as a callback when the given event class is fired.
-        """
-        if not isinstance(event_class, type):
-            raise TypeError(
-                "event_class must be of type 'type'. Got type %s." % type(event_class)
-            )
-        if not Event in event_class.mro():
-            raise TypeError("Event class must be a subclass of mqtt_io.events.Event")
-        if not callable(callback):
-            raise TypeError("callback must be callable. Got type %s." % type(callback))
-        self._listeners.setdefault(event_class, []).append(callback)
+        tx_chan, rx_chan = trio.open_memory_channel(max_buffer_size=buffer_size)
+        self._channels.setdefault(event_class, []).append((tx_chan, rx_chan))
 
-        def remove_listener() -> None:
-            self._listeners[event_class].remove(callback)
+        await self._nursery.start(hold_channel_open, tx_chan)
+        return rx_chan
 
-        return remove_listener
+    def fire(self, event: Event) -> None:
+        if self._nursery is None:
+            raise trio.BrokenResourceError("The event bus is not running")
+
+        async def send_event(tx_chan: trio.MemorySendChannel) -> None:
+            async with tx_chan:
+                try:
+                    tx_chan.send_nowait(event)
+                except trio.WouldBlock:
+                    pass
+
+        for tx_chan, _ in self._channels.get(type(event), []):
+            self._nursery.start_soon(send_event, tx_chan.clone())

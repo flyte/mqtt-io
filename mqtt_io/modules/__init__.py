@@ -2,6 +2,7 @@
 Contains stuff useful across all modules, whether they're GPIO, sensor or stream ones.
 """
 
+import trio
 import logging
 import sys
 from subprocess import CalledProcessError, check_call
@@ -15,14 +16,14 @@ from ..exceptions import CannotInstallModuleRequirements
 _LOG = logging.getLogger(__name__)
 
 
-def install_missing_requirements(pkgs_required: List[str]) -> None:
+async def install_missing_requirements(pkgs_required: List[str]) -> None:
     """
     Use pip to install the list of requirements.
     """
-    check_call([sys.executable, "-m", "pip", "install"] + pkgs_required)
+    await trio.run_process([sys.executable, "-m", "pip", "install"] + pkgs_required)
 
 
-def install_missing_module_requirements(module: ModuleType) -> None:
+async def install_missing_module_requirements(module: ModuleType) -> None:
     """
     Some of the modules require external packages to be installed. This gets
     the list from the `REQUIREMENTS` module attribute and attempts to
@@ -48,7 +49,7 @@ def install_missing_module_requirements(module: ModuleType) -> None:
         return
 
     try:
-        install_missing_requirements(pkgs_required)
+        await install_missing_requirements(pkgs_required)
     except CalledProcessError as err:
         raise CannotInstallModuleRequirements(
             "Unable to install packages for module %r (%s): %s"

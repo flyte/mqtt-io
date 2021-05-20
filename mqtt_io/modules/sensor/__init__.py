@@ -3,9 +3,9 @@ Contains the base class that is shared across all Sensor modules.
 """
 
 import abc
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from typing import Any
+from typing import Any, cast
+
+import trio
 
 from ...types import ConfigType, SensorValueType
 
@@ -53,5 +53,6 @@ class GenericSensor(abc.ABC):
         """
         Use a ThreadPoolExecutor to call the module's synchronous get_value function.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_value, sens_conf)
+        return cast(
+            SensorValueType, await trio.to_thread.run_sync(self.get_value, sens_conf)
+        )

@@ -27,7 +27,7 @@ from .constants import (
 from .events import (
     EventBus,
 )
-from .gpio import GPIOIo
+from .gpio import GPIO
 from .home_assistant import (
     hass_announce_digital_input,
     hass_announce_digital_output,
@@ -41,8 +41,8 @@ from .mqtt import (
     MQTTTLSOptions,
     MQTTWill,
 )
-from .sensors import SensorIo
-from .stream import StreamIo
+from .sensors import SensorIO
+from .stream import StreamIO
 from .tasks import TransientTaskManager
 from .types import ConfigType
 from .utils import PriorityCoro
@@ -68,9 +68,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         self.running: threading.Event = threading.Event()
 
         # IO functionality
-        self.gpio = GPIOIo(config, self)
-        self.sensor = SensorIo(config, self)
-        self.stream = StreamIo(config, self)
+        self.gpio = GPIO(config, self)
+        self.sensor = SensorIO(config, self)
+        self.stream = StreamIO(config, self)
 
         self.loop = loop or asyncio.get_event_loop()
         self._main_task: Optional["asyncio.Task[None]"] = None

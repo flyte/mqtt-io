@@ -1,28 +1,23 @@
 """
 Provides "SensorIo" which handles reading of sensor values
 """
-import asyncio
 import logging
-from typing import Dict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 import backoff  # type: ignore
+import trio
 
-from .config import (
-    validate_and_normalise_sensor_input_config,
-)
-from .constants import (
-    SENSOR_TOPIC,
-)
-from .events import (
-    SensorReadEvent,
-)
+from .abc import GenericIO
+from .config import validate_and_normalise_sensor_input_config
+from .constants import SENSOR_TOPIC
+from .events import DigitalInputChangedEvent, SensorReadEvent
 from .helpers import _init_module
 from .modules.sensor import GenericSensor
 from .types import ConfigType, SensorValueType
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
-    from .server import MqttIo
+    from .server_trio import MQTTIO
 _LOG = logging.getLogger(__name__)
 
 
@@ -31,13 +26,14 @@ _LOG = logging.getLogger(__name__)
 
 # pylint: disable=too-few-public-methods
 
-class SensorIo:
+
+class SensorIO(GenericIO):
     """
     Handles the modules for reading sensor values.
     Normally part of an instance of MqttIo
     """
 
-    def __init__(self, config: ConfigType, server: "MqttIo") -> None:
+    def __init__(self, config: ConfigType, server: "MQTTIO") -> None:
         self.config = config
         self.server = server
         # Sensor
@@ -45,35 +41,55 @@ class SensorIo:
         self.sensor_input_configs: Dict[str, ConfigType] = {}
         self.sensor_modules: Dict[str, GenericSensor] = {}
 
-    def init(self) -> None:
+    async def init(self) -> None:
         """
         Initializes the modules and inputs.
         """
-        self._init_sensor_modules()
-        self._init_sensor_inputs()
+        await self._init_sensor_modules()
+        await self._init_sensor_inputs()
 
-    def _init_sensor_modules(self) -> None:
+    async def _init_sensor_modules(self) -> None:
         """
         Initialise Sensor modules.
         """
         self.sensor_configs = {x["name"]: x for x in self.config["sensor_modules"]}
         self.sensor_modules = {}
         for sens_config in self.config["sensor_modules"]:
-            self.sensor_modules[sens_config["name"]] = _init_module(
-                sens_config, "sensor", self.config["options"]["install_requirements"]
+            self.sensor_modules[sens_config["name"]] = await _init_module(
+                sens_config,
+                "sensor",
+                self.config["options"]["install_requirements"],
             )
 
-    def _init_sensor_inputs(self) -> None:
-        async def publish_sensor_callback(event: SensorReadEvent) -> None:
-            sens_conf = self.sensor_input_configs[event.sensor_name]
-            digits: int = sens_conf["digits"]
-            self.server.new_publish_task(
-                event.sensor_name, sens_conf["retain"],
-                f"{event.value:.{digits}f}".encode("utf8"),
-                SENSOR_TOPIC
-            )
+    def _publish_read(
+        self, name: str, value: str, qos: int = 1, retain: bool = False
+    ) -> None:
+        self.server.mqtt.publish(
+            "/".join((self.server.config["mqtt"]["topic_prefix"], SENSOR_TOPIC, name)),
+            value.encode("utf8"),
+            qos=qos,
+            retain=retain,
+        )
 
-        self.server.event_bus.subscribe(SensorReadEvent, publish_sensor_callback)
+    async def _init_sensor_inputs(self) -> None:
+        async def publish_sensor_reads(
+            event_rx: trio.MemoryReceiveChannel,
+            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+        ) -> None:
+            event: SensorReadEvent
+            async with event_rx:
+                task_status.started()
+                async for event in event_rx:
+                    sens_conf = self.sensor_input_configs[event.sensor_name]
+                    digits: int = sens_conf["digits"]
+                    self._publish_read(
+                        event.sensor_name,
+                        f"{event.value:.{digits}f}",
+                        retain=sens_conf["retain"],
+                    )
+
+        event_rx = await self.server.event_bus.subscribe(SensorReadEvent)
+        await self.server.nursery.start(publish_sensor_reads, event_rx)
 
         for sens_conf in self.config["sensor_inputs"]:
             sensor_module = self.sensor_modules[sens_conf["module"]]
@@ -82,12 +98,12 @@ class SensorIo:
             )
             self.sensor_input_configs[sens_conf["name"]] = sens_conf
 
-            sensor_module.setup_sensor(sens_conf)
+            await trio.to_thread.run_sync(sensor_module.setup_sensor, sens_conf)
 
             # Use default args to the function to get around the late binding closures
             async def poll_sensor(
-                    sensor_module: GenericSensor = sensor_module,
-                    sens_conf: ConfigType = sens_conf,
+                sensor_module: GenericSensor = sensor_module,
+                sens_conf: ConfigType = sens_conf,
             ) -> None:
                 @backoff.on_exception(  # type: ignore
                     backoff.expo, Exception, max_time=sens_conf["interval"]
@@ -96,8 +112,8 @@ class SensorIo:
                     backoff.expo, lambda x: x is None, max_time=sens_conf["interval"]
                 )
                 async def get_sensor_value(
-                        sensor_module: GenericSensor = sensor_module,
-                        sens_conf: ConfigType = sens_conf,
+                    sensor_module: GenericSensor = sensor_module,
+                    sens_conf: ConfigType = sens_conf,
                 ) -> SensorValueType:
                     return await sensor_module.async_get_value(sens_conf)
 
@@ -115,10 +131,12 @@ class SensorIo:
                         _LOG.info(
                             "Read sensor '%s' value of %s", sens_conf["name"], value
                         )
-                        self.server.event_bus.fire(SensorReadEvent(sens_conf["name"], value))
-                    await asyncio.sleep(sens_conf["interval"])
+                        self.server.event_bus.fire(
+                            SensorReadEvent(sens_conf["name"], value)
+                        )
+                    await trio.sleep(sens_conf["interval"])
 
-            self.server.transient_task_queue.add_task(self.server.loop.create_task(poll_sensor()))
+            self.server.nursery.start_soon(poll_sensor)
 
     def cleanup(self) -> None:
         """
