@@ -2,17 +2,13 @@
 Contains the base class and some enums that are shared across all GPIO modules.
 """
 
-# IDEA: Possible implementations -@flyte at 23/02/2021, 21:37:43
-# Decide which executor we should use for async functions.
-# https://docs.python.org/3/library/asyncio-eventloop.html#asyncio.loop.run_in_executor
-# Should we use the default executor, or have one per module?
-
 import abc
-import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, Flag, auto
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, cast
+
+import trio
 
 from ...types import ConfigType, PinType
 
@@ -225,8 +221,7 @@ class GenericGPIO(abc.ABC):
         """
         Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_int_pins)
+        return cast(List[PinType], await trio.to_thread.run_sync(self.get_int_pins))
 
     def get_captured_int_pin_values(
         self, pins: Optional[Iterable[PinType]] = None
@@ -247,24 +242,22 @@ class GenericGPIO(abc.ABC):
         Use a ThreadPoolExecutor to call the module's synchronous
         get_captured_int_pin_values function.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            ThreadPoolExecutor(), self.get_captured_int_pin_values, pins
+        return cast(
+            Dict[PinType, bool],
+            await trio.to_thread.run_sync(self.get_captured_int_pin_values, pins),
         )
 
     async def async_set_pin(self, pin: PinType, value: bool) -> None:
         """
         Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.set_pin, pin, value)
+        await trio.to_thread.run_sync(self.set_pin, pin, value)
 
     async def async_get_pin(self, pin: PinType) -> bool:
         """
         Use a ThreadPoolExecutor to call the module's synchronous get_pin function.
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_pin, pin)
+        return cast(bool, await trio.to_thread.run_sync(self.get_pin, pin))
 
     def get_interrupt_value(self, pin: PinType, *args: Any, **kwargs: Any) -> bool:
         """
