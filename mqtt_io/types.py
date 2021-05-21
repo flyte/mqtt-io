@@ -1,16 +1,48 @@
 """
 Types used in MQTT IO type hints.
 """
-from typing import TYPE_CHECKING, Any, Dict, Union
+from typing import (
+    List,
+    Mapping,
+    MutableMapping,
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Protocol,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import trio
 
 if TYPE_CHECKING:
-    import asyncio
-    from concurrent.futures import Future as ConcurrentFuture
+    from .events import Event
+
+T = TypeVar("T")
+EventT = TypeVar("EventT", bound="Event")
 
 ConfigType = Dict[str, Any]
 PinType = Union[str, int]
 SensorValueType = Union[float, int, None]
 CerberusSchemaType = Dict[str, Any]
-TaskStatus = trio._core._run._TaskStatus  # pylint: disable=protected-access
+
+
+# class EventBusChannelDict(Protocol):
+#     def __getitem__(
+#         self, item: Type[EventT]
+#     ) -> Tuple[trio.MemorySendChannel[EventT], trio.MemoryReceiveChannel[EventT]]:
+#         ...
+
+#     # def setdefault(
+#     #     self,
+#     #     __key: Type[EventT],
+#     #     __default: List[
+#     #         Tuple[trio.MemorySendChannel[EventT], trio.MemoryReceiveChannel[EventT]]
+#     #     ],
+#     # ) -> List[Tuple[trio.MemorySendChannel[EventT], trio.MemoryReceiveChannel[EventT]]]:
+#     #     ...
+
+#     def setdefault(self, key: _KT, default: _VT = ...) -> _VT:
+#         ...

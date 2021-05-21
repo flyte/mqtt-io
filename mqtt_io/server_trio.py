@@ -6,10 +6,11 @@ from typing import List, Optional
 import paho.mqtt.client as paho
 import trio
 from anyio_mqtt import AnyIOMQTTClient
+from trio_typing import TaskStatus
 
 from mqtt_io.events import EventBus
 from mqtt_io.mqtt import MQTTClientOptions, MQTTMessageSend, MQTTTLSOptions, MQTTWill
-from mqtt_io.types import ConfigType, TaskStatus
+from mqtt_io.types import ConfigType
 
 from .abc import GenericIO
 from .gpio import GPIO
@@ -62,7 +63,9 @@ class MQTTIO:
     def run(self):
         trio.run(self.run_async)
 
-    async def handle_signals(self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED):
+    async def handle_signals(
+        self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED
+    ):
         with trio.open_signal_receiver(signal.SIGINT, signal.SIGQUIT) as signal_aiter:
             task_status.started()
             async for signum in signal_aiter:
@@ -99,7 +102,7 @@ class MQTTIO:
                 await self.sensor.init()
                 await self.stream.init()
 
-                self.mqtt.publish(
+                connect_msg_args = (
                     "/".join(
                         (
                             self.config["mqtt"]["topic_prefix"],
@@ -107,13 +110,14 @@ class MQTTIO:
                         )
                     ),
                     self.config["mqtt"]["status_payload_running"].encode("utf8"),
-                    qos=1,
-                    retain=True,
                 )
+                connect_msg_kwargs = dict(qos=1, retain=True)
+                self.mqtt.publish(*connect_msg_args, **connect_msg_kwargs)
+                self.mqtt.set_connect_message(*connect_msg_args, **connect_msg_kwargs)
         finally:
             _LOG.debug("Main nursery exited")
 
-    async def run_mqtt(self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED):
+    async def run_mqtt(self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED):
         async def handle_messages(client: AnyIOMQTTClient) -> None:
             msg: paho.MQTTMessage
             async for msg in client.messages:

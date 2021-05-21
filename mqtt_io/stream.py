@@ -5,13 +5,14 @@ import logging
 from typing import TYPE_CHECKING, Dict, Tuple
 
 import trio
+from trio_typing import TaskStatus
 
 from .abc import GenericIO
 from .constants import SEND_SUFFIX, STREAM_TOPIC
 from .events import StreamDataReadEvent, StreamDataSentEvent
 from .helpers import _init_module, output_name_from_topic
 from .modules.stream import GenericStream
-from .types import ConfigType, TaskStatus
+from .types import ConfigType
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
@@ -66,7 +67,7 @@ class StreamIO(GenericIO):
 
         async def publish_stream_data(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: StreamDataReadEvent
             async with event_rx:

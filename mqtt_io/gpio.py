@@ -7,6 +7,7 @@ from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import trio
+from trio_typing import TaskStatus
 
 from .abc import GenericIO
 from .config import (
@@ -23,7 +24,7 @@ from .constants import (
 from .events import DigitalInputChangedEvent, DigitalOutputChangedEvent
 from .helpers import _init_module, output_name_from_topic
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
-from .types import ConfigType, PinType, TaskStatus
+from .types import ConfigType, PinType
 from .utils import hold_channel_open
 
 if TYPE_CHECKING:
@@ -99,7 +100,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
 
         async def publish_input_changes(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: DigitalInputChangedEvent
             async with event_rx:
@@ -166,7 +167,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
 
         async def publish_digital_outputs(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: DigitalOutputChangedEvent
             async with event_rx:
@@ -474,7 +475,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
             desired_value = topic.endswith("/%s" % SET_ON_MS_SUFFIX)
 
             async def set_ms(
-                task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
+                task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
             ) -> None:
                 """
                 Create this task to directly set the outputs, as we don't want to tie up
@@ -562,7 +563,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
             async def reset_timer(
                 out_conf: ConfigType = out_conf,
                 value: bool = value,
-                task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
+                task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
             ) -> None:
                 """
                 Reset the output to the opposite value after x ms.

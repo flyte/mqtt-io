@@ -1,56 +1,21 @@
 """
 Utils for MQTT IO project.
 """
-import asyncio
 import math
-from functools import wraps
-from typing import Any, Coroutine, Optional, Union, cast
+from typing import Any, Union
 
 import trio
-
-from mqtt_io.tasks import TransientTaskManager
-from mqtt_io.types import TaskStatus
-
-
-class PriorityCoro:
-    """
-    An object for adding a coroutine to an asyncio.PriorityQueue.
-    """
-
-    def __init__(self, coro: Coroutine[Any, Any, Any], priority: int):
-        self.coro = coro
-        self.priority = priority
-
-    def __lt__(self, other: Any) -> bool:
-        return cast(bool, self.priority < other.priority)
-
-    def __eq__(self, other: Any) -> bool:
-        return cast(bool, self.priority == other.priority)
-
-
-def create_unawaited_task_threadsafe(
-    loop: asyncio.AbstractEventLoop,
-    transient_tasks: TransientTaskManager,
-    coro: Coroutine[Any, Any, None],
-    task_future: Optional["asyncio.Future[asyncio.Task[Any]]"] = None,
-) -> None:
-    """
-    Schedule a coroutine on the loop and add the Task to transient_tasks.
-    """
-
-    def callback() -> None:
-        task = loop.create_task(coro)
-        transient_tasks.add_task(task)
-        if task_future is not None:
-            task_future.set_result(task)
-
-    loop.call_soon_threadsafe(callback)
+from trio_typing import TaskStatus
 
 
 async def hold_channel_open(
-    channel: Union[trio.MemorySendChannel, trio.MemoryReceiveChannel],
-    task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
-):
-    with channel:
+    channel: Union["trio.MemorySendChannel[Any]", "trio.MemoryReceiveChannel[Any]"],
+    task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
+) -> None:
+    """
+    Hold a channel open indefinitely. Useful for when you're sporadically cloning a
+    channel but don't want to close the whole thing when you're finished with a clone.
+    """
+    async with channel:
         task_status.started()
         await trio.sleep(math.inf)

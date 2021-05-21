@@ -5,13 +5,14 @@ import logging
 import math
 from abc import ABC
 from dataclasses import dataclass
-from mqtt_io.types import TaskStatus
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Type
 
 import trio
+from trio_typing import TaskStatus
 
-from .tasks import TransientTaskManager
-from .utils import create_unawaited_task_threadsafe, hold_channel_open
+from mqtt_io.types import EventT
+
+from .utils import hold_channel_open
 
 _LOG = logging.getLogger(__name__)
 
@@ -78,67 +79,52 @@ class StreamDataSentEvent(Event):
     data: bytes
 
 
-# class EventBus:
-#     """
-#     Event bus that handles subscribing to specific events and firing coroutine callbacks.
-#     """
-
-#     def __init__(self, nursery: trio.Nursery):
-#         self._nursery = nursery
-#         self._listeners: Dict[Type[Event], List[ListenerType]] = {}
-
-#     def fire(self, event: Event) -> None:
-#         """
-#         Add callback functions that have subscribed to this event type to the nursery.
-#         """
-#         event_class = type(event)
-#         try:
-#             listeners = self._listeners[event_class]
-#             _LOG.debug(
-#                 "Found %s listener(s) for event type %s",
-#                 len(listeners),
-#                 event_class.__name__,
-#             )
-#         except KeyError:
-#             _LOG.debug("No listeners for event type %s", event_class.__name__)
-#             return
-
-#         for listener in listeners:
-#             self._nursery.start_soon(listener, event)
-
-#     def subscribe(
+# class EventBusChannels(
+#     Dict[
+#         Type[Event],
+#         List[Tuple[trio.MemorySendChannel[Event], trio.MemoryReceiveChannel[Event]]],
+#     ]
+# ):
+#     def __setitem__(
 #         self,
-#         event_class: Type[Event],
-#         callback: ListenerType,
-#     ) -> Callable[[], None]:
-#         """
-#         Add a coroutine to be used as a callback when the given event class is fired.
-#         """
-#         if not isinstance(event_class, type):
-#             raise TypeError(
-#                 "event_class must be of type 'type'. Got type %s." % type(event_class)
-#             )
-#         if not Event in event_class.mro():
-#             raise TypeError("Event class must be a subclass of mqtt_io.events.Event")
-#         if not callable(callback):
-#             raise TypeError("callback must be callable. Got type %s." % type(callback))
+#         key: Type[EventT],
+#         item: List[
+#             Tuple[trio.MemorySendChannel[EventT], trio.MemoryReceiveChannel[EventT]]
+#         ],
+#     ) -> None:
+#         super().__setitem__(key, item)
 
-#         self._listeners.setdefault(event_class, []).append(callback)
-
-#         def remove_listener() -> None:
-#             self._listeners[event_class].remove(callback)
-
-#         return remove_listener
+#     def __getitem__(
+#         self, key: Type[EventT]
+#     ) -> List[Tuple[trio.MemorySendChannel[EventT], trio.MemoryReceiveChannel[EventT]]]:
+#         pass
 
 
 class EventBus:
+    """
+    Provides subscriptions to individual events using channels.
+    """
+
     def __init__(self) -> None:
         self._nursery: Optional[trio.Nursery] = None
-        self._channels: Dict[
-            Type[Event], List[Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]]
-        ] = {}
+        self._channels = {}
 
-    async def run(self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED) -> None:
+        # self._channels: Dict[
+        #     Type[Event],
+        #     List[Tuple[trio.MemorySendChannel[Event], trio.MemoryReceiveChannel[Event]]],
+        # ] = EventBusChannels()
+
+        # self._channels: Dict[
+        #     Type[EventT],
+        #     List[
+        #         Tuple[trio.MemorySendChannel[EventT], trio.MemoryReceiveChannel[EventT]]
+        #     ],
+        # ] = {}
+
+    async def run(
+        self,
+        task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
+    ) -> None:
         async with trio.open_nursery() as nursery:
             self._nursery = nursery
             nursery.start_soon(lambda: trio.sleep(math.inf))
@@ -151,11 +137,12 @@ class EventBus:
         self._nursery = None
 
     async def subscribe(
-        self, event_class: Type[Event], buffer_size: int = 0
-    ) -> trio.MemoryReceiveChannel:
+        self, event_class: Type[EventT], buffer_size: int = 0
+    ) -> "trio.MemoryReceiveChannel[EventT]":
         if self._nursery is None:
             raise trio.BrokenResourceError("The event bus is not running")
-
+        tx_chan: "trio.MemorySendChannel[EventT]"
+        rx_chan: "trio.MemoryReceiveChannel[EventT]"
         tx_chan, rx_chan = trio.open_memory_channel(max_buffer_size=buffer_size)
         self._channels.setdefault(event_class, []).append((tx_chan, rx_chan))
 

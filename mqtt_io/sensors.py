@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Dict
 
 import backoff  # type: ignore
 import trio
+from trio_typing import TaskStatus
 
 from .abc import GenericIO
 from .config import validate_and_normalise_sensor_input_config
@@ -13,7 +14,7 @@ from .constants import SENSOR_TOPIC
 from .events import SensorReadEvent
 from .helpers import _init_module
 from .modules.sensor import GenericSensor
-from .types import ConfigType, SensorValueType, TaskStatus
+from .types import ConfigType, SensorValueType
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
@@ -74,7 +75,7 @@ class SensorIO(GenericIO):
     async def _init_sensor_inputs(self) -> None:
         async def publish_sensor_reads(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: SensorReadEvent
             async with event_rx:
