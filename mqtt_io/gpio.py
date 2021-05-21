@@ -1,5 +1,5 @@
 """
-Provides "StreamIo" which handles reading and writing to gpio-pins, interrupts on that pins, ...
+Provides "GPIO" which handles reading, writing and interrupts for GPIO pins.
 """
 import logging
 import threading
@@ -15,22 +15,16 @@ from .config import (
 )
 from .constants import (
     INPUT_TOPIC,
-    MQTT_SUB_PRIORITY,
     OUTPUT_TOPIC,
     SET_OFF_MS_SUFFIX,
     SET_ON_MS_SUFFIX,
     SET_SUFFIX,
 )
-from .events import DigitalInputChangedEvent, DigitalOutputChangedEvent, Event
+from .events import DigitalInputChangedEvent, DigitalOutputChangedEvent
 from .helpers import _init_module, output_name_from_topic
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
-from .types import ConfigType, PinType
-from .utils import (
-    PriorityCoro,
-    ResultNursery,
-    create_unawaited_task_threadsafe,
-    hold_channel_open,
-)
+from .types import ConfigType, PinType, TaskStatus
+from .utils import hold_channel_open
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
@@ -105,7 +99,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
 
         async def publish_input_changes(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: DigitalInputChangedEvent
             async with event_rx:
@@ -172,7 +166,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
 
         async def publish_digital_outputs(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: DigitalOutputChangedEvent
             async with event_rx:
@@ -480,7 +474,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
             desired_value = topic.endswith("/%s" % SET_ON_MS_SUFFIX)
 
             async def set_ms(
-                task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+                task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
             ) -> None:
                 """
                 Create this task to directly set the outputs, as we don't want to tie up
@@ -568,7 +562,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
             async def reset_timer(
                 out_conf: ConfigType = out_conf,
                 value: bool = value,
-                task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+                task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
             ) -> None:
                 """
                 Reset the output to the opposite value after x ms.

@@ -9,6 +9,7 @@ from typing import Any, Coroutine, Optional, Union, cast
 import trio
 
 from mqtt_io.tasks import TransientTaskManager
+from mqtt_io.types import TaskStatus
 
 
 class PriorityCoro:
@@ -48,36 +49,8 @@ def create_unawaited_task_threadsafe(
 
 async def hold_channel_open(
     channel: Union[trio.MemorySendChannel, trio.MemoryReceiveChannel],
-    task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+    task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
 ):
     with channel:
         task_status.started()
         await trio.sleep(math.inf)
-
-
-def set_result(results, key, func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        results[key] = await func(*args, **kwargs)
-
-    return wrapper
-
-
-class ResultNursery:
-    def __init__(self):
-        self.nursery_manager = trio.open_nursery()
-
-    async def __aenter__(self):
-        nursery = await self.nursery_manager.__aenter__()
-        nursery.results = {}
-
-        def start_soon_result(name, async_fn, *args):
-            nursery.start_soon(
-                set_result(nursery.results, name, async_fn), *args, name=name
-            )
-
-        nursery.start_soon_result = start_soon_result
-        return nursery
-
-    async def __aexit__(self, etype, exc, tb):
-        await self.nursery_manager.__aexit__(etype, exc, tb)

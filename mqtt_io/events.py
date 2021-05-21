@@ -5,6 +5,7 @@ import logging
 import math
 from abc import ABC
 from dataclasses import dataclass
+from mqtt_io.types import TaskStatus
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Type
 
 import trio
@@ -137,9 +138,7 @@ class EventBus:
             Type[Event], List[Tuple[trio.MemorySendChannel, trio.MemoryReceiveChannel]]
         ] = {}
 
-    async def run(
-        self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
-    ) -> None:
+    async def run(self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED) -> None:
         async with trio.open_nursery() as nursery:
             self._nursery = nursery
             nursery.start_soon(lambda: trio.sleep(math.inf))

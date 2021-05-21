@@ -2,22 +2,21 @@
 Provides "StreamIo" which handles writing and reading streams.
 """
 import logging
-from functools import partial
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING, Dict, Tuple
 
 import trio
 
 from .abc import GenericIO
-from .constants import MQTT_SUB_PRIORITY, SEND_SUFFIX, STREAM_TOPIC
+from .constants import SEND_SUFFIX, STREAM_TOPIC
 from .events import StreamDataReadEvent, StreamDataSentEvent
 from .helpers import _init_module, output_name_from_topic
 from .modules.stream import GenericStream
-from .types import ConfigType
-from .utils import PriorityCoro
+from .types import ConfigType, TaskStatus
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
     from .server_trio import MQTTIO
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -67,7 +66,7 @@ class StreamIO(GenericIO):
 
         async def publish_stream_data(
             event_rx: trio.MemoryReceiveChannel,
-            task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED,
+            task_status: TaskStatus = trio.TASK_STATUS_IGNORED,
         ) -> None:
             event: StreamDataReadEvent
             async with event_rx:

@@ -2,7 +2,6 @@
 Contains stuff useful across all modules, whether they're GPIO, sensor or stream ones.
 """
 
-import trio
 import logging
 import sys
 from subprocess import CalledProcessError, check_call
@@ -10,6 +9,7 @@ from types import ModuleType
 from typing import List
 
 import pkg_resources
+import trio
 
 from ..exceptions import CannotInstallModuleRequirements
 

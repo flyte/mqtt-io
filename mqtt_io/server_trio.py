@@ -1,7 +1,7 @@
 import logging
 import signal
 from hashlib import sha1
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional
 
 import paho.mqtt.client as paho
 import trio
@@ -9,10 +9,9 @@ from anyio_mqtt import AnyIOMQTTClient
 
 from mqtt_io.events import EventBus
 from mqtt_io.mqtt import MQTTClientOptions, MQTTMessageSend, MQTTTLSOptions, MQTTWill
-from mqtt_io.types import ConfigType
+from mqtt_io.types import ConfigType, TaskStatus
 
 from .abc import GenericIO
-from .constants import SEND_SUFFIX, SET_OFF_MS_SUFFIX, SET_ON_MS_SUFFIX, SET_SUFFIX
 from .gpio import GPIO
 from .home_assistant import (
     hass_announce_digital_input,
@@ -63,9 +62,7 @@ class MQTTIO:
     def run(self):
         trio.run(self.run_async)
 
-    async def handle_signals(
-        self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
-    ):
+    async def handle_signals(self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED):
         with trio.open_signal_receiver(signal.SIGINT, signal.SIGQUIT) as signal_aiter:
             task_status.started()
             async for signum in signal_aiter:
@@ -84,6 +81,9 @@ class MQTTIO:
         self.mqtt.disconnect()
         await self.mqtt.disconnect_event.wait()
         self.nursery.cancel_scope.cancel()
+        for io_module in self.io_modules:
+            _LOG.debug("Cleaning up %s IO module", io_module.__class__.__name__)
+            await trio.to_thread.run_sync(io_module.cleanup)
 
     async def run_async(self) -> None:
         self._trio_token = trio.lowlevel.current_trio_token()
@@ -113,9 +113,7 @@ class MQTTIO:
         finally:
             _LOG.debug("Main nursery exited")
 
-    async def run_mqtt(
-        self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
-    ):
+    async def run_mqtt(self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED):
         async def handle_messages(client: AnyIOMQTTClient) -> None:
             msg: paho.MQTTMessage
             async for msg in client.messages:

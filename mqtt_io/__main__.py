@@ -18,7 +18,6 @@ from . import VERSION
 from .config import validate_and_normalise_main_config
 from .exceptions import ConfigValidationFailed
 from .modules import install_missing_requirements
-from .server import MqttIo
 from .server_trio import MQTTIO
 
 _LOG = logging.getLogger("mqtt_io.__main__")

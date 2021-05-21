@@ -17,6 +17,7 @@ backoff = "^1.10.0"
 confp = "^0.4.0"
 trio = "^0.18.0"
 anyio-mqtt = {git = "https://github.com/flyte/anyio-mqtt", rev = "develop"}
+trio-typing = "^0.5.0"
 
 [tool.poetry.dev-dependencies]
 mock = { version = "^4.0.3", python = ">=3.6,<3.8" }
