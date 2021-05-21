@@ -1,4 +1,5 @@
 import logging
+import signal
 from hashlib import sha1
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -60,22 +61,57 @@ class MQTTIO:
         return self._trio_token
 
     def run(self):
-
-        # signals stuff
-
         trio.run(self.run_async)
 
-    async def run_async(self):
+    async def handle_signals(
+        self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
+    ):
+        with trio.open_signal_receiver(signal.SIGINT, signal.SIGQUIT) as signal_aiter:
+            task_status.started()
+            async for signum in signal_aiter:
+                _LOG.warning("Caught signal %s", signum)
+                await self.shutdown()
+
+    async def shutdown(self) -> None:
+        mqtt_config = self.config["mqtt"]
+        msg_info: paho.MQTTMessageInfo = self.mqtt.publish(
+            "/".join((mqtt_config["topic_prefix"], mqtt_config["status_topic"])),
+            mqtt_config["status_payload_stopped"].encode("utf8"),
+            qos=1,
+            retain=True,
+        )
+        await trio.to_thread.run_sync(msg_info.wait_for_publish)
+        self.mqtt.disconnect()
+        await self.mqtt.disconnect_event.wait()
+        self.nursery.cancel_scope.cancel()
+
+    async def run_async(self) -> None:
         self._trio_token = trio.lowlevel.current_trio_token()
-        async with trio.open_nursery() as nursery:
-            self._main_nursery = nursery
+        try:
+            async with trio.open_nursery() as nursery:
+                self._main_nursery = nursery
 
-            await nursery.start(self.event_bus.run)
-            await nursery.start(self.run_mqtt)
+                await nursery.start(self.handle_signals)
+                await nursery.start(self.event_bus.run)
+                await nursery.start(self.run_mqtt)
 
-            await self.gpio.init()
-            await self.sensor.init()
-            await self.stream.init()
+                await self.gpio.init()
+                await self.sensor.init()
+                await self.stream.init()
+
+                self.mqtt.publish(
+                    "/".join(
+                        (
+                            self.config["mqtt"]["topic_prefix"],
+                            self.config["mqtt"]["status_topic"],
+                        )
+                    ),
+                    self.config["mqtt"]["status_payload_running"].encode("utf8"),
+                    qos=1,
+                    retain=True,
+                )
+        finally:
+            _LOG.debug("Main nursery exited")
 
     async def run_mqtt(
         self, task_status: trio._core._run._TaskStatus = trio.TASK_STATUS_IGNORED
@@ -90,36 +126,35 @@ class MQTTIO:
             _LOG.debug("handle_messages() finished")
 
         options = self.mqtt_client_options
-        async with trio.open_nursery() as nursery:
-            self._mqtt_nursery = nursery
-            self._mqtt = client = AnyIOMQTTClient(
-                nursery,
-                dict(client_id=options.client_id, clean_session=options.clean_session),
-            )
-            self._mqtt.enable_logger(logging.getLogger("mqtt"))
-            if options.tls_options is not None:
-                client.tls_set_context(options.tls_options.ssl_context)
-            if options.username is not None:
-                client.username_pw_set(options.username, options.password)
-            client.connect(options.hostname, options.port, options.keepalive)
-            if options.will is not None:
-                client.will_set(
-                    options.will.topic,
-                    options.will.payload,
-                    options.will.qos,
-                    options.will.retain,
+        try:
+            async with trio.open_nursery() as nursery:
+                self._mqtt_nursery = nursery
+                self._mqtt = client = AnyIOMQTTClient(
+                    nursery,
+                    dict(
+                        client_id=options.client_id, clean_session=options.clean_session
+                    ),
                 )
-            nursery.start_soon(handle_messages, client)
-            mqtt_config: ConfigType = self.config["mqtt"]
-            client.publish(
-                "/".join((mqtt_config["topic_prefix"], mqtt_config["status_topic"])),
-                mqtt_config["status_payload_running"].encode("utf8"),
-                qos=1,
-                retain=True,
-            )
-            if "ha_discovery" in mqtt_config:
-                self._ha_discovery_announce(client)
-            task_status.started()
+                self._mqtt.enable_logger(logging.getLogger("mqtt"))
+                if options.tls_options is not None:
+                    client.tls_set_context(options.tls_options.ssl_context)
+                if options.username is not None:
+                    client.username_pw_set(options.username, options.password)
+                client.connect(options.hostname, options.port, options.keepalive)
+                if options.will is not None:
+                    client.will_set(
+                        options.will.topic,
+                        options.will.payload,
+                        options.will.qos,
+                        options.will.retain,
+                    )
+                nursery.start_soon(handle_messages, client)
+                mqtt_config: ConfigType = self.config["mqtt"]
+                if "ha_discovery" in mqtt_config:
+                    self._ha_discovery_announce(client)
+                task_status.started()
+        finally:
+            _LOG.debug("MQTT nursery exited")
 
     def _ha_discovery_announce(self, client: AnyIOMQTTClient) -> None:
         messages: List[MQTTMessageSend] = []
