@@ -6,6 +6,7 @@ from typing import List, Optional
 import paho.mqtt.client as paho
 import trio
 from anyio_mqtt import AnyIOMQTTClient
+from anyio_mqtt import State as AnyIOMQTTClientState
 from trio_typing import TaskStatus
 
 from mqtt_io.events import EventBus
@@ -82,7 +83,7 @@ class MQTTIO:
         )
         await trio.to_thread.run_sync(msg_info.wait_for_publish)
         self.mqtt.disconnect()
-        await self.mqtt.disconnect_event.wait()
+        await self.mqtt.wait_for_state(AnyIOMQTTClientState.DISCONNECTED)
         self.nursery.cancel_scope.cancel()
         for io_module in self.io_modules:
             _LOG.debug("Cleaning up %s IO module", io_module.__class__.__name__)
@@ -102,20 +103,23 @@ class MQTTIO:
                 await self.sensor.init()
                 await self.stream.init()
 
-                connect_msg_args = (
-                    "/".join(
-                        (
-                            self.config["mqtt"]["topic_prefix"],
-                            self.config["mqtt"]["status_topic"],
-                        )
-                    ),
-                    self.config["mqtt"]["status_payload_running"].encode("utf8"),
-                )
-                connect_msg_kwargs = dict(qos=1, retain=True)
-                self.mqtt.publish(*connect_msg_args, **connect_msg_kwargs)
-                self.mqtt.set_connect_message(*connect_msg_args, **connect_msg_kwargs)
+                self._send_running_msg()
+                nursery.start_soon(self.handle_mqtt_client_state_changes)
         finally:
             _LOG.debug("Main nursery exited")
+
+    def _send_running_msg(self) -> None:
+        self.mqtt.publish(
+            "/".join(
+                (
+                    self.config["mqtt"]["topic_prefix"],
+                    self.config["mqtt"]["status_topic"],
+                )
+            ),
+            self.config["mqtt"]["status_payload_running"].encode("utf8"),
+            qos=1,
+            retain=True,
+        )
 
     async def run_mqtt(self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED):
         async def handle_messages(client: AnyIOMQTTClient) -> None:
@@ -157,6 +161,11 @@ class MQTTIO:
                 task_status.started()
         finally:
             _LOG.debug("MQTT nursery exited")
+
+    async def handle_mqtt_client_state_changes(self) -> None:
+        async for state in self.mqtt.states:
+            if state == AnyIOMQTTClientState.CONNECTED:
+                self._send_running_msg()
 
     def _ha_discovery_announce(self, client: AnyIOMQTTClient) -> None:
         messages: List[MQTTMessageSend] = []

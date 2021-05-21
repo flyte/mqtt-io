@@ -221,7 +221,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             _LOG.debug("_mqtt_subscribe unblocked after MQTT connection")
         if self.mqtt is None:
             raise RuntimeError("MQTT client was None when trying to subscribe.")
-        await self.mqtt.subscribe([(topic, 1) for topic in topics])
+        self.mqtt.subscribe([(topic, 1) for topic in topics])
         for topic in topics:
             _LOG.info("Subscribed to topic: %r", topic)
 

@@ -100,8 +100,7 @@ class StreamIO(GenericIO):
                 self.stream_output_loop, stream_module, stream_conf, rx_chan
             )
 
-            # await trio.sleep(1)
-            await self.server.mqtt.subscribe(
+            self.server.mqtt.subscribe(
                 "/".join(
                     (
                         self.config["mqtt"]["topic_prefix"],

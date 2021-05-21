@@ -208,7 +208,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
                 )
 
             for suffix in (SET_SUFFIX, SET_ON_MS_SUFFIX, SET_OFF_MS_SUFFIX):
-                await self.server.mqtt.subscribe(
+                self.server.mqtt.subscribe(
                     "/".join(
                         (
                             self.config["mqtt"]["topic_prefix"],
