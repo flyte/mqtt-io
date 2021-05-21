@@ -13,7 +13,7 @@ FROM base AS requirements
 
 ARG BUILDX_QEMU_ENV
 RUN apt-get update && \
-    apt-get install -y lsb-release rustc libssl-dev libffi-dev python3-venv && \
+    apt-get install -y lsb-release rustc libssl-dev libffi-dev python3-venv git && \
     apt-get clean && \
     rm -rf /var/lib/apt-/lists/*
 
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir wheel setuptools-rust && \
     pip install --no-cache-dir poetry
 
 COPY pyproject.toml ./
-RUN poetry export -o /requirements.txt && \
+RUN poetry export --without-hashes -o /requirements.txt && \
     mkdir -p /home/mqtt_io && \
     python -m venv /home/mqtt_io/venv && \
     /home/mqtt_io/venv/bin/pip install wheel

@@ -110,7 +110,14 @@ class MQTTIO:
                     options.will.retain,
                 )
             nursery.start_soon(handle_messages, client)
-            if "ha_discovery" in self.config["mqtt"]:
+            mqtt_config: ConfigType = self.config["mqtt"]
+            client.publish(
+                "/".join((mqtt_config["topic_prefix"], mqtt_config["status_topic"])),
+                mqtt_config["status_payload_running"].encode("utf8"),
+                qos=1,
+                retain=True,
+            )
+            if "ha_discovery" in mqtt_config:
                 self._ha_discovery_announce(client)
             task_status.started()
 
