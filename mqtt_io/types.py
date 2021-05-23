@@ -2,23 +2,23 @@
 Types used in MQTT IO type hints.
 """
 from typing import (
-    List,
-    Mapping,
-    MutableMapping,
+    # List,
+    # Mapping,
+    # MutableMapping,
     TYPE_CHECKING,
     Any,
     Dict,
-    Protocol,
-    Tuple,
-    Type,
+    # Protocol,
+    # Tuple,
+    # Type,
     TypeVar,
     Union,
 )
 
-import trio
+# import trio
 
 if TYPE_CHECKING:
-    from .events import Event
+    from .events import Event  # pylint: disable=cyclic-import
 
 T = TypeVar("T")
 EventT = TypeVar("EventT", bound="Event")

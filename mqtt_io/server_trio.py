@@ -3,7 +3,7 @@ import signal
 from hashlib import sha1
 from typing import List, Optional
 
-import paho.mqtt.client as paho
+import paho.mqtt.client as paho  # type: ignore
 import trio
 from anyio_mqtt import AnyIOMQTTClient
 from anyio_mqtt import State as AnyIOMQTTClientState
@@ -45,28 +45,43 @@ class MQTTIO:
 
     @property
     def nursery(self) -> trio.Nursery:
+        """
+        The top-level nursery used by the server.
+        """
         if self._main_nursery is None:
             raise RuntimeError("Nursery has not been initialised")
         return self._main_nursery
 
     @property
     def mqtt(self) -> AnyIOMQTTClient:
+        """
+        The MQTT client.
+        """
         if self._mqtt is None:
             raise RuntimeError("MQTT is not initialised")
         return self._mqtt
 
     @property
     def trio_token(self) -> trio.lowlevel.TrioToken:
+        """
+        The Trio token for calling back into Trio from external threads.
+        """
         if self._trio_token is None:
             raise RuntimeError("Server has not yet been run()")
         return self._trio_token
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Run the server.
+        """
         trio.run(self.run_async)
 
     async def handle_signals(
         self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED
     ):
+        """
+        Catch signals and handle them.
+        """
         with trio.open_signal_receiver(signal.SIGINT, signal.SIGQUIT) as signal_aiter:
             task_status.started()
             async for signum in signal_aiter:
@@ -74,6 +89,9 @@ class MQTTIO:
                 await self.shutdown()
 
     async def shutdown(self) -> None:
+        """
+        Shutdown the server cleanly.
+        """
         mqtt_config = self.config["mqtt"]
         msg_info: paho.MQTTMessageInfo = self.mqtt.publish(
             "/".join((mqtt_config["topic_prefix"], mqtt_config["status_topic"])),
@@ -90,6 +108,9 @@ class MQTTIO:
             await trio.to_thread.run_sync(io_module.cleanup)
 
     async def run_async(self) -> None:
+        """
+        Initialise and run the server.
+        """
         self._trio_token = trio.lowlevel.current_trio_token()
         try:
             async with trio.open_nursery() as nursery:
@@ -122,6 +143,10 @@ class MQTTIO:
         )
 
     async def run_mqtt(self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED):
+        """
+        Initialise and run the MQTT connection.
+        """
+
         async def handle_messages(client: AnyIOMQTTClient) -> None:
             msg: paho.MQTTMessage
             async for msg in client.messages:
@@ -163,6 +188,9 @@ class MQTTIO:
             _LOG.debug("MQTT nursery exited")
 
     async def handle_mqtt_client_state_changes(self) -> None:
+        """
+        Run appropriate code when the MQTT client changes state.
+        """
         async for state in self.mqtt.states:
             if state == AnyIOMQTTClientState.CONNECTED:
                 self._send_running_msg()

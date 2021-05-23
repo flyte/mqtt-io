@@ -5,7 +5,7 @@ import logging
 import math
 from abc import ABC
 from dataclasses import dataclass
-from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Coroutine, Optional, Type
 
 import trio
 from trio_typing import TaskStatus
@@ -125,12 +125,18 @@ class EventBus:
         self,
         task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
     ) -> None:
+        """
+        Run the event bus.
+        """
         async with trio.open_nursery() as nursery:
             self._nursery = nursery
             nursery.start_soon(lambda: trio.sleep(math.inf))
             task_status.started()
 
     def close(self) -> None:
+        """
+        Close the event bus.
+        """
         if self._nursery is None:
             return
         self._nursery.cancel_scope.cancel()
@@ -139,6 +145,10 @@ class EventBus:
     async def subscribe(
         self, event_class: Type[EventT], buffer_size: int = 0
     ) -> "trio.MemoryReceiveChannel[EventT]":
+        """
+        Subscribe to an event and receive a trio.MemoryReceiveChannel on which you will
+        receive events of the requested type as they occur.
+        """
         if self._nursery is None:
             raise trio.BrokenResourceError("The event bus is not running")
         tx_chan: "trio.MemorySendChannel[EventT]"
@@ -149,11 +159,14 @@ class EventBus:
         await self._nursery.start(hold_channel_open, tx_chan)
         return rx_chan
 
-    def fire(self, event: Event) -> None:
+    def fire(self, event: EventT) -> None:
+        """
+        Fire an event.
+        """
         if self._nursery is None:
             raise trio.BrokenResourceError("The event bus is not running")
 
-        async def send_event(tx_chan: trio.MemorySendChannel) -> None:
+        async def send_event(tx_chan: "trio.MemorySendChannel[EventT]") -> None:
             async with tx_chan:
                 try:
                     tx_chan.send_nowait(event)

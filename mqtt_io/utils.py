@@ -2,10 +2,14 @@
 Utils for MQTT IO project.
 """
 import math
-from typing import Any, Union
+from typing import TYPE_CHECKING, Union
 
 import trio
 from trio_typing import TaskStatus
+
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 async def hold_channel_open(
