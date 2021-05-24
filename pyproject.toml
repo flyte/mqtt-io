@@ -16,7 +16,7 @@ dataclasses = { version = "^0.8", python = ">=3.6,<3.7" }
 backoff = "^1.10.0"
 confp = "^0.4.0"
 trio = "^0.18.0"
-anyio-mqtt = {git = "https://github.com/flyte/anyio-mqtt", rev = "62eef2709866ac284dbf3f354dfad219651240f4"}
+anyio-mqtt = "^0.3.0"
 trio-typing = "^0.5.0"
 
 [tool.poetry.dev-dependencies]

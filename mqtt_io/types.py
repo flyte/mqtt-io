@@ -20,7 +20,7 @@ from typing import (
 if TYPE_CHECKING:
     from .events import Event  # pylint: disable=cyclic-import
 
-T = TypeVar("T")
+T = TypeVar("T")  # pylint: disable=invalid-name
 EventT = TypeVar("EventT", bound="Event")
 
 ConfigType = Dict[str, Any]

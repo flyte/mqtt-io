@@ -1,3 +1,10 @@
+"""
+The main business logic of the server.
+
+Coordinates initialisation of the GPIO, sensor and stream modules, along with getting
+and setting their values and data, connecting to MQTT and sending/receiving MQTT messages.
+"""
+
 import logging
 import signal
 from hashlib import sha1
@@ -5,7 +12,7 @@ from typing import List, Optional
 
 import paho.mqtt.client as paho  # type: ignore
 import trio
-from anyio_mqtt import AnyIOMQTTClient
+from anyio_mqtt import AnyIOMQTTClient, AnyIOMQTTClientConfig
 from anyio_mqtt import State as AnyIOMQTTClientState
 from trio_typing import TaskStatus
 
@@ -26,7 +33,11 @@ from .stream import StreamIO
 _LOG = logging.getLogger(__name__)
 
 
-class MQTTIO:
+class MQTTIO:  # pylint: disable=too-many-instance-attributes
+    """
+    The main class that represents the business logic of the server.
+    """
+
     def __init__(self, config: ConfigType):
         self.config = config
         self._init_mqtt_config()
@@ -35,6 +46,8 @@ class MQTTIO:
         self._main_nursery: Optional[trio.Nursery] = None
         self._mqtt_nursery: Optional[trio.Nursery] = None
         self._mqtt: Optional[AnyIOMQTTClient] = None
+
+        self._shutdown_requested = trio.Event()
 
         self.event_bus = EventBus()
 
@@ -76,37 +89,6 @@ class MQTTIO:
         """
         trio.run(self.run_async)
 
-    async def handle_signals(
-        self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED
-    ):
-        """
-        Catch signals and handle them.
-        """
-        with trio.open_signal_receiver(signal.SIGINT, signal.SIGQUIT) as signal_aiter:
-            task_status.started()
-            async for signum in signal_aiter:
-                _LOG.warning("Caught signal %s", signum)
-                await self.shutdown()
-
-    async def shutdown(self) -> None:
-        """
-        Shutdown the server cleanly.
-        """
-        mqtt_config = self.config["mqtt"]
-        msg_info: paho.MQTTMessageInfo = self.mqtt.publish(
-            "/".join((mqtt_config["topic_prefix"], mqtt_config["status_topic"])),
-            mqtt_config["status_payload_stopped"].encode("utf8"),
-            qos=1,
-            retain=True,
-        )
-        await trio.to_thread.run_sync(msg_info.wait_for_publish)
-        self.mqtt.disconnect()
-        await self.mqtt.wait_for_state(AnyIOMQTTClientState.DISCONNECTED)
-        self.nursery.cancel_scope.cancel()
-        for io_module in self.io_modules:
-            _LOG.debug("Cleaning up %s IO module", io_module.__class__.__name__)
-            await trio.to_thread.run_sync(io_module.cleanup)
-
     async def run_async(self) -> None:
         """
         Initialise and run the server.
@@ -116,33 +98,33 @@ class MQTTIO:
             async with trio.open_nursery() as nursery:
                 self._main_nursery = nursery
 
-                await nursery.start(self.handle_signals)
+                await nursery.start(self._handle_signals)
                 await nursery.start(self.event_bus.run)
-                await nursery.start(self.run_mqtt)
+                await nursery.start(self._run_mqtt)
 
                 await self.gpio.init()
                 await self.sensor.init()
                 await self.stream.init()
 
                 self._send_running_msg()
-                nursery.start_soon(self.handle_mqtt_client_state_changes)
+                nursery.start_soon(self._handle_mqtt_client_state_changes)
         finally:
             _LOG.debug("Main nursery exited")
 
-    def _send_running_msg(self) -> None:
-        self.mqtt.publish(
-            "/".join(
-                (
-                    self.config["mqtt"]["topic_prefix"],
-                    self.config["mqtt"]["status_topic"],
-                )
-            ),
-            self.config["mqtt"]["status_payload_running"].encode("utf8"),
-            qos=1,
-            retain=True,
-        )
+    async def shutdown(self) -> None:
+        """
+        Shutdown the server cleanly.
+        """
+        self._shutdown_requested.set()
+        await self.mqtt.wait_for_state(AnyIOMQTTClientState.DISCONNECTED)
+        self.nursery.cancel_scope.cancel()
+        for io_module in self.io_modules:
+            _LOG.debug("Cleaning up %s IO module", io_module.__class__.__name__)
+            await trio.to_thread.run_sync(io_module.cleanup)
 
-    async def run_mqtt(self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED):
+    async def _run_mqtt(
+        self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED
+    ) -> None:
         """
         Initialise and run the MQTT connection.
         """
@@ -157,37 +139,70 @@ class MQTTIO:
             _LOG.debug("handle_messages() finished")
 
         options = self.mqtt_client_options
+        client_config = AnyIOMQTTClientConfig(
+            dict(client_id=options.client_id, clean_session=options.clean_session)
+        )
         try:
-            async with trio.open_nursery() as nursery:
-                self._mqtt_nursery = nursery
-                self._mqtt = client = AnyIOMQTTClient(
-                    nursery,
-                    dict(
-                        client_id=options.client_id, clean_session=options.clean_session
-                    ),
-                )
+            async with AnyIOMQTTClient(client_config) as self._mqtt:
                 self._mqtt.enable_logger(logging.getLogger("mqtt"))
                 if options.tls_options is not None:
-                    client.tls_set_context(options.tls_options.ssl_context)
+                    self._mqtt.tls_set_context(options.tls_options.ssl_context)
                 if options.username is not None:
-                    client.username_pw_set(options.username, options.password)
-                client.connect(options.hostname, options.port, options.keepalive)
+                    self._mqtt.username_pw_set(options.username, options.password)
+                self._mqtt.connect(options.hostname, options.port, options.keepalive)
                 if options.will is not None:
-                    client.will_set(
+                    self._mqtt.will_set(
                         options.will.topic,
                         options.will.payload,
                         options.will.qos,
                         options.will.retain,
                     )
-                nursery.start_soon(handle_messages, client)
+                self.nursery.start_soon(handle_messages, self._mqtt)
                 mqtt_config: ConfigType = self.config["mqtt"]
                 if "ha_discovery" in mqtt_config:
-                    self._ha_discovery_announce(client)
+                    self._ha_discovery_announce(self._mqtt)
                 task_status.started()
-        finally:
-            _LOG.debug("MQTT nursery exited")
 
-    async def handle_mqtt_client_state_changes(self) -> None:
+                await self._shutdown_requested.wait()
+
+                msg_info: paho.MQTTMessageInfo = self._mqtt.publish(
+                    "/".join((mqtt_config["topic_prefix"], mqtt_config["status_topic"])),
+                    mqtt_config["status_payload_stopped"].encode("utf8"),
+                    qos=1,
+                    retain=True,
+                )
+                await trio.to_thread.run_sync(msg_info.wait_for_publish)
+                self._mqtt.disconnect()
+
+        finally:
+            _LOG.debug("MQTT client closed")
+
+    async def _handle_signals(
+        self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED
+    ) -> None:
+        """
+        Catch signals and handle them.
+        """
+        with trio.open_signal_receiver(signal.SIGINT, signal.SIGQUIT) as signal_aiter:
+            task_status.started()
+            async for signum in signal_aiter:
+                _LOG.warning("Caught signal %s", signum)
+                await self.shutdown()
+
+    def _send_running_msg(self) -> None:
+        self.mqtt.publish(
+            "/".join(
+                (
+                    self.config["mqtt"]["topic_prefix"],
+                    self.config["mqtt"]["status_topic"],
+                )
+            ),
+            self.config["mqtt"]["status_payload_running"].encode("utf8"),
+            qos=1,
+            retain=True,
+        )
+
+    async def _handle_mqtt_client_state_changes(self) -> None:
         """
         Run appropriate code when the MQTT client changes state.
         """
@@ -196,6 +211,9 @@ class MQTTIO:
                 self._send_running_msg()
 
     def _ha_discovery_announce(self, client: AnyIOMQTTClient) -> None:
+        """
+        Announce our IO configs to Home Assistant.
+        """
         messages: List[MQTTMessageSend] = []
         mqtt_config: ConfigType = self.config["mqtt"]
 
