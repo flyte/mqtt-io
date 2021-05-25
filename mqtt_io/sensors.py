@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 class SensorIO(GenericIO):
     """
     Handles the modules for reading sensor values.
-    Normally part of an instance of MqttIo
+    Intended to be a mixin for MQTTIO.
     """
 
     def __init__(self, config: ConfigType, server: "MQTTIO") -> None:

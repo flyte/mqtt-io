@@ -106,7 +106,7 @@ def main() -> None:
         mqtt_io = MQTTIO(config)
         mqtt_io.run()
     except Exception:
-        _LOG.exception("MqttIo crashed!")
+        _LOG.exception("Fatal exception occurred, so execution cannot continue")
         raise
 
 

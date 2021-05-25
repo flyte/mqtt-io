@@ -96,27 +96,27 @@ The `raspberrypi` GPIO module is a good example of the above:
 If a digital input is not configured as an [interrupt](config/interrupts.md) (or even [sometimes if it is](config/reference/digital_inputs/?id=digital_inputs-star-interrupt_for)), then a loop will be created which polls the pin's current value and publishes a `DigitalInputChangedEvent` event when it does. As part of the initialisation of each pin, a callback function to publish the new value on MQTT will be subscribed to this event.
 
 {{ source_link(
-    "mqtt_io.server",
-    "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']",
-    "mqtt_io.server.MqttIo._init_digital_inputs"
+    "mqtt_io.gpio",
+    "//ClassDef[name='GPIO']//AsyncFunctionDef[name='init_digital_inputs']",
+    "mqtt_io.gpio.GPIO.init_digital_inputs"
 )}}
 
 ```python
 {{ sources_raw(
     [
         (
-            "mqtt_io.server",
-            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']",
-            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']/body/*[1]"
+            "mqtt_io.gpio",
+            "//ClassDef[name='GPIO']//AsyncFunctionDef[name='init_digital_inputs']",
+            "//ClassDef[name='GPIO']//AsyncFunctionDef[name='init_digital_inputs']/body/*[1]"
         ),
         (
-            "mqtt_io.server",
-            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']//AsyncFunctionDef[name='publish_callback']",
+            "mqtt_io.gpio",
+            "//ClassDef[name='GPIO']//AsyncFunctionDef[name='init_digital_inputs']//AsyncFunctionDef[name='publish_input_changes']",
             None
         ),
         (
-            "mqtt_io.server",
-            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']//Call[args//id='DigitalInputChangedEvent']",
+            "mqtt_io.gpio",
+            "//ClassDef[name='GPIO']//AsyncFunctionDef[name='init_digital_inputs']//Call[args//id='DigitalInputChangedEvent']",
             None
         )
     ],

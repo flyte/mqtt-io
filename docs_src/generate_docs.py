@@ -1,13 +1,12 @@
+import argparse
 import ast
 import json
 import os
 import pathlib
-import re
 import shutil
 import textwrap
 from contextlib import contextmanager
 from importlib import import_module
-from os import environ as env
 from os.path import join
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
@@ -323,7 +322,13 @@ def get_source(module_path: str, xpath: str, title: str) -> str:
 def get_source_link(module_path: str, xpath: str, title: str) -> str:
     module = import_module(module_path)
     module_filepath = pathlib.Path(module.__file__)
-    _, attrib = module_source(module, xpath)[0]
+    try:
+        _, attrib = module_source(module, xpath)[0]
+    except IndexError:
+        print(
+            f"Unable to get source link for module_path {module_path}, xpath {xpath}, title {title}"
+        )
+        raise
     url = "%s/blob/%s/%s#L%s" % (
         GITHUB_REPO,
         HEAD.commit.hexsha,
@@ -385,7 +390,7 @@ def generate_versions(versions: Set[str]) -> str:
     return versions_template.render(ctx)
 
 
-def generate_docs(docs_path: str) -> None:
+def generate_docs(docs_path: str, commit: bool = False) -> None:
     print(f"Loading YAML config schema from '{CONFIG_SCHEMA_PATH}'...")
     with open(CONFIG_SCHEMA_PATH, "r") as config_schema_file:
         config_schema: ConfigType = yaml.safe_load(config_schema_file)
@@ -443,12 +448,17 @@ def generate_docs(docs_path: str) -> None:
     versions_contents = generate_versions(versions)
     main_index_contents = generate_main_index(versions)
 
-    commit_to_gh_pages_branch(docs_path, versions_contents, main_index_contents)
+    if commit:
+        commit_to_gh_pages_branch(docs_path, versions_contents, main_index_contents)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--commit", action="store_true")
+    args = parser.parse_args()
+
     with TemporaryDirectory() as tempdir:
-        generate_docs(tempdir)
+        generate_docs(tempdir, commit=args.commit)
 
 
 if __name__ == "__main__":
