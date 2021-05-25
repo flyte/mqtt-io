@@ -18,7 +18,7 @@ from .types import ConfigType, SensorValueType
 
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
-    from .server_trio import MQTTIO
+    from .server import MQTTIO
 _LOG = logging.getLogger(__name__)
 
 

@@ -23,7 +23,7 @@ build:
 	poetry build
 
 publish: build
-	poetry publish
+	poetry publish --build
 
 docs:
 	poetry run python docs_src/generate_docs.py
