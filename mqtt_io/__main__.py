@@ -8,8 +8,8 @@ from copy import deepcopy
 from hashlib import sha256
 from typing import Any, Optional
 
+import trio
 import yaml
-
 from confp import render  # type: ignore
 
 from mqtt_io.types import ConfigType
@@ -89,7 +89,7 @@ def main() -> None:
         try:
             import sentry_sdk  # type: ignore
         except ImportError:
-            install_missing_requirements(["sentry-sdk"])
+            trio.run(install_missing_requirements, ["sentry-sdk"])
             import sentry_sdk  # type: ignore
 
         issue_id: Optional[int] = config["reporting"].get("issue_id")
