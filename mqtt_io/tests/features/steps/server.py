@@ -9,7 +9,7 @@ from behave.api.async_step import async_run_until_complete  # type: ignore
 
 from mqtt_io.exceptions import ConfigValidationFailed
 from mqtt_io.mqtt import MQTTMessageSend
-from mqtt_io.server import MqttIo
+from mqtt_io.server import MQTTIO
 
 try:
     from unittest.mock import AsyncMock  # type: ignore[attr-defined]
@@ -19,9 +19,9 @@ except ImportError:
 # pylint: disable=function-redefined
 
 
-@when("we instantiate MqttIo")  # type: ignore[no-redef]
+@when("we instantiate MQTTIO")  # type: ignore[no-redef]
 def step(context: Any) -> None:
-    context.data["mqttio"] = MqttIo(context.data["config"], loop=context.data["loop"])
+    context.data["mqttio"] = MQTTIO(context.data["config"], loop=context.data["loop"])
 
 
 @when("we initialise {target}")  # type: ignore[no-redef]
@@ -36,17 +36,17 @@ def step(context: Any, target: str) -> None:
 @when("we mock {method_name} on {mod}")  # type: ignore[no-redef]
 def step(context: Any, method_name: str, mod: str) -> None:
 
-    mqttio: MqttIo = context.data["mqttio"]
-    if mod == 'MqttIo':
+    mqttio: MQTTIO = context.data["mqttio"]
+    if mod == "MQTTIO":
         obj = mqttio
-    elif mod == 'GPIOIo':
+    elif mod == "GPIO":
         obj = mqttio.gpio
-    elif mod == 'SensorIo':
+    elif mod == "SensorIO":
         obj = mqttio.sensor
-    elif mod == 'StreamIo':
+    elif mod == "StreamIO":
         obj = mqttio.stream
     else:
-        raise ValueError('Invalid module')
+        raise ValueError("Invalid module")
 
     mock = AsyncMock() if iscoroutinefunction(getattr(obj, method_name)) else Mock()
     context.data["mocks"][f"mqttio.{method_name}"] = mock
@@ -56,7 +56,7 @@ def step(context: Any, method_name: str, mod: str) -> None:
 @when("we {lock_unlock} interrupt lock for {pin_name}")  # type: ignore[no-redef]
 def step(context: Any, lock_unlock: str, pin_name: str) -> None:
     assert lock_unlock in ("lock", "unlock")
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     lock = mqttio.gpio.interrupt_locks[pin_name]
     locked = lock.locked()
     if lock_unlock == "lock":
@@ -76,13 +76,13 @@ async def step(context: Any):
 @then("interrupt lock for {pin_name} should be {locked_unlocked}")  # type: ignore[no-redef]
 def step(context: Any, locked_unlocked: str, pin_name: str) -> None:
     assert locked_unlocked in ("locked", "unlocked")
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     lock = mqttio.gpio.interrupt_locks[pin_name]
     locked = lock.locked()
     assert locked if locked_unlocked == "locked" else not locked
 
 
-@then("{method_name} on MqttIo should be called with")  # type: ignore[no-redef]
+@then("{method_name} on MQTTIO should be called with")  # type: ignore[no-redef]
 def step(context: Any, method_name: str):
     mock: Union[Mock, AsyncMock] = context.data["mocks"][f"mqttio.{method_name}"]
     data = yaml.safe_load(context.text)
@@ -97,7 +97,7 @@ def step(context: Any, method_name: str):
         ), f"Should have been called with {kwarg_value} at kwargs key {kwarg_key}"
 
 
-@then("_mqtt_publish on MqttIo should be called with MQTT message")  # type: ignore[no-redef]
+@then("_mqtt_publish on MQTTIO should be called with MQTT message")  # type: ignore[no-redef]
 def step(context: Any):
     mock: Union[Mock, AsyncMock] = context.data["mocks"]["mqttio._mqtt_publish"]
     data = yaml.safe_load(context.text)
@@ -118,7 +118,7 @@ def step(context: Any):
         ), f"Payload was '{payload_str}' but we were expecting '{data['payload']}'"
 
 
-@then("{method_name} on MqttIo {should_shouldnt} be called")  # type: ignore[no-redef]
+@then("{method_name} on MQTTIO {should_shouldnt} be called")  # type: ignore[no-redef]
 def step(context: Any, method_name: str, should_shouldnt: str):
     assert should_shouldnt in ("should", "shouldn't")
     mock: Union[Mock, AsyncMock] = context.data["mocks"][f"mqttio.{method_name}"]
@@ -128,13 +128,13 @@ def step(context: Any, method_name: str, should_shouldnt: str):
         mock.assert_not_called()
 
 
-@then("gpio module {name} should be initialised") # type: ignore[no-redef]
+@then("gpio module {name} should be initialised")  # type: ignore[no-redef]
 def step(context: Any, name: str) -> None:
     mqttio = context.data["mqttio"]
     assert name in getattr(mqttio.gpio, f"gpio_modules")
 
 
-@then("sensor module {name} should be initialised") # type: ignore[no-redef]
+@then("sensor module {name} should be initialised")  # type: ignore[no-redef]
 def step(context: Any, name: str) -> None:
     mqttio = context.data["mqttio"]
     assert name in getattr(mqttio.sensor, f"sensor_modules")
@@ -143,7 +143,9 @@ def step(context: Any, name: str) -> None:
 @then("{module} module {name} should have {count:d} call(s) to {attribute}")  # type: ignore[no-redef]
 def step(context: Any, module: str, name: str, count: int, attribute: str) -> None:
     mqttio = context.data["mqttio"]
-    module = getattr(getattr(mqttio, f"{module.lower()}"), f"{module.lower()}_modules")[name]
+    module = getattr(getattr(mqttio, f"{module.lower()}"), f"{module.lower()}_modules")[
+        name
+    ]
     assert getattr(module, attribute).call_count == count
 
 
@@ -152,12 +154,13 @@ def step(context: Any, target: str, name: str) -> None:
     mqttio = context.data["mqttio"]
     attr_name = f"{target.lower().replace(' ', '_')}_configs"
     assert getattr(
-        mqttio, attr_name,
+        mqttio,
+        attr_name,
         getattr(
-            mqttio.gpio, attr_name, getattr(
-                mqttio.sensor, attr_name, getattr(mqttio.stream, attr_name, None)
-            )
-        )
+            mqttio.gpio,
+            attr_name,
+            getattr(mqttio.sensor, attr_name, getattr(mqttio.stream, attr_name, None)),
+        ),
     )[name]
 
 
@@ -170,7 +173,7 @@ def step(context: Any, target: str, name: str) -> None:
     mqttio = context.data["mqttio"]
     target_config = getattr(
         getattr(mqttio, f"{target.lower().replace(' ', '_')}"),
-        f"{target.lower().replace(' ', '_')}_configs"
+        f"{target.lower().replace(' ', '_')}_configs",
     )[name]
     for key, value in data.items():
         assert target_config[key] == value

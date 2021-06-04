@@ -6,7 +6,7 @@ from typing import Any, Optional, Set
 from behave import given, then, when  # type: ignore
 from behave.api.async_step import async_run_until_complete  # type: ignore
 from mqtt_io.modules.gpio import InterruptEdge, PinDirection
-from mqtt_io.server import MqttIo
+from mqtt_io.server import MQTTIO
 
 # pylint: disable=function-redefined,protected-access
 
@@ -198,7 +198,7 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
     assert value_str in ("true", "false")
     assert last_value_str in ("null", "true", "false")
     value_map = dict(true=True, false=False, null=None)
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     in_conf = mqttio.gpio.digital_input_configs[pin_name]
     value = value_map[value_str]
     last_value = value_map[last_value_str]
@@ -209,7 +209,7 @@ async def step(context: Any, pin_name: str, value_str: str, last_value_str: str)
 @async_run_until_complete(loop="loop")
 async def step(context: Any, pin_name: str, on_off: str) -> None:
     assert on_off in ("on", "off")
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     out_conf = mqttio.gpio.digital_output_configs[pin_name]
     module = mqttio.gpio.gpio_modules[out_conf["module"]]
     await mqttio.gpio.set_digital_output(module, out_conf, on_off == "on")

@@ -21,7 +21,7 @@ from .constants import (
     SET_ON_MS_SUFFIX,
     SET_SUFFIX,
 )
-from .events import DigitalInputChangedEvent, DigitalOutputChangedEvent
+from .events import DigitalInputChangedEvent, DigitalOutputChangedEvent, Event
 from .helpers import _init_module, output_name_from_topic
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
 from .types import ConfigType, PinType
@@ -99,10 +99,9 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
         """
 
         async def publish_input_changes(
-            event_rx: trio.MemoryReceiveChannel,
+            event_rx: "trio.MemoryReceiveChannel[DigitalInputChangedEvent]",
             task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED,
         ) -> None:
-            event: DigitalInputChangedEvent
             async with event_rx:
                 task_status.started()
                 async for event in event_rx:

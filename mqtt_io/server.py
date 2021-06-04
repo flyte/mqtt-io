@@ -8,12 +8,14 @@ and setting their values and data, connecting to MQTT and sending/receiving MQTT
 import logging
 import signal
 from hashlib import sha1
-from typing import List, Optional
+from types import TracebackType
+from typing import Any, AsyncContextManager, AsyncIterator, List, Optional, Type, cast
 
 import paho.mqtt.client as paho  # type: ignore
 import trio
 from anyio_mqtt import AnyIOMQTTClient, AnyIOMQTTClientConfig
 from anyio_mqtt import State as AnyIOMQTTClientState
+from async_generator import asynccontextmanager
 from trio_typing import TaskStatus
 
 from mqtt_io.events import EventBus
@@ -43,6 +45,7 @@ class MQTTIO:  # pylint: disable=too-many-instance-attributes
         self._init_mqtt_config()
 
         self._trio_token: Optional[trio.lowlevel.TrioToken] = None
+        self._main_nursery_manager: Optional[AsyncContextManager[trio.Nursery]] = None
         self._main_nursery: Optional[trio.Nursery] = None
         self._mqtt_nursery: Optional[trio.Nursery] = None
         self._mqtt: Optional[AnyIOMQTTClient] = None
@@ -87,29 +90,47 @@ class MQTTIO:  # pylint: disable=too-many-instance-attributes
         """
         Run the server.
         """
-        trio.run(self.run_async)
 
-    async def run_async(self) -> None:
+        async def _run() -> None:
+            async with self:
+                await trio.sleep_forever()
+
+        trio.run(_run)
+
+    @asynccontextmanager
+    async def _acm(self) -> AsyncIterator["MQTTIO"]:
         """
         Initialise and run the server.
         """
         self._trio_token = trio.lowlevel.current_trio_token()
-        try:
-            async with trio.open_nursery() as nursery:
-                self._main_nursery = nursery
+        async with trio.open_nursery() as nursery:
+            self._main_nursery = nursery
+            await nursery.start(self._handle_signals)
+            await nursery.start(self.event_bus.run)
+            await nursery.start(self._run_mqtt)
 
-                await nursery.start(self._handle_signals)
-                await nursery.start(self.event_bus.run)
-                await nursery.start(self._run_mqtt)
+            await self.gpio.init()
+            await self.sensor.init()
+            await self.stream.init()
 
-                await self.gpio.init()
-                await self.sensor.init()
-                await self.stream.init()
+            self._send_running_msg()
+            nursery.start_soon(self._handle_mqtt_client_state_changes)
 
-                self._send_running_msg()
-                nursery.start_soon(self._handle_mqtt_client_state_changes)
-        finally:
-            _LOG.debug("Main nursery exited")
+            yield self
+            _LOG.debug("Exited context manager")
+
+            if not self._shutdown_requested.is_set():
+                _LOG.debug("Calling shutdown()")
+                await self.shutdown()
+
+            _LOG.debug("Awaiting main nursery exit")
+        _LOG.debug("Main nursery exited")
+
+    async def __aenter__(self) -> "MQTTIO":
+        return await self._acm().__aenter__()
+
+    async def __aexit__(self, *args: Any) -> Optional[bool]:
+        return await self._acm().__aexit__(*args)
 
     async def shutdown(self) -> None:
         """

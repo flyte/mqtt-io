@@ -6,7 +6,7 @@ import yaml
 from behave import given, then, when  # type: ignore
 from behave.api.async_step import async_run_until_complete  # type: ignore
 from mqtt_io import events
-from mqtt_io.server import MqttIo
+from mqtt_io.server import MQTTIO
 
 try:
     from unittest.mock import AsyncMock  # type: ignore[attr-defined]
@@ -18,7 +18,7 @@ except ImportError:
 
 @when("we subscribe to {event_type_name}")
 def step(context: Any, event_type_name: str) -> None:
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     event_type = getattr(events, event_type_name)
     mock_sub = AsyncMock()
     context.data["event_subs"][event_type_name] = mock_sub
@@ -30,7 +30,7 @@ def step(context: Any, event_type_name: str) -> None:
 async def step(context: Any, event_type_name: str) -> None:
     data: Dict[str, Any] = yaml.safe_load(context.text)
     assert isinstance(data, dict), "Data provided to this step must be a YAML dict"
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     event_type: Type[events.Event] = getattr(events, event_type_name)
     event = event_type(**data)
     task_futures = mqttio.event_bus.fire(event)
@@ -42,7 +42,7 @@ async def step(context: Any, event_type_name: str) -> None:
 async def step(context: Any, event_type_name: str) -> None:
     data: Dict[str, Any] = yaml.safe_load(context.text)
     assert isinstance(data, dict), "Data provided to this step must be a YAML dict"
-    mqttio: MqttIo = context.data["mqttio"]
+    mqttio: MQTTIO = context.data["mqttio"]
     event_type: Type[events.Event] = getattr(events, event_type_name)
     event = event_type(**data)
 
