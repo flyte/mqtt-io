@@ -237,7 +237,7 @@ class GPIO(GenericIO):  # pylint: disable=too-many-instance-attributes
         """
         Handles values read from a digital input.
 
-        Fires a DigitalInputchangedEvent when it changes.
+        Fires a DigitalInputChangedEvent when it changes.
 
         This function also helps maintain the working state of pins which are configured
         as interrupts for other pins by checking if it's in the 'triggered' state. This

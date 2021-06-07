@@ -171,7 +171,7 @@ class EventBus:
                 try:
                     tx_chan.send_nowait(event)
                 except trio.WouldBlock:
-                    pass
+                    _LOG.warning("Unable to send event to channel %s", tx_chan)
 
         for tx_chan, _ in self._channels.get(type(event), []):
             self._nursery.start_soon(send_event, tx_chan.clone())

@@ -45,7 +45,6 @@ class MQTTIO:  # pylint: disable=too-many-instance-attributes
         self._init_mqtt_config()
 
         self._trio_token: Optional[trio.lowlevel.TrioToken] = None
-        self._main_nursery_manager: Optional[AsyncContextManager[trio.Nursery]] = None
         self._main_nursery: Optional[trio.Nursery] = None
         self._mqtt_nursery: Optional[trio.Nursery] = None
         self._mqtt: Optional[AnyIOMQTTClient] = None
@@ -90,18 +89,11 @@ class MQTTIO:  # pylint: disable=too-many-instance-attributes
         """
         Run the server.
         """
+        trio.run(self.run_async)
 
-        async def _run() -> None:
-            async with self:
-                await trio.sleep_forever()
-
-        trio.run(_run)
-
-    @asynccontextmanager
-    async def _acm(self) -> AsyncIterator["MQTTIO"]:
-        """
-        Initialise and run the server.
-        """
+    async def run_async(
+        self, task_status: TaskStatus[None] = trio.TASK_STATUS_IGNORED
+    ) -> None:
         self._trio_token = trio.lowlevel.current_trio_token()
         async with trio.open_nursery() as nursery:
             self._main_nursery = nursery
@@ -114,29 +106,16 @@ class MQTTIO:  # pylint: disable=too-many-instance-attributes
             await self.stream.init()
 
             self._send_running_msg()
-            nursery.start_soon(self._handle_mqtt_client_state_changes)
+            await nursery.start(self._handle_mqtt_client_state_changes)
 
-            yield self
-            _LOG.debug("Exited context manager")
-
-            if not self._shutdown_requested.is_set():
-                _LOG.debug("Calling shutdown()")
-                await self.shutdown()
-
-            _LOG.debug("Awaiting main nursery exit")
-        _LOG.debug("Main nursery exited")
-
-    async def __aenter__(self) -> "MQTTIO":
-        return await self._acm().__aenter__()
-
-    async def __aexit__(self, *args: Any) -> Optional[bool]:
-        return await self._acm().__aexit__(*args)
+            task_status.started()
 
     async def shutdown(self) -> None:
         """
         Shutdown the server cleanly.
         """
         self._shutdown_requested.set()
+        self.event_bus.close()
         await self.mqtt.wait_for_state(AnyIOMQTTClientState.DISCONNECTED)
         self.nursery.cancel_scope.cancel()
         for io_module in self.io_modules:
@@ -223,13 +202,17 @@ class MQTTIO:  # pylint: disable=too-many-instance-attributes
             retain=True,
         )
 
-    async def _handle_mqtt_client_state_changes(self) -> None:
+    async def _handle_mqtt_client_state_changes(
+        self, task_status: TaskStatus = trio.TASK_STATUS_IGNORED
+    ) -> None:
         """
         Run appropriate code when the MQTT client changes state.
         """
-        async for state in self.mqtt.states:
-            if state == AnyIOMQTTClientState.CONNECTED:
-                self._send_running_msg()
+        async with self.mqtt.states:
+            task_status.started()
+            async for state in self.mqtt.states:
+                if state == AnyIOMQTTClientState.CONNECTED:
+                    self._send_running_msg()
 
     def _ha_discovery_announce(self, client: AnyIOMQTTClient) -> None:
         """

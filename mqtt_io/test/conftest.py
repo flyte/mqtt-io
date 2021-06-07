@@ -1,13 +1,19 @@
-from typing import AsyncContextManager, AsyncGenerator, AsyncIterator, cast
+from typing import AsyncIterator, Optional, TypeVar, cast
 
 import pytest
 import trio
 import yaml
 from async_generator import asynccontextmanager
 
+from mqtt_io.events import Event
 from mqtt_io.server import MQTTIO
 
 from ..types import ConfigType
+
+EventT = TypeVar("EventT")
+
+
+# pylint: disable=protected-access
 
 
 class ConfigBuilder:
@@ -61,9 +67,8 @@ def config_builder() -> ConfigBuilder:
     return ConfigBuilder()
 
 
-# @asynccontextmanager
-# async def running_mqttio(mqttio: MQTTIO) -> AsyncIterator[None]:
-#     async with trio.open_nursery() as nursery:
-#         mqttio._main_nursery = nursery
-#         await nursery.start(mqttio.event_bus.run)
-#         yield
+async def pin_reads_value(
+    mqttio: MQTTIO, pin_name: str, value: bool, last_value: Optional[bool] = None
+) -> None:
+    in_conf = mqttio.gpio.digital_input_configs[pin_name]
+    await mqttio.gpio._handle_digital_input_value(in_conf, value, last_value)
