@@ -503,6 +503,17 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         == ("low" if out_conf["inverted"] else "high"),
                     )
                 )
+            else:
+                # Read and publish actual pin state if no publish_initial requested
+                raw_value = gpio_module.get_pin(out_conf["pin"])
+                value = raw_value != out_conf["inverted"]
+                _LOG.info(
+                    "Digital output '%s' current value is %s (raw: %s)",
+                    out_conf["name"],
+                    value,
+                    raw_value
+                )
+                self.event_bus.fire(DigitalOutputChangedEvent(out_conf["name"], value))
 
     def _init_sensor_inputs(self) -> None:
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
@@ -776,6 +787,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         any *args and **kwargs supplied by the GPIO library will get passed directly
         back to our GPIO module's get_interrupt_value() method.
 
+        If the pin is configured as a remote interrupt for another pin or pins, then the
         If the pin is configured as a remote interrupt for another pin or pins, then the
         execution, along with the interrupt lock is handed off to
         self.handle_remote_interrupt(), instead of getting the pin value, firing the

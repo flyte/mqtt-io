@@ -72,9 +72,26 @@ class GPIO(GenericGPIO):
         line_request.consumer = "mqtt-io"
         line_request.request_type = self.direction_map[direction]
 
-        line.request(line_request)
-        if direction == PinDirection.OUTPUT and initial is not None:
-            line.set_value(1 if initial == "high" else 0)
+        if direction == PinDirection.OUTPUT:
+            if initial is not None:
+                # Set default_val = Initial value provided by config
+                line.request(line_request, 1 if initial == "high" else 0)
+            else:
+                # Initial value not provided by config
+                # We need to read current value and keep it to avoid inconsistency
+                # So we request line "as-is" first to get current value
+                as_is_line_request = self.io.line_request()
+                as_is_line_request.consumer = line_request.consumer
+                as_is_line_request.request_type = self.io.line_request.DIRECTION_AS_IS
+                line.request(as_is_line_request)
+                current_value = line.get_value()
+                line.release()
+
+                # And request line again with default_val=current_value
+                line.request(line_request, current_value)
+        else:
+            line.request(line_request)
+
         self.pins[pin] = line
 
     def setup_interrupt_callback(
