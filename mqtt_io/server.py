@@ -788,7 +788,6 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         back to our GPIO module's get_interrupt_value() method.
 
         If the pin is configured as a remote interrupt for another pin or pins, then the
-        If the pin is configured as a remote interrupt for another pin or pins, then the
         execution, along with the interrupt lock is handed off to
         self.handle_remote_interrupt(), instead of getting the pin value, firing the
         DigitalInputChangedEvent and unlocking the interrupt lock.
