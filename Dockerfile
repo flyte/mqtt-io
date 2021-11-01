@@ -3,10 +3,12 @@
 # when building multiarch using buildx, then try this:
 # https://github.com/docker/buildx/issues/495#issuecomment-761562905
 
-FROM python:3.8-buster AS base
+FROM python:3.8-slim-buster AS base
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
+RUN useradd -m -s /bin/bash mqtt_io
+WORKDIR /home/mqtt_io
 
 
 FROM base AS requirements
@@ -22,26 +24,21 @@ RUN apt-get update && \
 
 RUN pip install --no-cache-dir wheel setuptools-rust && \
     if [ "${BUILDX_QEMU_ENV}" = "true" -a "$(getconf LONG_BIT)" = "32" ]; then \
-        pip install --no-cache-dir cryptography==3.3.2; \
+    pip install --no-cache-dir cryptography==3.3.2; \
     fi && \
     pip install --no-cache-dir poetry
 
+USER mqtt_io
 COPY pyproject.toml ./
-RUN poetry export -vvv --no-interaction -o /requirements.txt --without-hashes && \
-    mkdir -p /home/mqtt_io && \
-    python3.8 -m venv /home/mqtt_io/venv && \
-    /home/mqtt_io/venv/bin/pip install wheel
+RUN poetry config virtualenvs.in-project true && poetry install --no-interaction --no-dev
 
 
 FROM base
 
-RUN useradd -m -s /bin/bash mqtt_io
 USER mqtt_io
-WORKDIR /home/mqtt_io
-
-COPY --from=requirements --chown=mqtt_io /home/mqtt_io/venv ./venv
-COPY --from=requirements /requirements.txt ./
-RUN venv/bin/pip install -r requirements.txt
+COPY --from=requirements --chown=mqtt_io /home/mqtt_io/.venv ./venv
+# COPY --from=requirements /requirements.txt ./
+# RUN venv/bin/pip install -r requirements.txt
 
 COPY --chown=mqtt_io mqtt_io mqtt_io
 
