@@ -30,3 +30,11 @@ docs:
 
 docker:
 	docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:`git rev-parse --short HEAD` --push --build-arg BUILDX_QEMU_ENV=true .
+
+qemu_reset:
+	# https://github.com/docker/buildx/issues/495
+	docker pull multiarch/qemu-user-static
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+	echo "If this next step fails then you may need to 'docker buildx rm multiarch' first"
+	docker buildx create --name multiarch --driver docker-container --use
+	docker buildx inspect --bootstrap
