@@ -1,3 +1,7 @@
+
+"""
+Dockerpi GPIO
+"""
 from pi_mqtt_gpio.modules import GenericGPIO
 
 REQUIREMENTS = ("smbus",)
