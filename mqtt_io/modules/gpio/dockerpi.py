@@ -1,7 +1,8 @@
 """
 DockerPi 4 Channel Relay GPIO
 """
-from . import GenericGPIO
+from ...types import ConfigType, PinType
+from mqtt_io.modules.gpio import GenericGPIO, PinDirection, PinPUD
 
 REQUIREMENTS = ("smbus",)
 
@@ -19,17 +20,25 @@ class GPIO(GenericGPIO):
     """
     Implementation of DockerPi 4 chanel relay.
     """
-    def __init__(self, config):
+    def setup_module(self) -> None:
         import smbus
         self.bus = smbus.SMBus(config["i2c_bus_num"])
         self.address = config["dev_addr"]
 
-    def setup_pin(self, pin, direction, pullup, pin_config):
-        pass
+    def setup_pin(
+        self,
+        pin: PinType,
+        direction: PinDirection,
+        pullup: PinPUD,
+        pin_config: ConfigType,
+    ) -> None:
 
-    def set_pin(self, pin, value):
-        """ Turn on/off relay number self.relay """
+    def set_pin(self, pin: PinType, value: bool) -> None:
+        """ Turn on/off relay number self.address """
         self.bus.write_byte_data(self.address, pin, value)
 
-    def cleanup(self):
+    def get_pin(self, pin: PinType) -> bool:
+        return bool(self.bus.read_byte_data[self.address, pin])
+
+    def cleanup(self) -> None:
         self.bus.close()
