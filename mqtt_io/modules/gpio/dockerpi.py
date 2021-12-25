@@ -1,5 +1,5 @@
 """
-Dockerpi GPIO
+DockerPi 4 Channel Relay GPIO
 """
 from pi_mqtt_gpio.modules import GenericGPIO
 
