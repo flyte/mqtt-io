@@ -2,8 +2,8 @@
 DockerPi 4 Channel Relay GPIO
 """
 from typing import Optional
-from ...types import ConfigType, PinType
 from mqtt_io.modules.gpio import GenericGPIO, PinDirection, PinPUD
+from ...types import ConfigType, PinType
 
 REQUIREMENTS = ("smbus",)
 
@@ -13,7 +13,7 @@ CONFIG_SCHEMA = {
         "required": True,
         "empty": False,
         "default": 1,
-    }, 
+    },
     "dev_addr": {
         "type": "integer",
         "required": True,
@@ -32,6 +32,7 @@ class GPIO(GenericGPIO):
     Implementation of DockerPi 4 chanel relay.
     """
     def setup_module(self) -> None:
+        # pylint: disable=import-outside-toplevel,import-error
         import smbus as gpio
         addr = self.config["dev_addr"]
         bus = self.config["i2c_bus_num"]
