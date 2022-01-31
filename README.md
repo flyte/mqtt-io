@@ -45,6 +45,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 ### Streams
 
   - Serial port (`serial`)
+  - PN532 NFC/RFID reader (`pn532`)
 
 ## Installation
 
