@@ -6,6 +6,7 @@ Unreleased
 - Add GPIOZero module. #212 @fipwmaqzufheoxq92ebc
 - Render config with confp to allow dynamic configuration based on environment/redis/etcd vars. #210 @fipwmaqzufheoxq92ebc
 - Log uncaught exceptions to configured logging handlers. #206 @fipwmaqzufheoxq92ebc
+- Add GPIOZero ADC converters for MCP3xxx. #261 @Pro
 
 v2.2.6 - 2021-04-23
 ===================

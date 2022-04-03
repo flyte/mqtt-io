@@ -30,6 +30,9 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 
 ### Sensors
 
+  - MCP3xxx analog to digital converters based on [gpiozero](https://gpiozero.readthedocs.io/en/stable/api_spi.html) (`MCP3001`, `MCP3002`, `MCP3004`, `MCP3008`,
+                 `MCP3201`, `MCP3202`, `MCP3204`, `MCP3208`,
+                 `MCP3301`, `MCP3302`, `MCP3304`)
   - ADS1x15 analog to digital converters (`ads1x15`)
   - AHT20 temperature and humidity sensor (`aht20`)
   - BH1750 light level sensor (`bh1750`)
