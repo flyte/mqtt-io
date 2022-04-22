@@ -61,7 +61,7 @@ Configuration is written in a YAML file which is passed as an argument to the se
 The following example will configure the software to do the following:
 
 - Publish MQTT messages on the `home/input/doorbell` topic when the doorbell is pushed and released.
-- Subscribe to the MQTT topic `home/output/port_light/set` and change the output when messages are received on it.
+- Subscribe to the MQTT topic `home/output/porch_light/set` and change the output when messages are received on it.
 - Periodically read the value of the LM75 sensor and publish it on the MQTT topic `home/sensor/porch_temperature`.
 - Publish any data received on the `/dev/ttyUSB0` serial port to the MQTT topic `home/serial/alarm_system`.
 - Subscribe to the MQTT topic `home/serial/alarm_system/send` and send any data received on that topic to the serial port.
