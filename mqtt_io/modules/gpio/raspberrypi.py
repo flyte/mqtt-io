@@ -62,13 +62,13 @@ class GPIO(GenericGPIO):
         in_conf: ConfigType,
         callback: Callable[[List[Any], Dict[Any, Any]], None],
     ) -> None:
-        edge = self.interrupt_edge_map[edge]
+        gpio_edge = self.interrupt_edge_map[edge]
         _LOG.debug(
             "Added interrupt to Raspberry Pi pin '%s' with callback '%s'", pin, callback
         )
         self.io.add_event_detect(
             pin,
-            edge,
+            gpio_edge,
             callback=callback,
             bouncetime=in_conf.get("bouncetime", 100),
         )
