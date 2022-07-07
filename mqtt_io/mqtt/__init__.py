@@ -159,7 +159,7 @@ class AbstractMQTTClient(abc.ABC):
         Import an implemenation of AbstractMQTTClient and return its class.
         """
         client_module = import_module(module_name)
-        client: Type[AbstractMQTTClient]
+        client: Type["AbstractMQTTClient"]
         client = client_module.MQTTClient  # type: ignore[attr-defined]
         return client
 

@@ -1153,6 +1153,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     async def _main_loop(self) -> None:
         reconnect = True
         reconnect_delay = self.config["mqtt"]["reconnect_delay"]
+        reconnects_remaining = None
         while reconnect:
             try:
                 await self._connect_mqtt()
