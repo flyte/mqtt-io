@@ -74,7 +74,7 @@ def get_main_schema() -> ConfigType:
     :rtype: dict
     """
     schema_path = join(dirname(realpath(__file__)), "config.schema.yml")
-    with open(schema_path) as schema_file:
+    with open(schema_path, encoding="utf8") as schema_file:
         # We write this schema file, so we know it'll adhere to ConfigType rules
         return cast(ConfigType, yaml.safe_load(schema_file))
 
@@ -172,7 +172,7 @@ def load_main_config(path: str) -> ConfigType:
     :param path: The filesystem path
     :return: The config
     """
-    with open(path, "r") as stream:
+    with open(path, "r", encoding="utf8") as stream:
         raw_config = yaml.safe_load(stream)
     return validate_and_normalise_main_config(raw_config)
 

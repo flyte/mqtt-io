@@ -20,7 +20,7 @@ from .exceptions import ConfigValidationFailed
 from .modules import install_missing_requirements
 from .server import MqttIo
 
-_LOG = logging.getLogger('mqtt_io.__main__')
+_LOG = logging.getLogger("mqtt_io.__main__")
 
 
 def hashed(value: Any) -> str:
@@ -49,7 +49,7 @@ def load_config(config: str, render_config: str) -> Any:
     """
     Loads the config, and uses confp to render it if necessary.
     """
-    with open(config, "r") as stream:
+    with open(config, "r", encoding="utf8") as stream:
         if render_config:
             rendered = render(render_config, stream.read())
             raw_config = yaml.safe_load(rendered)
@@ -64,10 +64,13 @@ def main() -> None:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("config")
-    parser.add_argument("--render", help="""
+    parser.add_argument(
+        "--render",
+        help="""
     A config file for confp for preprocessing the config file.
     Doesn't need to contain a template section.
-    """)
+    """,
+    )
     args = parser.parse_args()
 
     # Load, validate and normalise config, or quit.
@@ -103,7 +106,7 @@ def main() -> None:
         mqtt_gpio = MqttIo(config)
         mqtt_gpio.run()
     except Exception:
-        _LOG.exception('MqttIo crashed!')
+        _LOG.exception("MqttIo crashed!")
         raise
 
 
