@@ -19,6 +19,7 @@ class GenericStream(ABC):
     def __init__(self, config: ConfigType):
         self.config = config
         self.setup_module()
+        self.executor = ThreadPoolExecutor()
 
     @abstractmethod
     def setup_module(self) -> None:
@@ -43,14 +44,14 @@ class GenericStream(ABC):
         Use a ThreadPoolExecutor to call the module's synchronous read method.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.read)
+        return await loop.run_in_executor(self.executor, self.read)
 
     async def async_write(self, data: bytes) -> None:
         """
         Use a ThreadPoolExecutor to call the module's synchronous write method.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.write, data)
+        return await loop.run_in_executor(self.executor, self.write, data)
 
     def cleanup(self) -> None:
         """
