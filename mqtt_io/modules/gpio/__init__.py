@@ -102,6 +102,7 @@ class GenericGPIO(abc.ABC):
         self.pullup_map: Dict[PinPUD, Any] = {}
         self.interrupt_edge_map: Dict[InterruptEdge, Any] = {}
 
+        self.executor = ThreadPoolExecutor()
         self.setup_module()
 
     @abc.abstractmethod
@@ -226,7 +227,7 @@ class GenericGPIO(abc.ABC):
         Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_int_pins)
+        return await loop.run_in_executor(self.executor, self.get_int_pins)
 
     def get_captured_int_pin_values(
         self, pins: Optional[Iterable[PinType]] = None
@@ -249,7 +250,7 @@ class GenericGPIO(abc.ABC):
         """
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(
-            ThreadPoolExecutor(), self.get_captured_int_pin_values, pins
+            self.executor, self.get_captured_int_pin_values, pins
         )
 
     async def async_set_pin(self, pin: PinType, value: bool) -> None:
@@ -257,14 +258,14 @@ class GenericGPIO(abc.ABC):
         Use a ThreadPoolExecutor to call the module's synchronous set_pin function.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.set_pin, pin, value)
+        return await loop.run_in_executor(self.executor, self.set_pin, pin, value)
 
     async def async_get_pin(self, pin: PinType) -> bool:
         """
         Use a ThreadPoolExecutor to call the module's synchronous get_pin function.
         """
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(ThreadPoolExecutor(), self.get_pin, pin)
+        return await loop.run_in_executor(self.executor, self.get_pin, pin)
 
     def get_interrupt_value(self, pin: PinType, *args: Any, **kwargs: Any) -> bool:
         """
