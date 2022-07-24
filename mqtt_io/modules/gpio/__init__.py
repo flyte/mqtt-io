@@ -84,16 +84,13 @@ class InterruptSupport(Flag):
     SET_TRIGGERS = auto()
 
 
-class GenericGPIO(abc.ABC):
+class GenericGPIO(abc.ABC):  # pylint: disable=too-many-instance-attributes
     """
     Abstracts a generic GPIO interface to be implemented by the modules in this
     directory.
     """
 
     INTERRUPT_SUPPORT = InterruptSupport.NONE
-
-    # pylint: disable=too-many-instance-attributes
-    # Eight is reasonable in this case.
 
     def __init__(self, config: ConfigType):
         self.config = config
