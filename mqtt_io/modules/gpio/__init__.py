@@ -102,7 +102,7 @@ class GenericGPIO(abc.ABC):
         self.pullup_map: Dict[PinPUD, Any] = {}
         self.interrupt_edge_map: Dict[InterruptEdge, Any] = {}
 
-        self.executor = ThreadPoolExecutor()
+        self.executor = ThreadPoolExecutor() # pylint: disable=too-many-instance-attributes
         self.setup_module()
 
     @abc.abstractmethod
