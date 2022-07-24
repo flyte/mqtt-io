@@ -92,6 +92,9 @@ class GenericGPIO(abc.ABC):
 
     INTERRUPT_SUPPORT = InterruptSupport.NONE
 
+    # pylint: disable=too-many-instance-attributes
+    # Eight is reasonable in this case.
+
     def __init__(self, config: ConfigType):
         self.config = config
         self.pin_configs: Dict[PinType, ConfigType] = {}
@@ -102,7 +105,7 @@ class GenericGPIO(abc.ABC):
         self.pullup_map: Dict[PinPUD, Any] = {}
         self.interrupt_edge_map: Dict[InterruptEdge, Any] = {}
 
-        self.executor = ThreadPoolExecutor() # pylint: disable=too-many-instance-attributes
+        self.executor = ThreadPoolExecutor()
         self.setup_module()
 
     @abc.abstractmethod
