@@ -1157,6 +1157,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         while reconnect:
             try:
                 await self._connect_mqtt()
+                # Reset reconnects remaining once successful
                 reconnects_remaining = self.config["mqtt"]["reconnect_count"]
                 self.critical_tasks = [
                     self.loop.create_task(coro)
