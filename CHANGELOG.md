@@ -1,5 +1,11 @@
 Unreleased
 ==========
+- Nothing!
+
+.v2.2.7 - 2022-07-07
+====================
+- Fix some minor pylint issues and silence some others.
+- Fix bug with changing reference to 'edge' in raspberrypi module. #268 @vytautassurvila
 - Add INA219 sensor module. #221 @birdie1
 - Implement PinPUD.OFF for pcf8574/5. #217 @IlmLV
 - Ensure HCSR04 distance cannot be None. #215 @joseffallman

@@ -147,7 +147,8 @@ class AbstractMQTTClient(abc.ABC):
         Publish an MQTT message.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def message_queue(self) -> "asyncio.Queue[MQTTMessage]":
         """
         Get the queue onto which received MQTT messages are put.
@@ -159,7 +160,7 @@ class AbstractMQTTClient(abc.ABC):
         Import an implemenation of AbstractMQTTClient and return its class.
         """
         client_module = import_module(module_name)
-        client: Type[AbstractMQTTClient]
+        client: Type["AbstractMQTTClient"]
         client = client_module.MQTTClient  # type: ignore[attr-defined]
         return client
 

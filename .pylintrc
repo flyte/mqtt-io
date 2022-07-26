@@ -2,4 +2,6 @@
 disable=
     too-many-arguments,
     unused-argument,
-    duplicate-code
+    duplicate-code,
+    consider-using-f-string,
+    consider-using-from-import
