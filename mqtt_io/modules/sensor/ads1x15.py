@@ -77,9 +77,7 @@ class Sensor(GenericSensor):
         )
 
         # Create single-ended input for each pin in config
-        self.channels = dict(
-            [(pin, AnalogIn(self.ads, pin)) for pin in self.config["pins"]]
-        )
+        self.channels = {pin: AnalogIn(self.ads, pin) for pin in self.config["pins"]}
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
