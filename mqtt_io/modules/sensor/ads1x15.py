@@ -1,7 +1,6 @@
 """
 ADS1x15 analog to digital converters
 """
-
 from typing import cast
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
@@ -20,7 +19,7 @@ CONFIG_SCHEMA: CerberusSchemaType = {
         empty=False,
         allowed=SENSOR_TYPES,
     ),
-    "pin": dict(type="integer", required=True, empty=False, allowed=[0, 1, 2, 3]),
+    "pins": dict(type="list", required=True, empty=False, allowed=[0, 1, 2, 3]),
     "gain": dict(
         type="integer",
         required=False,
@@ -43,6 +42,13 @@ class Sensor(GenericSensor):
             empty=False,
             allowed=["value", "voltage"],
             default="value",
+        ),
+        "pin": dict(
+            type="integer",
+            required=True,
+            empty=False,
+            allowed=[0, 1, 2, 3],
+            default=0,
         ),
     }
 
@@ -70,15 +76,18 @@ class Sensor(GenericSensor):
             self.i2c, gain=self.config["gain"], address=self.config["chip_addr"]
         )
 
-        # Create single-ended input on channel 0
-        self.chan = AnalogIn(self.ads, self.config["pin"])
+        # Create single-ended input for each pin in config
+        self.channels = {pin: AnalogIn(self.ads, pin) for pin in self.config["pins"]}
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the value or voltage from the sensor
         """
         sens_type = sens_conf["type"]
-        data = dict(value=self.chan.value, voltage=self.chan.voltage)
+        data = dict(
+            value=self.channels[sens_conf["pin"]].value,
+            voltage=self.channels[sens_conf["pin"]].voltage,
+        )
         return cast(
             float,
             data[sens_type],
