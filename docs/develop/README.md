@@ -42,6 +42,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
+  - MCP3xxx analog to digital converter via GPIOZero (`mcp3xxx`)
 
 ### Streams
 
