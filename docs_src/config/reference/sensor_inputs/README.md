@@ -27,7 +27,6 @@ sensor_modules:
 sensor_inputs:
   - name: workshop_temp
     module: dht
-    type: temperature
     interval: 30
 
   - name: workshop_humidity
@@ -135,7 +134,6 @@ Unlisted entries accepted: True
 sensor_inputs:
   - name: workshop_temp
     module: dht
-    type: temperature
     ha_discovery:
       name: Workshop Temperature
       device_class: temperature
