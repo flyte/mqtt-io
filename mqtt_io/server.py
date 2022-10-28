@@ -503,6 +503,17 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         == ("low" if out_conf["inverted"] else "high"),
                     )
                 )
+            else:
+                # Read and publish actual pin state if no publish_initial requested
+                raw_value = gpio_module.get_pin(out_conf["pin"])
+                value = raw_value != out_conf["inverted"]
+                _LOG.info(
+                    "Digital output '%s' current value is %s (raw: %s)",
+                    out_conf["name"],
+                    value,
+                    raw_value
+                )
+                self.event_bus.fire(DigitalOutputChangedEvent(out_conf["name"], value))
 
     def _init_sensor_inputs(self) -> None:
         async def publish_sensor_callback(event: SensorReadEvent) -> None:
