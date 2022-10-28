@@ -7,28 +7,9 @@ from typing import Optional
 from ...types import ConfigType, PinType
 from . import GenericGPIO, PinDirection, PinPUD
 
-ALLOWED_BOARDS = [
-    "zero",
-    "r1",
-    "zeroplus",
-    "zeroplus2h5",
-    "zeroplus2h3",
-    "pcpcplus",
-    "one",
-    "lite",
-    "plus2e",
-    "pc2",
-    "prime",
-]
 ALLOWED_MODES = ["bcm", "board", "mode_soc"]
-REQUIREMENTS = ("OrangePi.GPIO",)
+REQUIREMENTS = ("OPi.GPIO",)
 CONFIG_SCHEMA = {
-    "board": {
-        "type": "string",
-        "required": True,
-        "empty": False,
-        "allowed": ALLOWED_BOARDS + list(map(str.upper, ALLOWED_BOARDS)),
-    },
     "mode": {
         "type": "string",
         "required": True,
@@ -59,11 +40,7 @@ class GPIO(GenericGPIO):
             PinPUD.DOWN: gpio.PUD_DOWN,
         }
 
-        board = self.config["board"].upper()
         mode = self.config["mode"].upper()
-        if not hasattr(gpio, board):
-            raise AssertionError("%s board not found" % board)
-        gpio.setboard(getattr(gpio, board))
         gpio.setmode(getattr(gpio, mode))
 
     def setup_pin(
