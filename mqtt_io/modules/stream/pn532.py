@@ -30,12 +30,12 @@ class Stream(GenericStream):
         super().__init__(config)
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init
         from nfc import ContactlessFrontend
         self.clf = ContactlessFrontend(self.config["device"])
 
     def read(self) -> Optional[bytes]:
-        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init
         from binascii import hexlify
         self.clf.connect(rdwr={'on-connect': self.__connected})
         return hexlify(self.last_seen_tag.identifier)
