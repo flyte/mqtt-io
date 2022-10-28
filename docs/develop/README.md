@@ -19,6 +19,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 ### GPIO Modules
 
   - Beaglebone GPIO (`beaglebone`)
+  - DockerPi 4 Channel Relay GPIO (`dockerpi`)
   - Linux Kernel 4.8+ libgpiod (`gpiod`)
   - GPIO Zero (`gpiozero`)
   - MCP23017 IO expander (`mcp23017`)
