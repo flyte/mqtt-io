@@ -30,7 +30,7 @@ class Stream(GenericStream):
         super().__init__(config)
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init
+        # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init,import
         from nfc import ContactlessFrontend
         self.clf = ContactlessFrontend(self.config["device"])
 
@@ -46,6 +46,6 @@ class Stream(GenericStream):
     def cleanup(self) -> None:
         self.clf.close()
 
-    def __connected(self, tag):
+    def __connected(self, tag) -> bool:
         self.last_seen_tag = tag
         return False
