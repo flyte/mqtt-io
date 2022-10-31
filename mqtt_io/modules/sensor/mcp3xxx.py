@@ -3,7 +3,7 @@ MCP3xxx analog to digital converter via GPIOZero
 """
 
 from ...exceptions import RuntimeConfigError
-from ...types import ConfigType, SensorValueTypes
+from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
 REQUIREMENTS = ("gpiozero",)
@@ -168,8 +168,7 @@ class Sensor(GenericSensor):
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the analog value from the adc for the configured channel
-	
-	Returns an float between 0 and 1
-		(or -1 to +1 for certain devices operating in differential mode)
+        Returns an float between 0 and 1
+                (or -1 to +1 for certain devices operating in differential mode)
         """
         return self.mcp.value
