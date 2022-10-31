@@ -3,7 +3,7 @@ MCP3xxx analog to digital converter via GPIOZero
 """
 
 from ...exceptions import RuntimeConfigError
-from ...types import ConfigType, SensorValueType
+from ...types import ConfigType, SensorValueTypes
 from . import GenericSensor
 
 REQUIREMENTS = ("gpiozero",)
@@ -15,7 +15,8 @@ ALLOWED_TYPES = [
 CONFIG_SCHEMA = {
     "spi_port": dict(type="integer", required=False, empty=False, default=0),
     "spi_device": dict(type="integer", required=False, empty=False, default=0),
-    "type": dict(type="string", required=True, empty=False, allowed=ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES]),
+    "type": dict(type="string", required=True, empty=False,
+    			sallowed=ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES]),
     "channel": dict(type="integer", required=False, empty=False, default=0),
     "differential": dict(type="boolean", required=False, empty=False, default=False),
     "max_voltage": dict(type="float", required=False, empty=False, default=3.3),
@@ -27,6 +28,7 @@ class Sensor(GenericSensor):
     """
 
     def setup_module(self) -> None:
+	# pylint: disable=too-many-locals,too-many-branches
         """
         Init the mcp on SPI CEx
         """
@@ -166,6 +168,8 @@ class Sensor(GenericSensor):
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the analog value from the adc for the configured channel
+	
+	Returns an float between 0 and 1
+		(or -1 to +1 for certain devices operating in differential mode)
         """
-        # Returns an float between 0 and 1 (or -1 to +1 for certain devices operating in differential mode)
         return self.mcp.value
