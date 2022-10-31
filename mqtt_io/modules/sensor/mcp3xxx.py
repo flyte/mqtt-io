@@ -28,7 +28,7 @@ class Sensor(GenericSensor):
     """
 
     def setup_module(self) -> None:
-	# pylint: disable=too-many-locals,too-many-branches,import
+	# pylint: disable=too-many-locals,too-many-branches
         """
         Init the mcp on SPI CEx
         """

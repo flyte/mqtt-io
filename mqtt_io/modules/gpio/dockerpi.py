@@ -32,7 +32,7 @@ class GPIO(GenericGPIO):
     Implementation of DockerPi 4 chanel relay.
     """
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,import-error,import
+        # pylint: disable=import-outside-toplevel,import-error
         import smbus as gpio
         addr = self.config["dev_addr"]
         bus = self.config["i2c_bus_num"]

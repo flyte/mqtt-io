@@ -30,7 +30,7 @@ class Stream(GenericStream):
         super().__init__(config)
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init,import
+        # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init
         from nfc import ContactlessFrontend
         self.clf = ContactlessFrontend(self.config["device"])
 
