@@ -33,7 +33,7 @@ class GPIO(GenericGPIO):
     """
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
-        import smbus as gpio
+        import smbus as gpio # type: ignore
         addr = self.config["dev_addr"]
         bus = self.config["i2c_bus_num"]
         self.bus = gpio.SMBus(bus)

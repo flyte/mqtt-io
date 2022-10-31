@@ -171,4 +171,4 @@ class Sensor(GenericSensor):
         Returns an float between 0 and 1
                 (or -1 to +1 for certain devices operating in differential mode)
         """
-        return self.mcp.value
+        return self.mcp.value # type: ignore

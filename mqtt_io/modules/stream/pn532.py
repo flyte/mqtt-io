@@ -26,7 +26,7 @@ class Stream(GenericStream):
     """
 
     def __init__(self, config: ConfigType):
-        self.last_seen_tag = None
+        self.last_seen_tag = None # type: ignore
         super().__init__(config)
 
     def setup_module(self) -> None:
@@ -38,7 +38,7 @@ class Stream(GenericStream):
         # pylint: disable=import-outside-toplevel,import-error,attribute-defined-outside-init
         from binascii import hexlify
         self.clf.connect(rdwr={'on-connect': self.__connected})
-        return hexlify(self.last_seen_tag.identifier)
+        return hexlify(self.last_seen_tag.identifier) # type: ignore
 
     def write(self, data: bytes) -> None:
         pass
@@ -46,6 +46,6 @@ class Stream(GenericStream):
     def cleanup(self) -> None:
         self.clf.close()
 
-    def __connected(self, tag) -> bool:
-        self.last_seen_tag = tag
+    def __connected(self, tag) -> bool: # type: ignore
+        self.last_seen_tag = tag # type: ignore
         return False

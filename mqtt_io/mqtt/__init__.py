@@ -78,7 +78,7 @@ class MQTTTLSOptions:
         if self.cert_reqs == ssl.CERT_NONE:
             context.check_hostname = False
 
-        context.verify_mode = self.cert_reqs or ssl.CERT_REQUIRED
+        context.verify_mode = self.cert_reqs or ssl.CERT_REQUIRED # type: ignore
 
         if self.ca_certs is None:
             context.load_default_certs()
