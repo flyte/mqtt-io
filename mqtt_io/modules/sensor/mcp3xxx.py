@@ -43,7 +43,7 @@ class Sensor(GenericSensor):
 
         # import sensor supertype
         # pylint: disable=import-outside-toplevel,import-error
-        from gpiozero import AnalogInputDevice
+        from gpiozero import AnalogInputDevice # type: ignore
 
         # init the sensor by type
         self.mcp: AnalogInputDevice
