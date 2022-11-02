@@ -62,9 +62,11 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - if: github.event_name == 'release' && github.event.action == 'created'
         run: |
+          echo "rc docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:10} -t flyte/mqtt-io:latest --push --build-arg BUILDX_QEMU_ENV=true ."
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:10} -t flyte/mqtt-io:latest --push --build-arg BUILDX_QEMU_ENV=true .
       - if: github.event_name == 'push'
         run: |
+          echo "p docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:11} --push --build-arg BUILDX_QEMU_ENV=true ."
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:11} --push --build-arg BUILDX_QEMU_ENV=true .
 
   generate_docs:
