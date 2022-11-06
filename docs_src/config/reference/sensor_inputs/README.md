@@ -147,6 +147,7 @@ sensor_inputs:
     ha_discovery:
       name: Workshop Temperature
       device_class: temperature
+      unit_of_measurement: °C
 
   - name: workshop_humidity
     module: dht
@@ -154,6 +155,7 @@ sensor_inputs:
     ha_discovery:
       name: Workshop Humidity
       device_class: humidity
+      unit_of_measurement: %
 ```
 
 ### component :id=sensor_inputs-star-ha_discovery-component
