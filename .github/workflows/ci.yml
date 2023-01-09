@@ -69,6 +69,7 @@ jobs:
           echo "GITHUB_REF: ${GITHUB_REF}"
           echo "GITHUB_REF:11: ${GITHUB_REF:11}"
           echo "p docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t mqtt-io/${GITHUB_REF:11} --push --build-arg BUILDX_QEMU_ENV=true ."
+          export DOCKER_BUILDKIT 0
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t mqtt-io/${GITHUB_REF:11} --push --build-arg BUILDX_QEMU_ENV=true .
 
   generate_docs:
