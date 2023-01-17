@@ -511,7 +511,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     "Digital output '%s' current value is %s (raw: %s)",
                     out_conf["name"],
                     value,
-                    raw_value
+                    raw_value,
                 )
                 self.event_bus.fire(DigitalOutputChangedEvent(out_conf["name"], value))
 
