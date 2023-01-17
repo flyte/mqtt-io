@@ -65,7 +65,11 @@ jobs:
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:10} -t flyte/mqtt-io:latest --push --build-arg BUILDX_QEMU_ENV=true .
       - if: github.event_name == 'push'
         run: |
-          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${GITHUB_REF:11} --push --build-arg BUILDX_QEMU_ENV=true .
+          # Remove prefix
+          TAG_NAME=${GITHUB_REF:11}
+          # Change slashes to hyphens
+          TAG_NAME=${TAG_NAME//\//-}
+          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${TAG_NAME} --push --build-arg BUILDX_QEMU_ENV=true .
 
   generate_docs:
     name: Generate Documentation
