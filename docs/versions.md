@@ -14,6 +14,7 @@
 ## Other Versions
 
 
+- <a href="/304-release-deploy-pipeline-failed" target="_self">304-release-deploy-pipeline-failed</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
 - <a href="/fix_pipeline_remove_py3.6" target="_self">fix_pipeline_remove_py3.6</a>
