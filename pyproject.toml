@@ -8,17 +8,17 @@ license = "MIT"
 documentation = "https://flyte.github.io/mqtt-io/"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 PyYAML = "^5.4"
 Cerberus = "^1.3.2"
 typing-extensions = "^3.7.4"
-dataclasses = { version = "^0.8", python = ">=3.7,<3.8" }
+dataclasses = { version = "^0.8", python = ">=3.6,<3.7" }
 asyncio-mqtt = "^0.8.1"
 backoff = "^1.10.0"
 confp = "^0.4.0"
 
 [tool.poetry.dev-dependencies]
-mock = { version = "^4.0.3", python = ">=3.7,<3.8" }
+mock = { version = "^4.0.3", python = ">=3.6,<3.7" }
 pytest = "^6.2.2"
 tox = "^3.22.0"
 pylint = "^2.6.2"
