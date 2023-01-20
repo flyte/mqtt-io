@@ -3,6 +3,7 @@
 ## Releases
 
 
+- <a href="/2.2.9-beta" target="_self">2.2.9-beta</a>
 - <a href="/2.2.9-alpha" target="_self">2.2.9-alpha</a>
 - <a href="/2.2.8" target="_self">2.2.8</a>
 - <a href="/2.2.7" target="_self">2.2.7</a>
