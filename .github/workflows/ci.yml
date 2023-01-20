@@ -63,7 +63,7 @@ jobs:
       - if: github.event_name == 'release' && github.event.action == 'created'
         run: |
           # Remove prefix
-          TAG_NAME=${GITHUB_REF:10}
+          TAG_NAME=${GITHUB_REF:9}
           # Change slashes to hyphens
           TAG_NAME=${TAG_NAME//\//-}
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${TAG_NAME} -t flyte/mqtt-io:latest --push --build-arg BUILDX_QEMU_ENV=true .
