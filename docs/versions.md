@@ -17,6 +17,7 @@
 ## Other Versions
 
 
+- <a href="/282-still-not-reconnecting-when-mqtt-broker-not-available" target="_self">282-still-not-reconnecting-when-mqtt-broker-not-available</a>
 - <a href="/304-release-deploy-pipeline-failed" target="_self">304-release-deploy-pipeline-failed</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
