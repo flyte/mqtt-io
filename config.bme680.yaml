@@ -1,0 +1,62 @@
+mqtt:
+  host: mosquitto
+  port: 1883
+  user: ""
+  password: ""
+  topic_prefix: livingroom
+  ha_discovery:
+    enabled: yes
+  status_payload_running: available
+  status_payload_stopped: unavailable
+  status_payload_dead: unavailable
+
+sensor_modules:
+  - name: bme680
+    module: bme680
+    i2c_bus_num: 0
+    chip_addr: 0x77
+    filter_size: 3
+
+sensor_inputs:
+  - name: temperature
+    module: bme680
+    type: temperature
+    oversampling: 8x
+    interval: 60
+    ha_discovery:
+      name: Living Room Temperature
+      device_class: temperature
+      unit_of_measurement: '°C'
+  - name: humidity
+    module: bme680
+    type: humidity
+    oversampling: 2x
+    interval: 120
+    ha_discovery:
+      name: Living Room Humidity
+      device_class: humidity
+      unit_of_measurement: '%'
+  - name: pressure
+    module: bme680
+    type: pressure
+    oversampling: 4x
+    interval: 300
+    ha_discovery:
+      name: Living Room Air Pressure
+      device_class: atmospheric_pressure
+      unit_of_measurement: 'hPa'
+  - name: gas
+    module: bme680
+    type: gas
+    interval: 300
+    ha_discovery:
+      name: Living Room Gas Resistance
+      device_class: atmospheric_pressure
+      unit_of_measurement: 'Ohms'
+  - name: air_quality
+    module: bme680
+    type: air_quality
+    interval: 300
+    ha_discovery:
+      name: Living Room Air Quality
+      device_class: aqi
