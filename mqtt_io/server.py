@@ -1047,6 +1047,30 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 _LOG.exception("Exception while handling MQTT task:")
             self.mqtt_task_queue.task_done()
 
+    async def _mqtt_keep_alive_loop(self) -> None:
+        config: ConfigType = self.config["mqtt"]
+        topic_prefix: str = config["topic_prefix"]
+        if not self.mqtt_connected.is_set():
+            _LOG.debug("_mqtt_keep_alive_loop awaiting MQTT connection")
+            await self.mqtt_connected.wait()
+            _LOG.debug("_mqtt_keep_alive_loop unblocked after MQTT connection")
+        while True:
+            if self.mqtt is None:
+                _LOG.error("Attempted to ping MQTT server before client initialised")
+                while self.mqtt is None:
+                    await asyncio.sleep(1)
+                continue
+            try:
+                await self.mqtt.publish(MQTTMessageSend(
+                            "/".join((topic_prefix, config["status_topic"])),
+                            config["status_payload_running"].encode("utf8"),
+                            qos=1,
+                            retain=True,
+                        ))
+                await asyncio.sleep(config["keepalive"])
+            except MQTTException:
+                raise
+
     async def _mqtt_rx_loop(self) -> None:
         if not self.mqtt_connected.is_set():
             _LOG.debug("_mqtt_rx_loop awaiting MQTT connection")
@@ -1175,6 +1199,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     for coro in (
                         self._mqtt_task_loop(),
                         self._mqtt_rx_loop(),
+                        self._mqtt_keep_alive_loop(),
                         self._remove_finished_transient_tasks(),
                     )
                 ]
