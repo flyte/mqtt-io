@@ -21,10 +21,9 @@ CONFIG_SCHEMA: CerberusSchemaType = {
     ),
     "pins": dict(type="list", required=True, empty=False, allowed=[0, 1, 2, 3]),
     "gain": dict(
-        type="integer",
         required=False,
         empty=False,
-        allowed=[2 / 3, 1, 2, 4, 8, 16],
+        allowed=[0.6666666666666666, 1, 2, 4, 8, 16],
         default=1,
     ),
 }
