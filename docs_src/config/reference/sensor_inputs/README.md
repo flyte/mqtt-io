@@ -24,6 +24,11 @@ sensor_modules:
     type: AM2302
     pin: 4
 
+  - name: ds
+    module: ds18b
+    type: DS18B20
+    address: 000803702e49
+
 sensor_inputs:
   - name: workshop_temp
     module: dht
@@ -34,6 +39,9 @@ sensor_inputs:
     module: dht
     type: humidity
     interval: 60
+
+  - name: outdoor_temp
+    module: ds
 ```
 
 ## sensor_inputs.* :id=sensor_inputs-star
@@ -139,6 +147,7 @@ sensor_inputs:
     ha_discovery:
       name: Workshop Temperature
       device_class: temperature
+      unit_of_measurement: °C
 
   - name: workshop_humidity
     module: dht
@@ -146,6 +155,7 @@ sensor_inputs:
     ha_discovery:
       name: Workshop Humidity
       device_class: humidity
+      unit_of_measurement: %
 ```
 
 ### component :id=sensor_inputs-star-ha_discovery-component
