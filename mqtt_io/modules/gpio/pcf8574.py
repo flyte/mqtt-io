@@ -35,7 +35,7 @@ class GPIO(GenericGPIO):
         pin_config: ConfigType,
         initial: Optional[str] = None,
     ) -> None:
-        if direction == PinDirection.INPUT and pullup is not None:
+        if direction == PinDirection.INPUT and self.pullup_map[pullup] is not None:
             self.io.port[pin] = self.pullup_map[pullup]
         initial = pin_config.get("initial")
         if initial is not None:
