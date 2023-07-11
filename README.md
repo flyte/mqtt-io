@@ -101,11 +101,30 @@ sensor_modules:
     module: lm75
     i2c_bus_num: 1
     chip_addr: 0x48
+  # An INA219 sensor attached to the I2C bus
+  - name: ina219_sensor
+    module: ina219
+    i2c_bus_num: 1
+    chip_addr: 0x43
+
 
 sensor_inputs:
-  # The configuration of the specific sensor value to use (LM75 only has temperature)
+  # lm75 - The configuration of the specific sensor value to use (LM75 only has temperature)
   - name: porch_temperature
     module: lm75_sensor
+  # ina219 - The configuration of the specific sensor value to use (4 options for the ina219 sensor)
+  - name: power
+    type: power
+    module: ina219_sensor
+  - name: bus_voltage
+    type: bus_voltage
+    module: ina219_sensor
+  - name: current
+    type: current
+    module: ina219_sensor
+  - name: shunt_voltage
+    type: shunt_voltage
+    module: ina219_sensor
 
 # Streams
 stream_modules:
