@@ -62,7 +62,7 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
       - if: github.event_name == 'release' && github.event.action == 'created'
         run: |
-          # Remove prefix
+          # Remove prefix release
           echo "GITHUB_REF ${GITHUB_REF}"
           TAG_NAME=${GITHUB_REF##*/}
           # Change slashes to hyphens
@@ -71,8 +71,8 @@ jobs:
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${TAG_NAME} -t flyte/mqtt-io:latest --push --build-arg BUILDX_QEMU_ENV=true .
       - if: github.event_name == 'push'
         run: |
-          # Remove prefix
-          TAG_NAME=${GITHUB_REF:11}
+          # Remove prefix push
+          TAG_NAME=${GITHUB_REF##*/}
           # Change slashes to hyphens
           TAG_NAME=${TAG_NAME//\//-}
           docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${TAG_NAME} --push --build-arg BUILDX_QEMU_ENV=true .
