@@ -19,6 +19,7 @@
 
 
 - <a href="/2.2.9a" target="_self">2.2.9a</a>
+- <a href="/2.2.9b" target="_self">2.2.9b</a>
 - <a href="/282-still-not-reconnecting-when-mqtt-broker-not-available" target="_self">282-still-not-reconnecting-when-mqtt-broker-not-available</a>
 - <a href="/304-release-deploy-pipeline-failed" target="_self">304-release-deploy-pipeline-failed</a>
 - <a href="/322-version-229-is-not-available-on-pypi" target="_self">322-version-229-is-not-available-on-pypi</a>
