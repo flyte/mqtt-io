@@ -41,6 +41,7 @@ WORKDIR /home/mqtt_io
 
 COPY --from=requirements --chown=mqtt_io /home/mqtt_io/venv ./venv
 COPY --from=requirements /requirements.txt ./
+RUN venv/bin/python -m pip install --upgrade pip
 RUN venv/bin/pip install -r requirements.txt
 
 COPY --chown=mqtt_io mqtt_io mqtt_io
