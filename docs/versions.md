@@ -25,6 +25,7 @@
 - <a href="/282-still-not-reconnecting-when-mqtt-broker-not-available" target="_self">282-still-not-reconnecting-when-mqtt-broker-not-available</a>
 - <a href="/304-release-deploy-pipeline-failed" target="_self">304-release-deploy-pipeline-failed</a>
 - <a href="/322-version-229-is-not-available-on-pypi" target="_self">322-version-229-is-not-available-on-pypi</a>
+- <a href="/324-pinned-pyyaml-version-incompatible-with-latest-cython-300" target="_self">324-pinned-pyyaml-version-incompatible-with-latest-cython-300</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
 - <a href="/fix_pipeline_remove_py3.6" target="_self">fix_pipeline_remove_py3.6</a>
