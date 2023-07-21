@@ -2,6 +2,24 @@ Unreleased
 ==========
 - Nothing!
 
+.v2.2.9d - 2023-07-18
+====================
+- new sensors
+- fix for reconnection problem
+
+.v2.2.8 - 2023-01-19
+====================
+- Fix for #280 by @rlehfeld in #281
+- Fix reconnects_remaining referenced before assignment by @SamLeatherdale in #274
+- Only create one instance of sensor_module for ADS1x15 by @shbatm in #286
+- PN532 NFC/RFID reader implementation by @vytautassurvila in #269
+- Update README.md by @OzGav in #264
+- FIX OrangePi module by @neatherweb in #285
+- New DockerPi 4 Channel Relay GPIO module by @claudegel in #246
+- Digital Output: fix initial state inconsistency by @hacker-cb in #238
+- Add module mcp3xxx by @koleo9am in #227
+- Always remove finished transient_tasks. by @gmsoft-tuxicoman in #301
+
 .v2.2.7 - 2022-07-07
 ====================
 - Fix some minor pylint issues and silence some others.
