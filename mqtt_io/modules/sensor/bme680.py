@@ -93,7 +93,7 @@ class Sensor(GenericSensor):
                 gas = self.sensor.data.gas_resistance
                 burn_in_data.append(gas)
                 time.sleep(1)
-        gas = math.fsum(burn_in_data[-50:]) / 50.0
+        gas: float = math.fsum(burn_in_data[-50:]) / 50.0
         _LOG.info("Gas Resistance : %f", gas)
         return gas
 
@@ -155,7 +155,7 @@ class Sensor(GenericSensor):
             gas_score = 100 - (hum_weighting * 100)
 
         # Calculate air_quality_score.
-        air_quality_score = hum_score + gas_score
+        air_quality_score: float  = hum_score + gas_score
         return air_quality_score
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
