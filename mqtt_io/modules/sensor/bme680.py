@@ -75,7 +75,7 @@ class Sensor(GenericSensor):
 
         self.gas_baseline = None
 
-    def gas_avg(self, burn_in_time) -> float:
+    def gas_avg(self, burn_in_time: float) -> float:
         """
         Calculate the average gas resistance.
         :return: Gas Resistance
