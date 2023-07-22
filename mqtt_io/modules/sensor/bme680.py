@@ -5,6 +5,7 @@ BME680 temperature, humidity, and pressure sensor
 from typing import cast
 import logging
 import time
+import math
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
