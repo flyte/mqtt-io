@@ -81,7 +81,7 @@ class Sensor(GenericSensor):
         Calculate the average gas resistance.
         :return: Gas Resistance
         """
-
+        gas: float = 0.0
         start_time = time.time()
         curr_time = time.time()
 
@@ -93,7 +93,7 @@ class Sensor(GenericSensor):
                 gas = self.sensor.data.gas_resistance
                 burn_in_data.append(gas)
                 time.sleep(1)
-        gas: float = math.fsum(burn_in_data[-50:]) / 50.0
+        gas = math.fsum(burn_in_data[-50:]) / 50.0
         _LOG.info("Gas Resistance : %f", gas)
         return gas
 
