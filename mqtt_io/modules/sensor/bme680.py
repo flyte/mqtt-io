@@ -73,7 +73,7 @@ class Sensor(GenericSensor):
             "enabled": bme680.ENABLE_GAS_MEAS,
         }
 
-        self.gas_baseline = None
+        self.gas_baseline = 0.0
 
     def gas_avg(self, burn_in_time: float) -> float:
         """
@@ -92,7 +92,7 @@ class Sensor(GenericSensor):
                 gas = self.sensor.data.gas_resistance
                 burn_in_data.append(gas)
                 time.sleep(1)
-        gas = sum(burn_in_data[-50:]) / 50.0
+        gas = fsum(burn_in_data[-50:]) / 50.0
         _LOG.info("Gas Resistance : %f", gas)
         return gas
 
