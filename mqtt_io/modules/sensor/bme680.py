@@ -4,6 +4,7 @@ BME680 temperature, humidity, and pressure sensor
 
 from typing import cast
 import logging
+import time
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -58,7 +59,7 @@ class Sensor(GenericSensor):
 
         set_filter_size = getattr(self.sensor, "set_filter")
         set_filter_size(self.filter_map[str(self.config["filter_size"])])
-        
+
         self.oversampling_map = {
             "none": bme680.OS_NONE,
             "1x": bme680.OS_1X,
@@ -71,7 +72,7 @@ class Sensor(GenericSensor):
         self.gas_map = {
             "enabled": bme680.ENABLE_GAS_MEAS,
         }
-        
+
         self.gas_baseline = None
 
     def gas_avg(self, burn_in_time) -> float:
@@ -79,7 +80,6 @@ class Sensor(GenericSensor):
         Calculate the average gas resistance.
         :return: Gas Resistance
         """
-        import time
 
         start_time = time.time()
         curr_time = time.time()
@@ -95,7 +95,7 @@ class Sensor(GenericSensor):
         gas = sum(burn_in_data[-50:]) / 50.0
         _LOG.info("Gas Resistance : %f", gas)
         return gas
-        
+
     def setup_sensor(self, sens_conf: ConfigType) -> None:
         """
         Setup the BME680 sensor with the provided configuration.
@@ -129,7 +129,7 @@ class Sensor(GenericSensor):
         gas_baseline = self.gas_baseline
         # Set the humidity baseline to 40%, an optimal indoor humidity.
         hum_baseline = 40.0
-   
+
         # This sets the balance between humidity and gas reading in the
         # calculation of air_quality_score (25:75, humidity:gas)
         hum_weighting = 0.25
@@ -170,7 +170,7 @@ class Sensor(GenericSensor):
 
         if sens_type == "air_quality" and self.sensor.data.heat_stable:
             return self.air_quality()
-        
+
         if sens_type == "gas" and self.sensor.data.heat_stable:
             return self.gas_avg(120)
 
