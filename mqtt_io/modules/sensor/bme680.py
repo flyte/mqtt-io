@@ -92,7 +92,7 @@ class Sensor(GenericSensor):
                 gas = self.sensor.data.gas_resistance
                 burn_in_data.append(gas)
                 time.sleep(1)
-        gas = fsum(burn_in_data[-50:]) / 50.0
+        gas = math.fsum(burn_in_data[-50:]) / 50.0
         _LOG.info("Gas Resistance : %f", gas)
         return gas
 
