@@ -37,6 +37,17 @@ CONFIG_SCHEMA = {
         "empty": False,
         "allowed": STOPBITS_CHOICES,
     },
+    "delimiter": {
+        "type": "string",
+        "required": False,
+        "empty": True
+    },
+    "reset_before_read": {
+        "type": "boolean",
+        "required": False,
+        "empty": False,
+        "default": False
+    }
 }
 
 # pylint: disable=no-member
@@ -80,7 +91,16 @@ class Stream(GenericStream):
         self.ser.flushInput()
 
     def read(self) -> Optional[bytes]:
-        return self.ser.read(self.ser.in_waiting) or None
+        if("delimiter" in self.config):
+            if("reset_before_read" in self.config):
+                if(self.config["reset_before_read"]):
+                    self.ser.reset_input_buffer()
+            data = self.ser.read_until(self.config["delimiter"].encode("utf-8"))
+            if data:
+                data = data[:-len(self.config["delimiter"])]
+            return data or None
+        else:
+            return self.ser.read(self.ser.in_waiting) or None
 
     def write(self, data: bytes) -> None:
         self.ser.write(data)
