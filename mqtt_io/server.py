@@ -56,6 +56,7 @@ from .home_assistant import (
     hass_announce_digital_input,
     hass_announce_digital_output,
     hass_announce_sensor_input,
+    hass_announce_stream
 )
 from .modules import install_missing_module_requirements
 from .modules.gpio import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection
@@ -634,6 +635,12 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             messages.append(
                 hass_announce_sensor_input(
                     sens_conf, mqtt_config, self.mqtt_client_options
+                )
+            )
+        for stream_conf in self.stream_configs.values():
+            messages.append(
+                hass_announce_stream(
+                    stream_conf, mqtt_config, self.mqtt_client_options
                 )
             )
         for msg in messages:

@@ -47,6 +47,10 @@ CONFIG_SCHEMA = {
         "required": False,
         "empty": False,
         "default": False
+    },
+    "ha_discovery": {
+        "type": "dict",
+        "allow_unknown": True
     }
 }
 

@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Any, Dict
 
-from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, SET_SUFFIX
+from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, STREAM_TOPIC, SET_SUFFIX, SEND_SUFFIX
 from .mqtt import MQTTClientOptions, MQTTMessageSend
 from .types import ConfigType
 from . import VERSION
@@ -148,3 +148,35 @@ def hass_announce_sensor_input(
         json.dumps(sensor_config).encode("utf8"),
         retain=True,
     )
+
+def hass_announce_stream(
+    in_conf: ConfigType, mqtt_conf: ConfigType, mqtt_options: MQTTClientOptions
+) -> MQTTMessageSend:
+    """
+    Create a message which announces stream as text to Home Assistant.
+    """
+    disco_conf: ConfigType = mqtt_conf["ha_discovery"]
+    name: str = in_conf["name"]
+    disco_prefix: str = disco_conf["prefix"]
+    stream_config = get_common_config(in_conf, mqtt_conf, mqtt_options)
+    stream_config.update(
+        dict(
+            unique_id=f"{mqtt_options.client_id}_{in_conf['module']}_input_{name}",
+            state_topic="/".join((mqtt_conf["topic_prefix"], STREAM_TOPIC, name)),
+            command_topic="/".join((mqtt_conf["topic_prefix"], STREAM_TOPIC, name, SEND_SUFFIX))
+        )
+    )
+    return MQTTMessageSend(
+        "/".join(
+            (
+                disco_prefix,
+                stream_config.pop("component", "text"),
+                mqtt_options.client_id,
+                name,
+                "config",
+            )
+        ),
+        json.dumps(stream_config).encode("utf8"),
+        retain=True,
+    )
+
