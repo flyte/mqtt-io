@@ -95,18 +95,22 @@ class Stream(GenericStream):
         self.ser.flushInput()
 
     def read(self) -> Optional[bytes]:
-        if("delimiter" in self.config):
-            if("reset_before_read" in self.config):
-                if(self.config["reset_before_read"]):
+        data = None
+        if "delimiter" in self.config:
+            if "reset_before_read" in self.config:
+                if self.config["reset_before_read"]:
                     self.ser.reset_input_buffer()
             data = self.ser.read_until(self.config["delimiter"].encode("utf-8"))
             if data:
                 data = data[:-len(self.config["delimiter"])]
-            return data or None
         else:
-            return self.ser.read(self.ser.in_waiting) or None
+            data = self.ser.read(self.ser.in_waiting) or None
+
+        return data
 
     def write(self, data: bytes) -> None:
+        if("delimiter" in self.config):
+            data = data + self.config["delimiter"].encode("utf-8")
         self.ser.write(data)
 
     def cleanup(self) -> None:

@@ -179,4 +179,3 @@ def hass_announce_stream(
         json.dumps(stream_config).encode("utf8"),
         retain=True,
     )
-
