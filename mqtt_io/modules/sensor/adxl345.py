@@ -53,16 +53,16 @@ class Sensor(GenericSensor):
         sens_type = sens_conf["type"]
 
         if "output_g" in self.config and self.config["output_g"]:
-            all = self.adxl345.get_axes(True)
+            all_axes = self.adxl345.get_axes(True)
         else:
-            all = self.adxl345.get_axes()
+            all_axes = self.adxl345.get_axes()
 
         return cast(
             float,
             dict(
-                x=all["x"],
-                y=all["y"],
-                z=all["z"],
-                all=dumps(all),
+                x=all_axes["x"],
+                y=all_axes["y"],
+                z=all_axes["z"],
+                all_axes=dumps(all_axes),
             )[sens_type],
         )
