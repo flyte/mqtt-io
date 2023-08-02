@@ -8,7 +8,9 @@ import json
 import logging
 from typing import Any, Dict
 
-from .constants import INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, STREAM_TOPIC, SET_SUFFIX, SEND_SUFFIX
+from .constants import (
+    INPUT_TOPIC, OUTPUT_TOPIC, SENSOR_TOPIC, STREAM_TOPIC,
+    SET_SUFFIX, SEND_SUFFIX)
 from .mqtt import MQTTClientOptions, MQTTMessageSend
 from .types import ConfigType
 from . import VERSION

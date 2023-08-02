@@ -109,7 +109,7 @@ class Stream(GenericStream):
         return data
 
     def write(self, data: bytes) -> None:
-        if("delimiter" in self.config):
+        if "delimiter" in self.config:
             data = data + self.config["delimiter"].encode("utf-8")
         self.ser.write(data)
 
