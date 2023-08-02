@@ -32,6 +32,18 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 ### Sensors
 
   - ADS1x15 analog to digital converters (`ads1x15`)
+  - ADXL345 Digital Accelerometer Sensor
+
+Mandatory:
+- chip_addr
+
+Optional:
+- output_g (set True if output in g). default:m*s²
+
+Output:
+- x (in m*s²)
+- y (in m*s²)
+- z (in m*s²) (`adxl345`)
   - AHT20 temperature and humidity sensor (`aht20`)
   - BH1750 light level sensor (`bh1750`)
   - BME280 temperature, humidity and pressure sensor (`bme280`)
