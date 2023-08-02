@@ -39,6 +39,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
+  - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
 
 ### Streams
 
