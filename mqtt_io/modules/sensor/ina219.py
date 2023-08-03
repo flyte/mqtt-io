@@ -11,6 +11,7 @@ INA219 DC current sensor
 # - gain (40, 80, 160 or 320) -> maximum shunt voltage (milli volt)
 # Optional:
 # - low_power: send ina219 to sleep between readings
+# - i2c_bus_num: if auto detection fails - like on Pi4
 
 # Output:
 # - power (in watt)
@@ -30,7 +31,8 @@ _LOG = logging.getLogger(__name__)
 REQUIREMENTS = ("pi-ina219",)
 CONFIG_SCHEMA: CerberusSchemaType = {
     "chip_addr": dict(type="integer", required=True),
-    "shunt_ohms": dict(type="float", required=False, empty=False, default=100),
+    "i2c_bus_num": dict(type="integer", required=False),
+    "shunt_ohms": dict(type="float", required=False, empty=False, default=0.1),
     "max_amps": dict(type="float", required=False, empty=False),
     "voltage_range": dict(
         type="integer", required=False, empty=False, allowed=[16, 32], default=32
@@ -71,6 +73,7 @@ class Sensor(GenericSensor):
             self.config["shunt_ohms"],
             max_expected_amps=self.config.get("max_amps"),
             address=self.config["chip_addr"],
+            busnum=self.config["i2c_bus_num"],
         )
 
         ## Configure ina sensor with range and gain from config or default
