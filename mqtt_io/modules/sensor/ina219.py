@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 REQUIREMENTS = ("pi-ina219",)
 CONFIG_SCHEMA: CerberusSchemaType = {
     "chip_addr": dict(type="integer", required=True),
-    "i2c_bus_num": dict(type="integer", required=False),
+    "i2c_bus_num": dict(type="integer", required=False, default=1),
     "shunt_ohms": dict(type="float", required=False, empty=False, default=0.1),
     "max_amps": dict(type="float", required=False, empty=False),
     "voltage_range": dict(
