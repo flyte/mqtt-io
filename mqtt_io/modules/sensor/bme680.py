@@ -2,21 +2,21 @@
 BME680 temperature, humidity, and pressure sensor
 """
 
-from typing import cast
-import logging
-import time
 import math
+import time
+from typing import cast
+
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
-
-_LOG = logging.getLogger(__name__)
 
 REQUIREMENTS = ("smbus2", "bme680")
 CONFIG_SCHEMA = {
     "i2c_bus_num": dict(type="integer", required=False, empty=False),
     "chip_addr": dict(type="integer", required=True, empty=False),
-    "filter_size": dict(type="integer", required=False, empty=False, default=3),
+    "filter_size": dict(type="integer", required=False, empty=False,
+                        default=3),
 }
+
 
 class Sensor(GenericSensor):
     """
@@ -24,13 +24,17 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
+        "type":
+        dict(
             type="string",
             required=False,
             default="temperature",
-            allowed=["temperature", "humidity", "pressure", "gas", "air_quality"],
+            allowed=[
+                "temperature", "humidity", "pressure", "gas", "air_quality"
+            ],
         ),
-        "oversampling": dict(
+        "oversampling":
+        dict(
             type="string",
             required=False,
             allowed=["none", "1x", "2x", "4x", "8x", "16x"],
@@ -41,6 +45,7 @@ class Sensor(GenericSensor):
         # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
         # pylint: disable=import-error,no-member
         from smbus2 import SMBus  # type: ignore
+
         import bme680  # type: ignore
 
         self.i2c_addr: int = self.config["chip_addr"]
@@ -86,7 +91,6 @@ class Sensor(GenericSensor):
         curr_time = time.time()
 
         burn_in_data = []
-        _LOG.info(("Beginning %d seconds gas sensor burn"), burn_in_time)
         while curr_time - start_time < burn_in_time:
             curr_time = time.time()
             if self.sensor.get_sensor_data() and self.sensor.data.heat_stable:
@@ -94,7 +98,6 @@ class Sensor(GenericSensor):
                 burn_in_data.append(gas)
                 time.sleep(1)
         gas = math.fsum(burn_in_data[-50:]) / 50.0
-        _LOG.info("Gas Resistance : %f", gas)
         return gas
 
     def setup_sensor(self, sens_conf: ConfigType) -> None:
@@ -107,7 +110,8 @@ class Sensor(GenericSensor):
             # Set oversampling directly based on the sensor type
             oversampling = self.oversampling_map.get(sens_conf["oversampling"])
             if oversampling is not None:
-                getattr(self.sensor, f"set_{sens_type}_oversample")(oversampling)
+                getattr(self.sensor,
+                        f"set_{sens_type}_oversample")(oversampling)
 
         if "gas" in sens_type or "air_quality" in sens_type:
             # Set gas related parameters for gas and air quality measurements
@@ -142,7 +146,8 @@ class Sensor(GenericSensor):
 
         # Calculate hum_score as the distance from the hum_baseline.
         if hum_offset > 0:
-            hum_score = (100 - hum_baseline - hum_offset) / (100 - hum_baseline)
+            hum_score = (100 - hum_baseline - hum_offset) / (100 -
+                                                             hum_baseline)
             hum_score *= (hum_weighting * 100)
         else:
             hum_score = (hum_baseline + hum_offset) / hum_baseline
@@ -155,7 +160,7 @@ class Sensor(GenericSensor):
             gas_score = 100 - (hum_weighting * 100)
 
         # Calculate air_quality_score.
-        air_quality_score: float  = hum_score + gas_score
+        air_quality_score: float = hum_score + gas_score
         return air_quality_score
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
