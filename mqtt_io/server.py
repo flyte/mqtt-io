@@ -18,6 +18,7 @@ from functools import partial
 from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
+from asyncio_mqtt.error import MqttCodeError
 
 import backoff  # type: ignore
 from typing_extensions import Literal
@@ -1214,19 +1215,16 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 if self.config["mqtt"].get("ha_discovery", {}).get("enabled"):
                     self._ha_discovery_announce()
 
-                try:
-                    await asyncio.gather(*self.critical_tasks)
-                except asyncio.CancelledError:
-                    break
-                except Exception:  # pylint: disable=broad-except
-                    _LOG.exception("Exception in critical task:")
+                await asyncio.gather(*self.critical_tasks)
             except asyncio.CancelledError:
                 break
-            except MQTTException:
+            except (MQTTException,MqttCodeError):
                 if reconnects_remaining is not None:
                     reconnect = reconnects_remaining > 0
                     reconnects_remaining -= 1
                 _LOG.exception("Connection to MQTT broker failed")
+            except Exception:  # pylint: disable=broad-except
+                _LOG.exception("Exception in critical task:")
 
             finally:
                 _LOG.debug("Clearing events and cancelling 'critical_tasks'")
