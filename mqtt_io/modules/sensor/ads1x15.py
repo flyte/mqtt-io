@@ -4,7 +4,6 @@ ADS1x15 analog to digital converters
 import threading
 
 from typing import cast
-from threading import Lock
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
@@ -90,13 +89,12 @@ class Sensor(GenericSensor):
         """
         # acquire the lock
         with self.lock:
-
             sens_type = sens_conf["type"]
             data = dict(
                 value=self.channels[sens_conf["pin"]].value,
                 voltage=self.channels[sens_conf["pin"]].voltage,
             )
-            
+
         return cast(
             float,
             data[sens_type],
