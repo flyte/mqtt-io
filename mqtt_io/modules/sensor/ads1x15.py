@@ -4,6 +4,7 @@ ADS1x15 analog to digital converters
 import threading
 
 from typing import cast
+from threading import Lock
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
