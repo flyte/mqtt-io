@@ -661,7 +661,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     A decorator that applies exponential backoff to the function `get_sensor_value`.
 
                     Parameters:
-                        sensor_module (GenericSensor): The sensor module to use for getting the sensor value.
+                        sensor_module (GenericSensor): The sensor module to use for getting
+                            the sensor value.
                         sens_conf (ConfigType): The configuration for the sensor.
 
                     Returns:
@@ -792,7 +793,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         if msg.payload is None:
             _LOG.debug("Publishing MQTT message on topic %r with no payload", msg.topic)
-        elif isinstance(msg.payload, bytes) or isinstance(msg.payload, bytearray):
+        elif isinstance(msg.payload, (bytearray, bytes)):
             try:
                 payload = msg.payload.decode("utf8")
             except UnicodeDecodeError:

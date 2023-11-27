@@ -27,7 +27,8 @@ Func = TypeVar("Func", bound=Callable[..., Any])
 
 def _map_exception(func: Func) -> Func:
     """
-    Creates a decorator that wraps a function and maps any raised `MqttError` exception to a `MQTTException`.
+    Creates a decorator that wraps a function and maps any raised `MqttError`
+    exception to a `MQTTException`.
 
     :param func: The function to be wrapped.
     :type func: Func
@@ -37,7 +38,8 @@ def _map_exception(func: Func) -> Func:
     @wraps(func)
     async def inner(*args: Any, **kwargs: Any) -> Any:
         """
-        Decorator for asynchronous functions that catches `MqttError` exceptions and raises `MQTTException` instead.
+        Decorator for asynchronous functions that catches `MqttError` exceptions
+        and raises `MQTTException` instead.
 
         Parameters:
             func (Callable): The function to be decorated.
@@ -117,10 +119,10 @@ class MQTTClient(AbstractMQTTClient):
     async def disconnect(self) -> None:
         """
         This function is an asynchronous method that handles the disconnection of the client.
-        
+
         Parameters:
             self: The current instance of the class.
-            
+
         Returns:
             None
         """
@@ -135,8 +137,10 @@ class MQTTClient(AbstractMQTTClient):
         Subscribe to the given list of topics.
 
         Args:
-            topics (List[Tuple[str, int]]): A list of tuples representing the topics to subscribe to. 
-            Each tuple should contain a string representing the topic name and an integer representing the QoS level.
+            topics (List[Tuple[str, int]]): A list of tuples representing the topics
+                to subscribe to.
+            Each tuple should contain a string representing the topic name and
+                an integer representing the QoS level.
 
         Returns:
             None: This function does not return anything.
@@ -191,7 +195,7 @@ class MQTTClient(AbstractMQTTClient):
     def message_queue(self) -> "asyncio.Queue[MQTTMessage]":
         """
         Returns the message queue for receiving MQTT messages.
-        
+
         :return: The message queue for receiving MQTT messages.
         :rtype: asyncio.Queue[MQTTMessage]
         """
