@@ -154,7 +154,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         Parameters:
             config (Dict[str, Any]): The configuration for the class.
-            loop (Optional[asyncio.AbstractEventLoop]): The event loop to use. If not provided, the default event loop will be used.
+            loop (Optional[asyncio.AbstractEventLoop]): The event loop to use.
+            If not provided, the default event loop will be used.
 
         Returns:
             None
@@ -212,10 +213,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         Initializes the MQTT configuration.
 
-        This function retrieves the MQTT configuration from the application's 
-        main configuration file and performs the necessary setup tasks. 
-        It sets the topic prefix for MQTT messages, replaces the '<ip>' placeholder 
-        in the topic prefix with the IP address of the 'wlan0' interface, 
+        This function retrieves the MQTT configuration from the application's
+        main configuration file and performs the necessary setup tasks.
+        It sets the topic prefix for MQTT messages, replaces the '<ip>' placeholder
+        in the topic prefix with the IP address of the 'wlan0' interface,
         generates a client ID if not provided, and configures TLS options if enabled.
 
         Parameters:
@@ -364,7 +365,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                         )
                     )
                 )
-            
+
             if sub_topics:
                 self.mqtt_task_queue.put_nowait(
                     PriorityCoro(self._mqtt_subscribe(sub_topics), MQTT_SUB_PRIORITY)
@@ -453,17 +454,17 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     def _init_digital_outputs(self) -> None:
         """
         Initializes the digital outputs.
-        
-        This function sets up the MQTT publish callback for the output event. 
-        It creates a digital output queue on the right loop for each module. 
-        It subscribes to outputs when MQTT is initialized. 
-        It also fires DigitalOutputChangedEvents for the initial values of 
-        outputs if required, and reads and publishes the actual pin state 
+
+        This function sets up the MQTT publish callback for the output event.
+        It creates a digital output queue on the right loop for each module.
+        It subscribes to outputs when MQTT is initialized.
+        It also fires DigitalOutputChangedEvents for the initial values of
+        outputs if required, and reads and publishes the actual pin state
         if no publish_initial is requested.
-        
+
         Parameters:
             None
-        
+
         Returns:
             None
         """
@@ -473,7 +474,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             Publishes a callback function for the given DigitalOutputChangedEvent.
 
             Args:
-                event (DigitalOutputChangedEvent): The event object containing the details of the digital output change.
+                event (DigitalOutputChangedEvent): The event object containing the details
+                of the digital output change.
 
             Returns:
                 None
@@ -636,8 +638,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 Asynchronously polls a sensor to retrieve its value at regular intervals.
 
                 Args:
-                    sensor_module (Optional[GenericSensor]): The sensor module to use. Defaults to the sensor_module provided during function call.
-                    sens_conf (Optional[ConfigType]): The configuration for the sensor. Defaults to the sens_conf provided during function call.
+                    sensor_module (Optional[GenericSensor]): The sensor module to use.
+                    Defaults to the sensor_module provided during function call.
+                    sens_conf (Optional[ConfigType]): The configuration for the sensor.
+                    Defaults to the sens_conf provided during function call.
 
                 Returns:
                     None
@@ -655,11 +659,11 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 ) -> SensorValueType:
                     """
                     A decorator that applies exponential backoff to the function `get_sensor_value`.
-                    
+
                     Parameters:
                         sensor_module (GenericSensor): The sensor module to use for getting the sensor value.
                         sens_conf (ConfigType): The configuration for the sensor.
-                    
+
                     Returns:
                         SensorValueType: The value retrieved from the sensor.
                     """
@@ -769,7 +773,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         Args:
             msg (MQTTMessageSend): The MQTT message to publish.
-            wait (bool, optional): Whether to wait for MQTT connection before publishing. Defaults to True.
+            wait (bool, optional): Whether to wait for MQTT connection before publishing.
+            Defaults to True.
 
         Raises:
             RuntimeError: If the MQTT client is None.
@@ -787,21 +792,21 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
 
         if msg.payload is None:
             _LOG.debug("Publishing MQTT message on topic %r with no payload", msg.topic)
-        elif type(msg.payload) == bytes or type(msg.payload) == bytearray:
-                try:
-                    payload = msg.payload.decode("utf8")
-                except UnicodeDecodeError:
-                    _LOG.debug(
-                        "Publishing MQTT message on topic %r with non-unicode payload",
-                        msg.topic,
-                    )
-                else:
-                    _LOG.debug(
-                        "Publishing MQTT message on topic %r: %r", msg.topic, payload
-                    )
+        elif isinstance(msg.payload, bytes) or isinstance(msg.payload, bytearray):
+            try:
+                payload = msg.payload.decode("utf8")
+            except UnicodeDecodeError:
+                _LOG.debug(
+                    "Publishing MQTT message on topic %r with non-unicode payload",
+                    msg.topic,
+                )
+            else:
+                _LOG.debug(
+                    "Publishing MQTT message on topic %r: %r", msg.topic, payload
+                )
         else:
             _LOG.debug(
-                f"Publishing MQTT message on topic {msg.topic}: {msg.payload}"
+                "Publishing MQTT message on topic %r: %r", msg.topic, payload
             )
 
         await self.mqtt.publish(msg)
@@ -1355,13 +1360,13 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
         """
         Asynchronous main loop function.
 
-        This function is responsible for running the main event loop of the MQTT client. 
-        It handles reconnecting to the MQTT broker if the connection is lost and 
+        This function is responsible for running the main event loop of the MQTT client.
+        It handles reconnecting to the MQTT broker if the connection is lost and
         manages the execution of critical tasks.
 
         Parameters:
             None
-        
+
         Returns:
             None
         """
