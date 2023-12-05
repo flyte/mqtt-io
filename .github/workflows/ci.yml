@@ -86,7 +86,7 @@ jobs:
         with:
           fetch-depth: 0
       - id: branch-name
-        uses: tj-actions/branch-names@v2.2
+        uses: tj-actions/branch-names@v7.0.7
       - name: Ensure we can checkout gh-pages
         run: |
           git checkout gh-pages
