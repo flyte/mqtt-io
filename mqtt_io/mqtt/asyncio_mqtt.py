@@ -94,7 +94,7 @@ class MQTTClient(AbstractMQTTClient):
             username=options.username,
             password=options.password,
             client_id=options.client_id,
-            keepalive=options.keepalive,
+            #keepalive=options.keepalive,
             tls_context=tls_context,
             protocol=protocol_map[options.protocol],
             will=will,
