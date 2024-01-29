@@ -74,6 +74,18 @@ class StreamDataSentEvent(Event):
     stream_name: str
     data: bytes
 
+@dataclass
+class StreamDataSubscribeEvent(Event):
+    """
+    Trigger MQTT subscribe
+    """
+
+@dataclass
+class DigitalSubscribeEvent(Event):
+    """
+    Trigger MQTT subscribe
+    """
+
 
 class EventBus:
     """
