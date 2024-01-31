@@ -34,7 +34,7 @@ def get_common_config(
             device=dict(
                 manufacturer="MQTT IO",
                 model=f"v{VERSION}",
-                identifiers=["mqtt-io", mqtt_options.client_id],
+                identifiers=[mqtt_options.client_id],
                 name=disco_conf["name"],
             ),
         )
