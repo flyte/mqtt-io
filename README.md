@@ -42,6 +42,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
   - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
+  - PMS5003 particulate sensor (`pms5003`)
 
 ### Streams
 
