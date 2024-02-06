@@ -2,11 +2,11 @@
 PMS5003 Particulate Matter Sensor
 """
 
+import time
+from typing import cast
 from ...exceptions import RuntimeConfigError
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
-from typing import cast
 from . import GenericSensor
-import time
 
 REQUIREMENTS = ("plantower",)
 CONFIG_SCHEMA: CerberusSchemaType = {
@@ -25,7 +25,11 @@ class Sensor(GenericSensor):
             required=False,
             empty=False,
             default="pm25_std",
-            allowed=["pm10_cf1", "pm25_cf1","pm100_cf1","pm10_std","pm25_std","pm100_std","gr03um","gr05um","gr10um","gr25um","gr50um","gr100um"],
+            allowed=
+                ["pm10_cf1", "pm25_cf1","pm100_cf1",
+                 "pm10_std","pm25_std","pm100_std",
+                 "gr03um","gr05um","gr10um",
+                 "gr25um","gr50um","gr100um"],
         )
     }
 
@@ -43,7 +47,8 @@ class Sensor(GenericSensor):
         """
         Get the particulate data from the sensor
         """
-        sleep_sensor = sens_conf["interval"] >= 120 #turn sensor off if interval between readings is >= 2 minutes
+        #turn sensor off if interval between readings is >= 2 minutes
+        sleep_sensor = sens_conf["interval"] >= 120 
         if sleep_sensor:
             self.sensor.set_to_wakeup()
             time.sleep(30)
