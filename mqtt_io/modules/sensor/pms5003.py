@@ -53,10 +53,7 @@ class Sensor(GenericSensor):
             self.sensor.set_to_wakeup()
             time.sleep(30)
         sens_type = sens_conf["type"]
-        try:
-            result = self.sensor.read()
-        except:
-            return None
+        result = self.sensor.read()
         if sleep_sensor:
             self.sensor.set_to_sleep()
         return cast(
