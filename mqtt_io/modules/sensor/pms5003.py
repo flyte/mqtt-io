@@ -4,7 +4,6 @@ PMS5003 Particulate Matter Sensor
 
 import time
 from typing import cast
-from ...exceptions import RuntimeConfigError
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
