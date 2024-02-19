@@ -3,7 +3,7 @@
 # when building multiarch using buildx, then try this:
 # https://github.com/docker/buildx/issues/495#issuecomment-761562905
 
-FROM python:3.8-buster AS base
+FROM python:3.8-slim-buster AS base
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
@@ -41,8 +41,8 @@ WORKDIR /home/mqtt_io
 
 COPY --from=requirements --chown=mqtt_io /home/mqtt_io/venv ./venv
 COPY --from=requirements /requirements.txt ./
-RUN venv/bin/python -m pip install --upgrade pip
-RUN venv/bin/pip install -r requirements.txt
+RUN venv/bin/python -m pip install --no-cache-dir --upgrade pip
+RUN venv/bin/pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=mqtt_io mqtt_io mqtt_io
 
