@@ -47,7 +47,7 @@ class Sensor(GenericSensor):
         Get the particulate data from the sensor
         """
         #turn sensor off if interval between readings is >= 2 minutes
-        sleep_sensor = sens_conf["interval"] >= 120 
+        sleep_sensor = sens_conf["interval"] >= 120
         if sleep_sensor:
             self.sensor.set_to_wakeup()
             time.sleep(30)
