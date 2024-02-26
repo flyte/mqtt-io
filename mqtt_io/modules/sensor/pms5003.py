@@ -33,7 +33,7 @@ class Sensor(GenericSensor):
     }
 
     def setup_module(self) -> None:
-        # pylint: disable=import-outside-toplevel,import-error
+        # pylint: disable=import-outside-toplevel,import-error,ignore_missing_imports
         import plantower
 
         self.serial_port = self.config["serial_port"]
