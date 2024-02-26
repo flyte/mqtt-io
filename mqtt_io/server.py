@@ -18,7 +18,7 @@ from functools import partial
 from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
-from asyncio_mqtt.error import MqttCodeError
+from asyncio_mqtt.error import MqttCodeError # type: ignore
 
 import backoff  # type: ignore
 from typing_extensions import Literal
