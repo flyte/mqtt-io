@@ -1,6 +1,8 @@
 """
 ADS1x15 analog to digital converters
 """
+import threading
+
 from typing import cast
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
@@ -78,15 +80,21 @@ class Sensor(GenericSensor):
         # Create single-ended input for each pin in config
         self.channels = {pin: AnalogIn(self.ads, pin) for pin in self.config["pins"]}
 
+        # initialize mutex lock
+        self.lock = threading.Lock()
+
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the value or voltage from the sensor
         """
-        sens_type = sens_conf["type"]
-        data = dict(
-            value=self.channels[sens_conf["pin"]].value,
-            voltage=self.channels[sens_conf["pin"]].voltage,
-        )
+        # acquire the lock
+        with self.lock:
+            sens_type = sens_conf["type"]
+            data = dict(
+                value=self.channels[sens_conf["pin"]].value,
+                voltage=self.channels[sens_conf["pin"]].voltage,
+            )
+
         return cast(
             float,
             data[sens_type],
