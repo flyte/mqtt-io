@@ -27,7 +27,6 @@
 - <a href="/322-version-229-is-not-available-on-pypi" target="_self">322-version-229-is-not-available-on-pypi</a>
 - <a href="/324-pinned-pyyaml-version-incompatible-with-latest-cython-300" target="_self">324-pinned-pyyaml-version-incompatible-with-latest-cython-300</a>
 - <a href="/dependabot" target="_self">dependabot</a>
-- <a href="/dependabot/github_actions/dot-github/workflows/tj-actions/branch-names-7.0.7" target="_self">dependabot/github_actions/dot-github/workflows/tj-actions/branch-names-7.0.7</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
 - <a href="/fix_pipeline_remove_py3.6" target="_self">fix_pipeline_remove_py3.6</a>

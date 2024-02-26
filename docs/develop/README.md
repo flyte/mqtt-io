@@ -55,6 +55,8 @@ Output:
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
   - MCP3xxx analog to digital converter via GPIOZero (`mcp3xxx`)
+  - PMS5003 Particulate Matter Sensor (`pms5003`)
+  - SHT4x temperature and humidity sensor (`sht4x`)
 
 ### Streams
 
