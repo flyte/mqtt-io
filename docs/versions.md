@@ -33,3 +33,4 @@
 - <a href="/fix_pipeline_remove_py3.6" target="_self">fix_pipeline_remove_py3.6</a>
 - <a href="/pr-test" target="_self">pr-test</a>
 - <a href="/pre_release_2.2.8" target="_self">pre_release_2.2.8</a>
+- <a href="/revert-342-docker-slim" target="_self">revert-342-docker-slim</a>
