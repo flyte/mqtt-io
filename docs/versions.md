@@ -3,6 +3,7 @@
 ## Releases
 
 
+- <a href="/2.3.0-bravo" target="_self">2.3.0-bravo</a>
 - <a href="/2.3.0-alpha" target="_self">2.3.0-alpha</a>
 - <a href="/2.2.9" target="_self">2.2.9</a>
 - <a href="/2.2.9-gamma" target="_self">2.2.9-gamma</a>
