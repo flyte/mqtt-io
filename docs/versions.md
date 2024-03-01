@@ -29,6 +29,7 @@
 - <a href="/304-release-deploy-pipeline-failed" target="_self">304-release-deploy-pipeline-failed</a>
 - <a href="/322-version-229-is-not-available-on-pypi" target="_self">322-version-229-is-not-available-on-pypi</a>
 - <a href="/324-pinned-pyyaml-version-incompatible-with-latest-cython-300" target="_self">324-pinned-pyyaml-version-incompatible-with-latest-cython-300</a>
+- <a href="/353-relese-version-230" target="_self">353-relese-version-230</a>
 - <a href="/dependabot" target="_self">dependabot</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
