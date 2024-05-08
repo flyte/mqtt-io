@@ -9,13 +9,13 @@ from . import GenericSensor
 REQUIREMENTS = ("Adafruit_DHT",)
 ALLOWED_TYPES = ["dht11", "dht22", "am2302"]
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "pin": dict(type="integer", required=True, empty=False),
-    "type": dict(
-        type="string",
-        required=True,
-        empty=False,
-        allowed=ALLOWED_TYPES + [x.upper() for x in ALLOWED_TYPES],
-    ),
+    "pin": {"type": 'integer', "required": True, "empty": False},
+    "type": {
+        "type": 'string',
+        "required": True,
+        "empty": False,
+        "allowed": ALLOWED_TYPES + [x.upper() for x in ALLOWED_TYPES],
+    },
 }
 
 
@@ -25,13 +25,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="temperature",
-            allowed=["temperature", "humidity"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'temperature',
+            "allowed": ['temperature', 'humidity'],
+        }
     }
 
     def setup_module(self) -> None:

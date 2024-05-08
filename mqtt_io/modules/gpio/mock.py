@@ -9,7 +9,7 @@ from ...types import ConfigType, PinType
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
 
 REQUIREMENTS = ()
-CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
+CONFIG_SCHEMA = {"test": {"type": 'boolean', "required": False, "default": False}}
 
 
 # pylint: disable=useless-super-delegation,too-many-instance-attributes
@@ -24,7 +24,7 @@ class GPIO(GenericGPIO):
         | InterruptSupport.CAPTURE_REGISTER
     )
     PIN_SCHEMA = {
-        "test": dict(type="boolean", required=False, default=False),
+        "test": {"type": 'boolean', "required": False, "default": False},
     }
 
     def __init__(self, config: ConfigType):

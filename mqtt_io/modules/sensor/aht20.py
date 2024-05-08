@@ -17,13 +17,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="temperature",
-            allowed=["temperature", "humidity"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'temperature',
+            "allowed": ['temperature', 'humidity'],
+        }
     }
 
     def setup_module(self) -> None:

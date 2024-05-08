@@ -23,21 +23,21 @@ def get_common_config(
     Return config that's common across all HQ discovery announcements.
     """
     disco_conf: ConfigType = mqtt_conf["ha_discovery"]
-    config = dict(name=io_conf["name"])
+    config = {"name": io_conf['name']}
     config.update(
-        dict(
-            availability_topic="/".join(
+        {
+            "availability_topic": '/'.join(
                 (mqtt_conf["topic_prefix"], mqtt_conf["status_topic"])
             ),
-            payload_available=mqtt_conf["status_payload_running"],
-            payload_not_available=mqtt_conf["status_payload_dead"],
-            device=dict(
-                manufacturer="MQTT IO",
-                model=f"v{VERSION}",
-                identifiers=[mqtt_options.client_id],
-                name=disco_conf["name"],
-            ),
-        )
+            "payload_available": mqtt_conf["status_payload_running"],
+            "payload_not_available": mqtt_conf["status_payload_dead"],
+            "device": {
+                "manufacturer": 'MQTT IO',
+                "model": f'v{VERSION}',
+                "identifiers": [mqtt_options.client_id],
+                "name": disco_conf["name"],
+            },
+        }
     )
     config.update(io_conf.get("ha_discovery", {}))
     return config
@@ -54,12 +54,12 @@ def hass_announce_digital_input(
     disco_prefix: str = disco_conf["prefix"]
     sensor_config = get_common_config(in_conf, mqtt_conf, mqtt_options)
     sensor_config.update(
-        dict(
-            unique_id=f"{mqtt_options.client_id}_{in_conf['module']}_input_{name}",
-            state_topic="/".join((mqtt_conf["topic_prefix"], INPUT_TOPIC, name)),
-            payload_on=in_conf["on_payload"],
-            payload_off=in_conf["off_payload"],
-        )
+        {
+            "unique_id": f'{mqtt_options.client_id}_{in_conf["module"]}_input_{name}',
+            "state_topic": '/'.join((mqtt_conf["topic_prefix"], INPUT_TOPIC, name)),
+            "payload_on": in_conf["on_payload"],
+            "payload_off": in_conf["off_payload"],
+        }
     )
     return MQTTMessageSend(
         "/".join(
@@ -90,13 +90,13 @@ def hass_announce_digital_output(
     disco_prefix: str = disco_conf["prefix"]
     switch_config = get_common_config(out_conf, mqtt_conf, mqtt_options)
     switch_config.update(
-        dict(
-            unique_id=f"{mqtt_options.client_id}_{out_conf['module']}_output_{name}",
-            state_topic="/".join((prefix, OUTPUT_TOPIC, name)),
-            command_topic="/".join((prefix, OUTPUT_TOPIC, name, SET_SUFFIX)),
-            payload_on=out_conf["on_payload"],
-            payload_off=out_conf["off_payload"],
-        )
+        {
+            "unique_id": f'{mqtt_options.client_id}_{out_conf["module"]}_output_{name}',
+            "state_topic": '/'.join((prefix, OUTPUT_TOPIC, name)),
+            "command_topic": '/'.join((prefix, OUTPUT_TOPIC, name, SET_SUFFIX)),
+            "payload_on": out_conf["on_payload"],
+            "payload_off": out_conf["off_payload"],
+        }
     )
     return MQTTMessageSend(
         "/".join(
@@ -127,10 +127,10 @@ def hass_announce_sensor_input(
     disco_prefix: str = disco_conf["prefix"]
     sensor_config = get_common_config(sens_conf, mqtt_conf, mqtt_options)
     sensor_config.update(
-        dict(
-            unique_id=f"{mqtt_options.client_id}_{sens_conf['module']}_sensor_{name}",
-            state_topic="/".join((prefix, SENSOR_TOPIC, name)),
-        )
+        {
+            "unique_id": f'{mqtt_options.client_id}_{sens_conf["module"]}_sensor_{name}',
+            "state_topic": '/'.join((prefix, SENSOR_TOPIC, name)),
+        }
     )
     if "expire_after" not in sensor_config:
         sensor_config["expire_after"] = sens_conf["interval"] * 2 + 5

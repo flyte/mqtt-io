@@ -113,7 +113,7 @@ class MQTTClient(AbstractMQTTClient):
         Returns:
             None: This function does not return anything.
         """
-        await self._client.__aenter__()
+        await self._client.__aenter__() # pylint: disable=unnecessary-dunder-call
 
     @_map_exception
     async def disconnect(self) -> None:

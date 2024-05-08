@@ -9,7 +9,7 @@ from . import GenericSensor
 
 REQUIREMENTS = ("plantower",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "serial_port": dict(type="string", required=True, empty=False),
+    "serial_port": {"type": 'string', "required": True, "empty": False},
 }
 
 
@@ -19,17 +19,17 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="pm25_std",
-            allowed=
-                ["pm10_cf1", "pm25_cf1","pm100_cf1",
-                 "pm10_std","pm25_std","pm100_std",
-                 "gr03um","gr05um","gr10um",
-                 "gr25um","gr50um","gr100um"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'pm25_std',
+            "allowed": 
+                ['pm10_cf1', 'pm25_cf1','pm100_cf1',
+                 'pm10_std','pm25_std','pm100_std',
+                 'gr03um','gr05um','gr10um',
+                 'gr25um','gr50um','gr100um'],
+        }
     }
 
     def setup_module(self) -> None:
@@ -57,20 +57,20 @@ class Sensor(GenericSensor):
             self.sensor.set_to_sleep()
         return cast(
             int,
-            dict(
-                pm10_cf1=result.pm10_cf1,
-                pm25_cf1=result.pm25_cf1,
-                pm100_cf1=result.pm100_cf1,
-                pm10_std=result.pm10_std,
-                pm25_std=result.pm25_std,
-                pm100_std=result.pm100_std,
-                gr03um=result.gr03um,
-                gr05um=result.gr05um,
-                gr10um=result.gr10um,
-                gr25um=result.gr25um,
-                gr50um=result.gr50um,
-                gr100um=result.gr100um
-                )[sens_type],
+            {
+                "pm10_cf1": result.pm10_cf1,
+                "pm25_cf1": result.pm25_cf1,
+                "pm100_cf1": result.pm100_cf1,
+                "pm10_std": result.pm10_std,
+                "pm25_std": result.pm25_std,
+                "pm100_std": result.pm100_std,
+                "gr03um": result.gr03um,
+                "gr05um": result.gr05um,
+                "gr10um": result.gr10um,
+                "gr25um": result.gr25um,
+                "gr50um": result.gr50um,
+                "gr100u": result.gr100um
+                }[sens_type],
         )
 
     def cleanup(self) -> None:

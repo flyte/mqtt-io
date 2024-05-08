@@ -10,13 +10,17 @@ from . import GenericSensor
 REQUIREMENTS = ("w1thermsensor>=2.0.0",)
 ALLOWED_TYPES = ["DS18S20", "DS1822", "DS18B20", "DS1825", "DS28EA00", "MAX31850K"]
 CONFIG_SCHEMA = {
-    "address": dict(type="string", required=True, empty=False),
-    "type": dict(
-        type="string",
-        required=True,
-        empty=False,
-        allowed=ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES],
-    ),
+    "address": {
+        "type": 'string',
+        "required": True,
+        "empty": False
+    },
+    "type": {
+        "type": 'string',
+        "required": True,
+        "empty": False,
+        "allowed": ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES],
+    },
 }
 
 
