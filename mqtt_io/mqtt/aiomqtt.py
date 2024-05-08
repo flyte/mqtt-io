@@ -8,7 +8,7 @@ from asyncio.queues import QueueFull
 from functools import wraps
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, cast
 
-from aiomqtt.client import Client, MqttError, Will  # type: ignore
+from aiomqtt.client import Client, MqttError, Will, ProtocolVersion  # type: ignore
 from paho.mqtt import client as paho  # type: ignore
 
 from . import (
@@ -72,9 +72,9 @@ class MQTTClient(AbstractMQTTClient):
         """
         super().__init__(options)
         protocol_map = {
-            MQTTProtocol.V31: paho.MQTTv31,
-            MQTTProtocol.V311: paho.MQTTv311,
-            MQTTProtocol.V5: paho.MQTTv5,
+            MQTTProtocol.V31: ProtocolVersion.V31,
+            MQTTProtocol.V311: ProtocolVersion.V311,
+            MQTTProtocol.V5: ProtocolVersion.V5,
         }
         will = None
         if options.will is not None:
