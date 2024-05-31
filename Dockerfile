@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir poetry && \
 
 FROM base
 
+RUN apt-get update && apt-get install -y gcc && gcc --version
 RUN useradd -m -s /bin/bash mqtt_io
 USER mqtt_io
 WORKDIR /home/mqtt_io
@@ -43,5 +44,6 @@ RUN venv/bin/python -m pip install --no-cache-dir --upgrade pip
 RUN venv/bin/pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=mqtt_io mqtt_io mqtt_io
+RUN gcc --version
 
 CMD [ "venv/bin/python", "-m", "mqtt_io", "/config.yml" ]
