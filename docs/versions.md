@@ -31,6 +31,7 @@
 - <a href="/322-version-229-is-not-available-on-pypi" target="_self">322-version-229-is-not-available-on-pypi</a>
 - <a href="/324-pinned-pyyaml-version-incompatible-with-latest-cython-300" target="_self">324-pinned-pyyaml-version-incompatible-with-latest-cython-300</a>
 - <a href="/353-relese-version-230" target="_self">353-relese-version-230</a>
+- <a href="/355-new-version-not-working" target="_self">355-new-version-not-working</a>
 - <a href="/366-docker-not-buildable-due-to-package-docutils-021post1-not-found" target="_self">366-docker-not-buildable-due-to-package-docutils-021post1-not-found</a>
 - <a href="/dependabot" target="_self">dependabot</a>
 - <a href="/develop" target="_self">develop</a>
