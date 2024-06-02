@@ -48,6 +48,7 @@ Output:
   - BH1750 light level sensor (`bh1750`)
   - BME280 temperature, humidity and pressure sensor (`bme280`)
   - BME680 temperature, humidity and pressure sensor (`bme680`)
+  - BMP085 temperature and pressure sensor (`bmp085`)
   - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
   - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
