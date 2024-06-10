@@ -44,6 +44,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
   - PMS5003 particulate sensor (`pms5003`)
   - SHT40/SHT41/SHT45 temperature and humidity sensors (`sht4x`)
+  - YF-S201 flow rate sensor (`yfs201`)
 
 ### Streams
 
