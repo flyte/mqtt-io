@@ -99,10 +99,10 @@ class Sensor(GenericSensor):
         import board  # type: ignore
 
         self.adafruit_ens160_module = adafruit_ens160
-
+    
         i2c = board.I2C()  # uses board.SCL and board.SDA
-        # i2c = busio.I2C(board.SCL, board.SDA)
         # i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
+
         self.ens160 = adafruit_ens160.ENS160(i2c, address=self.config["chip_addr"])
         self.ens160.temperature_compensation = self.config["temperature_compensation"]
         self.ens160.humidity_compensation = self.config["humidity_compensation"]
@@ -110,8 +110,7 @@ class Sensor(GenericSensor):
     def get_value(self, sens_conf: ConfigType) -> float:
         """Return the sensor value in the configured type."""
 
-        status = self.ens160.data_validity
-        # Return value:
+        # data_validity  values:
         # NORMAL_OP - Normal operation,
         # WARM_UP - Warm-Up phase, first 3 minutes after power-on.
         # START_UP - Initial Start-Up phase, first full hour of operation after initial power-on.Only once in the sensor’s lifetime.
@@ -119,12 +118,10 @@ class Sensor(GenericSensor):
         # note: Note that the status will only be stored in the non-volatile memory after an initial 24h of continuous
         #       operation. If unpowered before conclusion of said period, the ENS160 will resume "Initial Start-up" mode
         #       after re-powering.
-        if status == self.adafruit_ens160_module.INVALID_OUT:
+        if self.ens160.data_validity == self.adafruit_ens160_module.INVALID_OUT:
             raise RuntimeError("ENS160 sensor is returning invalid output")
 
-        data = self.ens160.read_all_sensors()
-        # print("Sensor resistances (ohms):", data["Resistances"])
         sens_type = sens_conf["type"]
         return cast(
-            int, dict(aqi=data["AQI"], tvoc=data["TVOC"], co2=data["eCO2"])[sens_type]
+            int, dict(aqi=self.ens160.AQI, tvoc=self.ens160.TVOC, eco2=self.ens160.eCO2)[sens_type]
         )
