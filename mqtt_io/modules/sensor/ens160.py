@@ -42,7 +42,6 @@ DEFAULT_HUMIDITY_COMPENSATION = 50
 
 REQUIREMENTS = ("adafruit-circuitpython-ens160",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    # "i2c_bus_num": dict(type="integer", required=True, empty=False),
     "chip_addr": dict(
         type="integer", required=False, empty=False, default=DEFAULT_CHIP_ADDR
     ),
@@ -99,7 +98,7 @@ class Sensor(GenericSensor):
         import board  # type: ignore
 
         self.adafruit_ens160_module = adafruit_ens160
-    
+
         i2c = board.I2C()  # uses board.SCL and board.SDA
         # i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
 
@@ -123,5 +122,8 @@ class Sensor(GenericSensor):
 
         sens_type = sens_conf["type"]
         return cast(
-            int, dict(aqi=self.ens160.AQI, tvoc=self.ens160.TVOC, eco2=self.ens160.eCO2)[sens_type]
+            int,
+            dict(aqi=self.ens160.AQI, tvoc=self.ens160.TVOC, eco2=self.ens160.eCO2)[
+                sens_type
+            ],
         )
