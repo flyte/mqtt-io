@@ -14,7 +14,6 @@ sensor_inputs:
     pin: 0
     digits: 0
     interval: 10
-    
 """
 
 from typing import Dict, cast
