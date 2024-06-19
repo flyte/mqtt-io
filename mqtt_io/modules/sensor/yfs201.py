@@ -29,7 +29,7 @@ class YFS201:
     Multiple instances support multiple sensors on different pins
     """
 
-    def __init__(self, gpiozero, name: str, pin: int) -> None:
+    def __init__(self, gpiozero: gpiozero, name: str, pin: int) -> None:
         self.name = name
         self.pin = gpiozero.DigitalInputDevice(pin)
         self.pin.when_activated = self.count_pulse
@@ -59,7 +59,7 @@ class YFS201:
 
     def get_value(self, interval: int) -> float:
         """Return flow rate in L/min over interval seconds and reset count."""
-        flow_rate = cast(float, self.flow_rate(interval))
+        flow_rate = self.flow_rate(interval)
         self.reset_count()
         return flow_rate
 
