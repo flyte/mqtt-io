@@ -37,7 +37,7 @@ class Sensor(GenericSensor):
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
         import adafruit_dht  # type: ignore
-        from microcontroller import Pin
+        from microcontroller import Pin # type: ignore
 
         sensor_type: str = self.config["type"].lower()
 
