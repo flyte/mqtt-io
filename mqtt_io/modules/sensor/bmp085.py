@@ -48,4 +48,3 @@ class Sensor(GenericSensor):
         sens_type = sens_conf["type"]
         data = DATA_READER[sens_type](self.bmp)
         return cast(float, data)
-
