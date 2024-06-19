@@ -29,7 +29,7 @@ class YFS201:
     Multiple instances support multiple sensors on different pins
     """
 
-    def __init__(self, gpiozero, name: str, pin: int) -> None:
+    def __init__(self, gpiozero, name: str, pin: int) -> None: # type: ignore[no-untyped-def]
         self.name = name
         self.pin = gpiozero.DigitalInputDevice(pin)
         self.pin.when_activated = self.count_pulse
