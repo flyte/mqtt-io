@@ -16,7 +16,7 @@ sensor_inputs:
     interval: 10
 """
 
-from typing import Dict, cast
+from typing import Dict
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -29,7 +29,7 @@ class YFS201:
     Multiple instances support multiple sensors on different pins
     """
 
-    def __init__(self, gpiozero: gpiozero, name: str, pin: int) -> None:
+    def __init__(self, gpiozero: ModuleType, name: str, pin: int) -> None:
         self.name = name
         self.pin = gpiozero.DigitalInputDevice(pin)
         self.pin.when_activated = self.count_pulse
