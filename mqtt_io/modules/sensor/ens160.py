@@ -1,5 +1,4 @@
 """
-
 ENS160 Air Quality Sensor
 
 sensor_modules:
@@ -27,7 +26,6 @@ sensor_inputs:
     interval: 10
     digits: 0
     type: eco2
-
 """
 
 from typing import cast
@@ -71,7 +69,7 @@ class Sensor(GenericSensor):
     TVOC: Total Volatile Organic Compounds concentration
     Return value range: 0–65000, unit: ppb
 
-    CO2 equivalent concentration calculated according to the detected data of VOCs and hydrogen (eCO2 – Equivalent CO2)
+    CO2 equivalent concentration calculated according to the detected data of VOCs and hydrogen
     Return value range: 400–65000, unit: ppm
 
     Five levels: Excellent(400 - 600), Good(600 - 800), Moderate(800 - 1000),
@@ -98,10 +96,7 @@ class Sensor(GenericSensor):
         import board  # type: ignore
 
         self.adafruit_ens160_module = adafruit_ens160
-
         i2c = board.I2C()  # uses board.SCL and board.SDA
-        # i2c = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
-
         self.ens160 = adafruit_ens160.ENS160(i2c, address=self.config["chip_addr"])
         self.ens160.temperature_compensation = self.config["temperature_compensation"]
         self.ens160.humidity_compensation = self.config["humidity_compensation"]
@@ -112,11 +107,12 @@ class Sensor(GenericSensor):
         # data_validity  values:
         # NORMAL_OP - Normal operation,
         # WARM_UP - Warm-Up phase, first 3 minutes after power-on.
-        # START_UP - Initial Start-Up phase, first full hour of operation after initial power-on.Only once in the sensor’s lifetime.
+        # START_UP - Initial Start-Up phase, first full hour of operation after initial power-on.
+        #             Only once in the sensor’s lifetime.
         # INVALID_OUT - Invalid output
-        # note: Note that the status will only be stored in the non-volatile memory after an initial 24h of continuous
-        #       operation. If unpowered before conclusion of said period, the ENS160 will resume "Initial Start-up" mode
-        #       after re-powering.
+        # note: Note that the status will only be stored in the non-volatile memory after an initial
+        #       24h of continuous operation. If unpowered before conclusion of said period, the
+        #       ENS160 will resume "Initial Start-up" mode after re-powering.
         if self.ens160.data_validity == self.adafruit_ens160_module.INVALID_OUT:
             raise RuntimeError("ENS160 sensor is returning invalid output")
 
