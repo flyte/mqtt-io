@@ -58,6 +58,20 @@ Output:
   - MCP3xxx analog to digital converter via GPIOZero (`mcp3xxx`)
   - PMS5003 Particulate Matter Sensor (`pms5003`)
   - SHT4x temperature and humidity sensor (`sht4x`)
+  - YF-S201 Flow Rate Sensor
+
+Example configuration:
+
+sensor_modules:
+  - name: yfs201
+    module: yfs201
+
+sensor_inputs:
+  - name: flow_rate1
+    module: yfs201
+    pin: 0
+    digits: 0
+    interval: 10 (`yfs201`)
 
 ### Streams
 
