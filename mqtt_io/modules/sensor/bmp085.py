@@ -36,7 +36,7 @@ class Sensor(GenericSensor):
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
         # pylint: disable=import-error,no-member
-        from Adafruit_BMP.BMP085 import BMP085
+        from Adafruit_BMP.BMP085 import BMP085 # type: ignore
 
         self.address: int = self.config["chip_addr"]
         self.bmp = BMP085(address=self.address)
@@ -46,6 +46,6 @@ class Sensor(GenericSensor):
         Get the temperature, humidity or pressure value from the sensor
         """
         sens_type = sens_conf["type"]
-        data = DATA_READER[sens_type](self.bmp)
+        #error: Call to untyped function (unknown) in typed context
+        data = DATA_READER[sens_type](self.bmp) # type: ignore
         return cast(float, data)
-
