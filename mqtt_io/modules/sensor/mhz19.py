@@ -8,7 +8,8 @@ from mqtt_io.types import CerberusSchemaType, ConfigType, SensorValueType
 REQUIREMENTS = ("pyserial",)
 CONFIG_SCHEMA: CerberusSchemaType = {
     "device": dict(type="string", required=True, empty=False),
-    "range": dict(type="integer", required=False, empty=False, default=5000, allowed=[2000, 5000, 10000]),
+    "range": dict(type="integer", required=False, empty=False, default=5000,
+                  allowed=[2000, 5000, 10000]),
 }
 
 class Sensor(GenericSensor):
@@ -18,9 +19,9 @@ class Sensor(GenericSensor):
 
     @staticmethod
     def _calc_checksum(data: bytes) -> bytes:
-        v = sum(data[1:]) % 0x100
-        v = (0xff - v + 1) % 0x100
-        return v.to_bytes(1, "big")
+        value = sum(data[1:]) % 0x100
+        value = (0xff - value + 1) % 0x100
+        return value.to_bytes(1, "big")
 
     @staticmethod
     def _check_checksum(data: bytes) -> bool:
@@ -43,7 +44,8 @@ class Sensor(GenericSensor):
         )
 
         # setup detection range
-        cmd = Sensor._add_checksum(b"\xff\x01\x99\x00\x00\x00" + self.config["range"].to_bytes(2, "big"))
+        cmd = Sensor._add_checksum(b"\xff\x01\x99\x00\x00\x00" +
+                                   self.config["range"].to_bytes(2, "big"))
         self.ser.write(cmd)
         # no response
 
