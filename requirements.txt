@@ -1,5 +1,0 @@
-paho-mqtt
-PyYAML<=5.2,>=4.2b1
-enum34
-cerberus
-

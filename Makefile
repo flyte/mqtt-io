@@ -1,23 +1,29 @@
-schema:
-	python setup.py insert_schema
+.PHONY: docs
 
-packages: clean schema sdist wheel2 wheel3
-
-sdist: schema
-	python setup.py sdist
-
-wheel2: schema
-	python2 setup.py bdist_wheel
-
-wheel3: schema
-	python3 setup.py bdist_wheel
+black:
+	black -l 90 mqtt_io
 
 clean:
-	cp pi_mqtt_gpio/__init__.py.die pi_mqtt_gpio/__init__.py
-	rm -rf .cache .eggs build *.egg-info
-	find pi_mqtt_gpio -type d -name __pycache__ -prune -exec rm -rf {} \;
-	rm -rf dist
+	find mqtt_io -type d -name __pycache__ -prune -exec rm -rf {} \;
+	rm -rf dist .eggs .mypy_cache .pytest_cache *.egg-info
 
-upload: packages
-	twine upload dist/*
-	$(MAKE) clean
+graphs:
+	dot -Tsvg -O interrupt_handling.dot
+	dot -Tsvg -O interrupt_callbacks.dot
+
+coverage:
+	poetry run coverage run --source "." --omit "mqtt_io/tests/*,mqtt_io/modules/*" -m behave mqtt_io/tests/features -t ~skip
+	poetry run coverage report -m
+
+lint:
+	poetry run pylint -d fixme mqtt_io
+	poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
+
+build:
+	poetry build
+
+publish: build
+	poetry publish
+
+docs:
+	poetry run python docs_src/generate_docs.py

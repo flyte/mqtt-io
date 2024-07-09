@@ -1,0 +1,42 @@
+digraph {
+    label = <<font point-size="42">Interrupt Initialisation</font>>;
+    labelloc="t";
+
+    subgraph cluster_init_digital_input {
+        label = "initialise_digital_input()";
+        fontsize = 22;
+        node [shape=box, style=rounded]
+            calls_setup_interrupt [label="Call gpio module's setup_interrupt() method\nfor a specific pin, passing in callback function"];
+    }
+
+    calls_setup_interrupt -> q_software_callback;
+
+    subgraph cluster_module_setup_interrupt {
+        label = "module.setup_interrupt()";
+        fontsize = 22;
+
+        node [shape=diamond]
+            q_software_callback [label="GPIO hardware's library supports software callbacks?"];
+            q_interrupt_pin [label="GPIO hardware outputs on dedicated pin(s) upon interrupt?"];
+            q_set_triggers [label="Can configure GPIO hardware to interrupt on specific pins only?"];
+
+        node [shape=box, style=rounded]
+            config_software_callback [label="Add gpio_module.interrupt_handler() as\ncallback when configuring pin interrupt"];
+            enable_int_all_pins [label="Enable interrupts (if required) for all pins"];
+            enable_int_pin [label="Enable interrupts for this pin"];
+            store_callback [label="Store supplied callback for this pin in self.interrupt_callbacks[pin]"];
+            ints_not_supported [label="Interrupts not supported"];
+
+        q_software_callback -> config_software_callback [label="Yes"];
+        q_software_callback -> q_interrupt_pin [label="No"];
+
+        q_interrupt_pin -> ints_not_supported [label="No"];
+        q_interrupt_pin -> q_set_triggers [label="Yes"];
+
+        q_set_triggers -> enable_int_all_pins [label="No"];
+        q_set_triggers -> enable_int_pin [label="Yes"];
+
+        enable_int_all_pins -> store_callback;
+        enable_int_pin -> store_callback;
+    }
+}

@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "mqtt-io"
+version = "2.3.0"
+description = "Expose GPIO modules (Raspberry Pi, Beaglebone, PCF8754, PiFace2 etc.), digital sensors (LM75 etc.) and serial streams to an MQTT server for remote control and monitoring."
+readme = "README.md"
+authors = ["Ellis Percival <mqtt-io@failcode.co.uk>"]
+license = "MIT"
+documentation = "https://flyte.github.io/mqtt-io/"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+PyYAML = "^6.0.1"
+Cerberus = "^1.3.2"
+typing-extensions = "^3.7.4"
+dataclasses = { version = "^0.8", python = ">=3.6,<3.7" }
+asyncio-mqtt = "^0.8.1"
+backoff = "^1.10.0"
+confp = "^0.4.0"
+# Fix for poetry/docutils related bug
+docutils = "0.18.1"
+
+[tool.poetry.dev-dependencies]
+mock = { version = "^4.0.3", python = ">=3.6,<3.8" }
+pytest = "^6.2.2"
+tox = "^3.22.0"
+pylint = "^2.6.2"
+mypy = "^0.812"
+behave = "^1.2.6"
+coverage = "^5.4"
+md-toc = "^7.1.0"
+Sphinx = "^3.5.1"
+sphinx-autoapi = "^1.7.0"
+recommonmark = "^0.7.1"
+Jinja2 = "^2.11.3"
+ast-to-xml="^0.2.3"
+GitPython = "^3.1.15"
+semver = "^2.13.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,5 +1,0 @@
-import yaml
-
-CONFIG_SCHEMA = yaml.safe_load("""
-$config_schema
-""")

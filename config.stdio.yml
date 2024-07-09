@@ -1,16 +1,22 @@
 mqtt:
-  host: test.mosquitto.org
-  port: 1883
-  user: ""
-  password: ""
-  topic_prefix: pimqttgpio/mydevice
+  host: localhost
+  topic_prefix: mqtt_io
+  clean_session: yes
   protocol: 3.1.1
+  keepalive: 10
+  reconnect_delay: 4
+  reconnect_count: 4
 
 gpio_modules:
   - name: stdio
     module: stdio
 
 digital_inputs:
+  - name: test
+    module: stdio
+    pin: 22
+    interrupt: rising
+
   - name: button
     module: stdio
     pin: 21
@@ -19,6 +25,10 @@ digital_inputs:
     pullup: yes
     pulldown: no
     inverted: yes
+    interrupt: rising
+    interrupt_for:
+      - test
+    poll_interval: 2
 
 digital_outputs:
   - name: bell
@@ -26,3 +36,42 @@ digital_outputs:
     pin: 20
     on_payload: "ON"
     off_payload: "OFF"
+    publish_initial: yes
+    initial: high
+
+sensor_modules:
+  - name: mock
+    module: mock
+
+sensor_inputs:
+  - name: mock_sensor
+    module: mock
+    interval: 2
+
+logging:
+  version: 1
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: default
+      level: DEBUG
+  formatters:
+    default:
+      format: "%(asctime)s %(name)s [%(levelname)-8s] %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+  loggers:
+    paho:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    mqtt:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes
+    mqtt_io:
+      level: DEBUG
+      handlers:
+        - console
+      propagate: yes

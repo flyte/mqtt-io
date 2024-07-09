@@ -1,0 +1,7 @@
+[MESSAGES CONTROL]
+disable=
+    too-many-arguments,
+    unused-argument,
+    duplicate-code,
+    consider-using-f-string,
+    consider-using-from-import
