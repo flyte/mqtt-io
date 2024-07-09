@@ -37,6 +37,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - BME680 temperature, humidity and pressure sensor (`bme680`)
   - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
   - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
+  - ENS160  digital multi-gas sensor with multiple IAQ data (TVOC, eCO2, AQI) (`ens160`)
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
