@@ -51,6 +51,33 @@ Output:
   - BMP085 temperature and pressure sensor (`bmp085`)
   - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
   - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
+  - ENS160 Air Quality Sensor
+
+sensor_modules:
+  - name: ens160
+    module: ens160
+    chip_addr: 0x53
+    temperature_compensation: 25
+    humidity_compensation: 50
+
+sensor_inputs:
+  - name: air_quality
+    module: ens160
+    interval: 10
+    digits: 0
+    type: aqi
+
+  - name: volatile_organic_compounds
+    module: ens160
+    interval: 10
+    digits: 0
+    type: tvoc
+
+  - name: eco2
+    module: ens160
+    interval: 10
+    digits: 0
+    type: eco2 (`ens160`)
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
