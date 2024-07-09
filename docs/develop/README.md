@@ -83,6 +83,7 @@ sensor_inputs:
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
   - MCP3xxx analog to digital converter via GPIOZero (`mcp3xxx`)
+  - MH-Z19 NDIR CO2 sensor (`mhz19`)
   - PMS5003 Particulate Matter Sensor (`pms5003`)
   - SHT4x temperature and humidity sensor (`sht4x`)
   - YF-S201 Flow Rate Sensor
