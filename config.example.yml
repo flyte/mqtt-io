@@ -34,6 +34,11 @@ sensor_modules:
     type: DS18S20
     address: 000803702e49
 
+  - name: mhz19
+    module: mhz19
+    device: "/dev/ttyS1"
+    range: 5000
+
 digital_inputs:
   - name: button
     module: raspberrypi
@@ -76,3 +81,10 @@ sensor_inputs:
     module: ds18b22
     interval: 10
     digits: 2
+
+  - name: co2_mhz19
+    module: mhz19
+    interval: 30
+    ha_discovery:
+      name: CO2 MH-Z19
+      device_class: carbon_dioxide
