@@ -59,7 +59,7 @@ class FLOWSENSOR:
         """Reset pulse count."""
         self.count = 0
 
-    def flow_rate(self, sample_window: int) -> float:
+    def flow_rate(self, sample_window: int, factor: float) -> float:
         """Return flow rate in liters per minute.
 
         From YF-S201 manual:
@@ -71,11 +71,11 @@ class FLOWSENSOR:
         sample_window is in seconds, so hz is pulse_count / sample_window
         """
         hertz = self.count / sample_window
-        return hertz / sens_conf["factor"]
+        return hertz / factor
 
-    def get_value(self, interval: int) -> float:
+    def get_value(self, interval: int, factor: float) -> float:
         """Return flow rate in L/min over interval seconds and reset count."""
-        flow_rate = self.flow_rate(interval)
+        flow_rate = self.flow_rate(interval,factor)
         self.reset_count()
         return flow_rate
 
@@ -117,4 +117,4 @@ class Sensor(GenericSensor):
         self.sensors[sensor.name] = sensor
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
-        return self.sensors[sens_conf["name"]].get_value(sens_conf["interval"])
+        return self.sensors[sens_conf["name"]].get_value(sens_conf["interval"],sens_conf["factor"])
