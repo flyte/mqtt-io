@@ -2,6 +2,18 @@ Unreleased
 ==========
 - Nothing!
 
+.v2.4.0 - 2024-07-20
+====================
+- Bump tj-actions/branch-names from 2.2 to 7.0.7 in /.github/workflows by @dependabot in https://github.com/flyte/mqtt-io/pull/339
+- # Fix for poetry/docutils related bug by @BenjiU in https://github.com/flyte/mqtt-io/pull/367
+- upgrade DHT11/DHT22 backing library by @pansila in https://github.com/flyte/mqtt-io/pull/297
+- Install gcc for slim docker to build rpi.gpio on demand by @BenjiU in https://github.com/flyte/mqtt-io/pull/368
+- Remove lint warnings from bmp085.py by @BenjiU in https://github.com/flyte/mqtt-io/pull/375
+- Add support for YF-S201 flow rate sensor by @linucks in https://github.com/flyte/mqtt-io/pull/370
+- Support for ENS160  digital multi-gas sensor with multiple IAQ data (TVOC, eCO2, AQI) by @linucks in https://github.com/flyte/mqtt-io/pull/371
+- feat: add MH-Z19 sensor module by @kleest in https://github.com/flyte/mqtt-io/pull/365
+- Add Support for Sunxi Linux Boards by @fabys77 in https://github.com/flyte/mqtt-io/pull/100
+
 .v2.3.0 - 2024-03-01
 ====================
 - 324 pinned pyyaml version incompatible with latest cython 300 by @BenjiU in #325
