@@ -6,7 +6,7 @@ In order to support as much hardware as possible without changing the project's 
 
 In order for a module to specify its requirements, a module-level constant is used which lists them in the same format as the `pip install` command.
 
-[mqtt_io.modules.gpio.raspberrypi:REQUIREMENTS](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/raspberrypi.py#L13):
+[mqtt_io.modules.gpio.raspberrypi:REQUIREMENTS](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/raspberrypi.py#L13):
 
 ```python
 REQUIREMENTS = ("RPi.GPIO",)
@@ -22,7 +22,7 @@ To specify extra schema for the pin-level config sections (`digital_inputs`, `di
 
 If the pin-level schema only applies to an input or an output (in the case of a GPIO module), then instead of setting it on the `PIN_SCHEMA` class-level constant, use `INPUT_SCHEMA` or `OUTPUT_SCHEMA` respectively.
 
-[mqtt_io.modules.gpio.gpiod:CONFIG_SCHEMA](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/gpiod.py#L18):
+[mqtt_io.modules.gpio.gpiod:CONFIG_SCHEMA](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/gpiod.py#L18):
 
 ```python
 CONFIG_SCHEMA = {
@@ -40,7 +40,7 @@ CONFIG_SCHEMA = {
 
 During software startup, each GPIO module's `setup_module()` method will be called once per instance of the module in the `gpio_modules` section of the config file.
 
-[mqtt_io.modules.gpio:GenericGPIO.setup_module](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/__init__.py#L109):
+[mqtt_io.modules.gpio:GenericGPIO.setup_module](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/__init__.py#L109):
 
 ```python
 def setup_module(self) -> None:
@@ -73,7 +73,7 @@ The GPIO library is then initialised and an object may be stored (usually at `se
 
 It may be appropriate to build mappings of pin directions (input, output), pullups (up, down, off) and interrupt edges (rising, falling, both) if appropriate for this hardware. The base GenericGPIO class uses its own constants to refer to these, so the mappings translate the base GenericGPIO's constants to ones used by the hardware's Python library.
 
-[mqtt_io.modules.gpio:PinDirection](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/__init__.py#L22):
+[mqtt_io.modules.gpio:PinDirection](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/__init__.py#L22):
 
 ```python
 class PinDirection(Enum):
@@ -85,7 +85,7 @@ class PinDirection(Enum):
     OUTPUT = auto()
 ```
 
-[mqtt_io.modules.gpio:PinPUD](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/__init__.py#L31):
+[mqtt_io.modules.gpio:PinPUD](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/__init__.py#L31):
 
 ```python
 class PinPUD(Enum):
@@ -98,7 +98,7 @@ class PinPUD(Enum):
     DOWN = auto()
 ```
 
-[mqtt_io.modules.gpio:InterruptEdge](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/__init__.py#L41):
+[mqtt_io.modules.gpio:InterruptEdge](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/__init__.py#L41):
 
 ```python
 class InterruptEdge(Enum):
@@ -113,7 +113,7 @@ class InterruptEdge(Enum):
 
 The `raspberrypi` GPIO module is a good example of the above:
 
-[mqtt_io.modules.gpio.raspberrypi:GPIO.setup_module](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/raspberrypi.py#L23):
+[mqtt_io.modules.gpio.raspberrypi:GPIO.setup_module](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/raspberrypi.py#L23):
 
 ```python
 def setup_module(self) -> None:
@@ -142,7 +142,7 @@ def setup_module(self) -> None:
 
 If a digital input is not configured as an [interrupt](config/interrupts.md) (or even [sometimes if it is](config/reference/digital_inputs/?id=digital_inputs-star-interrupt_for)), then a loop will be created which polls the pin's current value and publishes a `DigitalInputChangedEvent` event when it does. As part of the initialisation of each pin, a callback function to publish the new value on MQTT will be subscribed to this event.
 
-[mqtt_io.server.MqttIo._init_digital_inputs](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/server.py#L377):
+[mqtt_io.server.MqttIo._init_digital_inputs](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/server.py#L377):
 
 ```python
 def _init_digital_inputs(self) -> None:
@@ -175,7 +175,7 @@ def _init_digital_inputs(self) -> None:
 
 For each of the entries in `digital_inputs` and `digital_outputs`, `setup_pin()` will be called. This step is for configuring the hardware's pins to be input or outputs, or anything else that must be set at pin level.
 
-[mqtt_io.modules.gpio:GenericGPIO.setup_pin](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/__init__.py#L118):
+[mqtt_io.modules.gpio:GenericGPIO.setup_pin](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/__init__.py#L118):
 
 ```python
 def setup_pin(
@@ -214,7 +214,7 @@ digital_outputs:
 
 Here's the `raspberrypi` GPIO module's `setup_pin()` implementation:
 
-[mqtt_io.modules.gpio.raspberrypi:GPIO.setup_pin](https://github.com/flyte/mqtt-io/blob/8c5ecec402e544bf7db1dfbd36b00bb3cf501488/mqtt_io/modules/gpio/raspberrypi.py#L44):
+[mqtt_io.modules.gpio.raspberrypi:GPIO.setup_pin](https://github.com/flyte/mqtt-io/blob/0df4b2a9f7546b1b41dfee66ee5a021eefd0170a/mqtt_io/modules/gpio/raspberrypi.py#L44):
 
 ```python
 def setup_pin(
