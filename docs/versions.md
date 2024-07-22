@@ -34,6 +34,7 @@
 - <a href="/355-new-version-not-working" target="_self">355-new-version-not-working</a>
 - <a href="/366-docker-not-buildable-due-to-package-docutils-021post1-not-found" target="_self">366-docker-not-buildable-due-to-package-docutils-021post1-not-found</a>
 - <a href="/374-mqtt_iomodulessensorbmp085py510-c0305-trailing-newlines-trailing-newlines" target="_self">374-mqtt_iomodulessensorbmp085py510-c0305-trailing-newlines-trailing-newlines</a>
+- <a href="/380-generate-documentatio-not-working-blocks-release" target="_self">380-generate-documentatio-not-working-blocks-release</a>
 - <a href="/dependabot" target="_self">dependabot</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
