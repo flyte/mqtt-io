@@ -98,6 +98,8 @@ jobs:
       - name: Install dependencies and generate docs
         run: |
           pip install poetry
+          ls
+          git status
           poetry install
           poetry run python docs_src/generate_docs.py
 
