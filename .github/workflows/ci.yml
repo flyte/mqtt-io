@@ -85,14 +85,15 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - id: branch-name
-        uses: tj-actions/branch-names@v7.0.7
-      - name: Ensure we can checkout gh-pages for release (tags)
+      - name: Get branch names
+        id: branch-names
+        uses: tj-actions/branch-names@v8
+      - name: Ensure we can checkout gh-pages for release (${{ steps.branch-names.outputs.tag }})
         if: steps.branch-names.outputs.is_tag == 'true'
         run: |
           git checkout gh-pages
           git checkout ${{ steps.branch-names.outputs.tag }}
-      - name: Ensure we can checkout gh-pages for pr (branch)
+      - name: Ensure we can checkout gh-pages for pr (${{ steps.branch-names.outputs.current_branch }})
         if: steps.branch-names.outputs.is_tag == 'false'
         run: |
           git checkout gh-pages
