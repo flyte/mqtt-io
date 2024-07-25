@@ -87,11 +87,12 @@ jobs:
           fetch-depth: 0
       - id: branch-name
         uses: tj-actions/branch-names@v7.0.7
-      - name: Ensure we can checkout gh-pages
+      - name: Ensure we can checkout gh-pages for release (tags)
         if: steps.branch-names.outputs.is_tag == 'true'
         run: |
           git checkout gh-pages
           git checkout ${{ steps.branch-names.outputs.tag }}
+      - name: Ensure we can checkout gh-pages for pr (branch)
         if: steps.branch-names.outputs.is_tag == 'false'
         run: |
           git checkout gh-pages
