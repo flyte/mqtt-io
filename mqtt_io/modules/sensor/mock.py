@@ -8,7 +8,7 @@ from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
 REQUIREMENTS = ()
-CONFIG_SCHEMA = dict(test=dict(type="boolean", required=False, default=False))
+CONFIG_SCHEMA = {"test": {"type": 'boolean', "required": False, "default": False}}
 
 
 # pylint: disable=useless-super-delegation

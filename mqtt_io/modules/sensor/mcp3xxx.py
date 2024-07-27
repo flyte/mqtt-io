@@ -22,17 +22,17 @@ ALLOWED_TYPES = [
     "MCP3308",
 ]
 CONFIG_SCHEMA = {
-    "spi_port": dict(type="integer", required=False, empty=False, default=0),
-    "spi_device": dict(type="integer", required=False, empty=False, default=0),
-    "type": dict(
-        type="string",
-        required=True,
-        empty=False,
-        allowed=ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES],
-    ),
-    "channel": dict(type="integer", required=False, empty=False, default=0),
-    "differential": dict(type="boolean", required=False, empty=False, default=False),
-    "max_voltage": dict(type="float", required=False, empty=False, default=3.3),
+    "spi_port": {"type": 'integer', "required": False, "empty": False, "default": 0},
+    "spi_device": {"type": 'integer', "required": False, "empty": False, "default": 0},
+    "type": {
+        "type": 'string',
+        "required": True,
+        "empty": False,
+        "allowed": ALLOWED_TYPES + [x.lower() for x in ALLOWED_TYPES],
+    },
+    "channel": {"type": 'integer', "required": False, "empty": False, "default": 0},
+    "differential": {"type": 'boolean', "required": False, "empty": False, "default": False},
+    "max_voltage": {"type": 'float', "required": False, "empty": False, "default": 3.3},
 }
 
 

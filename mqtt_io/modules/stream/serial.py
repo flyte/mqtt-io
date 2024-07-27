@@ -64,13 +64,13 @@ class Stream(GenericStream):
                 7: serial.SEVENBITS,
                 8: serial.EIGHTBITS,
             }[self.config["bytesize"]],
-            parity=dict(
-                none=serial.PARITY_NONE,
-                odd=serial.PARITY_ODD,
-                even=serial.PARITY_EVEN,
-                mark=serial.PARITY_MARK,
-                space=serial.PARITY_SPACE,
-            )[self.config["parity"]],
+            parity= {
+                "none": serial.PARITY_NONE,
+                "odd": serial.PARITY_ODD,
+                "even": serial.PARITY_EVEN,
+                "mark": serial.PARITY_MARK,
+                "space": serial.PARITY_SPACE,
+            }[self.config["parity"]],
             stopbits={
                 1: serial.STOPBITS_ONE,
                 1.5: serial.STOPBITS_ONE_POINT_FIVE,

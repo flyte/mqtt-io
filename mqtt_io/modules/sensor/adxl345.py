@@ -21,8 +21,8 @@ from . import GenericSensor
 
 REQUIREMENTS = ("adxl345",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr": dict(type="integer", required=True, empty=False),
-    "output_g": dict(type="boolean", required=False, empty=False),
+    "chip_addr": {"type": 'integer', "required": True, "empty": False},
+    "output_g": {"type": 'boolean', "required": False, "empty": False},
 }
 
 
@@ -32,13 +32,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="all",
-            allowed=["all", "x", "y", "z"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'all',
+            "allowed": ['all', 'x', 'y', 'z'],
+        }
     }
 
     def setup_module(self) -> None:
@@ -59,10 +59,10 @@ class Sensor(GenericSensor):
 
         return cast(
             float,
-            dict(
-                x=all_axes["x"],
-                y=all_axes["y"],
-                z=all_axes["z"],
-                all_axes=dumps(all_axes),
-            )[sens_type],
+            {
+                "x": all_axes['x'],
+                "y": all_axes['y'],
+                "z": all_axes['z'],
+                "all_axes": dumps(all_axes),
+            }[sens_type],
         )

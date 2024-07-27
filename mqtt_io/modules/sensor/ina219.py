@@ -30,22 +30,26 @@ _LOG = logging.getLogger(__name__)
 
 REQUIREMENTS = ("pi-ina219",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr": dict(type="integer", required=True),
-    "i2c_bus_num": dict(type="integer", required=False, default=1),
-    "shunt_ohms": dict(type="float", required=False, empty=False, default=0.1),
-    "max_amps": dict(type="float", required=False, empty=False),
-    "voltage_range": dict(
-        type="integer", required=False, empty=False, allowed=[16, 32], default=32
-    ),
-    "gain": dict(
-        type="string",
-        required=False,
-        empty=False,
-        coerce=lambda x: str(x).upper(),
-        default="AUTO",
-        allowed=["AUTO", "1_40MV", "2_80MV", "4_160MV", "8_320MV"],
-    ),
-    "low_power": dict(type="boolean", required=False, default=False),
+    "chip_addr": {"type": 'integer', "required": True},
+    "i2c_bus_num": {"type": 'integer', "required": False, "default": 1},
+    "shunt_ohms": {"type": 'float', "required": False, "empty": False, "default": 0.1},
+    "max_amps": {"type": 'float', "required": False, "empty": False},
+    "voltage_range": {
+        "type": 'integer',
+        "required": False,
+        "empty": False,
+        "allowed": [16, 32],
+        "default": 32
+    },
+    "gain": {
+        "type": 'string',
+        "required": False,
+        "empty": False,
+        "coerce": lambda x: str(x).upper(),
+        "default": 'AUTO',
+        "allowed": ['AUTO', '1_40MV', '2_80MV', '4_160MV', '8_320MV'],
+    },
+    "low_power": {"type": 'boolean', "required": False, "default": False},
 }
 
 
@@ -55,13 +59,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="power",
-            allowed=["power", "current", "bus_voltage", "shunt_voltage"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'power',
+            "allowed": ['power', 'current', 'bus_voltage', 'shunt_voltage'],
+        }
     }
 
     def setup_module(self) -> None:

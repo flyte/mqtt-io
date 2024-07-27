@@ -32,7 +32,7 @@ class GPIO(GenericGPIO):
         | InterruptSupport.SET_TRIGGERS
     )
     PIN_SCHEMA = {
-        "pin": dict(type="integer", required=True, min=0, max=15),
+        "pin": {"type": 'integer', "required": True, "min": 0, "max": 15},
     }
 
     def setup_module(self) -> None:
