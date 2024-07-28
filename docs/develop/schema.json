@@ -143,12 +143,12 @@
       "client_module": {
         "meta": {
           "description": "MQTT Client implementation module path.",
-          "extra_info": "There's currently only one implementation, which uses the\n[asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.\n",
+          "extra_info": "There's currently only one implementation, which uses the\n[aiomqtt](https://github.com/sbtinstruments/aiomqtt/) client.\n",
           "title_id": "mqtt-client_module"
         },
         "type": "string",
         "required": false,
-        "default": "mqtt_io.mqtt.asyncio_mqtt"
+        "default": "mqtt_io.mqtt.aiomqtt"
       },
       "ha_discovery": {
         "type": "dict",

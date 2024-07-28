@@ -213,11 +213,11 @@ MQTT Client implementation module path.
 ```yaml
 Type: string
 Required: False
-Default: mqtt_io.mqtt.asyncio_mqtt
+Default: mqtt_io.mqtt.aiomqtt
 ```
 
 ?> There's currently only one implementation, which uses the
-[asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.
+[aiomqtt](https://github.com/sbtinstruments/aiomqtt/) client.
 
 
 ## ha_discovery :id=mqtt-ha_discovery
