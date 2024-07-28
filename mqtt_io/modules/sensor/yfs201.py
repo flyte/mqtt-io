@@ -70,11 +70,11 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "pin": dict(
-            type="integer",
-            required=True,
-            empty=False,
-        )
+        "pin": {
+            "type": 'integer',
+            "required": True,
+            "empty": False,
+        }
     }
 
     def setup_module(self) -> None:
