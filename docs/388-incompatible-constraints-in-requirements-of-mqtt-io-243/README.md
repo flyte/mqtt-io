@@ -28,6 +28,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - PCF8575 IO expander (`pcf8575`)
   - PiFace Digital IO 2 (`piface2`)
   - Raspberry Pi GPIO (`raspberrypi`)
+  - Sunxi Board (`sunxi`)
 
 ### Sensors
 
