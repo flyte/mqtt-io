@@ -13,7 +13,7 @@ class GPIO(GenericGPIO):
     """
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
-        from pySUNXI import gpio
+        from pySUNXI import gpio # type: ignore
 
         self.io: gpio = gpio
         self.direction_map = {PinDirection.INPUT: gpio.INPUT, PinDirection.OUTPUT: gpio.OUTPUT}
@@ -40,18 +40,18 @@ class GPIO(GenericGPIO):
         else:
             pullup = self.pullup_map[pullup]
 
-        initial = {None: -1, "low": 0, "high": 1}[pin_config.get("initial")]
+        initial_state = {None: -1, "low": 0, "high": 1}[initial]
         #self.io.setup(pin, direction, pull_up_down=pullup, initial=initial)
         self.io.setcfg(pin, direction)
         self.io.pullup(pin, pullup)
         if direction==self.io.OUTPUT:
-            self.io.output(pin, initial)
+            self.io.output(pin, initial_state)
 
-    def set_pin(self, pin, value):
+    def set_pin(self, pin: PinType, value: bool) -> None:
         self.io.output(pin, value)
 
-    def get_pin(self, pin):
-        return self.io.input(pin)
+    def get_pin(self, pin: PinType) -> bool:
+        return bool(self.io.input(pin))
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         pass
