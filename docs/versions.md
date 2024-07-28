@@ -40,7 +40,6 @@
 - <a href="/dependabot" target="_self">dependabot</a>
 - <a href="/develop" target="_self">develop</a>
 - <a href="/feature" target="_self">feature</a>
-- <a href="/feature/update_python" target="_self">feature/update_python</a>
 - <a href="/fix_pipeline_remove_py3.6" target="_self">fix_pipeline_remove_py3.6</a>
 - <a href="/pr-test" target="_self">pr-test</a>
 - <a href="/pre_release_2.2.8" target="_self">pre_release_2.2.8</a>
