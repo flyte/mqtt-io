@@ -40,21 +40,24 @@ DEFAULT_HUMIDITY_COMPENSATION = 50
 
 REQUIREMENTS = ("adafruit-circuitpython-ens160",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr": dict(
-        type="integer", required=False, empty=False, default=DEFAULT_CHIP_ADDR
-    ),
-    "temperature_compensation": dict(
-        type="float",
-        required=False,
-        empty=False,
-        default=DEFAULT_TEMPERATURE_COMPENSATION,
-    ),
-    "humidity_compensation": dict(
-        type="float",
-        required=False,
-        empty=False,
-        default=DEFAULT_HUMIDITY_COMPENSATION,
-    ),
+    "chip_addr": {
+        "type": 'integer',
+        "required": False,
+        "empty": False,
+        "default": 'DEFAULT_CHIP_ADDR',
+    },
+    "temperature_compensation": {
+        "type": 'float',
+        "required": False,
+        "empty": False,
+        "default": 'DEFAULT_TEMPERATURE_COMPENSATION',
+    },
+    "humidity_compensation": {
+        "type": 'float',
+        "required": False,
+        "empty": False,
+        "default": 'DEFAULT_HUMIDITY_COMPENSATION',
+    },
 }
 
 
@@ -81,13 +84,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="aqi",
-            allowed=["aqi", "tvoc", "eco2"],
-        ),
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'aqi',
+            "allowed": ['aqi', 'tvoc', 'eco2'],
+        },
     }
 
     def setup_module(self) -> None:
@@ -119,7 +122,7 @@ class Sensor(GenericSensor):
         sens_type = sens_conf["type"]
         return cast(
             int,
-            dict(aqi=self.ens160.AQI, tvoc=self.ens160.TVOC, eco2=self.ens160.eCO2)[
+            {"aqi": self.ens160.AQI, "tvoc": self.ens160.TVOC, "eco2": self.ens160.eCO2}[
                 sens_type
             ],
         )

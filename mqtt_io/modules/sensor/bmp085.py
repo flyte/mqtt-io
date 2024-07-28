@@ -9,7 +9,7 @@ from . import GenericSensor
 
 REQUIREMENTS = ("Adafruit_BMP",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr": dict(type="integer", required=True, empty=False),
+    "chip_addr": {"type": 'integer', "required": True, "empty": False},
 }
 DATA_READER = {
         "temperature": lambda bmp: bmp.read_temperature(),
@@ -24,13 +24,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="temperature",
-            allowed=["temperature", "pressure", "altitude"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'temperature',
+            "allowed": ['temperature', 'pressure', 'altitude'],
+        }
     }
 
     def setup_module(self) -> None:
