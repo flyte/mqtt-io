@@ -7,9 +7,9 @@ from mqtt_io.types import CerberusSchemaType, ConfigType, SensorValueType
 
 REQUIREMENTS = ("pyserial",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "device": dict(type="string", required=True, empty=False),
-    "range": dict(type="integer", required=False, empty=False, default=5000,
-                  allowed=[2000, 5000, 10000]),
+    "device": {"type": 'string', "required": True, "empty": False},
+    "range": {"type": 'integer', "required": False, "empty": False, "default": 5000,
+                  "allowed": [2000, 5000, 10000]},
 }
 
 class Sensor(GenericSensor):
