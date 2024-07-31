@@ -46,7 +46,9 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - PMS5003 particulate sensor (`pms5003`)
   - SHT40/SHT41/SHT45 temperature and humidity sensors (`sht4x`)
   - YF-S201 flow rate sensor (`yfs201`)
+  - FREQUENCYCOUNTER Counts pulses from GPIOs and return the frequency in Hz (frequencycounter)
   - FLOWSENSOR generic flow rate sensor like YF-S201 or YF-DN50 (`flowsensor`)
+
 
 ### Streams
 
