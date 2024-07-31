@@ -86,21 +86,21 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "pin": dict(
-            type="integer",
-            required=True,
-            empty=False,
-        ),
-        "interval": dict(
-            type="integer",
-            required=True,
-            empty=False,
-        ),
-        "factor": dict(
-            type="float",
-            required=True,
-            empty=False,
-        )
+        "pin": {
+            "type": 'integer',
+            "required": True,
+            "empty": False,
+        },
+        "interval": {
+            "type": 'integer',
+            "required": True,
+            "empty": False,
+        },
+        "factor": {
+            "type": 'float',
+            "required": True,
+            "empty": False,
+        }
     }
 
     def setup_module(self) -> None:
