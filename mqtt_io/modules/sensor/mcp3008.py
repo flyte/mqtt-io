@@ -12,9 +12,9 @@ from . import GenericSensor
 REQUIREMENTS = ("adafruit-mcp3008",)
 
 CONFIG_SCHEMA = {
-    "spi_port": dict(type="integer", required=False, empty=False, default=0),
-    "spi_device": dict(type="integer", required=False, empty=False, default=0),
-    "chip_addr": dict(type="integer", required=False, empty=False, default=0),
+    "spi_port": {"type": 'integer', "required": False, "empty": False, "default": 0},
+    "spi_device": {"type": 'integer', "required": False, "empty": False, "default": 0},
+    "chip_addr": {"type": 'integer', "required": False, "empty": False, "default": 0},
 }
 
 _LOG = logging.getLogger(__name__)
@@ -26,12 +26,7 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA = {
-        "channel": dict(
-            type="integer",
-            required=True,
-            min=0,
-            max=7,
-        )
+        "channel": {"type": 'integer', "required": True, "min": 0, "max": 7}
     }
 
     def setup_module(self) -> None:

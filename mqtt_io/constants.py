@@ -13,7 +13,7 @@ SENSOR_TOPIC = "sensor"
 STREAM_TOPIC = "stream"
 
 MODULE_IMPORT_PATH = "mqtt_io.modules"
-MODULE_CLASS_NAMES = dict(gpio="GPIO", sensor="Sensor", stream="Stream")
+MODULE_CLASS_NAMES = {"gpio": 'GPIO', "sensor": 'Sensor', "stream": 'Stream'}
 
 MQTT_SUB_PRIORITY = 1
 MQTT_ANNOUNCE_PRIORITY = 2

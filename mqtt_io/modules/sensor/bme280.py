@@ -9,8 +9,8 @@ from . import GenericSensor
 
 REQUIREMENTS = ("smbus2", "RPi.bme280")
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "i2c_bus_num": dict(type="integer", required=True, empty=False),
-    "chip_addr": dict(type="integer", required=True, empty=False),
+    "i2c_bus_num": {"type": 'integer', "required": True, "empty": False},
+    "chip_addr": {"type": 'integer', "required": True, "empty": False},
 }
 
 
@@ -20,13 +20,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            default="temperature",
-            allowed=["temperature", "humidity", "pressure"],
-        )
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "default": 'temperature',
+            "allowed": ['temperature', 'humidity', 'pressure'],
+        }
     }
 
     def setup_module(self) -> None:
@@ -48,9 +48,9 @@ class Sensor(GenericSensor):
         data = self.bme.sample(self.bus, self.address, self.calib)
         return cast(
             float,
-            dict(
-                temperature=data.temperature,
-                humidity=data.humidity,
-                pressure=data.pressure,
-            )[sens_type],
+            {
+                "temperature": data.temperature,
+                "humidity": data.humidity,
+                "pressure": data.pressure,
+            }[sens_type],
         )

@@ -129,10 +129,10 @@ mqtt:
         description: MQTT Client implementation module path.
         extra_info: |
           There's currently only one implementation, which uses the
-          [asyncio-mqtt](https://github.com/sbtinstruments/asyncio-mqtt/) client.
+          [aiomqtt](https://github.com/sbtinstruments/aiomqtt/) client.
       type: string
       required: no
-      default: mqtt_io.mqtt.asyncio_mqtt
+      default: mqtt_io.mqtt.aiomqtt
     ha_discovery:
       type: dict
       required: no

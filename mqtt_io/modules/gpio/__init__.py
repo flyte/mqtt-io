@@ -11,7 +11,7 @@ import abc
 import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from enum import Enum, Flag, auto
+from enum import Enum, Flag, IntFlag, auto
 from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from ...types import ConfigType, PinType
@@ -48,7 +48,7 @@ class InterruptEdge(Enum):
     BOTH = auto()
 
 
-class InterruptSupport(Flag):
+class InterruptSupport(IntFlag):
     """
     Classifies the kind of support a GPIO module has for interrupts.
 

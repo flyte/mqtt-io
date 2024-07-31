@@ -8,7 +8,7 @@ from asyncio.queues import QueueFull
 from functools import wraps
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, cast
 
-from asyncio_mqtt.client import Client, MqttError, Will  # type: ignore
+from aiomqtt.client import Client, MqttError, Will, ProtocolVersion  # type: ignore
 from paho.mqtt import client as paho  # type: ignore
 
 from . import (
@@ -72,9 +72,9 @@ class MQTTClient(AbstractMQTTClient):
         """
         super().__init__(options)
         protocol_map = {
-            MQTTProtocol.V31: paho.MQTTv31,
-            MQTTProtocol.V311: paho.MQTTv311,
-            MQTTProtocol.V5: paho.MQTTv5,
+            MQTTProtocol.V31: ProtocolVersion.V31,
+            MQTTProtocol.V311: ProtocolVersion.V311,
+            MQTTProtocol.V5: ProtocolVersion.V5,
         }
         will = None
         if options.will is not None:
@@ -93,7 +93,7 @@ class MQTTClient(AbstractMQTTClient):
             port=options.port,
             username=options.username,
             password=options.password,
-            client_id=options.client_id,
+            identifier=options.client_id,
             #keepalive=options.keepalive,
             tls_context=tls_context,
             protocol=protocol_map[options.protocol],
@@ -113,7 +113,7 @@ class MQTTClient(AbstractMQTTClient):
         Returns:
             None: This function does not return anything.
         """
-        await self._client.connect(timeout=timeout)
+        await self._client.__aenter__() # pylint: disable=unnecessary-dunder-call
 
     @_map_exception
     async def disconnect(self) -> None:
@@ -126,10 +126,7 @@ class MQTTClient(AbstractMQTTClient):
         Returns:
             None
         """
-        try:
-            await self._client.disconnect()
-        except TimeoutError:
-            await self._client.force_disconnect()
+        await self._client.__aexit__(None, None, None)
 
     @_map_exception
     async def subscribe(self, topics: List[Tuple[str, int]]) -> None:
