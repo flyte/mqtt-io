@@ -108,6 +108,20 @@ From YF-DN50 manual:
   ==> Factor = 0.2
 
 If you use "factor = 1", the sensor module returns the frequency in Hertz (Hz). (`flowsensor`)
+  - Frequencycounter: Generic Frequency Counter
+
+Example configuration:
+
+sensor_modules:
+  - name: frequency
+    module: frequencycounter
+
+sensor_inputs:
+  - name: flow_rate1
+    module: frequency
+    pin: 0
+    digits: 0
+    interval: 10 (`frequencycounter`)
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
