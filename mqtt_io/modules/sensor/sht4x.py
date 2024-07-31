@@ -1,5 +1,5 @@
 """
-AHT20 temperature and humidity sensor
+SHT4x temperature and humidity sensor
 """
 
 from typing import cast
@@ -8,12 +8,12 @@ from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 from ...exceptions import RuntimeConfigError
 
-REQUIREMENTS = ("adafruit-circuitpython-ahtx0",)
+REQUIREMENTS = ("adafruit-circuitpython-sht4x",)
 
 
 class Sensor(GenericSensor):
     """
-    Implementation of Sensor class for aht20.
+    Implementation of Sensor class for sht4x.
     """
 
     SENSOR_SCHEMA = {
@@ -28,12 +28,12 @@ class Sensor(GenericSensor):
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
-        import adafruit_ahtx0  # type: ignore
+        import adafruit_sht4x  # type: ignore
         import board  # type: ignore
         import busio  # type: ignore
 
         i2c = busio.I2C(board.SCL, board.SDA)
-        self.sensor = adafruit_ahtx0.AHTx0(i2c)
+        self.sensor = adafruit_sht4x.SHT4x(i2c)
 
     @property
     def _temperature(self) -> SensorValueType:
@@ -52,6 +52,6 @@ class Sensor(GenericSensor):
         if sens_conf["type"] == "humidity":
             return self._humidity
         raise RuntimeConfigError(
-            "aht20 sensor '%s' was not configured to return 'temperature' or 'humidity'"
+            "sht4x sensor '%s' was not configured to return 'temperature' or 'humidity'"
             % sens_conf["name"]
         )

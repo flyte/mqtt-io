@@ -2,6 +2,34 @@ Unreleased
 ==========
 - Nothing!
 
+.v2.4.0 - 2024-07-20
+====================
+- Bump tj-actions/branch-names from 2.2 to 7.0.7 in /.github/workflows by @dependabot in https://github.com/flyte/mqtt-io/pull/339
+- # Fix for poetry/docutils related bug by @BenjiU in https://github.com/flyte/mqtt-io/pull/367
+- upgrade DHT11/DHT22 backing library by @pansila in https://github.com/flyte/mqtt-io/pull/297
+- Install gcc for slim docker to build rpi.gpio on demand by @BenjiU in https://github.com/flyte/mqtt-io/pull/368
+- Remove lint warnings from bmp085.py by @BenjiU in https://github.com/flyte/mqtt-io/pull/375
+- Add support for YF-S201 flow rate sensor by @linucks in https://github.com/flyte/mqtt-io/pull/370
+- Support for ENS160  digital multi-gas sensor with multiple IAQ data (TVOC, eCO2, AQI) by @linucks in https://github.com/flyte/mqtt-io/pull/371
+- feat: add MH-Z19 sensor module by @kleest in https://github.com/flyte/mqtt-io/pull/365
+- Add Support for Sunxi Linux Boards by @fabys77 in https://github.com/flyte/mqtt-io/pull/100
+
+.v2.3.0 - 2024-03-01
+====================
+- 324 pinned pyyaml version incompatible with latest cython 300 by @BenjiU in #325
+- fix pipeline for tagging by @BenjiU in #323
+- pin pyyaml to v6.0.1 by @BenjiU in #326
+- Add new module for sensor adxl345 by @birdie1 in #223
+- Sensor INA219: Use optional i2c_bus_num by @mschlenstedt in #328
+- Update ads1x15.py by @maxthebuch in #329
+- repeat subscribe when reconnected to MQTT broker by @JohannesHennecke in #337
+- Fix non-unique identifiers reporting to HA by @dolai1 in #345
+- docker: use a "slim" base image by @chatziko in #342
+- Fix applying mqtt.reconnect_count by reordering except clauses by @zzeekk in #331
+- Add PMS5003 Particulate Sensor by @johnwang16 in #346
+- gpiod: enable pullup/pulldown by @chatziko in #341
+- docker: slim image, use rustup, build deps only on armv7 by @chatziko in #352
+
 .v2.2.9d - 2023-07-18
 ====================
 - new sensors

@@ -20,7 +20,7 @@ CONFIG_SCHEMA = {
 }
 
 
-class GPIO(GenericGPIO):
+class GPIO(GenericGPIO):  # pylint: disable=too-many-instance-attributes
     """
     Implementation of GPIO class for libgpiod (linux kernel >= 4.8).
     """
@@ -40,6 +40,12 @@ class GPIO(GenericGPIO):
         self.direction_map = {
             PinDirection.INPUT: gpiod.line_request.DIRECTION_INPUT,
             PinDirection.OUTPUT: gpiod.line_request.DIRECTION_OUTPUT,
+        }
+
+        self.flags_map = {
+            PinPUD.OFF: gpiod.line_request.FLAG_BIAS_DISABLE,
+            PinPUD.UP: gpiod.line_request.FLAG_BIAS_PULL_UP,
+            PinPUD.DOWN: gpiod.line_request.FLAG_BIAS_PULL_DOWN,
         }
 
         self.interrupt_edge_map = {
@@ -63,14 +69,14 @@ class GPIO(GenericGPIO):
         pullup:     pullup settings are not supported
         """
         # Pullup settings are called bias in libgpiod and are only
-        # available since Linux Kernel 5.5. They are as of now not
-        # yet part of python3-gpiod.
+        # available since Linux Kernel 5.5.
 
         line: "gpiod.line" = self.chip.get_line(pin)
 
         line_request = self.io.line_request()
         line_request.consumer = "mqtt-io"
         line_request.request_type = self.direction_map[direction]
+        line_request.flags = self.flags_map[pullup]
 
         if direction == PinDirection.OUTPUT:
             if initial is not None:

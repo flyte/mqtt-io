@@ -1,5 +1,5 @@
 """
-BME280 temperature, humidity and pressure sensor
+BMP085 temperature and pressure sensor
 """
 
 from typing import cast
@@ -7,10 +7,14 @@ from typing import cast
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("smbus2", "RPi.bme280")
+REQUIREMENTS = ("Adafruit_BMP",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "i2c_bus_num": {"type": 'integer', "required": True, "empty": False},
     "chip_addr": {"type": 'integer', "required": True, "empty": False},
+}
+DATA_READER = {
+        "temperature": lambda bmp: bmp.read_temperature(),
+        "pressure": lambda bmp: bmp.read_pressure(),
+        "altitude": lambda bmp: bmp.read_altitude(),
 }
 
 
@@ -25,32 +29,23 @@ class Sensor(GenericSensor):
             "required": False,
             "empty": False,
             "default": 'temperature',
-            "allowed": ['temperature', 'humidity', 'pressure'],
+            "allowed": ['temperature', 'pressure', 'altitude'],
         }
     }
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
         # pylint: disable=import-error,no-member
-        from smbus2 import SMBus  # type: ignore
-        import bme280  # type: ignore
+        from Adafruit_BMP.BMP085 import BMP085 # type: ignore
 
-        self.bus = SMBus(self.config["i2c_bus_num"])
         self.address: int = self.config["chip_addr"]
-        self.bme = bme280
-        self.calib = bme280.load_calibration_params(self.bus, self.address)
+        self.bmp = BMP085(address=self.address)
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the temperature, humidity or pressure value from the sensor
         """
         sens_type = sens_conf["type"]
-        data = self.bme.sample(self.bus, self.address, self.calib)
-        return cast(
-            float,
-            {
-                "temperature": data.temperature,
-                "humidity": data.humidity,
-                "pressure": data.pressure,
-            }[sens_type],
-        )
+        #error: Call to untyped function (unknown) in typed context
+        data = DATA_READER[sens_type](self.bmp) # type: ignore
+        return cast(float, data)

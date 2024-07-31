@@ -140,11 +140,11 @@ def custom_validate_main_config(config: ConfigType) -> ConfigType:
     bad_configs: Dict[str, Dict[str, List[str]]] = {}
 
     # Make sure each of the IO configs refer to an existing module config
-    module_and_io_sections = dict(
-        gpio_modules=("digital_inputs", "digital_outputs"),
-        sensor_modules=("sensor_inputs",),
-        stream_modules=("stream_reads", "stream_writes"),
-    )
+    module_and_io_sections = {
+        "gpio_modules": ("digital_inputs", "digital_outputs"),
+        "sensor_modules": ("sensor_inputs",),
+        "stream_modules": ("stream_reads", "stream_writes"),
+    }
     for module_section, io_sections in module_and_io_sections.items():
         validate_gpio_module_names(bad_configs, config, module_section, io_sections)
 

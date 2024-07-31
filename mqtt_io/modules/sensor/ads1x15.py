@@ -1,6 +1,8 @@
 """
 ADS1x15 analog to digital converters
 """
+import threading
+
 from typing import cast
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
@@ -12,20 +14,15 @@ SENSOR_TYPES = [SENSOR_ADS1015, SENSOR_ADS1115]
 
 REQUIREMENTS = ("adafruit-circuitpython-ads1x15",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr": dict(type="integer", required=False, empty=False, default=0x48),
-    "type": dict(
-        type="string",
-        required=True,
-        empty=False,
-        allowed=SENSOR_TYPES,
-    ),
-    "pins": dict(type="list", required=True, empty=False, allowed=[0, 1, 2, 3]),
-    "gain": dict(
-        required=False,
-        empty=False,
-        allowed=[0.6666666666666666, 1, 2, 4, 8, 16],
-        default=1,
-    ),
+    "chip_addr": {"type": 'integer', "required": False, "empty": False, "default": 0x48},
+    "type": {"type": 'string', "required": True, "empty": False, "allowed": SENSOR_TYPES},
+    "pins": {"type": 'list', "required": True, "empty": False, "allowed": [0, 1, 2, 3]},
+    "gain": {
+        "required": False,
+        "empty": False,
+        "allowed": [0.6666666666666666, 1, 2, 4, 8, 16],
+        "default": 1
+    },
 }
 
 
@@ -35,20 +32,20 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            allowed=["value", "voltage"],
-            default="value",
-        ),
-        "pin": dict(
-            type="integer",
-            required=True,
-            empty=False,
-            allowed=[0, 1, 2, 3],
-            default=0,
-        ),
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "allowed": ['value', 'voltage'],
+            "default": 'value',
+        },
+        "pin": {
+            "type": 'integer',
+            "required": True,
+            "empty": False,
+            "allowed": [0, 1, 2, 3],
+            "default": 0,
+        },
     }
 
     def setup_module(self) -> None:
@@ -78,15 +75,21 @@ class Sensor(GenericSensor):
         # Create single-ended input for each pin in config
         self.channels = {pin: AnalogIn(self.ads, pin) for pin in self.config["pins"]}
 
+        # initialize mutex lock
+        self.lock = threading.Lock()
+
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the value or voltage from the sensor
         """
-        sens_type = sens_conf["type"]
-        data = dict(
-            value=self.channels[sens_conf["pin"]].value,
-            voltage=self.channels[sens_conf["pin"]].voltage,
-        )
+        # acquire the lock
+        with self.lock:
+            sens_type = sens_conf["type"]
+            data = {
+                "value": self.channels[sens_conf['pin']].value,
+                "voltage": self.channels[sens_conf['pin']].voltage,
+            }
+
         return cast(
             float,
             data[sens_type],
