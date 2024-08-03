@@ -628,7 +628,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             )
             self.sensor_input_configs[sens_conf["name"]] = sens_conf
 
-            sensor_module.setup_sensor(sens_conf)
+            sensor_module.setup_sensor(sens_conf, self.event_bus)
 
             # Use default args to the function to get around the late binding closures
             async def poll_sensor(
