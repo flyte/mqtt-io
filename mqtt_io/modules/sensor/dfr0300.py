@@ -147,14 +147,12 @@ class Sensor(GenericSensor):
         self.temperature = DEFAULT_TEMPERATURE
 
         if TEMPSENSOR_ID not in sens_conf:
-            print("NOT setting up temperature sensor")
+            _LOG.info("dfr0300: No temperature sensor configured")
             return
-
-        print("Setting up temperature sensor")
 
         def on_sensor_read(data):
             """Callback for sensor read event"""
-            print("Sensor read event cb", dir(data))
+            _LOG.info("Sensor read event cb %s", dir(data))
             if data.sensor_name == sens_conf[TEMPSENSOR_ID] and data.value is not None:
                 self.temperature = data.value
 
