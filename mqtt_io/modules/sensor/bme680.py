@@ -4,13 +4,15 @@ BME680 temperature, humidity and pressure sensor
 
 from typing import cast
 
+from mqtt_io.events import EventBus
+
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
 REQUIREMENTS = ("smbus2", "bme680")
 CONFIG_SCHEMA = {
-    "i2c_bus_num": {"type": 'integer', "required": False, "empty": False},
-    "chip_addr": {"type": 'integer', "required": True, "empty": False},
+    "i2c_bus_num": {"type": "integer", "required": False, "empty": False},
+    "chip_addr": {"type": "integer", "required": True, "empty": False},
 }
 
 
@@ -21,15 +23,15 @@ class Sensor(GenericSensor):
 
     SENSOR_SCHEMA: CerberusSchemaType = {
         "type": {
-            "type": 'string',
+            "type": "string",
             "required": False,
-            "default": 'temperature',
-            "allowed": ['temperature', 'humidity', 'pressure'],
+            "default": "temperature",
+            "allowed": ["temperature", "humidity", "pressure"],
         },
         "oversampling": {
-            "type": 'string',
+            "type": "string",
             "required": False,
-            "allowed": ['none', '1x', '2x', '4x', '8x', '16x'],
+            "allowed": ["none", "1x", "2x", "4x", "8x", "16x"],
         },
     }
 
@@ -53,7 +55,7 @@ class Sensor(GenericSensor):
             "16x": bme680.OS_16X,
         }
 
-    def setup_sensor(self, sens_conf: ConfigType) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         sens_type: str = sens_conf["type"]
         if "oversampling" in sens_conf:
             set_oversampling = getattr(self.sensor, f"set_{sens_type}_oversample")

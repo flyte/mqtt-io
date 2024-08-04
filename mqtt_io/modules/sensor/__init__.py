@@ -38,7 +38,7 @@ class GenericSensor(abc.ABC):
         in `self.config`.
         """
 
-    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus = None) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         """
         Called on initialisation of each reading type of the Sensor module during the
         startup phase.

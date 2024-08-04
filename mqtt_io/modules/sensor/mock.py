@@ -4,11 +4,13 @@ Mock Sensor module for use with the tests.
 
 from unittest.mock import Mock
 
+from mqtt_io.events import EventBus
+
 from ...types import ConfigType, SensorValueType
 from . import GenericSensor
 
 REQUIREMENTS = ()
-CONFIG_SCHEMA = {"test": {"type": 'boolean', "required": False, "default": False}}
+CONFIG_SCHEMA = {"test": {"type": "boolean", "required": False, "default": False}}
 
 
 # pylint: disable=useless-super-delegation
@@ -26,8 +28,8 @@ class Sensor(GenericSensor):
     def setup_module(self) -> None:
         return super().setup_module()
 
-    def setup_sensor(self, sens_conf: ConfigType) -> None:
-        return super().setup_sensor(sens_conf)
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
+        return super().setup_sensor(sens_conf, event_bus)
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         return super().get_value(sens_conf)

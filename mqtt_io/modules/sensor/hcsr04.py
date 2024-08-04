@@ -6,6 +6,8 @@ import time
 from statistics import mean
 from typing import Any, Dict, List, Optional
 
+from mqtt_io.events import EventBus
+
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -123,7 +125,7 @@ class Sensor(GenericSensor):
         self.gpio = GPIO
         self.sensors: Dict[str, HCSR04] = {}
 
-    def setup_sensor(self, sens_conf: ConfigType) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         sensor = HCSR04(gpio=self.gpio, **sens_conf)
         self.sensors[sensor.name] = sensor
 

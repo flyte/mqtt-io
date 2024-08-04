@@ -18,6 +18,8 @@ sensor_inputs:
 """
 
 from typing import Dict
+
+from mqtt_io.events import EventBus
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -30,7 +32,7 @@ class FREQUENCYCOUNTER:
     Multiple instances support multiple sensors on different pins
     """
 
-    def __init__(self, gpiozero, name: str, pin: int) -> None: # type: ignore[no-untyped-def]
+    def __init__(self, gpiozero, name: str, pin: int) -> None:  # type: ignore[no-untyped-def]
         self.name = name
         self.pin = gpiozero.DigitalInputDevice(pin)
         self.pin.when_activated = self.count_pulse
@@ -65,15 +67,15 @@ class Sensor(GenericSensor):
 
     SENSOR_SCHEMA: CerberusSchemaType = {
         "pin": {
-            "type": 'integer',
+            "type": "integer",
             "required": True,
             "empty": False,
         },
         "interval": {
-            "type": 'integer',
+            "type": "integer",
             "required": True,
             "empty": False,
-        }
+        },
     }
 
     def setup_module(self) -> None:
@@ -83,7 +85,7 @@ class Sensor(GenericSensor):
         self.gpiozero = gpiozero
         self.sensors: Dict[str, FREQUENCYCOUNTER] = {}
 
-    def setup_sensor(self, sens_conf: ConfigType) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         sensor = FREQUENCYCOUNTER(
             gpiozero=self.gpiozero, name=sens_conf["name"], pin=sens_conf["pin"]
         )

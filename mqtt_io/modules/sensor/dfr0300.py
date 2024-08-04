@@ -139,7 +139,7 @@ class Sensor(GenericSensor):
         },
     }
 
-    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus = None) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         """
         Setup the sensor module
         """
