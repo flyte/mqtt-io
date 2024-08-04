@@ -18,8 +18,21 @@ import time
 
 _PWM_CHAN_COUNT = 4
 _ADC_CHAN_COUNT = 4
+BOARD_SETUP_TRIES = 3
+BOARD_SETUP_TIMEOUT = 2
 
 _LOG = logging.getLogger(__name__)
+
+
+def board_status_str(board) -> str:
+    """Return board status as string."""
+    return {
+        board.STA_OK: "STA_OK",
+        board.STA_ERR: "STA_ERR",
+        board.STA_ERR_DEVICE_NOT_DETECTED: "STA_ERR_DEVICE_NOT_DETECTED",
+        board.STA_ERR_PARAMETER: "STA_ERR_PARAMETER",
+        board.STA_ERR_SOFT_VERSION: "STA_ERR_SOFT_VERSION",
+    }.get(board.last_operate_status, "unknown error")
 
 
 class DFRobotExpansionBoard(abc.ABC):
@@ -116,6 +129,15 @@ class DFRobotExpansionBoard(abc.ABC):
                 self.last_operate_status = self.STA_ERR_PARAMETER
                 return []
         return ld
+
+    def setup(self):
+        """Run the board setup."""
+        count = 0
+        while self.begin() != self.STA_OK:
+            count += 1
+            if count > BOARD_SETUP_TRIES:
+                raise RuntimeError("board begin failed: %s" % board_status_str(self))
+            time.sleep(BOARD_SETUP_TIMEOUT)
 
     def set_pwm_enable(self):
         """
