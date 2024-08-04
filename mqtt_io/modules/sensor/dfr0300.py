@@ -6,7 +6,6 @@ import abc
 import json
 import logging
 import os
-import time
 
 from typing import cast
 
@@ -171,8 +170,8 @@ class Sensor(GenericSensor):
 
         def on_sensor_read(data):
             """Callback for sensor read event"""
-            _LOG.info("Sensor read event cb %s", dir(data))
             if data.sensor_name == sens_conf[TEMPSENSOR_ID] and data.value is not None:
+                _LOG.info("Set self.temperature %s", dir(data))
                 self.temperature = data.value
 
         self.event_bus = event_bus
