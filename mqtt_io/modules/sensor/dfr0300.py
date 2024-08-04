@@ -171,7 +171,6 @@ class Sensor(GenericSensor):
         def on_sensor_read(data):
             """Callback for sensor read event"""
             if data.sensor_name == sens_conf[TEMPSENSOR_ID] and data.value is not None:
-                _LOG.info("Set self.temperature %s", dir(data))
                 self.temperature = data.value
 
         self.event_bus = event_bus
@@ -197,7 +196,7 @@ class Sensor(GenericSensor):
         """
         voltage = self.board.get_adc_value(self.channel)
         ec = self.ec_from_voltage(voltage, self.temperature)
-        _LOG.info("Temperature:%.1f ^C EC:%.2f ms/cm", self.temperature, ec)
+        #_LOG.info("Temperature:%.2f ^C EC:%.2f ms/cm", self.temperature, ec)
         return cast(
             float,
             ec,
