@@ -15,6 +15,7 @@
 import abc
 import logging
 import time
+from typing import List, Union
 
 _PWM_CHAN_COUNT = 4
 _ADC_CHAN_COUNT = 4
@@ -22,17 +23,6 @@ BOARD_SETUP_TRIES = 3
 BOARD_SETUP_TIMEOUT = 2
 
 _LOG = logging.getLogger(__name__)
-
-
-def board_status_str(board) -> str:
-    """Return board status as string."""
-    return {
-        board.STA_OK: "STA_OK",
-        board.STA_ERR: "STA_ERR",
-        board.STA_ERR_DEVICE_NOT_DETECTED: "STA_ERR_DEVICE_NOT_DETECTED",
-        board.STA_ERR_PARAMETER: "STA_ERR_PARAMETER",
-        board.STA_ERR_SOFT_VERSION: "STA_ERR_SOFT_VERSION",
-    }.get(board.last_operate_status, "unknown error")
 
 
 class DFRobotExpansionBoard(abc.ABC):
@@ -76,18 +66,18 @@ class DFRobotExpansionBoard(abc.ABC):
     ALL = 0xFFFFFFFF
 
     @abc.abstractmethod
-    def _write_bytes(self, reg, buf):
+    def _write_bytes(self, reg: int, buf: List[int]) -> None:
         pass
 
     @abc.abstractmethod
-    def _read_bytes(self, reg, length):
+    def _read_bytes(self, reg: int, length: int) -> List[int]:
         pass
 
-    def __init__(self, addr):
+    def __init__(self, addr: int) -> None:
         self._addr = addr
         self._is_pwm_enable = False
 
-    def begin(self):
+    def begin(self) -> int:
         """
         @brief    Board begin
         @return   Board status
@@ -105,7 +95,7 @@ class DFRobotExpansionBoard(abc.ABC):
                 self.set_adc_disable()
         return self.last_operate_status
 
-    def set_addr(self, addr):
+    def set_addr(self, addr: int) -> None:
         """
         @brief    Set board controler address, reboot module to make it effective
         @param address: int    Address to set, range in 1 to 127
@@ -115,22 +105,22 @@ class DFRobotExpansionBoard(abc.ABC):
             return
         self._write_bytes(self._REG_SLAVE_ADDR, [addr])
 
-    def _parse_id(self, limit, id_):
+    def _parse_id(self, limit: int, id_: Union[int, List[int]]) -> List[int]:
+        if id_ == self.ALL:
+            return list(range(1, limit + 1))
         ld = []
-        if isinstance(id_, list) is False:
+        if not isinstance(id_, list):
             id_ = id_ + 1
             ld.append(id_)
         else:
             ld = [i + 1 for i in id_]
-        if ld == self.ALL:
-            return range(1, limit + 1)
         for i in ld:
             if i < 1 or i > limit:
                 self.last_operate_status = self.STA_ERR_PARAMETER
                 return []
         return ld
 
-    def setup(self):
+    def setup(self) -> None:
         """Run the board setup."""
         count = 0
         while self.begin() != self.STA_OK:
@@ -139,7 +129,7 @@ class DFRobotExpansionBoard(abc.ABC):
                 raise RuntimeError("board begin failed: %s" % board_status_str(self))
             time.sleep(BOARD_SETUP_TIMEOUT)
 
-    def set_pwm_enable(self):
+    def set_pwm_enable(self) -> None:
         """
         @brief    Set pwm enable, pwm channel need external power
         """
@@ -148,7 +138,7 @@ class DFRobotExpansionBoard(abc.ABC):
             self._is_pwm_enable = True
         time.sleep(0.01)
 
-    def set_pwm_disable(self):
+    def set_pwm_disable(self) -> None:
         """
         @brief    Set pwm disable
         """
@@ -157,7 +147,7 @@ class DFRobotExpansionBoard(abc.ABC):
             self._is_pwm_enable = False
         time.sleep(0.01)
 
-    def set_pwm_frequency(self, freq):
+    def set_pwm_frequency(self, freq: int) -> None:
         """
         @brief    Set pwm frequency
         @param freq: int    Frequency to set, in range 1 - 1000
@@ -172,7 +162,7 @@ class DFRobotExpansionBoard(abc.ABC):
         if is_pwm_enable:
             self.set_pwm_enable()
 
-    def set_pwm_duty(self, chan, duty):
+    def set_pwm_duty(self, chan: Union[int, List[int]], duty: float) -> None:
         """
         @brief    Set selected channel duty
         @param chan: list     One or more channels to set, items in range 1 to 4, or chan = self.ALL
@@ -186,19 +176,19 @@ class DFRobotExpansionBoard(abc.ABC):
                 self._REG_PWM_DUTY1 + (i - 1) * 2, [int(duty), int((duty * 10) % 10)]
             )
 
-    def set_adc_enable(self):
+    def set_adc_enable(self) -> None:
         """
         @brief    Set adc enable
         """
         self._write_bytes(self._REG_ADC_CTRL, [0x01])
 
-    def set_adc_disable(self):
+    def set_adc_disable(self) -> None:
         """
         @brief    Set adc disable
         """
         self._write_bytes(self._REG_ADC_CTRL, [0x00])
 
-    def get_adc_value(self, chan):
+    def get_adc_value(self, chan: int) -> Union[List[float], float]:
         """
         @brief    Get adc value
         @param chan: int    Channel to get, in range 1 to 4, or self.ALL
@@ -208,7 +198,7 @@ class DFRobotExpansionBoard(abc.ABC):
             rslt = self._read_bytes(self._REG_ADC_VAL1 + (i - 1) * 2, 2)
         return (rslt[0] << 8) | rslt[1]
 
-    def detecte(self):
+    def detecte(self) -> List[str]:
         """
         @brief    If you forget address you had set, use this to detecte them, must have class instance
         @return   Board list conformed
@@ -219,117 +209,26 @@ class DFRobotExpansionBoard(abc.ABC):
             self._addr = i
             if self.begin() == self.STA_OK:
                 l.append(i)
-        l = map(hex, l)
         self._addr = back
         self.last_operate_status = self.STA_OK
-        return l
-
-
-class DFRobotExpansionBoardDigitalRGBLED:
-    """Class for digital RGB LED control."""
-
-    def __init__(self, board):
-        """
-        @param board: DFRobot_Expansion_Board   Board instance to operate digital rgb led, test LED: https://www.dfrobot.com/product-1829.html
-                                                Warning: LED must connect to pwm channel, otherwise may destory Pi IO
-        """
-        self._board = board
-        self._chan_r = 0
-        self._chan_g = 0
-        self._chan_b = 0
-
-    def begin(self, chan_r, chan_g, chan_b):
-        """
-        @brief    Set digital rgb led color channel, these parameters not repeat
-        @param chan_r: int    Set color red channel id, in range 1 to 4
-        @param chan_g: int    Set color green channel id, in range 1 to 4
-        @param chan_b: int    Set color blue channel id, in range 1 to 4
-        """
-        if chan_r == chan_g or chan_r == chan_b or chan_g == chan_b:
-            return
-        if (
-            chan_r < _PWM_CHAN_COUNT
-            and chan_g < _PWM_CHAN_COUNT
-            and chan_b < _PWM_CHAN_COUNT
-        ):
-            self._chan_r = chan_r
-            self._chan_g = chan_g
-            self._chan_b = chan_b
-            self._board.set_pwm_enable()
-            self._board.set_pwm_frequency(1000)
-            self._board.set_pwm_duty(self._board.ALL, 100)
-
-    def color888(self, r, g, b):
-        """
-        @brief    Set LED to true-color
-        @param r: int   Color components red
-        @param g: int   Color components green
-        @param b: int   Color components blue
-        """
-        self._board.set_pwm_duty([self._chan_r], 100 - (r & 0xFF) * 100 // 255)
-        self._board.set_pwm_duty([self._chan_g], 100 - (g & 0xFF) * 100 // 255)
-        self._board.set_pwm_duty([self._chan_b], 100 - (b & 0xFF) * 100 // 255)
-
-    def color24(self, color):
-        """
-        @brief    Set LED to 24-bits color
-        @param color: int   24-bits color
-        """
-        color &= 0xFFFFFF
-        self.color888(color >> 16, (color >> 8) & 0xFF, color & 0xFF)
-
-    def color565(self, color):
-        """
-        @brief    Set LED to 16-bits color
-        @param color: int   16-bits color
-        """
-        color &= 0xFFFF
-        self.color888((color & 0xF800) >> 8, (color & 0x7E0) >> 3, (color & 0x1F) << 3)
-
-
-class DFRobotExpansionBoardServo:
-    """Class to operate a servo"""
-
-    def __init__(self, board):
-        """
-        @param board: DFRobot_Expansion_Board   Board instance to operate servo, test servo: https://www.dfrobot.com/product-255.html
-                                                Warning: servo must connect to pwm channel, otherwise may destory Pi IO
-        """
-        self._board = board
-
-    def begin(self):
-        """
-        @brief    Board servo begin
-        """
-        self._board.set_pwm_enable()
-        self._board.set_pwm_frequency(50)
-        self._board.set_pwm_duty(self._board.ALL, 0)
-
-    def move(self, id_, angle):
-        """
-        @brief    Servos move
-        @param id_: list     One or more servos to set, items in range 1 to 4, or chan = self.ALL
-        @param angle: int   Angle to move, in range 0 to 180
-        """
-        if 0 <= angle <= 180:
-            self._board.set_pwm_duty(id_, (0.5 + (float(angle) / 90.0)) / 20 * 100)
+        return list(map(hex, l))
 
 
 class DFRobotExpansionBoardIIC(DFRobotExpansionBoard):
     """Class for IIC communication with Expansion Board."""
 
-    def __init__(self, bus_id, addr):
+    def __init__(self, bus_id: int, addr: int) -> None:
         """
         @param bus_id: int   Which bus to operate
         @oaram addr: int     Board controler address
         """
         # pylint: disable=import-outside-toplevel,import-error
-        import smbus
+        import smbus  # type: ignore
 
         self._bus = smbus.SMBus(bus_id)
         super().__init__(addr)
 
-    def _write_bytes(self, reg, buf):
+    def _write_bytes(self, reg: int, buf: List[int]) -> None:
         # pylint: disable=broad-exception-caught
         self.last_operate_status = self.STA_ERR_DEVICE_NOT_DETECTED
         try:
@@ -338,13 +237,24 @@ class DFRobotExpansionBoardIIC(DFRobotExpansionBoard):
         except Exception:
             _LOG.warning("DFRobotExpansionBoardIIC I2C write error")
 
-    def _read_bytes(self, reg, length):
+    def _read_bytes(self, reg: int, length: int) -> List[int]:
         # pylint: disable=broad-exception-caught
         self.last_operate_status = self.STA_ERR_DEVICE_NOT_DETECTED
         try:
-            rslt = self._bus.read_i2c_block_data(self._addr, reg, length)
+            rslt: List[int] = self._bus.read_i2c_block_data(self._addr, reg, length)
             self.last_operate_status = self.STA_OK
             return rslt
         except Exception:
             _LOG.warning("DFRobotExpansionBoardIIC I2C read error")
             return [0] * length
+
+
+def board_status_str(board: DFRobotExpansionBoard) -> str:
+    """Return board status as string."""
+    return {
+        board.STA_OK: "STA_OK",
+        board.STA_ERR: "STA_ERR",
+        board.STA_ERR_DEVICE_NOT_DETECTED: "STA_ERR_DEVICE_NOT_DETECTED",
+        board.STA_ERR_PARAMETER: "STA_ERR_PARAMETER",
+        board.STA_ERR_SOFT_VERSION: "STA_ERR_SOFT_VERSION",
+    }.get(board.last_operate_status, "unknown error")

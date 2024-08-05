@@ -7,7 +7,7 @@ import json
 import logging
 import os
 
-from typing import cast
+from typing import Tuple
 
 from mqtt_io.events import EventBus, SensorReadEvent
 from mqtt_io.exceptions import RuntimeConfigError
@@ -45,16 +45,18 @@ class Calibrator(abc.ABC):
     """Class to handle calibration"""
 
     def __init__(self) -> None:
-        self.kvalue_low = INITIAL_KVALUE
-        self.kvalue_mid = INITIAL_KVALUE
-        self.kvalue_high = INITIAL_KVALUE
+        self.kvalue_low: float = INITIAL_KVALUE
+        self.kvalue_mid: float = INITIAL_KVALUE
+        self.kvalue_high: float = INITIAL_KVALUE
         if os.path.exists(CALIBRATION_FILE):
             self.kvalue_low, self.kvalue_mid, self.kvalue_high = self.read_calibration()
 
-    def calibrate(self, voltage, temperature) -> None:
+    def calibrate(self, voltage: float, temperature: float) -> None:
         """Set the calibration values and write out to file."""
 
-        def calc_kvalue(ec_solution, voltage, temperature):
+        def calc_kvalue(
+            ec_solution: float, voltage: float, temperature: float
+        ) -> float:
             comp_ec_solution = ec_solution * (1.0 + 0.0185 * (temperature - 25.0))
             return round(820.0 * 200.0 * comp_ec_solution / 1000.0 / voltage, 2)
 
@@ -74,7 +76,8 @@ class Calibrator(abc.ABC):
         # Should think about looping to stabalise the reading before writing
         self.write_calibration()
 
-    def read_calibration(self):
+    @staticmethod
+    def read_calibration() -> Tuple[float, float, float]:
         """Read calibrated values from json file.
         {
           "kvalue_low": 1.0,
@@ -84,28 +87,35 @@ class Calibrator(abc.ABC):
 
         """
         if os.path.exists(CALIBRATION_FILE):
-            with open(CALIBRATION_FILE, "r", encoding=CALIBRATION_FILE_ENCODING) as f:
-                data = json.load(f)
+            with open(
+                CALIBRATION_FILE, "r", encoding=CALIBRATION_FILE_ENCODING
+            ) as file_handle:
+                data = json.load(file_handle)
                 kvalue_low = float(data["kvalue_low"])
                 kvalue_mid = float(data["kvalue_mid"])
                 kvalue_high = float(data["kvalue_high"])
             return (kvalue_low, kvalue_mid, kvalue_high)
         raise FileNotFoundError(f"Calibration file ${CALIBRATION_FILE} not found")
 
-    def write_calibration(self):
+    def write_calibration(self) -> None:
         """Write calibrated values to json file."""
         try:
-            with open(CALIBRATION_FILE, "w", encoding=CALIBRATION_FILE_ENCODING) as f:
+            with open(
+                CALIBRATION_FILE, "w", encoding=CALIBRATION_FILE_ENCODING
+            ) as file_handle:
                 data = {
                     "kvalue_low": self.kvalue_low,
                     "kvalue_mid": self.kvalue_mid,
                     "kvalue_high": self.kvalue_high,
                 }
-                json.dump(data, f, indent=2, encoding="ascii")
+                json.dump(
+                    data, file_handle, indent=2, encoding=CALIBRATION_FILE_ENCODING
+                )
         except IOError as exc:
             _LOG.warning("Failed to write calibration data: %s", exc)
 
 
+# pylint: disable=too-many-instance-attributes
 class Sensor(GenericSensor):
     """
     Implementation of Sensor class for the DFR0300 Electrical Conductivity Sensor
@@ -128,14 +138,16 @@ class Sensor(GenericSensor):
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
-        from .drivers.DFRobot_RaspberryPi_Expansion_Board import DFRobotExpansionBoardIIC  # type: ignore
+        from .drivers.DFRobot_RaspberryPi_Expansion_Board import (
+            DFRobotExpansionBoardIIC,
+        )  # type: ignore
 
         self.board = DFRobotExpansionBoardIIC(
             self.config["i2c_bus_num"], self.config["chip_addr"]
         )  # type: ignore
         self.board.setup()
-
         self.board.set_adc_enable()
+
         self.pin2channel = {
             0: self.board.A0,
             1: self.board.A1,
@@ -158,7 +170,7 @@ class Sensor(GenericSensor):
 
         pin: PinType = sens_conf["pin"]
         try:
-            self.channel = self.pin2channel[pin]
+            self.channel = self.pin2channel[int(pin)]
         except KeyError as exc:
             raise RuntimeConfigError(
                 "pin '%s' was not configured to return a valid value" % pin
@@ -168,15 +180,14 @@ class Sensor(GenericSensor):
             _LOG.info("dfr0300: No temperature sensor configured")
             return
 
-        def on_sensor_read(data):
+        def on_sensor_read(data: SensorReadEvent) -> None:
             """Callback for sensor read event"""
             if data.sensor_name == sens_conf[TEMPSENSOR_ID] and data.value is not None:
                 self.temperature = data.value
 
-        self.event_bus = event_bus
-        self.event_bus.subscribe(SensorReadEvent, on_sensor_read)
+        event_bus.subscribe(SensorReadEvent, on_sensor_read)
 
-    def ec_from_voltage(self, voltage, temperature):
+    def ec_from_voltage(self, voltage: float, temperature: float) -> float:
         """Convert voltage to EC with temperature compensation"""
         # pylint: disable=attribute-defined-outside-init
         raw_ec = calc_raw_ec(voltage)
@@ -195,9 +206,6 @@ class Sensor(GenericSensor):
         Get the EC from the sensor
         """
         voltage = self.board.get_adc_value(self.channel)
-        ec = self.ec_from_voltage(voltage, self.temperature)
-        #_LOG.info("Temperature:%.2f ^C EC:%.2f ms/cm", self.temperature, ec)
-        return cast(
-            float,
-            ec,
-        )
+        ec_value = self.ec_from_voltage(voltage, self.temperature)
+        # _LOG.info("Temperature:%.2f ^C EC:%.2f ms/cm", self.temperature, ec_value)
+        return ec_value
