@@ -4,7 +4,8 @@
   Adapted from the below by @linucks
 
   @file DFRobot_RaspberryPi_Expansion_Board.py
-  @brief This RaspberryPi expansion board can communicate with RaspberryPi via I2C. It has 10 GPIOs, 1 SPI, 4 I2Cs and 1 uart.
+  @brief This RaspberryPi expansion board can communicate with RaspberryPi via I2C.
+         It has 10 GPIOs, 1 SPI, 4 I2Cs and 1 uart.
   @copyright   Copyright (c) 2010 DFRobot Co.Ltd (http://www.dfrobot.com)
   @license     The MIT License (MIT)
   @author      Frank(jiehan.guo@dfrobot.com)
@@ -15,7 +16,7 @@
 import abc
 import logging
 import time
-from typing import List, Union
+from typing import List
 
 _PWM_CHAN_COUNT = 4
 _ADC_CHAN_COUNT = 4
@@ -59,7 +60,7 @@ class DFRobotExpansionBoard(abc.ABC):
     STA_ERR_SOFT_VERSION = 0x03
     STA_ERR_PARAMETER = 0x04
 
-    """ last operate status, users can use this variable to determine the result of a function call. """
+    """Last operation status: use this variable to determine the result of a function call. """
     last_operate_status = STA_OK
 
     @abc.abstractmethod

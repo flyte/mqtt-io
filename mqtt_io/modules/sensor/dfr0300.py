@@ -138,7 +138,7 @@ class Sensor(GenericSensor):
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
-        from .drivers.DFRobot_RaspberryPi_Expansion_Board import (
+        from .drivers.dfr0566_driver import (
             DFRobotExpansionBoardIIC,
         )  # type: ignore
 
