@@ -62,9 +62,6 @@ class DFRobotExpansionBoard(abc.ABC):
     """ last operate status, users can use this variable to determine the result of a function call. """
     last_operate_status = STA_OK
 
-    """ Global variables """
-    ALL = 0xFFFFFFFF
-
     @abc.abstractmethod
     def _write_bytes(self, reg: int, buf: List[int]) -> None:
         pass
@@ -91,7 +88,6 @@ class DFRobotExpansionBoard(abc.ABC):
                 self.last_operate_status = self.STA_ERR_SOFT_VERSION
             else:
                 self.set_pwm_disable()
-                self.set_pwm_duty(self.ALL, 0)
                 self.set_adc_disable()
         return self.last_operate_status
 
@@ -105,113 +101,44 @@ class DFRobotExpansionBoard(abc.ABC):
             return
         self._write_bytes(self._REG_SLAVE_ADDR, [addr])
 
-    def _parse_id(self, limit: int, id_: Union[int, List[int]]) -> List[int]:
-        if id_ == self.ALL:
-            return list(range(1, limit + 1))
-        ld = []
-        if not isinstance(id_, list):
-            id_ = id_ + 1
-            ld.append(id_)
-        else:
-            ld = [i + 1 for i in id_]
-        for i in ld:
-            if i < 1 or i > limit:
-                self.last_operate_status = self.STA_ERR_PARAMETER
-                return []
-        return ld
-
     def setup(self) -> None:
         """Run the board setup."""
         count = 0
         while self.begin() != self.STA_OK:
             count += 1
             if count > BOARD_SETUP_TRIES:
-                raise RuntimeError("board begin failed: %s" % board_status_str(self))
+                raise RuntimeError(
+                    "Failed to initialise board: %s" % board_status_str(self)
+                )
             time.sleep(BOARD_SETUP_TIMEOUT)
-
-    def set_pwm_enable(self) -> None:
-        """
-        @brief    Set pwm enable, pwm channel need external power
-        """
-        self._write_bytes(self._REG_PWM_CONTROL, [0x01])
-        if self.last_operate_status == self.STA_OK:
-            self._is_pwm_enable = True
-        time.sleep(0.01)
 
     def set_pwm_disable(self) -> None:
         """
-        @brief    Set pwm disable
+        Disable the PWM
         """
         self._write_bytes(self._REG_PWM_CONTROL, [0x00])
         if self.last_operate_status == self.STA_OK:
             self._is_pwm_enable = False
         time.sleep(0.01)
 
-    def set_pwm_frequency(self, freq: int) -> None:
-        """
-        @brief    Set pwm frequency
-        @param freq: int    Frequency to set, in range 1 - 1000
-        """
-        if freq < 1 or freq > 1000:
-            self.last_operate_status = self.STA_ERR_PARAMETER
-            return
-        is_pwm_enable = self._is_pwm_enable
-        self.set_pwm_disable()
-        self._write_bytes(self._REG_PWM_FREQ, [freq >> 8, freq & 0xFF])
-        time.sleep(0.01)
-        if is_pwm_enable:
-            self.set_pwm_enable()
-
-    def set_pwm_duty(self, chan: Union[int, List[int]], duty: float) -> None:
-        """
-        @brief    Set selected channel duty
-        @param chan: list     One or more channels to set, items in range 1 to 4, or chan = self.ALL
-        @param duty: float    Duty to set, in range 0.0 to 100.0
-        """
-        if duty < 0 or duty > 100:
-            self.last_operate_status = self.STA_ERR_PARAMETER
-            return
-        for i in self._parse_id(_PWM_CHAN_COUNT, chan):
-            self._write_bytes(
-                self._REG_PWM_DUTY1 + (i - 1) * 2, [int(duty), int((duty * 10) % 10)]
-            )
-
     def set_adc_enable(self) -> None:
         """
-        @brief    Set adc enable
+        Enable the ADC
         """
         self._write_bytes(self._REG_ADC_CTRL, [0x01])
 
     def set_adc_disable(self) -> None:
         """
-        @brief    Set adc disable
+        Disable the ADC
         """
         self._write_bytes(self._REG_ADC_CTRL, [0x00])
 
     def get_adc_value(self, chan: int) -> Union[List[float], float]:
         """
-        @brief    Get adc value
-        @param chan: int    Channel to get, in range 1 to 4, or self.ALL
-        @return :list       List of value
+        Return the ADC value for the given channel.
         """
-        for i in self._parse_id(_ADC_CHAN_COUNT, chan):
-            rslt = self._read_bytes(self._REG_ADC_VAL1 + (i - 1) * 2, 2)
+        rslt = self._read_bytes(self._REG_ADC_VAL1 + chan * 2, 2)
         return (rslt[0] << 8) | rslt[1]
-
-    def detecte(self) -> List[str]:
-        """
-        @brief    If you forget address you had set, use this to detecte them, must have class instance
-        @return   Board list conformed
-        """
-        l = []
-        back = self._addr
-        for i in range(1, 127):
-            self._addr = i
-            if self.begin() == self.STA_OK:
-                l.append(i)
-        self._addr = back
-        self.last_operate_status = self.STA_OK
-        return list(map(hex, l))
 
 
 class DFRobotExpansionBoardIIC(DFRobotExpansionBoard):
