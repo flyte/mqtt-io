@@ -6,7 +6,7 @@ from typing import cast
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("adafruit-circuitpython-tsl2561",)
+REQUIREMENTS = ("adafruit-circuitpython-tsl2561",) # type: ignore
 CONFIG_SCHEMA: CerberusSchemaType = {
     "chip_addr": {
         "type": 'integer',
