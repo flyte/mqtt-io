@@ -133,7 +133,7 @@ class DFRobotExpansionBoard(abc.ABC):
         """
         self._write_bytes(self._REG_ADC_CTRL, [0x00])
 
-    def get_adc_value(self, chan: int) -> Union[List[float], float]:
+    def get_adc_value(self, chan: int) -> float:
         """
         Return the ADC value for the given channel.
         """

@@ -180,10 +180,15 @@ class Sensor(GenericSensor):
             _LOG.info("dfr0300: No temperature sensor configured")
             return
 
-        def on_sensor_read(data: SensorReadEvent) -> None:
-            """Callback for sensor read event"""
-            if data.sensor_name == sens_conf[TEMPSENSOR_ID] and data.value is not None:
-                self.temperature = data.value
+        async def on_sensor_read(event: SensorReadEvent) -> None:
+            """Callback for sensor read event
+            Sets self.temperature from the temperature sensor
+            """
+            if (
+                event.sensor_name == sens_conf[TEMPSENSOR_ID]
+                and event.value is not None
+            ):
+                self.temperature = event.value
 
         event_bus.subscribe(SensorReadEvent, on_sensor_read)
 
