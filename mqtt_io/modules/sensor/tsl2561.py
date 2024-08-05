@@ -6,7 +6,7 @@ from typing import cast
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
-REQUIREMENTS = ("adafruit-circuitpython-tsl2561",) # type: ignore
+REQUIREMENTS = ("adafruit-circuitpython-tsl2561",)
 CONFIG_SCHEMA: CerberusSchemaType = {
     "chip_addr": {
         "type": 'integer',
@@ -48,7 +48,7 @@ class Sensor(GenericSensor):
         # pylint: disable=import-error,no-member
         import board  # type: ignore
         import busio  # type: ignore
-        import adafruit_tsl2561
+        import adafruit_tsl2561 # type: ignore
         # Create the I2C bus
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
@@ -62,7 +62,6 @@ class Sensor(GenericSensor):
             self.address = 41
 
         self.tsl = adafruit_tsl2561.TSL2561(self.i2c, self.address)
-
 
         # Set gain 0=1x, 1=16x
         if self.config["gain"] == 1:
@@ -85,15 +84,22 @@ class Sensor(GenericSensor):
         #print("tsl2561 Integration time = {}".format(self.tsl.integration_time))
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
-        """
-        Get the values from the sensor
-        """
+        # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
+        # pylint: disable=import-error,no-member
+        import time
+
+        self.tsl.enabled = True
+        time.sleep(1)
+
         sens_type = sens_conf["type"]
         data = {
             "broadband": self.tsl.broadband,
             "infrared": self.tsl.infrared,
             "lux": self.tsl.lux
         }
+
+        self.tsl.enabled = False
+
         if data[sens_type] is None: # Possible sensor underrange or overrange.
             data[sens_type] = -1
 
