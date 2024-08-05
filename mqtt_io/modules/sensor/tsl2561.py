@@ -1,8 +1,6 @@
 """
 TSL2561 luminosity sensor
 """
-import threading
-
 from typing import cast
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
@@ -10,19 +8,23 @@ from . import GenericSensor
 
 REQUIREMENTS = ("adafruit-circuitpython-tsl2561",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "chip_addr": dict(type="integer", required=False, empty=False, default=0x48),
-    "integration_time": dict(
-        required=False,
-        empty=False,
-        allowed=[13.7, 101, 402],
-        default=101,
-    ),
-    "gain": dict(
-        required=False,
-        empty=False,
-        allowed=[1, 16],
-        default=1,
-    ),
+    "chip_addr": {
+        "type": 'integer',
+        "required": False,
+        "empty": False,
+        "default": '0x48'},
+    "integration_time": {
+        "required": False,
+        "empty": False,
+        "allowed": [13.7, 101, 402],
+        "default": 101,
+    },
+    "gain": {
+        "required": False,
+        "empty": False,
+        "allowed": [1, 16],
+        "default": 1,
+    },
 }
 
 
@@ -32,13 +34,13 @@ class Sensor(GenericSensor):
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
-        "type": dict(
-            type="string",
-            required=False,
-            empty=False,
-            allowed=["broadband", "infrared", "lux"],
-            default="lux",
-        ),
+        "type": {
+            "type": 'string',
+            "required": False,
+            "empty": False,
+            "allowed": ['broadband', 'infrared', 'lux'],
+            "default": 'lux',
+        },
     }
 
     def setup_module(self) -> None:
@@ -83,23 +85,17 @@ class Sensor(GenericSensor):
         #print("tsl2561 Integration time = {}".format(self.tsl.integration_time))
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
-        import time
         """
         Get the values from the sensor
         """
-        self.tsl.enabled = True # Enable sensor
-        time.sleep(1)
-
         sens_type = sens_conf["type"]
-        data = dict(
-            broadband=self.tsl.broadband,
-            infrared=self.tsl.infrared,
-            lux=self.tsl.lux
-        )
+        data = {
+            "broadband": self.tsl.broadband,
+            "infrared": self.tsl.infrared,
+            "lux": self.tsl.lux
+        }
         if data[sens_type] is None: # Possible sensor underrange or overrange.
             data[sens_type] = -1
-
-        self.tsl.enabled = False # Disable for energy savings
 
         return cast(
             float,
