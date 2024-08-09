@@ -53,29 +53,28 @@ class Sensor(GenericSensor):
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
         # Convert sensor address from hex to dec
-        self.address = 57
-        if self.config["chip_addr"] == 0x39:
-            self.address = 57
-        elif self.config["chip_addr"] == 0x49:
-            self.address = 73
-        elif self.config["chip_addr"] == 0x29:
-            self.address = 41
+        self.address = int(0x48)
+        if 'chip_addr' in self.config:
+            self.address = int(self.config['chip_addr'])
 
         self.tsl = adafruit_tsl2561.TSL2561(self.i2c, self.address)
 
         # Set gain 0=1x, 1=16x
-        if self.config["gain"] == 1:
-            self.tsl.gain = 0
-        elif self.config["gain"] == 16:
-            self.tsl.gain = 1
+        gains = {
+            "1": 0,
+            "16": 1,
+        }
+        if 'gain' in self.config:
+            self.tsl.gain = gains[str(self.config["gain"])]
 
         # Set integration time (0=13.7ms, 1=101ms, 2=402ms, or 3=manual)
-        if self.config["integration_time"] == 13.7:
-            self.tsl.integration_time = 0
-        elif self.config["integration_time"] == 101:
-            self.tsl.integration_time = 1
-        elif self.config["integration_time"] == 402:
-            self.tsl.integration_time = 2
+        ints = {
+            "13.7": 0,
+            "101": 1,
+            "402": 2,
+        }
+        if 'integration_time' in self.config:
+            self.tsl.integration_time = ints[str(self.config["integration_time"])]
 
         self.tsl.enabled = True
 
@@ -87,7 +86,6 @@ class Sensor(GenericSensor):
         # pylint: disable=import-outside-toplevel,attribute-defined-outside-init
         # pylint: disable=import-error,no-member
         import time
-
         self.tsl.enabled = True
         time.sleep(1)
 
