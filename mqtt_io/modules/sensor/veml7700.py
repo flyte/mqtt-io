@@ -79,7 +79,8 @@ class Sensor(GenericSensor):
             "800": 'ALS_800MS',
         }
         if 'integration_time' in self.config:
-            self.veml7700.light_integration_time = getattr(self.veml7700, ints[str(self.config['integration_time'])])
+            self.veml7700.light_integration_time = getattr(self.veml7700,
+                ints[str(self.config['integration_time'])])
 
         #print("veml7700 Gain = {}".format(self.veml7700.light_gain))
         #print("veml7700 Integration time = {}".format(self.veml7700.light_integration_time))
@@ -94,11 +95,11 @@ class Sensor(GenericSensor):
             "lux_corrected": "-1",
         }
 
-        # Correction formula according to https://www.vishay.com/docs/84323/designingveml7700.pdf for lux > 1000
         if data['lux'] > 1000:
-            data['lux_corrected'] = (6.0135e-13 * data['lux'] ** 4) + (-9.3924e-9 * data['lux'] ** 3) + (8.1488e-5 * data['lux'] ** 2) + (1.0023 * data['lux'])
-        else:
-            data['lux_corrected'] = data['lux']
+            data['lux_corrected'] = (6.0135e-13 * data['lux'] ** 4) + \
+                (-9.3924e-9 * data['lux'] ** 3) + \
+                (8.1488e-5 * data['lux'] ** 2) + \
+                (1.0023 * data['lux'])
 
         return cast(
             float,
