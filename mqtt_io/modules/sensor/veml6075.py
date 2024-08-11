@@ -76,7 +76,6 @@ class Sensor(GenericSensor):
         """
         Get the UV index from the sensor
         """
-        # Setup and turn on the sensor
 
         # Fetch the values
         uva, uvb = self.sensor.get_measurements()
