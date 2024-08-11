@@ -5,7 +5,6 @@ VEML 6075 UV sensor
 from mqtt_io.types import ConfigType, SensorValueType
 from . import GenericSensor
 import logging
-import time
 
 REQUIREMENTS = ("smbus2", "veml6075",)
 
@@ -61,15 +60,15 @@ class Sensor(GenericSensor):
 
 
     def calculate_uv_index(self, sens_conf, uva, uvb, uv_comp1, uv_comp2) -> float:
-        _LOG.info("UVA: " + str(uva) + " UVB: " + str(uvb) + " UV_comp1: " + str(uv_comp1) + " UV_comp2: " + str(uv_comp2))
+        _LOG.debug("UVA: " + str(uva) + " UVB: " + str(uvb) + " UV_comp1: " + str(uv_comp1) + " UV_comp2: " + str(uv_comp2))
         uva_calc = uva - (sens_conf["a"] * uv_comp1) - (sens_conf["b"] * uv_comp2)
-        _LOG.info("uva_calc " + str(uva_calc))
+        _LOG.debug("uva_calc " + str(uva_calc))
         uvb_calc = uvb - (sens_conf["c"] * uv_comp1) - (sens_conf["d"] * uv_comp2)
-        _LOG.info("uvb_calc " + str(uvb_calc))
+        _LOG.debug("uvb_calc " + str(uvb_calc))
         uva_index = uva_calc * sens_conf["UVAresp"]
-        _LOG.info("uva_index " + str(uva_index))
+        _LOG.debug("uva_index " + str(uva_index))
         uvb_index = uvb_calc * sens_conf["UVBresp"]
-        _LOG.info("uvb_index " + str(uvb_index))
+        _LOG.debug("uvb_index " + str(uvb_index))
         uv_index = (uva_index + uvb_index) / 2
         return uv_index
 
@@ -80,12 +79,8 @@ class Sensor(GenericSensor):
         # Setup and turn on the sensor
 
         # Fetch the values
-        #time.sleep(.2)
         uva, uvb = self.sensor.get_measurements()
         uv_comp1, uv_comp2 = self.sensor.get_comparitor_readings()
-
-        # Turn off the sensor
-        #self.sensor.set_shutdown(True)
 
         # Calculate and return the UV index
         return self.calculate_uv_index(sens_conf, uva, uvb, uv_comp1, uv_comp2)
