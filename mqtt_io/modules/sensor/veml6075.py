@@ -60,7 +60,9 @@ class Sensor(GenericSensor):
         self.sensor.set_shutdown(False)
 
 
-    def calculate_uv_index(self, sens_conf, uva, uvb, uv_comp1, uv_comp2) -> float:
+    def calculate_uv_index(self, sens_conf: ConfigType, \
+        uva: float, uvb: float, uv_comp1: float, uv_comp2: float) -> float:
+
         """
         Calculate the UV index from received values.
         """
@@ -72,7 +74,7 @@ class Sensor(GenericSensor):
         uva_index = uva_calc * sens_conf["UVAresp"]
         uvb_index = uvb_calc * sens_conf["UVBresp"]
         _LOG.debug("uva_index: %f uvb_index: %f", uva_index, uvb_index)
-        uv_index = (uva_index + uvb_index) / 2
+        uv_index: float = (uva_index + uvb_index) / 2.0
         return uv_index
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
