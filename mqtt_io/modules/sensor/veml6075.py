@@ -2,9 +2,9 @@
 VEML 6075 UV sensor
 """
 
+import logging
 from mqtt_io.types import ConfigType, SensorValueType
 from . import GenericSensor
-import logging
 
 REQUIREMENTS = ("smbus2", "veml6075",)
 
@@ -14,7 +14,8 @@ CONFIG_SCHEMA = {
 
 
 # UV COEFFICIENTS AND RESPONSIVITY
-# See https://web.archive.org/web/20190416120825/http://www.vishay.com/docs/84339/designingveml6075.pdf
+# More details here :
+# https://web.archive.org/web/20190416120825/http://www.vishay.com/docs/84339/designingveml6075.pdf
 # For more details
 ##################################################################################
 # Configuration                #  a   #   b  #  c   #  d  #  UVAresp  # UVBresp  #
@@ -45,7 +46,7 @@ class Sensor(GenericSensor):
         "UVAresp": {"type": "float", "required": False, "empty": False, "default": 0.001461},
         "UVBresp": {"type": "float", "required": False, "empty": False, "default": 0.002591},
     }
-    
+
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
         from smbus2 import SMBus  # type: ignore
@@ -60,15 +61,17 @@ class Sensor(GenericSensor):
 
 
     def calculate_uv_index(self, sens_conf, uva, uvb, uv_comp1, uv_comp2) -> float:
-        _LOG.debug("UVA: " + str(uva) + " UVB: " + str(uvb) + " UV_comp1: " + str(uv_comp1) + " UV_comp2: " + str(uv_comp2))
+        """
+        Calculate the UV index from received values.
+        """
+
+        _LOG.debug("UVA: %f UVB: %f UV_comp1: %f UV_comp2: %f)", uva, uvb, uv_comp1, uv_comp2)
         uva_calc = uva - (sens_conf["a"] * uv_comp1) - (sens_conf["b"] * uv_comp2)
-        _LOG.debug("uva_calc " + str(uva_calc))
         uvb_calc = uvb - (sens_conf["c"] * uv_comp1) - (sens_conf["d"] * uv_comp2)
-        _LOG.debug("uvb_calc " + str(uvb_calc))
+        _LOG.debug("uva_calc: %f uvb_calc: %f", uva_calc, uvb_calc)
         uva_index = uva_calc * sens_conf["UVAresp"]
-        _LOG.debug("uva_index " + str(uva_index))
         uvb_index = uvb_calc * sens_conf["UVBresp"]
-        _LOG.debug("uvb_index " + str(uvb_index))
+        _LOG.debug("uva_index: %f uvb_index: %f", uva_index, uvb_index)
         uv_index = (uva_index + uvb_index) / 2
         return uv_index
 
