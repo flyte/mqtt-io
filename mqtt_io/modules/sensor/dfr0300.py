@@ -1,5 +1,29 @@
 """
 DFRobot Gravity DFR0300 Electrical Conductivity Sensor
+
+Example config (including optional temperature sensor):
+
+sensor_modules:
+  - name: aht20_temp
+    module: aht20
+  - name: dfr0300
+    module: dfr0300
+
+sensor_inputs:
+  - name: temperature
+    module: aht20_temp 
+    type: temperature
+    interval: 10
+    digits: 4
+
+  - name: ec
+    module: dfr0300
+    pin: 0
+    tempsensor: temperature
+    interval: 10
+    digits: 4
+
+
 """
 
 import abc
@@ -17,7 +41,7 @@ from . import GenericSensor
 
 _LOG = logging.getLogger(__name__)
 
-
+REQUIREMENTS = ("smbus",)
 CONFIG_SCHEMA: CerberusSchemaType = {
     "i2c_bus_num": {"type": "integer", "required": False, "empty": False, "default": 1},
     "chip_addr": {
