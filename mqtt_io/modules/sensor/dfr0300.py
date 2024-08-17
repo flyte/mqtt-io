@@ -11,7 +11,7 @@ sensor_modules:
 
 sensor_inputs:
   - name: temperature
-    module: aht20_temp 
+    module: aht20_temp
     type: temperature
     interval: 10
     digits: 4
@@ -20,6 +20,8 @@ sensor_inputs:
     module: dfr0300
     pin: 0
     tempsensor: temperature
+    # Specify temperature if no temperature sensor is configured
+    #temperature: 25.0
     interval: 10
     digits: 4
 
@@ -55,9 +57,10 @@ CONFIG_SCHEMA: CerberusSchemaType = {
 ANALOG_PINS = [0, 1, 2, 3]
 CALIBRATION_FILE = "ec_config.json"
 CALIBRATION_FILE_ENCODING = "ascii"
-DEFAULT_TEMPERATURE = 25.0
 INITIAL_KVALUE = 1.0
+DEFAULT_TEMPERATURE = 25.0
 TEMPSENSOR_ID = "tempsensor"
+TEMPERATURE_ID = "temperature"
 
 
 def calc_raw_ec(voltage: float) -> float:
@@ -158,6 +161,11 @@ class Sensor(GenericSensor):
             "required": False,
             "empty": False,
         },
+        TEMPERATURE_ID: {
+            "type": "float",
+            "required": False,
+            "empty": False,
+        },
     }
 
     def setup_module(self) -> None:
@@ -189,16 +197,26 @@ class Sensor(GenericSensor):
         """
         Setup the sensor module
         """
-        # pylint: disable=attribute-defined-outside-init
-        self.temperature = DEFAULT_TEMPERATURE
+        if TEMPSENSOR_ID in sens_conf and TEMPERATURE_ID in sens_conf:
+            raise RuntimeConfigError(
+                "Cannot specify both temperature sensor and temperature value"
+            )
 
         pin: PinType = sens_conf["pin"]
         try:
+            # pylint: disable=attribute-defined-outside-init
             self.channel = self.pin2channel[int(pin)]
         except KeyError as exc:
             raise RuntimeConfigError(
                 "pin '%s' was not configured to return a valid value" % pin
             ) from exc
+
+        # pylint: disable=attribute-defined-outside-init
+        self.temperature = DEFAULT_TEMPERATURE
+        if TEMPERATURE_ID in sens_conf:
+            self.temperature = sens_conf[TEMPERATURE_ID]
+            _LOG.info("dfr0300: Set temperature to %f", self.temperature)
+            return
 
         if TEMPSENSOR_ID not in sens_conf:
             _LOG.info("dfr0300: No temperature sensor configured")
