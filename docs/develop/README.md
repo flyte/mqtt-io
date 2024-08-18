@@ -130,6 +130,7 @@ sensor_inputs:
   - MH-Z19 NDIR CO2 sensor (`mhz19`)
   - PMS5003 Particulate Matter Sensor (`pms5003`)
   - SHT4x temperature and humidity sensor (`sht4x`)
+  - TSL2561 luminosity sensor (`tsl2561`)
   - YF-S201 Flow Rate Sensor
 
 Example configuration:
