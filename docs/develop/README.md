@@ -131,6 +131,7 @@ sensor_inputs:
   - PMS5003 Particulate Matter Sensor (`pms5003`)
   - SHT4x temperature and humidity sensor (`sht4x`)
   - TSL2561 luminosity sensor (`tsl2561`)
+  - VEML 6075 UV sensor (`veml6075`)
   - YF-S201 Flow Rate Sensor
 
 Example configuration:
