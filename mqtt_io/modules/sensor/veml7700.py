@@ -100,6 +100,8 @@ class Sensor(GenericSensor):
                 (-9.3924e-9 * data['lux'] ** 3) + \
                 (8.1488e-5 * data['lux'] ** 2) + \
                 (1.0023 * data['lux'])
+        else:
+            data['lux_corrected'] = data['lux']
 
         return cast(
             float,
