@@ -18,8 +18,6 @@ import logging
 import time
 from typing import List
 
-_PWM_CHAN_COUNT = 4
-_ADC_CHAN_COUNT = 4
 BOARD_SETUP_TRIES = 3
 BOARD_SETUP_TIMEOUT = 2
 
@@ -77,8 +75,8 @@ class DFRobotExpansionBoard(abc.ABC):
 
     def begin(self) -> int:
         """
-        @brief    Board begin
-        @return   Board status
+        Board begin
+        return:   Board status
         """
         pid = self._read_bytes(self._REG_PID, 1)
         vid = self._read_bytes(self._REG_VID, 1)
@@ -94,8 +92,8 @@ class DFRobotExpansionBoard(abc.ABC):
 
     def set_addr(self, addr: int) -> None:
         """
-        @brief    Set board controler address, reboot module to make it effective
-        @param address: int    Address to set, range in 1 to 127
+        Set board controler address, reboot module to make it effective
+        addr: int    Address to set, range in 1 to 127
         """
         if addr < 1 or addr > 127:
             self.last_operate_status = self.STA_ERR_PARAMETER
@@ -112,15 +110,6 @@ class DFRobotExpansionBoard(abc.ABC):
                     "Failed to initialise board: %s" % board_status_str(self)
                 )
             time.sleep(BOARD_SETUP_TIMEOUT)
-
-    def set_pwm_disable(self) -> None:
-        """
-        Disable the PWM
-        """
-        self._write_bytes(self._REG_PWM_CONTROL, [0x00])
-        if self.last_operate_status == self.STA_OK:
-            self._is_pwm_enable = False
-        time.sleep(0.01)
 
     def set_adc_enable(self) -> None:
         """
@@ -141,6 +130,52 @@ class DFRobotExpansionBoard(abc.ABC):
         rslt = self._read_bytes(self._REG_ADC_VAL1 + chan * 2, 2)
         return (rslt[0] << 8) | rslt[1]
 
+    def set_pwm_enable(self) -> None:
+        """
+        Set pwm enable, pwm channel need external power
+        """
+        self._write_bytes(self._REG_PWM_CONTROL, [0x01])
+        if self.last_operate_status == self.STA_OK:
+            self._is_pwm_enable = True
+        time.sleep(0.01)
+
+    def set_pwm_disable(self) -> None:
+        """
+        Disable the PWM
+        """
+        self._write_bytes(self._REG_PWM_CONTROL, [0x00])
+        if self.last_operate_status == self.STA_OK:
+            self._is_pwm_enable = False
+        time.sleep(0.01)
+
+    def set_pwm_frequency(self, freq: int) -> None:
+        """
+        Set PWM frequency:
+        freq: int    Frequency to set, in range 1 - 1000
+        """
+        if freq < 1 or freq > 1000:
+            self.last_operate_status = self.STA_ERR_PARAMETER
+            return
+        is_pwm_enable = self._is_pwm_enable
+        self.set_pwm_disable()
+        self._write_bytes(self._REG_PWM_FREQ, [freq >> 8, freq & 0xFF])
+        time.sleep(0.01)
+        if is_pwm_enable:
+            self.set_pwm_enable()
+
+    def set_pwm_duty(self, chan: int, duty: float) -> None:
+        """
+        Set selected channel duty:
+        chan: Channel to set, in range 0 - 3
+        duty: Duty to set, in range 0.0 to 100.0
+        """
+        if duty < 0 or duty > 100:
+            self.last_operate_status = self.STA_ERR_PARAMETER
+            return
+        self._write_bytes(
+            self._REG_PWM_DUTY1 + chan * 2, [int(duty), int((duty * 10) % 10)]
+        )
+
 
 class DFRobotExpansionBoardIIC(DFRobotExpansionBoard):
     """Class for IIC communication with Expansion Board."""
@@ -157,24 +192,57 @@ class DFRobotExpansionBoardIIC(DFRobotExpansionBoard):
         super().__init__(addr)
 
     def _write_bytes(self, reg: int, buf: List[int]) -> None:
-        # pylint: disable=broad-exception-caught
         self.last_operate_status = self.STA_ERR_DEVICE_NOT_DETECTED
         try:
             self._bus.write_i2c_block_data(self._addr, reg, buf)
             self.last_operate_status = self.STA_OK
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             _LOG.warning("DFRobotExpansionBoardIIC I2C write error")
 
     def _read_bytes(self, reg: int, length: int) -> List[int]:
-        # pylint: disable=broad-exception-caught
         self.last_operate_status = self.STA_ERR_DEVICE_NOT_DETECTED
         try:
             rslt: List[int] = self._bus.read_i2c_block_data(self._addr, reg, length)
             self.last_operate_status = self.STA_OK
             return rslt
-        except Exception:
+        except Exception:  # pylint: disable=broad-except
             _LOG.warning("DFRobotExpansionBoardIIC I2C read error")
             return [0] * length
+
+
+class DFRobotExpansionBoardServo:
+    """
+    board: DFRobot_Expansion_Board
+           Board instance to operate servo, test servo: https://www.dfrobot.com/product-255.html
+
+    Warning: servo must connect to pwm channel, otherwise may destory Pi IO
+    """
+
+    def __init__(self, board: DFRobotExpansionBoard) -> None:
+        """Set the board instance."""
+        self._board = board
+
+    def begin(self) -> None:
+        """
+        Board servo begin
+        """
+        self._board.set_pwm_enable()
+        self._board.set_pwm_frequency(50)
+        self._board.set_pwm_duty(0, 0)
+        self._board.set_pwm_duty(1, 0)
+        self._board.set_pwm_duty(2, 0)
+        self._board.set_pwm_duty(3, 0)
+
+    def move(self, channel_id: int, angle: int) -> None:
+        """
+        Move the servo to the given angle.
+        channel_id: int    Servos to set in range 0 to 3
+        angle: int   Angle to move, in range 0 to 180
+        """
+        if 0 <= angle <= 180:
+            self._board.set_pwm_duty(
+                channel_id, (0.5 + (float(angle) / 90.0)) / 20 * 100
+            )
 
 
 def board_status_str(board: DFRobotExpansionBoard) -> str:
