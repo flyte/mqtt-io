@@ -75,7 +75,8 @@ class Calibrator(abc.ABC):
         self.kvalue_low: float = INITIAL_KVALUE
         self.kvalue_mid: float = INITIAL_KVALUE
         self.kvalue_high: float = INITIAL_KVALUE
-        if os.path.exists(CALIBRATION_FILE):
+        self.calibration_file = CALIBRATION_FILE
+        if os.path.exists(self.calibration_file):
             self.kvalue_low, self.kvalue_mid, self.kvalue_high = self.read_calibration()
 
     def calibrate(self, voltage: float, temperature: float) -> None:
@@ -103,8 +104,7 @@ class Calibrator(abc.ABC):
         # Should think about looping to stabalise the reading before writing
         self.write_calibration()
 
-    @staticmethod
-    def read_calibration() -> Tuple[float, float, float]:
+    def read_calibration(self) -> Tuple[float, float, float]:
         """Read calibrated values from json file.
         {
           "kvalue_low": 1.0,
@@ -113,22 +113,22 @@ class Calibrator(abc.ABC):
         }
 
         """
-        if os.path.exists(CALIBRATION_FILE):
+        if os.path.exists(self.calibration_file):
             with open(
-                CALIBRATION_FILE, "r", encoding=CALIBRATION_FILE_ENCODING
+                self.calibration_file, "r", encoding=CALIBRATION_FILE_ENCODING
             ) as file_handle:
                 data = json.load(file_handle)
                 kvalue_low = float(data["kvalue_low"])
                 kvalue_mid = float(data["kvalue_mid"])
                 kvalue_high = float(data["kvalue_high"])
             return (kvalue_low, kvalue_mid, kvalue_high)
-        raise FileNotFoundError(f"Calibration file ${CALIBRATION_FILE} not found")
+        raise FileNotFoundError(f"Calibration file ${self.calibration_file} not found")
 
     def write_calibration(self) -> None:
         """Write calibrated values to json file."""
         try:
             with open(
-                CALIBRATION_FILE, "w", encoding=CALIBRATION_FILE_ENCODING
+                self.calibration_file, "w", encoding=CALIBRATION_FILE_ENCODING
             ) as file_handle:
                 data = {
                     "kvalue_low": self.kvalue_low,
