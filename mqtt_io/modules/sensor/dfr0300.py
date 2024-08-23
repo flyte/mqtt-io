@@ -188,10 +188,10 @@ class Sensor(GenericSensor):
         }
 
         self.kvalue = INITIAL_KVALUE
-        calibrator = Calibrator()
-        self.kvalue_low = calibrator.kvalue_low
-        self.kvalue_mid = calibrator.kvalue_mid
-        self.kvalue_high = calibrator.kvalue_high
+        self.calibrator = Calibrator()
+        self.kvalue_low = self.calibrator.kvalue_low
+        self.kvalue_mid = self.calibrator.kvalue_mid
+        self.kvalue_high = self.calibrator.kvalue_high
 
     def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         """
