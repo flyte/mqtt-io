@@ -28,7 +28,6 @@ sensor_inputs:
 
 """
 
-import abc
 import json
 import logging
 import os
@@ -61,85 +60,6 @@ INITIAL_KVALUE = 1.0
 DEFAULT_TEMPERATURE = 25.0
 TEMPSENSOR_ID = "tempsensor"
 TEMPERATURE_ID = "temperature"
-
-
-def calc_raw_ec(voltage: float) -> float:
-    """Convert voltage to raw EC"""
-    return 1000 * voltage / 820.0 / 200.0
-
-
-class Calibrator(abc.ABC):
-    """Class to handle calibration"""
-
-    def __init__(self) -> None:
-        self.kvalue_low: float = INITIAL_KVALUE
-        self.kvalue_mid: float = INITIAL_KVALUE
-        self.kvalue_high: float = INITIAL_KVALUE
-        self.calibration_file = CALIBRATION_FILE
-        if os.path.exists(self.calibration_file):
-            self.kvalue_low, self.kvalue_mid, self.kvalue_high = self.read_calibration()
-
-    def calibrate(self, voltage: float, temperature: float) -> None:
-        """Set the calibration values and write out to file."""
-
-        def calc_kvalue(
-            ec_solution: float, voltage: float, temperature: float
-        ) -> float:
-            comp_ec_solution = ec_solution * (1.0 + 0.0185 * (temperature - 25.0))
-            return round(820.0 * 200.0 * comp_ec_solution / 1000.0 / voltage, 2)
-
-        raw_ec = calc_raw_ec(voltage)
-        if 0.9 < raw_ec < 1.9:
-            self.kvalue_low = calc_kvalue(1.413, voltage, temperature)
-            _LOG.info(">>>Buffer Solution:1.413us/cm kvalue_low: %f", self.kvalue_low)
-        elif 1.9 <= raw_ec < 4:
-            self.kvalue_mid = calc_kvalue(2.8, voltage, temperature)
-            _LOG.info(">>>EC:2.8ms/cm kvalue_mid: %f", self.kvalue_mid)
-        elif 9 < raw_ec < 16.8:
-            self.kvalue_high = calc_kvalue(12.88, voltage, temperature)
-            _LOG.info(">>>Buffer Solution:12.88ms/cm kvalue_high:%f ", self.kvalue_high)
-        else:
-            raise ValueError(">>>Buffer Solution Error Try Again<<<")
-
-        # Should think about looping to stabalise the reading before writing
-        self.write_calibration()
-
-    def read_calibration(self) -> Tuple[float, float, float]:
-        """Read calibrated values from json file.
-        {
-          "kvalue_low": 1.0,
-          "kvalue_mid": 1.0,
-          "kvalue_high": 1.0
-        }
-
-        """
-        if os.path.exists(self.calibration_file):
-            with open(
-                self.calibration_file, "r", encoding=CALIBRATION_FILE_ENCODING
-            ) as file_handle:
-                data = json.load(file_handle)
-                kvalue_low = float(data["kvalue_low"])
-                kvalue_mid = float(data["kvalue_mid"])
-                kvalue_high = float(data["kvalue_high"])
-            return (kvalue_low, kvalue_mid, kvalue_high)
-        raise FileNotFoundError(f"Calibration file ${self.calibration_file} not found")
-
-    def write_calibration(self) -> None:
-        """Write calibrated values to json file."""
-        try:
-            with open(
-                self.calibration_file, "w", encoding=CALIBRATION_FILE_ENCODING
-            ) as file_handle:
-                data = {
-                    "kvalue_low": self.kvalue_low,
-                    "kvalue_mid": self.kvalue_mid,
-                    "kvalue_high": self.kvalue_high,
-                }
-                json.dump(
-                    data, file_handle, indent=2, encoding=CALIBRATION_FILE_ENCODING
-                )
-        except IOError as exc:
-            _LOG.warning("Failed to write calibration data: %s", exc)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -188,10 +108,12 @@ class Sensor(GenericSensor):
         }
 
         self.kvalue = INITIAL_KVALUE
-        self.calibrator = Calibrator()
-        self.kvalue_low = self.calibrator.kvalue_low
-        self.kvalue_mid = self.calibrator.kvalue_mid
-        self.kvalue_high = self.calibrator.kvalue_high
+        self.kvalue_low = INITIAL_KVALUE
+        self.kvalue_mid = INITIAL_KVALUE
+        self.kvalue_high = INITIAL_KVALUE
+        self.calibration_file = os.path.abspath(CALIBRATION_FILE)
+        if os.path.exists(self.calibration_file):
+            self.kvalue_low, self.kvalue_mid, self.kvalue_high = self.read_calibration()
 
     def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         """
@@ -234,10 +156,40 @@ class Sensor(GenericSensor):
 
         event_bus.subscribe(SensorReadEvent, on_sensor_read)
 
+    def read_calibration(self) -> Tuple[float, float, float]:
+        """Read calibrated values from json file.
+        {
+          "kvalue_low": 1.0,
+          "kvalue_mid": 1.0,
+          "kvalue_high": 1.0
+        }
+
+        """
+        if os.path.exists(self.calibration_file):
+            with open(
+                self.calibration_file, "r", encoding=CALIBRATION_FILE_ENCODING
+            ) as file_handle:
+                try:
+                    data = json.load(file_handle)
+                except json.decoder.JSONDecodeError:
+                    raise FileNotFoundError(
+                        f"Calibration file {self.calibration_file} is not valid JSON"
+                    ) from None
+                kvalue_low = float(data["kvalue_low"])
+                kvalue_mid = float(data["kvalue_mid"])
+                kvalue_high = float(data["kvalue_high"])
+            return (kvalue_low, kvalue_mid, kvalue_high)
+        raise FileNotFoundError(f"Calibration file {self.calibration_file} not found")
+
+    @staticmethod
+    def calc_raw_ec(voltage: float) -> float:
+        """Convert voltage to raw EC"""
+        return 1000 * voltage / 820.0 / 200.0
+
     def ec_from_voltage(self, voltage: float, temperature: float) -> float:
         """Convert voltage to EC with temperature compensation"""
         # pylint: disable=attribute-defined-outside-init
-        raw_ec = calc_raw_ec(voltage)
+        raw_ec = self.calc_raw_ec(voltage)
         value_temp = raw_ec * self.kvalue
         if value_temp > 5.0:
             self.kvalue = self.kvalue_high
