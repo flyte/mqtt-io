@@ -20,6 +20,7 @@ from typing import List
 
 BOARD_SETUP_TRIES = 3
 BOARD_SETUP_TIMEOUT = 2
+PMW_CHANNELS = 4
 
 _LOG = logging.getLogger(__name__)
 
@@ -73,7 +74,7 @@ class DFRobotExpansionBoard(abc.ABC):
         self._addr = addr
         self._is_pwm_enable = False
 
-    def begin(self) -> int:
+    def begin(self, disable_pmw: bool = False, disable_adc: bool = False) -> int:
         """
         Board begin
         return:   Board status
@@ -86,8 +87,10 @@ class DFRobotExpansionBoard(abc.ABC):
             elif vid[0] != self._REG_DEF_VID:
                 self.last_operate_status = self.STA_ERR_SOFT_VERSION
             else:
-                self.set_pwm_disable()
-                self.set_adc_disable()
+                if disable_pmw:
+                    self.set_pwm_disable()
+                if disable_adc:
+                    self.set_adc_disable()
         return self.last_operate_status
 
     def set_addr(self, addr: int) -> None:
@@ -228,10 +231,8 @@ class DFRobotExpansionBoardServo:
         """
         self._board.set_pwm_enable()
         self._board.set_pwm_frequency(50)
-        self._board.set_pwm_duty(0, 0)
-        self._board.set_pwm_duty(1, 0)
-        self._board.set_pwm_duty(2, 0)
-        self._board.set_pwm_duty(3, 0)
+        for channel in range(PMW_CHANNELS):
+            self._board.set_pwm_duty(channel, 0)
 
     def move(self, channel_id: int, angle: int) -> None:
         """
