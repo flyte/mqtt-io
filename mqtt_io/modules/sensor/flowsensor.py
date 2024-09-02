@@ -10,7 +10,7 @@ sensor_modules:
 
 sensor_inputs:
   - name: flow_rate1
-    module: flowsensor
+    module: yfs201
     pin: 0
     digits: 0
     interval: 10
@@ -45,7 +45,7 @@ class FLOWSENSOR:
     Multiple instances support multiple sensors on different pins
     """
 
-    def __init__(self, gpiozero, name: str, pin: int) -> None: # type: ignore[no-untyped-def]
+    def __init__(self, gpiozero, name: str, pin: int) -> None:  # type: ignore[no-untyped-def]
         self.name = name
         self.pin = gpiozero.DigitalInputDevice(pin)
         self.pin.when_activated = self.count_pulse
@@ -75,7 +75,7 @@ class FLOWSENSOR:
 
     def get_value(self, interval: int, factor: float) -> float:
         """Return flow rate in L/min over interval seconds and reset count."""
-        flow_rate = self.flow_rate(interval,factor)
+        flow_rate = self.flow_rate(interval, factor)
         self.reset_count()
         return flow_rate
 
@@ -87,20 +87,20 @@ class Sensor(GenericSensor):
 
     SENSOR_SCHEMA: CerberusSchemaType = {
         "pin": {
-            "type": 'integer',
+            "type": "integer",
             "required": True,
             "empty": False,
         },
         "interval": {
-            "type": 'integer',
+            "type": "integer",
             "required": True,
             "empty": False,
         },
         "factor": {
-            "type": 'float',
+            "type": "float",
             "required": True,
             "empty": False,
-        }
+        },
     }
 
     def setup_module(self) -> None:
@@ -117,4 +117,6 @@ class Sensor(GenericSensor):
         self.sensors[sensor.name] = sensor
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
-        return self.sensors[sens_conf["name"]].get_value(sens_conf["interval"],sens_conf["factor"])
+        return self.sensors[sens_conf["name"]].get_value(
+            sens_conf["interval"], sens_conf["factor"]
+        )
