@@ -89,7 +89,7 @@ sensor_modules:
 
 sensor_inputs:
   - name: flow_rate1
-    module: flowsensor
+    module: yfs201
     pin: 0
     digits: 0
     interval: 10
@@ -132,20 +132,6 @@ sensor_inputs:
   - SHT4x temperature and humidity sensor (`sht4x`)
   - TSL2561 luminosity sensor (`tsl2561`)
   - VEML 6075 UV sensor (`veml6075`)
-  - YF-S201 Flow Rate Sensor
-
-Example configuration:
-
-sensor_modules:
-  - name: yfs201
-    module: yfs201
-
-sensor_inputs:
-  - name: flow_rate1
-    module: yfs201
-    pin: 0
-    digits: 0
-    interval: 10 (`yfs201`)
 
 ### Streams
 
