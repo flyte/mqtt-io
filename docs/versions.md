@@ -50,5 +50,4 @@
 - <a href="/release-2.4.2" target="_self">release-2.4.2</a>
 - <a href="/release-2.4.4" target="_self">release-2.4.4</a>
 - <a href="/release-2.5.1" target="_self">release-2.5.1</a>
-- <a href="/release/2.5.2" target="_self">release/2.5.2</a>
 - <a href="/revert-342-docker-slim" target="_self">revert-342-docker-slim</a>
