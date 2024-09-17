@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-io"
-version = "2.5.1"
+version = "2.5.2"
 description = "Expose GPIO modules (Raspberry Pi, Beaglebone, PCF8754, PiFace2 etc.), digital sensors (LM75 etc.) and serial streams to an MQTT server for remote control and monitoring."
 readme = "README.md"
 authors = ["Ellis Percival <mqtt-io@failcode.co.uk>"]
