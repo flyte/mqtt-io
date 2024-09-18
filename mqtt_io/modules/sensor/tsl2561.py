@@ -12,7 +12,7 @@ CONFIG_SCHEMA: CerberusSchemaType = {
         "type": 'integer',
         "required": False,
         "empty": False,
-        "default": '0x48'},
+        "default": '0x49'},
     "integration_time": {
         "required": False,
         "empty": False,
@@ -30,7 +30,7 @@ CONFIG_SCHEMA: CerberusSchemaType = {
 
 class Sensor(GenericSensor):
     """
-    Implementation of Sensor class for the Adafruit_ADS1x15.
+    Implementation of Sensor class for the Adafruit_TSL2561
     """
 
     SENSOR_SCHEMA: CerberusSchemaType = {
@@ -53,7 +53,7 @@ class Sensor(GenericSensor):
         self.i2c = busio.I2C(board.SCL, board.SDA)
 
         # Convert sensor address from hex to dec
-        self.address = int(0x48)
+        self.address = int(0x49)
         if 'chip_addr' in self.config:
             self.address = int(self.config['chip_addr'])
 
