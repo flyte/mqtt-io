@@ -30,4 +30,4 @@ class Sensor(GenericSensor):
         return super().setup_sensor(sens_conf)
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
-        return super().get_value(sens_conf)
+        return super().get_value(sens_conf) # type: ignore[safe-super]

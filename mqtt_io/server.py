@@ -808,7 +808,7 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 )
         else:
             _LOG.debug(
-                "Publishing MQTT message on topic %r: %r", msg.topic, payload
+                "Publishing MQTT message on topic %r: %r", msg.topic, msg.payload
             )
 
         await self.mqtt.publish(msg)

@@ -8,7 +8,7 @@ from copy import deepcopy
 from hashlib import sha256
 from typing import Any, Optional
 
-import yaml
+import yaml # type: ignore
 
 from confp import render  # type: ignore
 
