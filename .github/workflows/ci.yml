@@ -5,15 +5,15 @@ on:
   - release
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: ['3.8', '3.10']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Setup Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -97,7 +97,7 @@ jobs:
         if: steps.branch-names.outputs.is_tag == 'false'
         run: |
           git checkout gh-pages
-          git checkout ${{ steps.branch-names.outputs.current_branch }}          
+          git checkout ${{ steps.branch-names.outputs.current_branch }}
       - name: Setup Python 3.8
         uses: actions/setup-python@v2
         with:
