@@ -173,7 +173,7 @@ class GenericGPIO(abc.ABC):  # pylint: disable=too-many-instance-attributes
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Optional[Callable[[List[Any], Dict[Any, Any]], None]] = None,
+        callback: Optional[Callable[..., None]] = None,
     ) -> None:
         """
         Used internally to ensure that `self.interrupt_edges` is updated for this pin.

@@ -2,7 +2,7 @@
 Mock GPIO module for using with the tests.
 """
 
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Callable, Dict, Iterable, List, Optional
 from unittest.mock import Mock
 
 from ...types import ConfigType, PinType
@@ -39,7 +39,7 @@ class GPIO(GenericGPIO):
 
         super().__init__(config)
         self.interrupt_callbacks: Dict[
-            PinType, Callable[[List[Any], Dict[Any, Any]], None]
+            PinType, Callable[..., None]
         ] = {}
 
     def setup_interrupt_callback(
@@ -47,7 +47,7 @@ class GPIO(GenericGPIO):
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Callable[[List[Any], Dict[Any, Any]], None],
+        callback: Callable[..., None],
     ) -> None:
         self.interrupt_callbacks[pin] = callback
 

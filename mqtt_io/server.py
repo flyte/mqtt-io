@@ -18,9 +18,9 @@ from functools import partial
 from hashlib import sha1
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
-from aiomqtt.exceptions import MqttCodeError # type: ignore
+from aiomqtt import MqttCodeError
 
-import backoff  # type: ignore
+import backoff
 from typing_extensions import Literal
 
 from .config import (
@@ -648,10 +648,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                     None
 
                 """
-                @backoff.on_exception(  # type: ignore
+                @backoff.on_exception(
                     backoff.expo, Exception, max_time=sens_conf["interval"]
                 )
-                @backoff.on_predicate(  # type: ignore
+                @backoff.on_predicate(
                     backoff.expo, lambda x: x is None, max_time=sens_conf["interval"]
                 )
                 async def get_sensor_value(
