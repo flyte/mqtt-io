@@ -132,6 +132,7 @@ sensor_inputs:
   - SHT4x temperature and humidity sensor (`sht4x`)
   - TSL2561 luminosity sensor (`tsl2561`)
   - VEML 6075 UV sensor (`veml6075`)
+  - VEML7700 luminosity sensor (`veml7700`)
 
 ### Streams
 
