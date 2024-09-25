@@ -61,7 +61,7 @@ class MQTTTLSOptions:
     ca_certs: Optional[str] = None
     certfile: Optional[str] = None
     keyfile: Optional[str] = None
-    cert_reqs: int = ssl.CERT_REQUIRED
+    cert_reqs: ssl.VerifyMode = ssl.CERT_REQUIRED
     tls_version: int = ssl.PROTOCOL_TLS
     ciphers: Optional[str] = None
 

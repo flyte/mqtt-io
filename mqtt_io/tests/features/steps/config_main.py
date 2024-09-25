@@ -1,5 +1,5 @@
 from typing import Any
-import yaml
+import yaml # type: ignore
 from behave import given, then, when  # type: ignore
 from mqtt_io.config import validate_and_normalise_main_config
 from mqtt_io.exceptions import ConfigValidationFailed

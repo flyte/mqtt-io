@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 import semver
-import yaml
+import yaml # type: ignore
 from ast_to_xml import module_source
 from git import Repo
 from jinja2 import Template

@@ -8,7 +8,7 @@ from os.path import dirname, join, realpath
 from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 import cerberus  # type: ignore
-import yaml
+import yaml # type: ignore
 
 from ..exceptions import ConfigValidationFailed
 from ..types import ConfigType

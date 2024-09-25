@@ -3,7 +3,7 @@ GPIO Zero
 """
 import logging
 from functools import partial
-from typing import Optional, Any, Callable, List, Dict, TYPE_CHECKING, cast
+from typing import Optional, Any, Callable, Dict, TYPE_CHECKING, cast
 
 from mqtt_io.modules.gpio import (
     GenericGPIO,
@@ -89,7 +89,7 @@ class GPIO(GenericGPIO):
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Callable[[List[Any], Dict[Any, Any]], None],
+        callback: Callable[..., None],
     ) -> None:
         _LOG.debug(
             "Added interrupt to gpiozero Pi pin '%s' with callback '%s'", pin, callback
