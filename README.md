@@ -48,6 +48,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - PMS5003 particulate sensor (`pms5003`)
   - SHT40/SHT41/SHT45 temperature and humidity sensors (`sht4x`)
   - TLSl2561 light level sensor (`tsl2561`)
+  - VEML7700 light level sensor (`veml7700`)
   - YF-S201 flow rate sensor (`yfs201`)
 
 
