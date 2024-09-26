@@ -19,6 +19,7 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 ### GPIO Modules
 
   - Beaglebone GPIO (`beaglebone`)
+  - DockerPi 4 Channel Relay GPIO (`dockerpi`)
   - Linux Kernel 4.8+ libgpiod (`gpiod`)
   - GPIO Zero (`gpiozero`)
   - MCP23017 IO expander (`mcp23017`)
@@ -27,35 +28,38 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - PCF8575 IO expander (`pcf8575`)
   - PiFace Digital IO 2 (`piface2`)
   - Raspberry Pi GPIO (`raspberrypi`)
+  - Sunxi Board (`sunxi`)
 
 ### Sensors
 
   - ADS1x15 analog to digital converters (`ads1x15`)
+  - ADXL345 Digital Accelerometer Sensor (`adxl345`)
   - AHT20 temperature and humidity sensor (`aht20`)
   - BH1750 light level sensor (`bh1750`)
   - BME280 temperature, humidity and pressure sensor (`bme280`)
   - BME680 temperature, humidity and pressure sensor (`bme680`)
+  - BMP085 temperature and pressure sensor (`bmp085`)
   - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
   - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
-  - ENS160  digital multi-gas sensor with multiple IAQ data (TVOC, eCO2, AQI) (`ens160`)
-  - FREQUENCYCOUNTER Counts pulses from GPIOs and return the frequency in Hz (`frequencycounterr`)
-  - FLOWSENSOR generic flow rate sensor like YF-S201, YF-DN50 or others (`flowsensor`)
+  - ENS160 Air Quality Sensor (`ens160`)
+  - Flowsensor: Generic Flow Rate Sensor (`flowsensor`)
+  - Frequencycounter: Generic Frequency Counter (`frequencycounter`)
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
-  - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
-  - PMS5003 particulate sensor (`pms5003`)
-  - SHT40/SHT41/SHT45 temperature and humidity sensors (`sht4x`)
-  - TLSl2561 light level sensor (`tsl2561`)
-  - VEML7700 light level sensor (`veml7700`)
-  - YF-S201 flow rate sensor (`yfs201`)
-
+  - MCP3xxx analog to digital converter via GPIOZero (`mcp3xxx`)
+  - MH-Z19 NDIR CO2 sensor (`mhz19`)
+  - PMS5003 Particulate Matter Sensor (`pms5003`)
+  - SHT4x temperature and humidity sensor (`sht4x`)
+  - TSL2561 luminosity sensor (`tsl2561`)
+  - VEML 6075 UV sensor (`veml6075`)
+  - VEML7700 luminosity sensor (`veml7700`)
 
 ### Streams
 
-  - Serial port (`serial`)
   - PN532 NFC/RFID reader (`pn532`)
+  - Serial port (`serial`)
 
 ## Installation
 
@@ -111,30 +115,11 @@ sensor_modules:
     module: lm75
     i2c_bus_num: 1
     chip_addr: 0x48
-  # An INA219 sensor attached to the I2C bus
-  - name: ina219_sensor
-    module: ina219
-    i2c_bus_num: 1
-    chip_addr: 0x43
-
 
 sensor_inputs:
-  # lm75 - The configuration of the specific sensor value to use (LM75 only has temperature)
+  # The configuration of the specific sensor value to use (LM75 only has temperature)
   - name: porch_temperature
     module: lm75_sensor
-  # ina219 - The configuration of the specific sensor value to use (4 options for the ina219 sensor)
-  - name: power
-    type: power
-    module: ina219_sensor
-  - name: bus_voltage
-    type: bus_voltage
-    module: ina219_sensor
-  - name: current
-    type: current
-    module: ina219_sensor
-  - name: shunt_voltage
-    type: shunt_voltage
-    module: ina219_sensor
 
 # Streams
 stream_modules:

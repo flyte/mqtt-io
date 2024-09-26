@@ -1,5 +1,8 @@
 """
 ADXL345 Digital Accelerometer Sensor
+"""
+
+"""
 
 Mandatory:
 - chip_addr

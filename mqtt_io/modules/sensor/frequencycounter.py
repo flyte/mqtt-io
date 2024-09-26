@@ -1,6 +1,8 @@
 """
-
 Frequencycounter: Generic Frequency Counter
+"""
+
+"""
 
 Example configuration:
 
