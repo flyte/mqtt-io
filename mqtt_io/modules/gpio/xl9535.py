@@ -77,3 +77,6 @@ class GPIO(GenericGPIO):
         assert pin in range(16), "Pin number must be an integer between 0 and 15"
         state = self.bus.read_word_data(self.address, XL9535_OUTPUT_PORT_0)
         return bool(state & 1 << cast(int, pin))
+
+    def cleanup(self) -> None:
+        self.bus.close()
