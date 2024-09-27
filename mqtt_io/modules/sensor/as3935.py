@@ -1,4 +1,6 @@
 # pylint: disable=line-too-long
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
 """
 
 AS3935 Ligntning Sensor
@@ -7,7 +9,7 @@ Example configuration:
 
 sensor_modules:
   - name: AS3935_Sensor
-    module: sensor
+    module: as3935
     pin: 17
     auto_filter: True
     indoor: True
@@ -17,7 +19,7 @@ sensor_inputs:
     module: AS3935_Sensor
     digits: 4
     interval: 5
-    type: distance·
+    type: distance
 
 Module Options
 --------------
@@ -74,10 +76,10 @@ type:                The following types are supported:
 
 """
 
-from typing import cast
+import logging
+from typing import Dict
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
-import logging
 
 _LOG = logging.getLogger(__name__)
 
@@ -165,8 +167,14 @@ class FRANKLINSENSOR:
         self.name = name
         self.pin = gpiozero.DigitalInputDevice(pin)
         self.pin.when_activated = self.trigger_interrupt
-        self.count = 0
         self.lightning = lightning
+        self.count = 0
+        self.data = {
+            "last": 0,
+            "distance": 0,
+            "energy": 0,
+            "number": 0
+        }
 
     def trigger_interrupt(self) -> None:
         """ When the interrupt goes high """
@@ -174,7 +182,6 @@ class FRANKLINSENSOR:
         # pylint: disable=import-error,no-member
         import time # type: ignore
         time.sleep(0.05)
-        global data
         _LOG.debug("as3935: Interrupt called!")
         interrupt_value = self.lightning.read_interrupt_register()
         if interrupt_value == self.lightning.NOISE:
@@ -187,15 +194,15 @@ class FRANKLINSENSOR:
                 self.increase_threshold()
         elif interrupt_value == self.lightning.LIGHTNING:
             _LOG.debug("as3935: Lightning strike detected!")
-            _LOG.debug("as3935: Approximately: " + str(self.lightning.distance_to_storm) + "km away!")
-            _LOG.debug("as3935: Energy value: " + str(self.lightning.lightning_energy))
-            number = data["number"] + 1
+            _LOG.debug("as3935: Approximately: %s km away!", self.lightning.distance_to_storm)
+            _LOG.debug("as3935: Energy value: %s", self.lightning.lightning_energy)
+            self.count += 1
             now = time.time()
-            data = {
+            self.data = {
                 "last": now,
                 "distance": self.lightning.distance_to_storm,
                 "energy": self.lightning.lightning_energy,
-                "number": number
+                "number": self.count
             }
 
     def reduce_noise(self) -> None:
@@ -205,7 +212,7 @@ class FRANKLINSENSOR:
         if value > 7:
             _LOG.debug("as3935: Noise floor is at the maximum value 7.")
             return
-        _LOG.debug("as3935: Increasing the noise event threshold to " + str(value))
+        _LOG.debug("as3935: Increasing the noise event threshold to %s", value)
         self.lightning.noise_level = value
 
     def increase_threshold(self) -> None:
@@ -216,8 +223,14 @@ class FRANKLINSENSOR:
             self.lightning.mask_disturber = True
             _LOG.debug("as3935: Watchdog threshold is at the maximum value 10. Mask disturbers now.")
             return
-        _LOG.debug("as3935: Increasing the disturber watchdog threshold to " + str(value))
+        _LOG.debug("as3935: Increasing the disturber watchdog threshold to %s", value)
         self.lightning.watchdog_threshold = value
+
+    def get_value(self, value: str) -> float:
+        """ Return the value of 'type' """
+        value = self.data[value]
+        return value
+
 
 class Sensor(GenericSensor):
     """
@@ -241,8 +254,9 @@ class Sensor(GenericSensor):
         import sparkfun_qwiicas3935 # type: ignore
         import gpiozero  # type: ignore
 
-        #Create gpio object
+        # Create gpio object
         self.gpiozero = gpiozero
+        self.sensors: Dict[str, FRANKLINSENSOR] = {}
 
         # Create bus object using our board's I2C port
         self.i2c = board.I2C()
@@ -267,7 +281,7 @@ class Sensor(GenericSensor):
         self.lightning.tune_cap = 0
         self.lightning.indoor_outdoor = self.lightning.INDOOR
         self.lightning.mask_disturber = False
-        self.lightning.AUTOFILTER=True # Our own var
+        self.lightning.AUTOFILTER = True # Our own var
 
         # Auto Filter False-Positives?
         if 'auto_filter' in self.config:
@@ -309,33 +323,21 @@ class Sensor(GenericSensor):
             self.lightning.tune_cap = self.config["tune_cap"]
 
         # Debug
-        _LOG.debug("as3935: The noise floor is " + str(self.lightning.noise_level))
-        _LOG.debug("as3935: The disturber watchdog threshold is " + str(self.lightning.watchdog_threshold))
-        _LOG.debug("as3935: The Lightning Detectori's Indoor/Outdoor mode is set to: " + str(self.lightning.indoor_outdoor))
-        _LOG.debug("as3935: Are disturbers being masked? " + str(self.lightning.mask_disturber))
-        _LOG.debug("as3935: Spike Rejection is set to: " + str(self.lightning.spike_rejection))
-        _LOG.debug("as3935: Division Ratio is set to: " + str(self.lightning.division_ratio))
-        _LOG.debug("as3935: Internal Capacitor is set to: " + str(self.lightning.tune_cap))
-
-        # Global data
-        global data
-        data = {
-            "last": 0,
-            "distance": 0,
-            "energy": 0,
-            "number": 0
-        }
+        _LOG.debug("as3935: The noise floor is %s", self.lightning.noise_level)
+        _LOG.debug("as3935: The disturber watchdog threshold is %s", self.lightning.watchdog_threshold)
+        _LOG.debug("as3935: The Lightning Detectori's Indoor/Outdoor mode is set to: %s", self.lightning.indoor_outdoor)
+        _LOG.debug("as3935: Are disturbers being masked? %s", self.lightning.mask_disturber)
+        _LOG.debug("as3935: Spike Rejection is set to: %s", self.lightning.spike_rejection)
+        _LOG.debug("as3935: Division Ratio is set to: %s", self.lightning.division_ratio)
+        _LOG.debug("as3935: Internal Capacitor is set to: %s", self.lightning.tune_cap)
 
         # Create sensor
         sensor = FRANKLINSENSOR(
             gpiozero=self.gpiozero, lightning=self.lightning, name=self.config["name"], pin=self.config["pin"]
         )
-
+        self.sensors[sensor.name] = sensor
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
-        global data
-        sens_type = sens_conf["type"]
-        return cast(
-            float,
-            data[sens_type]
+        return self.sensors[self.config["name"]].get_value(
+            sens_conf["type"]
         )
