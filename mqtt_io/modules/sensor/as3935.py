@@ -170,10 +170,10 @@ class FRANKLINSENSOR:
         self.lightning = lightning
         self.count = 0
         self.data = {
-            "last": 0,
-            "distance": 0,
-            "energy": 0,
-            "number": 0
+            "last": int(0),
+            "distance": float(0),
+            "energy": float(0),
+            "number": int(0)
         }
 
     def trigger_interrupt(self) -> None:
@@ -199,10 +199,10 @@ class FRANKLINSENSOR:
             self.count += 1
             now = time.time()
             self.data = {
-                "last": now,
-                "distance": self.lightning.distance_to_storm,
-                "energy": self.lightning.lightning_energy,
-                "number": self.count
+                "last": int(now),
+                "distance": float(self.lightning.distance_to_storm),
+                "energy": float(self.lightning.lightning_energy),
+                "number": int(self.count)
             }
 
     def reduce_noise(self) -> None:
@@ -226,9 +226,9 @@ class FRANKLINSENSOR:
         _LOG.debug("as3935: Increasing the disturber watchdog threshold to %s", value)
         self.lightning.watchdog_threshold = value
 
-    def get_value(self, value: str) -> float:
+    def get_value(self, value) -> float:
         """ Return the value of 'type' """
-        value = self.data[value]
+        value = float(self.data[value])
         return value
 
 
