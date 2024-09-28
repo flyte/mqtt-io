@@ -228,8 +228,8 @@ class FRANKLINSENSOR:
 
     def get_value(self, value) -> float:
         """ Return the value of 'type' """
-        value = float(self.data[value])
-        return value
+        ret = float(self.data[value])
+        return ret
 
 
 class Sensor(GenericSensor):
