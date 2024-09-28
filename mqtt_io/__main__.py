@@ -4,6 +4,7 @@ Main entrypoint when MQTT IO is invoked as `python -m mqtt_io`.
 import argparse
 import logging.config
 import sys
+from os import getenv
 from copy import deepcopy
 from hashlib import sha256
 from typing import Any, Optional
@@ -76,6 +77,16 @@ def main() -> None:
     # Load, validate and normalise config, or quit.
     try:
         raw_config = load_config(args.config, args.render)
+        if raw_config:
+            if "mqtt" not in raw_config or raw_config["mqtt"] is None:
+                raw_config["mqtt"] = {}
+            raw_config["mqtt"]["host"] = getenv("MQTT_IO_HOST", raw_config["mqtt"].get("host"))
+            raw_config["mqtt"]["port"] = getenv("MQTT_IO_PORT", raw_config["mqtt"].get("port"))
+            raw_config["mqtt"]["user"] = getenv("MQTT_IO_USER", raw_config["mqtt"].get("user"))
+            raw_config["mqtt"]["password"] = getenv("MQTT_IO_PASSWORD",
+                                                    raw_config["mqtt"].get("password"))
+            raw_config["mqtt"]["protocol"] = getenv("MQTT_IO_PROTOCOL",
+                                                    raw_config["mqtt"].get("protocol"))
         config = validate_and_normalise_main_config(raw_config)
     except ConfigValidationFailed as exc:
         print(str(exc), file=sys.stderr)
