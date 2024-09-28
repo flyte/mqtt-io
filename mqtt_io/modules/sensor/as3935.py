@@ -226,7 +226,7 @@ class FRANKLINSENSOR:
         _LOG.debug("as3935: Increasing the disturber watchdog threshold to %s", value)
         self.lightning.watchdog_threshold = value
 
-    def get_value(self, value) -> float:
+    def get_value(self, value: str) -> float:
         """ Return the value of 'type' """
         ret = float(self.data[value])
         return ret
