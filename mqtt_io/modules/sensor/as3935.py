@@ -59,7 +59,7 @@ division_ratio:      The antenna is designed to resonate at 500kHz and so can be
                      3.5 percent of that value for proper signal validation and distance
                      estimation. The division ratio can only be set to 16, 32, 64 or 128.
                      Default: 16
-tun_cap:             This setting will add capacitance to the series RLC antenna on the
+tune_cap:            This setting will add capacitance to the series RLC antenna on the
                      product. It's possible to add 0-120pF in steps of  8pF to the antenna.
                      The Tuning Cap value will be set between 0 and 120pF, in steps of 8pF.
                      If necessary, the input value is rounded down to the nearest 8pF.
