@@ -1,10 +1,10 @@
+"""
+AS3935 Ligntning Sensor
+"""
 # pylint: disable=line-too-long
 # pylint: disable=too-many-branches
 # pylint: disable=too-many-statements
 """
-
-AS3935 Ligntning Sensor
-
 Example configuration:
 
 sensor_modules:
