@@ -1,10 +1,6 @@
 """
 AS3935 Ligntning Sensor
-"""
-# pylint: disable=line-too-long
-# pylint: disable=too-many-branches
-# pylint: disable=too-many-statements
-"""
+
 Example configuration:
 
 sensor_modules:
@@ -75,6 +71,9 @@ type:                The following types are supported:
                      number:    number of lightning events since start
 
 """
+# pylint: disable=line-too-long
+# pylint: disable=too-many-branches
+# pylint: disable=too-many-statements
 
 import logging
 from typing import Dict
