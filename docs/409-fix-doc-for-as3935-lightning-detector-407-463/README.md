@@ -47,7 +47,76 @@ Output:
 - y (in m*s²)
 - z (in m*s²) (`adxl345`)
   - AHT20 temperature and humidity sensor (`aht20`)
-  - AS3935 Ligntning Sensor (`as3935`)
+  - AS3935 Ligntning Sensor
+
+Example configuration:
+
+sensor_modules:
+  - name: AS3935_Sensor
+    module: as3935
+    pin: 17
+    auto_filter: True
+    indoor: True
+
+sensor_inputs:
+  - name: distance
+    module: AS3935_Sensor
+    digits: 4
+    interval: 5
+    type: distance
+
+Module Options
+--------------
+See also:
+https://www.embeddedadventures.com/datasheets/AS3935_Datasheet_EN_v2.pdf
+https://github.com/fourstix/Sparkfun_CircuitPython_QwiicAS3935/blob/master/sparkfun_qwiicas3935.py
+https://github.com/fourstix/Sparkfun_CircuitPython_QwiicAS3935/blob/master/examples
+
+pin:                 Interrupt GPIO Pin
+auto_filter:         Set noise_level, mask_disturber and watchdog_threshold automatically.
+                     Default: True
+indoor:              Set whether or not the sensor should use an indoor configuration.
+                     Default: True
+lightning_threshold: number of lightning detections required before an
+                     interrupt is raised.
+                     Default: 1
+watchdog_threshold:  This function returns the threshold for events that trigger the IRQ
+                     Pin. Only sensitivity threshold values 1 to 10 allowed.
+                     Default: 2
+spike_rejection:     This setting, like the watchdog threshold, can help determine
+                     between false events and actual lightning. The shape of the spike is
+                     analyzed during the chip's signal validation routine. Increasing this
+                     value increases robustness at the cost of sensitivity to distant
+                     events.
+                     Default: 2
+noise_level:         The noise floor level is compared to a known reference voltage. If
+                     this level is exceeded the chip will issue an interrupt to the IRQ pin,
+                     broadcasting that it can not operate properly due to noise (INT_NH).
+                     Check datasheet for specific noise level tolerances when setting this
+                     register.
+                     Default: 2
+mask_disturber       Setting this True or False will change whether or not disturbers
+                     trigger the IRQ pin.
+                     Default: False
+division_ratio:      The antenna is designed to resonate at 500kHz and so can be tuned
+                     with the following setting. The accuracy of the antenna must be within
+                     3.5 percent of that value for proper signal validation and distance
+                     estimation. The division ratio can only be set to 16, 32, 64 or 128.
+                     Default: 16
+tune_cap:            This setting will add capacitance to the series RLC antenna on the
+                     product. It's possible to add 0-120pF in steps of  8pF to the antenna.
+                     The Tuning Cap value will be set between 0 and 120pF, in steps of 8pF.
+                     If necessary, the input value is rounded down to the nearest 8pF.
+                     Default: 0
+
+Sensor Options
+--------------
+
+type:                The following types are supported:
+                     last:      last lightning in unix timestamp format
+                     distance:  distance of last lightning in km
+                     energy:    energy of last lightning (no unit, no physical meaning)
+                     number:    number of lightning events since start (`as3935`)
   - BH1750 light level sensor (`bh1750`)
   - BME280 temperature, humidity and pressure sensor (`bme280`)
   - BME680 temperature, humidity and pressure sensor (`bme680`)
