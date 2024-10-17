@@ -69,6 +69,16 @@ _Requires Python 3.6+_
 
 `python3 -m mqtt_io config.yml`
 
+Some configuration parameters can be passed as environment variables:
+
+- `MQTT_IO_HOST` - Host name or IP address of the MQTT server.
+- `MQTT_IO_PORT` - Port number to connect to on the MQTT server.
+- `MQTT_IO_USER` - Username to authenticate with on the MQTT server.
+- `MQTT_IO_PASSWORD` - Password to authenticate with on the MQTT server.
+- `MQTT_IO_PROTOCOL` - Version of the MQTT protocol to use.
+
+Environment variables take precedence over configuration files.
+
 ## Configuration Example
 
 Configuration is written in a YAML file which is passed as an argument to the server on startup.
