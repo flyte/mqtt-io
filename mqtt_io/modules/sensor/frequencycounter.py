@@ -1,27 +1,23 @@
 """
 Frequencycounter: Generic Frequency Counter
 """
-
-"""
-
-Example configuration:
-
-sensor_modules:
-  - name: frequency
-    module: frequencycounter
-
-sensor_inputs:
-  - name: flow_rate1
-    module: frequency
-    pin: 0
-    digits: 0
-    interval: 10
-
-"""
-
 from typing import Dict
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
+
+##Example configuration:
+##
+##sensor_modules:
+##  - name: frequency
+##    module: frequencycounter
+##
+##sensor_inputs:
+##  - name: flow_rate1
+##    module: frequency
+##    pin: 0
+##    digits: 0
+##    interval: 10
+
 
 REQUIREMENTS = ("gpiozero",)
 
