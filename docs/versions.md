@@ -3,6 +3,7 @@
 ## Releases
 
 
+- <a href="/2.6.0" target="_self">2.6.0</a>
 - <a href="/2.5.2" target="_self">2.5.2</a>
 - <a href="/2.5.0" target="_self">2.5.0</a>
 - <a href="/2.4.3" target="_self">2.4.3</a>
