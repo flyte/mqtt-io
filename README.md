@@ -28,26 +28,42 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - PCF8575 IO expander (`pcf8575`)
   - PiFace Digital IO 2 (`piface2`)
   - Raspberry Pi GPIO (`raspberrypi`)
+<<<<<<< HEAD
   - Sunxi Board (`sunxi`)
+=======
+  - XL9535/PCA9535/TCA9535 IO expander (`xl9535`)
+>>>>>>> upstream/develop
 
 ### Sensors
 
   - ADS1x15 analog to digital converters (`ads1x15`)
+<<<<<<< HEAD
   - ADXL345 Digital Accelerometer Sensor (`adxl345`)
+=======
+  - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
+>>>>>>> upstream/develop
   - AHT20 temperature and humidity sensor (`aht20`)
+  - AS3935 lightning detector (`as3935`)
   - BH1750 light level sensor (`bh1750`)
   - BME280 temperature, humidity and pressure sensor (`bme280`)
   - BME680 temperature, humidity and pressure sensor (`bme680`)
   - BMP085 temperature and pressure sensor (`bmp085`)
   - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
   - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
+<<<<<<< HEAD
   - ENS160 Air Quality Sensor (`ens160`)
   - Flowsensor: Generic Flow Rate Sensor (`flowsensor`)
   - Frequencycounter: Generic Frequency Counter (`frequencycounter`)
+=======
+  - ENS160  digital multi-gas sensor with multiple IAQ data (TVOC, eCO2, AQI) (`ens160`)
+  - FLOWSENSOR generic flow rate sensor like YF-S201, YF-DN50 or others (`flowsensor`)
+  - FREQUENCYCOUNTER Counts pulses from GPIOs and return the frequency in Hz (`frequencycounterr`)
+>>>>>>> upstream/develop
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
+<<<<<<< HEAD
   - MCP3xxx analog to digital converter via GPIOZero (`mcp3xxx`)
   - MH-Z19 NDIR CO2 sensor (`mhz19`)
   - PMS5003 Particulate Matter Sensor (`pms5003`)
@@ -55,6 +71,14 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - TSL2561 luminosity sensor (`tsl2561`)
   - VEML 6075 UV sensor (`veml6075`)
   - VEML7700 luminosity sensor (`veml7700`)
+=======
+  - PMS5003 particulate sensor (`pms5003`)
+  - SHT40/SHT41/SHT45 temperature and humidity sensors (`sht4x`)
+  - TSL2561 light level sensor (`tsl2561`)
+  - VEML7700 light level sensor (`veml7700`)
+  - YF-S201 flow rate sensor (`yfs201`)
+
+>>>>>>> upstream/develop
 
 ### Streams
 
