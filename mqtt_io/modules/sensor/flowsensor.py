@@ -1,40 +1,37 @@
 """
-
 Flowsensor: Generic Flow Rate Sensor
-
-Example configuration:
-
-sensor_modules:
-  - name: yfs201
-    module: flowsensor
-
-sensor_inputs:
-  - name: flow_rate1
-    module: yfs201
-    pin: 0
-    digits: 0
-    interval: 10
-    factor: 0.2
-
-Factor can be calculated from Pulse characteristcs (dicumentation):
-
-From YF-S201 manual:
-  Pulse Characteristic: F = 7 * Q (L/MIN).
-  Pulse frequency (Hz) / 7.0 = flow rate in L/min
-  ==> Factor = 7.0
-
-From YF-DN50 manual:
-  Pulse Characteristic: F = 0.2 * Q (L/MIN).
-  Pulse frequency (Hz) / 0.2 = flow rate in L/min
-  ==> Factor = 0.2
-
-If you use "factor = 1", the sensor module returns the frequency in Hertz (Hz).
-
 """
-
 from typing import Dict
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
+
+## Example configuration:
+##sensor_modules:
+##  - name: yfs201
+##    module: flowsensor
+##
+##sensor_inputs:
+##  - name: flow_rate1
+##    module: yfs201
+##    pin: 0
+##    digits: 0
+##    interval: 10
+##    factor: 0.2
+##
+##Factor can be calculated from Pulse characteristcs (dicumentation):
+##
+##From YF-S201 manual:
+##  Pulse Characteristic: F = 7 * Q (L/MIN).
+##  Pulse frequency (Hz) / 7.0 = flow rate in L/min
+##  ==> Factor = 7.0
+##
+##From YF-DN50 manual:
+##  Pulse Characteristic: F = 0.2 * Q (L/MIN).
+##  Pulse frequency (Hz) / 0.2 = flow rate in L/min
+##  ==> Factor = 0.2
+##
+##If you use "factor = 1", the sensor module returns the frequency in Hertz (Hz).
+
 
 REQUIREMENTS = ("gpiozero",)
 
