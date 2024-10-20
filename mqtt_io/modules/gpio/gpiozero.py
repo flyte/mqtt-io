@@ -82,7 +82,12 @@ class GPIO(GenericGPIO):
             self._out_pins[pin].off()
 
     def get_pin(self, pin: PinType) -> bool:
-        return cast(bool, self._in_pins[pin].is_active)
+        if pin in self._in_pins:
+            return cast(bool, self._in_pins[pin].is_active)
+        elif pin in self._out_pins:
+            return bool(self._out_pins[pin].value)
+        else:
+            raise ValueError(f"Pin {pin} not found")
 
     def setup_interrupt_callback(
         self,
