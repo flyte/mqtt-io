@@ -283,7 +283,7 @@ gpio_modules:
       gpio_modules:
         - name: rpi_gpio
           module: raspberrypi
-        
+
         - name: pcf
           module: pcf8574
           i2c_bus_num: 1
@@ -333,7 +333,7 @@ sensor_modules:
           module: dht22
           type: AM2302
           pin: 4
-        
+
         - name: ds
           module: ds18b
           type: DS18S20
@@ -465,7 +465,7 @@ digital_inputs:
       gpio_modules:
         - name: rpi
           module: raspberrypi
-      
+
       digital_inputs:
         - name: gpio0
           module: rpi
@@ -684,7 +684,7 @@ digital_outputs:
       gpio_modules:
         - name: rpi
           module: raspberrypi
-      
+
       digital_outputs:
         - name: gpio0
           module: rpi
@@ -854,7 +854,7 @@ sensor_inputs:
           module: dht22
           type: AM2302
           pin: 4
-      
+
       sensor_inputs:
         - name: workshop_temp
           module: dht
@@ -900,10 +900,10 @@ sensor_inputs:
         meta:
           description: How long to wait between checking the value of this sensor.
           unit: seconds
-        type: integer
+        type: float
         required: no
         default: 60
-        min: 1
+        min: 0.1
       digits:
         meta:
           description: How many decimal places to round the sensor reading to.

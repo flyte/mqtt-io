@@ -22,6 +22,7 @@ from aiomqtt import MqttCodeError
 
 import backoff
 from typing_extensions import Literal
+import json
 
 from .config import (
     get_main_schema_section,
@@ -611,7 +612,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                                     event.sensor_name,
                                 )
                             ),
-                            f"{event.value:.{digits}f}".encode("utf8"),
+                            # If value_type is object, then convert to JSON string
+                            json.dumps(event.value).encode("utf8") if isinstance(event.value, dict) else
+                                f"{event.value:.{digits}f}".encode("utf8"),
                             retain=sens_conf["retain"],
                         )
                     ),
@@ -681,7 +684,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                             sens_conf["name"],
                         )
                     if value is not None:
-                        value = round(value, sens_conf["digits"])
+                        # If value is type object skip rounding
+                        if not isinstance(value, dict):
+                            value = round(value, sens_conf["digits"])
                         _LOG.info(
                             "Read sensor '%s' value of %s", sens_conf["name"], value
                         )

@@ -87,6 +87,7 @@ celerybeat-schedule
 .env
 
 # virtualenv
+.venv/
 venv/
 ENV/
 
@@ -101,4 +102,3 @@ ENV/
 
 # User's Config File
 config.yml
-
