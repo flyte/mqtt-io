@@ -102,7 +102,7 @@ def step(context: Any, is_isnt: str, pin_name: str):
 
     poller_task_pin_names = {
         get_coro(task).cr_frame.f_locals["in_conf"]["name"]
-        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        for task in asyncio.all_tasks(loop=mqttio.loop)
         if get_coro(task).__name__ == "digital_input_poller"
     }
     if is_isnt == "is":
@@ -137,7 +137,7 @@ def step(context: Any, is_isnt: str, module_name: str):
 
     task_modules = {
         get_coro(task).cr_frame.f_locals["module"]
-        for task in asyncio.Task.all_tasks(loop=mqttio.loop)
+        for task in asyncio.all_tasks(loop=mqttio.loop)
         if get_coro(task).__name__ == "digital_output_loop"
     }
     if is_isnt == "is":

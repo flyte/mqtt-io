@@ -8,8 +8,8 @@ from asyncio.queues import QueueFull
 from functools import wraps
 from typing import Any, Callable, List, Optional, Tuple, TypeVar, cast
 
-from aiomqtt.client import Client, MqttError, Will, ProtocolVersion  # type: ignore
-from paho.mqtt import client as paho  # type: ignore
+from aiomqtt import Client, MqttError, Will, ProtocolVersion
+from paho.mqtt import client as paho
 
 from . import (
     AbstractMQTTClient,

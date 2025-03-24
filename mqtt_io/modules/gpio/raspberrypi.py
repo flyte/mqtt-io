@@ -3,7 +3,7 @@ Raspberry Pi GPIO
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Optional
 
 from ...types import ConfigType, PinType
 from . import GenericGPIO, InterruptEdge, InterruptSupport, PinDirection, PinPUD
@@ -60,7 +60,7 @@ class GPIO(GenericGPIO):
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Callable[[List[Any], Dict[Any, Any]], None],
+        callback: Callable[..., None],
     ) -> None:
         gpio_edge = self.interrupt_edge_map[edge]
         _LOG.debug(

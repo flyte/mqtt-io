@@ -12,7 +12,7 @@ import asyncio
 import logging
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum, Flag, IntFlag, auto
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, cast
 
 from ...types import ConfigType, PinType
 
@@ -173,7 +173,7 @@ class GenericGPIO(abc.ABC):  # pylint: disable=too-many-instance-attributes
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Optional[Callable[[List[Any], Dict[Any, Any]], None]] = None,
+        callback: Optional[Callable[..., None]] = None,
     ) -> None:
         """
         Used internally to ensure that `self.interrupt_edges` is updated for this pin.
@@ -213,7 +213,7 @@ class GenericGPIO(abc.ABC):  # pylint: disable=too-many-instance-attributes
         """
         Return the list of pin names that this pin is a remote interrupt for.
         """
-        return self.pin_configs[pin].get("interrupt_for", [])
+        return cast(List[str], self.pin_configs[pin].get("interrupt_for", []))
 
     def get_int_pins(self) -> List[PinType]:
         """
@@ -274,6 +274,7 @@ class GenericGPIO(abc.ABC):  # pylint: disable=too-many-instance-attributes
         for the value, or looking it up in a register that captures the value at time of
         interrupt.
         """
+        return False
 
     async def get_interrupt_values_remote(
         self, pins: List[PinType]

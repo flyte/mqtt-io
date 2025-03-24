@@ -2,7 +2,7 @@
 Mock GPIO module for using with the tests.
 """
 
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Callable, Dict, Iterable, List, Optional
 from unittest.mock import Mock
 
 from ...types import ConfigType, PinType
@@ -39,7 +39,7 @@ class GPIO(GenericGPIO):
 
         super().__init__(config)
         self.interrupt_callbacks: Dict[
-            PinType, Callable[[List[Any], Dict[Any, Any]], None]
+            PinType, Callable[..., None]
         ] = {}
 
     def setup_interrupt_callback(
@@ -47,12 +47,12 @@ class GPIO(GenericGPIO):
         pin: PinType,
         edge: InterruptEdge,
         in_conf: ConfigType,
-        callback: Callable[[List[Any], Dict[Any, Any]], None],
+        callback: Callable[..., None],
     ) -> None:
         self.interrupt_callbacks[pin] = callback
 
     def setup_module(self) -> None:
-        return super().setup_module()
+        return super().setup_module() # type: ignore[safe-super]
 
     def setup_pin(
         self,
@@ -62,7 +62,8 @@ class GPIO(GenericGPIO):
         pin_config: ConfigType,
         initial: Optional[str] = None,
     ) -> None:
-        return super().setup_pin(pin, direction, pullup, pin_config, initial=initial)
+        return super().setup_pin( # type: ignore[safe-super]
+            pin, direction, pullup, pin_config, initial=initial)
 
     def setup_interrupt(
         self, pin: PinType, edge: InterruptEdge, in_conf: ConfigType
@@ -70,10 +71,10 @@ class GPIO(GenericGPIO):
         return super().setup_interrupt(pin, edge, in_conf)
 
     def set_pin(self, pin: PinType, value: bool) -> None:
-        return super().set_pin(pin, value)
+        return super().set_pin(pin, value) # type: ignore[safe-super]
 
     def get_pin(self, pin: PinType) -> bool:
-        return super().get_pin(pin)
+        return super().get_pin(pin) # type: ignore[safe-super]
 
     def get_int_pins(self) -> List[PinType]:
         return super().get_int_pins()

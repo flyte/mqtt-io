@@ -27,27 +27,30 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
   - PCF8575 IO expander (`pcf8575`)
   - PiFace Digital IO 2 (`piface2`)
   - Raspberry Pi GPIO (`raspberrypi`)
+  - XL9535/PCA9535/TCA9535 IO expander (`xl9535`)
 
 ### Sensors
 
   - ADS1x15 analog to digital converters (`ads1x15`)
+  - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
   - AHT20 temperature and humidity sensor (`aht20`)
+  - AS3935 lightning detector (`as3935`)
   - BH1750 light level sensor (`bh1750`)
   - BME280 temperature, humidity and pressure sensor (`bme280`)
   - BME680 temperature, humidity and pressure sensor (`bme680`)
   - DHT11/DHT22/AM2302 temperature and humidity sensors (`dht22`)
   - DS18S20/DS1822/DS18B20/DS1825/DS28EA00/MAX31850K temperature sensors (`ds18b`)
   - ENS160  digital multi-gas sensor with multiple IAQ data (TVOC, eCO2, AQI) (`ens160`)
-  - FREQUENCYCOUNTER Counts pulses from GPIOs and return the frequency in Hz (`frequencycounterr`)
   - FLOWSENSOR generic flow rate sensor like YF-S201, YF-DN50 or others (`flowsensor`)
+  - FREQUENCYCOUNTER Counts pulses from GPIOs and return the frequency in Hz (`frequencycounterr`)
   - HCSR04 ultrasonic range sensor (connected to the Raspberry Pi on-board GPIO) (`hcsr04`)
   - INA219 DC current sensor (`ina219`)
   - LM75 temperature sensor (`lm75`)
   - MCP3008 analog to digital converter (`mcp3008`)
-  - ADXl345 3-axis accelerometer up to ±16g  (`adxl345`)
   - PMS5003 particulate sensor (`pms5003`)
   - SHT40/SHT41/SHT45 temperature and humidity sensors (`sht4x`)
-  - TLSl2561 light level sensor (`tsl2561`)
+  - TSL2561 light level sensor (`tsl2561`)
+  - VEML7700 light level sensor (`veml7700`)
   - YF-S201 flow rate sensor (`yfs201`)
 
 
@@ -65,6 +68,16 @@ _Requires Python 3.6+_
 ## Execution
 
 `python3 -m mqtt_io config.yml`
+
+Some configuration parameters can be passed as environment variables:
+
+- `MQTT_IO_HOST` - Host name or IP address of the MQTT server.
+- `MQTT_IO_PORT` - Port number to connect to on the MQTT server.
+- `MQTT_IO_USER` - Username to authenticate with on the MQTT server.
+- `MQTT_IO_PASSWORD` - Password to authenticate with on the MQTT server.
+- `MQTT_IO_PROTOCOL` - Version of the MQTT protocol to use.
+
+Environment variables take precedence over configuration files.
 
 ## Configuration Example
 
