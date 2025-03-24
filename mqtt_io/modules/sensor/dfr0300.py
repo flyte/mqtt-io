@@ -10,16 +10,20 @@ sensor_modules:
     module: dfr0300
 
 sensor_inputs:
-  - name: temperature
+  - name: temp_aht20
     module: aht20_temp
     type: temperature
     interval: 10
     digits: 4
+    ha_discovery:
+      name: Temperature
+      device_class: temperature
 
   - name: ec
     module: dfr0300
     pin: 0
-    tempsensor: temperature
+    # Must match the name of the temperature sensor
+    tempsensor: temp_aht20
     # Specify temperature if no temperature sensor is configured
     #temperature: 25.0
     interval: 10
@@ -67,7 +71,8 @@ ECREF = 200.0
 # pylint: disable=too-many-instance-attributes
 class Sensor(GenericSensor):
     """
-    Implementation of Sensor class for the DFR0300 Electrical Conductivity Sensor
+    Implementation of Sensor class for the DFRobot DFR0300 Electrical Conductivity Sensor
+    (Using the DFRobot DFR0566 RaspberryPi Expansion Board)
 
     """
 
@@ -158,7 +163,8 @@ class Sensor(GenericSensor):
         event_bus.subscribe(SensorReadEvent, on_sensor_read)
 
     def read_calibration(self) -> Tuple[float, float]:
-        """Read calibrated values from json file.
+        """Read calibrated values from json file with format:
+
         {
           "kvalue_low": 1.0,
           "kvalue_high": 1.0
