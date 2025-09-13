@@ -33,4 +33,59 @@ If you aren't able to find the exact device path to use, then you can also run t
 docker run -ti --rm -v /path/to/your/config.yml:/config.yml --privileged flyte/mqtt-io
 ```
 
+## Platform & Sensor-specific Docker Config
+
+These are provided as examples, and may apply more generally than the Sensors & Platforms mentioned here.
+
+### DHT22 on Raspberry Pi
+
+#### GPIO Device Filesystem Permissions
+In addition to the `/dev/gpiomem` device being passed through to the Docker Container, 
+`mqtt_io` also needs permission to use the device.
+
+By default, on Raspberry Pi OS, access to the GPIO is granted by membership of the `gpio` group.
+
+You can run the command `grep gpio /etc/group` to find the GID (group ID) of the `gpio` group. Here it is `993`;
+```
+$ grep gpio /etc/group
+gpio:x:993:pi
+```
+
+To add the User inside the `mqtt_io` Docker container to this group, add it on the command line:
+```
+docker run -ti --rm -v /path/to/your/config.yml:/config.yml --device /dev/gpiomem --group-add 993 flyte/mqtt-io
+```
+
+Or in a `docker-compose.yml` file:
+```
+services:
+  mqtt-io:
+    image: flyte/mqtt-io
+    group_add:
+      - 993
+```
+
+#### RPi.GPIO Library Dependencies
+The DHT22 Sensor Module relies on the `RPi.GPIO` library to use the GPIO on a Raspberry Pi.
+This library performs some checks on import to check that it is being run on a Raspberry Pi.
+To pass these checks, the Docker Container needs to be configured with;
+* Access to the `/dev/gpiomem` device, to check that GPIO is accessible
+* Access to the `/proc/device-tree/system/linux,revision` `procfs` "file", to check that it is running on a Raspberry Pi
+
+Access to the Host `/proc` filesystem can be given to the Container with the `security_opt` of `systempaths=unconfined`.
+
+On the command line, this uses the flag:
+```
+--security-opt="systempaths=unconfined"
+```
+
+Or for `docker-compose.yml`, add the following to the service entry:
+```
+security_opt:
+  - systempaths=unconfined
+```
+
+!> `systempaths=unconfined` will give the Container access to all of `/proc` & `/sys`. 
+Filesystem permissions still apply, but if these are circumvented the Container can edit values in `/proc` & `/sys`
+
 _Please raise an issue on Github if you find that any of this information is incorrect._
