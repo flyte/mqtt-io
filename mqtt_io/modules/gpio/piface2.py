@@ -22,6 +22,7 @@ class GPIO(GenericGPIO):
         pfdio.init()
         self.io = pfdio
 
+    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

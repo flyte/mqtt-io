@@ -42,6 +42,7 @@ class GPIO(GenericGPIO):
         self.bus = gpio.SMBus(bus)
         self.address = addr
 
+    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

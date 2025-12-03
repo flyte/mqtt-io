@@ -41,6 +41,7 @@ class GPIO(GenericGPIO):
 
         gpio.setmode(gpio.BCM)
 
+    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

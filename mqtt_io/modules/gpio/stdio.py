@@ -16,6 +16,7 @@ class GPIO(GenericGPIO):
     def setup_module(self) -> None:
         print("setup_module()")
 
+    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,
