@@ -8,6 +8,7 @@ from subprocess import CalledProcessError, check_call
 from types import ModuleType
 from typing import List
 
+# pylint: disable=import-error
 import pkg_resources
 
 from ..exceptions import CannotInstallModuleRequirements

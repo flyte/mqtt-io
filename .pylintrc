@@ -4,4 +4,5 @@ disable=
     unused-argument,
     duplicate-code,
     consider-using-f-string,
-    consider-using-from-import
+    consider-using-from-import,
+    too-many-positional-arguments
