@@ -9,7 +9,7 @@ from types import ModuleType
 from typing import List
 
 # pylint: disable=import-error
-import pkg_resources
+import pkg_resources # type: ignore
 
 from ..exceptions import CannotInstallModuleRequirements
 
