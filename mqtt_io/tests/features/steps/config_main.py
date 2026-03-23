@@ -17,7 +17,7 @@ def step(context: Any) -> None:
 @given("a valid config")  # type: ignore[no-redef]
 def step(context: Any) -> None:
     config = context.data["raw_config"]
-    config["mqtt"] = dict(host="localhost")
+    config["mqtt"] = dict(host="test.mosquitto.org")
 
 
 @given("the config has an entry in {section} with")  # type: ignore[no-redef]
