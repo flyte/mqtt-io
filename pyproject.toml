@@ -38,6 +38,9 @@ semver = "^2.13.0"
 docutils = "0.18.1"
 dill = "^0.4.0"
 
+[tool.mypy]
+disable_error_code = ["import-untyped"]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
