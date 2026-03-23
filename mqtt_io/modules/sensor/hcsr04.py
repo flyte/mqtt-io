@@ -30,7 +30,6 @@ class HCSR04:
     Separate class for the distance sensors themselves, since there may be more than one
     attached to the Raspberry Pi's GPIO pins.
     """
-    #pylint: disable=too-many-positional-arguments
     def __init__(
         self,
         gpio: Any,

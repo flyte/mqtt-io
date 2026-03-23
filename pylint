@@ -75,7 +75,7 @@ limit-inference-results = 100
 # load-plugins =
 
 # Pickle collected data for later comparisons.
-persistent = true 
+persistent = true
 
 # Resolve imports to .pyi stubs if available. May reduce no-member messages and
 # increase not-an-iterable messages.

@@ -114,7 +114,6 @@ class GenericGPIO(abc.ABC):  # pylint: disable=too-many-instance-attributes
         in `self.config`.
         """
 
-    #pylint: disable=too-many-positional-arguments
     @abc.abstractmethod
     def setup_pin(
         self,

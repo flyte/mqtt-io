@@ -27,7 +27,6 @@ class GPIO(GenericGPIO):
 
         self.io = PCF8574(self.config["i2c_bus_num"], self.config["chip_addr"])
 
-    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

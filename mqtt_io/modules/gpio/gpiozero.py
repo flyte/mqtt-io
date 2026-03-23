@@ -51,7 +51,6 @@ class GPIO(GenericGPIO):
             PinPUD.DOWN: False,
         }
 
-    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

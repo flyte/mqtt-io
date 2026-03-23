@@ -43,7 +43,6 @@ class GPIO(GenericGPIO):
         mode = self.config["mode"].upper()
         gpio.setmode(getattr(gpio, mode))
 
-    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

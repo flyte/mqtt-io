@@ -47,7 +47,6 @@ class GPIO(GenericGPIO):
         # off all outputs be default
         self.bus.write_word_data(self.address, XL9535_OUTPUT_PORT_0, 0x0000)
 
-    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,

@@ -54,7 +54,6 @@ class GPIO(GenericGPIO):  # pylint: disable=too-many-instance-attributes
             InterruptEdge.BOTH: gpiod.line_request.EVENT_BOTH_EDGES,
         }
 
-    #pylint: disable=too-many-positional-arguments
     def setup_pin(
         self,
         pin: PinType,
@@ -150,7 +149,6 @@ class InterruptThread(threading.Thread):
     Thread that waits on interrupt events for a given pin, then calls the callback.
     """
 
-    #pylint: disable=too-many-positional-arguments
     def __init__(
         self,
         chip: "gpiod.chip",
