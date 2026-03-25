@@ -24,7 +24,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir poetry && \
+RUN pip install --no-cache-dir poetry poetry-plugin-export && \
     poetry export -o /requirements.txt && \
     mkdir -p /home/mqtt_io && \
     python -m venv /home/mqtt_io/venv && \
