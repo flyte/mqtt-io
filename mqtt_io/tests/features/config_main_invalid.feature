@@ -95,7 +95,7 @@ Feature: Invalid main config validation
         When we validate the main config
         Then config validation fails
 
-    @skip
+    @fixme
     Scenario: Configuring a GPIO module's pin as a digital input twice should fail
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -118,7 +118,7 @@ Feature: Invalid main config validation
         When we validate the main config
         Then config validation fails
 
-    @skip
+    @fixme
     Scenario: Configuring a GPIO module's pin as a digital output twice should fail
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -141,7 +141,7 @@ Feature: Invalid main config validation
         When we validate the main config
         Then config validation fails
 
-    @skip
+    @fixme
     Scenario: Configuring a GPIO module's pin as a digital output and a digital input should fail
         Given a valid config
         And the config has an entry in gpio_modules with

@@ -59,7 +59,6 @@ class Sensor(GenericSensor):
         self.sensor.set_integration_time('100ms')
         self.sensor.set_shutdown(False)
 
-
     def calculate_uv_index(self, sens_conf: ConfigType, \
         uva: float, uvb: float, uv_comp1: float, uv_comp2: float) -> float:
 
