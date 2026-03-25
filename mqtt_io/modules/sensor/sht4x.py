@@ -10,9 +10,6 @@ from ...exceptions import RuntimeConfigError
 
 REQUIREMENTS = ("adafruit-circuitpython-sht4x",)
 
-CONFIG_SCHEMA = {
-    "chip_addr": {"type": "integer", "required": False, "empty": False, "default": 0x44}
-}
 
 class Sensor(GenericSensor):
     """
@@ -37,7 +34,7 @@ class Sensor(GenericSensor):
         import busio  # type: ignore
 
         i2c = busio.I2C(board.SCL, board.SDA)
-        self.sensor = adafruit_sht4x.SHT4x(i2c, address=self.config["chip_addr"])
+        self.sensor = adafruit_sht4x.SHT4x(i2c)
 
     @property
     def _temperature(self) -> SensorValueType:
