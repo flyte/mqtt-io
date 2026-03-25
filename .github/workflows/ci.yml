@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        python-version: ['3.10', '3.12']
 
     steps:
       - uses: actions/checkout@v4
@@ -25,12 +25,12 @@ jobs:
       - name: Lint with mypy
         run: poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
       - name: Test with behave
-        run: poetry run behave -t ~skip mqtt_io/tests/features
+        run: poetry run behave --tags ~fixme mqtt_io/tests/features
 
   publish:
     name: Publish to PyPI
     if: github.event_name == 'release' && github.event.action == 'created'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: test
     steps:
       - uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
   build_docker_image:
     name: Build Docker Image
     if: (github.event_name == 'release' && github.event.action == 'created') || github.event_name == 'push'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: test
     steps:
       - uses: actions/checkout@v2
@@ -80,7 +80,7 @@ jobs:
     name: Generate Documentation
     if: github.event_name == 'push'
     concurrency: generate_docs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         with:

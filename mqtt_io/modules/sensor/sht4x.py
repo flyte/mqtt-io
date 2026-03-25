@@ -19,13 +19,14 @@ class Sensor(GenericSensor):
     Implementation of Sensor class for sht4x.
     """
 
+
     SENSOR_SCHEMA = {
         "type": {
-            "type": 'string',
+            "type": "string",
             "required": False,
             "empty": False,
-            "default": 'temperature',
-            "allowed": ['temperature', 'humidity'],
+            "default": "temperature",
+            "allowed": ["temperature", "humidity"],
         }
     }
 
