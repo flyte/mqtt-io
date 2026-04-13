@@ -3,7 +3,7 @@
 # when building multiarch using buildx, then try this:
 # https://github.com/docker/buildx/issues/495#issuecomment-761562905
 
-FROM python:3.8-slim-buster AS base
+FROM python:3.10.20-slim-trixie AS base
 
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
@@ -24,7 +24,7 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir poetry && \
+RUN pip install --no-cache-dir poetry poetry-plugin-export && \
     poetry export -o /requirements.txt && \
     mkdir -p /home/mqtt_io && \
     python -m venv /home/mqtt_io/venv && \

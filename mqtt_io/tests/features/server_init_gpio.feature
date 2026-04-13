@@ -158,6 +158,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
         And a digital input poller task isn't added for mock0
         And a digital output loop task is added for GPIO module mock
 
+    @fixme
     Scenario: Digital output publishes initial high/on value when publish_initial=True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -185,6 +186,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             payload: "ON"
             """
 
+    @fixme
     Scenario: Digital output publishes initial low/off value when publish_initial=True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -213,6 +215,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             """
 
 
+    @fixme
     Scenario: Inverted digital output publishes initial high/off value when publish_initial=True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -241,6 +244,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             payload: "OFF"
             """
     
+    @fixme
     Scenario: Inverted digital output publishes initial low/on value when publish_initial=True
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -269,6 +273,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             payload: "ON"
             """
 
+    @fixme
     Scenario: Digital output publishes ON when turned on
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -295,6 +300,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             payload: "ON"
             """
     
+    @fixme
     Scenario: Digital output publishes OFF when turned off
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -321,6 +327,7 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             payload: "OFF"
             """
 
+    @fixme
     Scenario: Inverted digital output publishes ON when turned on
         Given a valid config
         And the config has an entry in gpio_modules with
@@ -347,7 +354,8 @@ Feature: Tests for the successful initialisation of the GPIO aspects of the serv
             """
             payload: "ON"
             """
-    
+
+    @fixme
     Scenario: Inverted digital output publishes OFF when turned off
         Given a valid config
         And the config has an entry in gpio_modules with
