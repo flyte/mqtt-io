@@ -189,7 +189,13 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             {}
         )  # type: Dict[str, asyncio.Queue[Tuple[ConfigType, str]]]
 
-        self.loop = loop or asyncio.get_event_loop()
+        if loop is not None:
+            self.loop = loop
+        else:
+            try:
+                self.loop = asyncio.get_event_loop()
+            except RuntimeError:
+                self.loop = asyncio.new_event_loop()
         self._main_task: Optional["asyncio.Task[None]"] = None
         self.critical_tasks: List["asyncio.Task[Any]"] = []
         self.transient_tasks: List["asyncio.Task[Any]"] = []

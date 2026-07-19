@@ -81,7 +81,9 @@ def main() -> None:
             if "mqtt" not in raw_config or raw_config["mqtt"] is None:
                 raw_config["mqtt"] = {}
             raw_config["mqtt"]["host"] = getenv("MQTT_IO_HOST", raw_config["mqtt"].get("host"))
-            raw_config["mqtt"]["port"] = getenv("MQTT_IO_PORT", raw_config["mqtt"].get("port"))
+            mqtt_port = getenv("MQTT_IO_PORT")
+            if mqtt_port is not None:
+                raw_config["mqtt"]["port"] = int(mqtt_port)
             raw_config["mqtt"]["user"] = getenv("MQTT_IO_USER", raw_config["mqtt"].get("user"))
             raw_config["mqtt"]["password"] = getenv("MQTT_IO_PASSWORD",
                                                     raw_config["mqtt"].get("password"))
