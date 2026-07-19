@@ -42,6 +42,7 @@
 - <a href="/388-incompatible-constraints-in-requirements-of-mqtt-io-243" target="_self">388-incompatible-constraints-in-requirements-of-mqtt-io-243</a>
 - <a href="/409-fix-doc-for-as3935-lightning-detector-407-463" target="_self">409-fix-doc-for-as3935-lightning-detector-407-463</a>
 - <a href="/431-sht4x-sensor-how-to-change-the-i2c-address-from-0x44-default-to-0x45" target="_self">431-sht4x-sensor-how-to-change-the-i2c-address-from-0x44-default-to-0x45</a>
+- <a href="/443-release-version-270" target="_self">443-release-version-270</a>
 - <a href="/add-chip-addr-for-sht4x" target="_self">add-chip-addr-for-sht4x</a>
 - <a href="/dependabot" target="_self">dependabot</a>
 - <a href="/develop" target="_self">develop</a>
