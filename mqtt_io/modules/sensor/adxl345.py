@@ -1,23 +1,23 @@
 """
 ADXL345 Digital Accelerometer Sensor
-
-Mandatory:
-- chip_addr
-
-Optional:
-- output_g (set True if output in g). default:m*s²
-
-Output:
-- x (in m*s²)
-- y (in m*s²)
-- z (in m*s²)
 """
-
 from json import dumps
 from typing import cast
 
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
+
+## Mandatory:
+## - chip_addr
+##
+## Optional:
+## - output_g (set True if output in g). default:m*s²
+##
+## Output:
+## - x (in m*s²)
+## - y (in m*s²)
+## - z (in m*s²)
+
 
 REQUIREMENTS = ("adxl345",)
 CONFIG_SCHEMA: CerberusSchemaType = {

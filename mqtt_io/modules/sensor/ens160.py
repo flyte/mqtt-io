@@ -1,37 +1,37 @@
 """
 ENS160 Air Quality Sensor
-
-sensor_modules:
-  - name: ens160
-    module: ens160
-    chip_addr: 0x53
-    temperature_compensation: 25
-    humidity_compensation: 50
-
-sensor_inputs:
-  - name: air_quality
-    module: ens160
-    interval: 10
-    digits: 0
-    type: aqi
-
-  - name: volatile_organic_compounds
-    module: ens160
-    interval: 10
-    digits: 0
-    type: tvoc
-
-  - name: eco2
-    module: ens160
-    interval: 10
-    digits: 0
-    type: eco2
 """
-
 from typing import cast
 
 from ...types import CerberusSchemaType, ConfigType
 from . import GenericSensor
+
+## Example configuration:
+##sensor_modules:
+##  - name: ens160
+##    module: ens160
+##    chip_addr: 0x53
+##    temperature_compensation: 25
+##    humidity_compensation: 50
+##
+##sensor_inputs:
+##  - name: air_quality
+##    module: ens160
+##    interval: 10
+##    digits: 0
+##    type: aqi
+##
+##  - name: volatile_organic_compounds
+##    module: ens160
+##    interval: 10
+##    digits: 0
+##    type: tvoc
+##
+##  - name: eco2
+##    module: ens160
+##    interval: 10
+##    digits: 0
+##    type: eco2
 
 DEFAULT_CHIP_ADDR = 0x53
 DEFAULT_TEMPERATURE_COMPENSATION = 25
