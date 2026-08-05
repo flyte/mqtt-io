@@ -7,6 +7,8 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+from mqtt_io.events import EventBus
+
 from ...types import ConfigType, SensorValueType
 
 
@@ -36,13 +38,16 @@ class GenericSensor(abc.ABC):
         in `self.config`.
         """
 
-    def setup_sensor(self, sens_conf: ConfigType) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         """
         Called on initialisation of each reading type of the Sensor module during the
         startup phase.
 
         The `sens_conf` passed in here is the sensor's entry in the `sensor_inputs`
         section of the config file.
+
+        The `event_bus` is the system event bus so that it is possible to track and respond
+        to other events, such as other sensor readings.
         """
 
     def cleanup(self) -> None:
