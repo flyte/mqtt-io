@@ -26,6 +26,8 @@ jobs:
         run: poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
       - name: Test with behave
         run: poetry run behave --tags ~fixme mqtt_io/tests/features
+      - name: Test USB stream cleanup
+        run: poetry run pytest mqtt_io/tests/test_stream_usb.py
 
   publish:
     name: Publish to PyPI
