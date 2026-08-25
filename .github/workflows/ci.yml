@@ -26,10 +26,12 @@ jobs:
         run: poetry run mypy --show-error-codes --strict --no-warn-unused-ignores mqtt_io
       - name: Test with behave
         run: poetry run behave --tags ~fixme mqtt_io/tests/features
+      - name: Test USB stream cleanup
+        run: poetry run pytest mqtt_io/tests/test_stream_usb.py
 
   publish:
     name: Publish to PyPI
-    if: github.event_name == 'release' && github.event.action == 'created'
+    if: github.repository == 'flyte/mqtt-io' && github.event_name == 'release' && github.event.action == 'created'
     runs-on: ubuntu-22.04
     needs: test
     steps:
@@ -49,7 +51,7 @@ jobs:
 
   build_docker_image:
     name: Build Docker Image
-    if: (github.event_name == 'release' && github.event.action == 'created') || github.event_name == 'push'
+    if: github.repository == 'flyte/mqtt-io' && ((github.event_name == 'release' && github.event.action == 'created') || github.event_name == 'push')
     runs-on: ubuntu-22.04
     needs: test
     steps:
@@ -78,7 +80,7 @@ jobs:
 
   generate_docs:
     name: Generate Documentation
-    if: github.event_name == 'push'
+    if: github.repository == 'flyte/mqtt-io' && github.event_name == 'push'
     concurrency: generate_docs
     runs-on: ubuntu-22.04
     steps:

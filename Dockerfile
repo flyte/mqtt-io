@@ -16,7 +16,7 @@ FROM base AS requirements
 ARG TARGETPLATFORM
 RUN if [ "${TARGETPLATFORM}" = "linux/arm/v7" ]; then \
         apt-get update && \
-        apt-get install -y lsb-release curl g++ pkg-config libssl-dev libffi-dev && \
+        apt-get install -y lsb-release curl g++ pkg-config libssl-dev libffi-dev libusb-1.0-0-dev libudev-dev && \
         \
         (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y) \
     fi
@@ -33,8 +33,8 @@ RUN pip install --no-cache-dir poetry poetry-plugin-export && \
 
 FROM base
 
-# Install gcc so packages installed durring runtime may be build
-RUN apt-get update && apt-get install -y gcc && gcc --version
+# Install gcc and USB build deps so hidapi can compile on linux/arm/v7 (no wheel).
+RUN apt-get update && apt-get install -y gcc pkg-config libusb-1.0-0-dev libudev-dev && gcc --version
 
 RUN useradd -m -s /bin/bash mqtt_io
 USER mqtt_io
