@@ -33,8 +33,8 @@ RUN pip install --no-cache-dir poetry poetry-plugin-export && \
 
 FROM base
 
-# Install gcc so packages installed durring runtime may be build
-RUN apt-get update && apt-get install -y gcc libusb-1.0-0-dev && gcc --version
+# Install gcc and USB build deps so hidapi can compile on linux/arm/v7 (no wheel).
+RUN apt-get update && apt-get install -y gcc pkg-config libusb-1.0-0-dev libudev-dev && gcc --version
 
 RUN useradd -m -s /bin/bash mqtt_io
 USER mqtt_io
