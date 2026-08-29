@@ -16,6 +16,7 @@ dataclasses = { version = "^0.8", python = ">=3.6,<3.7" }
 aiomqtt = "^2.1.0"
 backoff = "^2.2.1"
 confp = "^0.4.0"
+packaging = ">=23.2"
 # Fix for poetry/docutils related bug
 docutils = "0.18.1"
 
@@ -37,7 +38,7 @@ GitPython = "^3.1.15"
 semver = "^2.13.0"
 docutils = "0.18.1"
 dill = "^0.4.0"
-setuptools = "81.0.0"
+setuptools = "*"
 
 [tool.mypy]
 disable_error_code = ["import-untyped"]
