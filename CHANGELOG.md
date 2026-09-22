@@ -2,6 +2,8 @@ Unreleased
 ==========
 - Reopen any stream after a failed read or write, instead of polling a dead
   handle.
+- Drain a stream as soon as a read returns data, instead of waiting another
+  ``read_interval`` before publishing the next chunk.
 
 .v2.4.0 - 2024-07-20
 ====================
