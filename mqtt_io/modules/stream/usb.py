@@ -2,6 +2,7 @@
 USB
 """
 
+import errno
 from typing import Optional
 
 from . import GenericStream
@@ -12,7 +13,7 @@ CONFIG_SCHEMA = {
     "vid": {"type": "integer", "required": True, "empty": False},
     "pid": {"type": "integer", "required": True, "empty": False},
     "read_size": {"type": "integer", "required": True, "empty": True},
-    "read_timeout": {"type": "integer", "default": 1, "required": False, "empty": True},
+    "read_timeout": {"type": "integer", "default": 1000, "required": False, "empty": True},
     "write_size": {"type": "integer", "required": True, "empty": True},
     "interface": {"type": "integer", "required": True, "empty": True},
 }
@@ -23,6 +24,8 @@ CONFIG_SCHEMA = {
 class Stream(GenericStream):
     """
     Stream module for sending to and receiving from USB devices.
+
+    A read timeout means no bytes were waiting. Any other USB error is raised.
     """
 
     def setup_module(self) -> None:
@@ -74,12 +77,13 @@ class Stream(GenericStream):
         import usb.core  # type: ignore
 
         try:
-            result = bytes(
+            return bytes(
                 self.ep_in.read(self.config["read_size"], self.config["read_timeout"])
             )
-        except usb.core.USBError:
-            result = None
-        return result
+        except usb.core.USBError as exc:
+            if getattr(exc, "errno", None) == errno.ETIMEDOUT:
+                return None
+            raise
 
     def write(self, data: bytes) -> None:
         byte_list = list(data)
