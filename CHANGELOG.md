@@ -1,5 +1,7 @@
 Unreleased
 ==========
+- Drain a stream as soon as a read returns data, instead of waiting another
+  ``read_interval`` before publishing the next chunk.
 
 2.7.0 - 2026-10-17
 ==================
