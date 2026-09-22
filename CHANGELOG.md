@@ -1,5 +1,7 @@
 Unreleased
 ==========
+- Treat a USB stream read timeout as an empty read, and raise any other USB
+  error. The default read timeout is 1000 ms, long enough for one transfer.
 - Drain a stream as soon as a read returns data, instead of waiting another
   ``read_interval`` before publishing the next chunk.
 
