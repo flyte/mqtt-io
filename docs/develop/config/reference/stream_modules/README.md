@@ -108,6 +108,21 @@ Unit: seconds
 Default: 60
 ```
 
+## retry_interval :id=stream_modules-star-retry_interval
+
+*stream_modules.&ast;*.**retry_interval**
+
+How long to wait before opening the stream again after the device
+is missing or a read/write fails. Applies to every stream module.
+
+
+```yaml
+Type: float
+Required: False
+Unit: seconds
+Default: 3
+```
+
 ## read :id=stream_modules-star-read
 
 *stream_modules.&ast;*.**read**

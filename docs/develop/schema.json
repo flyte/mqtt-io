@@ -450,6 +450,17 @@
           "default": 60,
           "min": 0.01
         },
+        "retry_interval": {
+          "meta": {
+            "description": "How long to wait before opening the stream again after the device\nis missing or a read/write fails. Applies to every stream module.\n",
+            "unit": "seconds",
+            "title_id": "stream_modules-star-retry_interval"
+          },
+          "type": "float",
+          "required": false,
+          "default": 3,
+          "min": 0.01
+        },
         "read": {
           "meta": {
             "description": "Whether to poll this stream for incoming data and publish it on an MQTT topic.\n",
