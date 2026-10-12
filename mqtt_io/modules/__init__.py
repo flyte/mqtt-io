@@ -8,8 +8,9 @@ from subprocess import CalledProcessError, check_call
 from types import ModuleType
 from typing import List
 
-# pylint: disable=import-error
-import pkg_resources # type: ignore
+from importlib.metadata import PackageNotFoundError, version
+
+from packaging.requirements import Requirement
 
 from ..exceptions import CannotInstallModuleRequirements
 
@@ -38,10 +39,15 @@ def install_missing_module_requirements(module: ModuleType) -> None:
         _LOG.debug("Module %r has no extra requirements to install.", module)
         return
 
-    pkgs_installed = pkg_resources.WorkingSet()
     pkgs_required = []
     for req in reqs:
-        if pkgs_installed.find(pkg_resources.Requirement.parse(req)) is None:
+        requirement = Requirement(req)
+        try:
+            installed = version(requirement.name)
+        except PackageNotFoundError:
+            pkgs_required.append(req)
+            continue
+        if requirement.specifier and installed not in requirement.specifier:
             pkgs_required.append(req)
 
     if not pkgs_required:
