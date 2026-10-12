@@ -895,6 +895,23 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
             last_value = value
             await asyncio.sleep(in_conf["poll_interval"])
 
+    async def _reopen_stream(
+        self, module: GenericStream, stream_conf: ConfigType
+    ) -> None:
+        """
+        Reopen a stream after a lost device.
+
+        Sleep only when reopening fails, so a missing device is not claimed
+        on every poll interval.
+        """
+        try:
+            await module.async_reconnect()
+        except Exception:  # pylint: disable=broad-except
+            _LOG.exception(
+                "Exception while reopening stream '%s':", stream_conf["name"]
+            )
+            await asyncio.sleep(stream_conf.get("retry_interval", 3))
+
     async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:
         """
         Poll a stream at a given interval and fire the StreamDataReadEvent with read data.
@@ -906,6 +923,8 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 _LOG.exception(
                     "Exception while polling stream '%s':", stream_conf["name"]
                 )
+                await self._reopen_stream(module, stream_conf)
+                continue
             else:
                 if data is not None:
                     self.event_bus.fire(StreamDataReadEvent(stream_conf["name"], data))
@@ -1361,8 +1380,15 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 _LOG.exception(
                     "Exception while sending data to stream '%s':", stream_conf["name"]
                 )
-            else:
-                self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
+                try:
+                    await module.async_reconnect()
+                    await module.async_write(data)
+                except Exception:  # pylint: disable=broad-except
+                    _LOG.exception(
+                        "Exception while reopening stream '%s':", stream_conf["name"]
+                    )
+                    continue
+            self.event_bus.fire(StreamDataSentEvent(stream_conf["name"], data))
 
     async def _main_loop(self) -> None:
         """

@@ -436,6 +436,16 @@ stream_modules:
         required: no
         default: 60
         min: 0.01
+      retry_interval:
+        meta:
+          description: |
+            How long to wait before opening the stream again after the device
+            is missing or a read/write fails. Applies to every stream module.
+          unit: seconds
+        type: float
+        required: no
+        default: 3
+        min: 0.01
       read:
         meta:
           description: |
