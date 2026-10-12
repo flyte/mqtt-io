@@ -37,7 +37,9 @@ def _mocks() -> Tuple[MagicMock, MagicMock, MagicMock, MagicMock]:
     return mock_usb, mock_core, mock_util, device
 
 
-def _patched(mock_usb: MagicMock, mock_core: MagicMock, mock_util: MagicMock):
+def _patched(
+    mock_usb: MagicMock, mock_core: MagicMock, mock_util: MagicMock
+) -> Any:
     return patch.dict(
         sys.modules, {"usb": mock_usb, "usb.core": mock_core, "usb.util": mock_util}
     )
