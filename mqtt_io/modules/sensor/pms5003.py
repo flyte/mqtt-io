@@ -9,7 +9,7 @@ from . import GenericSensor
 
 REQUIREMENTS = ("plantower",)
 CONFIG_SCHEMA: CerberusSchemaType = {
-    "serial_port": {"type": 'string', "required": True, "empty": False},
+    "serial_port": {"type": "string", "required": True, "empty": False},
 }
 
 
@@ -20,33 +20,42 @@ class Sensor(GenericSensor):
 
     SENSOR_SCHEMA: CerberusSchemaType = {
         "type": {
-            "type": 'string',
+            "type": "string",
             "required": False,
             "empty": False,
-            "default": 'pm25_std',
-            "allowed": 
-                ['pm10_cf1', 'pm25_cf1','pm100_cf1',
-                 'pm10_std','pm25_std','pm100_std',
-                 'gr03um','gr05um','gr10um',
-                 'gr25um','gr50um','gr100um'],
+            "default": "pm25_std",
+            "allowed": [
+                "pm10_cf1",
+                "pm25_cf1",
+                "pm100_cf1",
+                "pm10_std",
+                "pm25_std",
+                "pm100_std",
+                "gr03um",
+                "gr05um",
+                "gr10um",
+                "gr25um",
+                "gr50um",
+                "gr100um",
+            ],
         }
     }
 
     def setup_module(self) -> None:
         # pylint: disable=import-outside-toplevel,import-error
-        import plantower # type: ignore
+        import plantower  # type: ignore
 
         self.serial_port = self.config["serial_port"]
         self.sensor = plantower.Plantower(port=self.serial_port)
         self.sensor.mode_change(plantower.PMS_PASSIVE_MODE)
         self.sensor.set_to_wakeup()
-        time.sleep(30) #give fan time to stabilize readings
+        time.sleep(30)  # give fan time to stabilize readings
 
     def get_value(self, sens_conf: ConfigType) -> SensorValueType:
         """
         Get the particulate data from the sensor
         """
-        #turn sensor off if interval between readings is >= 2 minutes
+        # turn sensor off if interval between readings is >= 2 minutes
         sleep_sensor = sens_conf["interval"] >= 120
         if sleep_sensor:
             self.sensor.set_to_wakeup()
@@ -69,8 +78,8 @@ class Sensor(GenericSensor):
                 "gr10um": result.gr10um,
                 "gr25um": result.gr25um,
                 "gr50um": result.gr50um,
-                "gr100u": result.gr100um
-                }[sens_type],
+                "gr100u": result.gr100um,
+            }[sens_type],
         )
 
     def cleanup(self) -> None:

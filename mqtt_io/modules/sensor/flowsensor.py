@@ -33,6 +33,8 @@ If you use "factor = 1", the sensor module returns the frequency in Hertz (Hz).
 """
 
 from typing import Dict
+
+from mqtt_io.events import EventBus
 from ...types import CerberusSchemaType, ConfigType, SensorValueType
 from . import GenericSensor
 
@@ -110,7 +112,7 @@ class Sensor(GenericSensor):
         self.gpiozero = gpiozero
         self.sensors: Dict[str, FLOWSENSOR] = {}
 
-    def setup_sensor(self, sens_conf: ConfigType) -> None:
+    def setup_sensor(self, sens_conf: ConfigType, event_bus: EventBus) -> None:
         sensor = FLOWSENSOR(
             gpiozero=self.gpiozero, name=sens_conf["name"], pin=sens_conf["pin"]
         )
