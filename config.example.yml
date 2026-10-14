@@ -47,7 +47,7 @@ digital_inputs:
     off_payload: "OFF"
     pullup: no
     pulldown: yes
-    
+
   - name: button_left
     module: raspberrypi
     pin: 23
@@ -82,6 +82,18 @@ sensor_inputs:
     interval: 10
     digits: 2
 
+stream_modules:
+  - name: mmwave_uart
+    module: serial
+    device: /dev/serial0
+    baud: 115200
+    delimiter: "\r\n"
+    reset_before_read: True
+    read_interval: 5
+    timeout: 60
+    ha_discovery:
+      unique_id: mmwave_uart
+      name: MMWave UART
   - name: co2_mhz19
     module: mhz19
     interval: 30
