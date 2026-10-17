@@ -2,4 +2,4 @@
 Top level of MQTT IO package.
 """
 
-VERSION = "2.7.0rc1"
+VERSION = "2.7.0"

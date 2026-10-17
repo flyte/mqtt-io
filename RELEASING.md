@@ -3,9 +3,11 @@
 ## Current Preparation
 
 The local `release/2.7.0` branch is based on `develop` and prepares version
-`2.7.0rc1`. The minor version includes the configurable SHT4x chip address as well
-as fixes since `2.6.0`. Local preparation does not commit, tag, push or publish.
-The final stable version will be `2.7.0` on a separately reviewed commit and tag.
+`2.7.0` after testing the published `2.7.0rc1` candidate. The minor version
+includes the configurable SHT4x chip address as well as fixes since `2.6.0`.
+The stable version change is prepared in this branch before merging into
+`develop`. Local preparation does not commit, tag, push or publish. The existing
+`2.7.0rc1` tag and release remain unchanged; stable needs its own reviewed tag.
 
 ## Versioning
 
@@ -90,9 +92,21 @@ workflow passes `actionlint`. The rebuilt RC wheel and source archive pass
 `pip check` and the stream-reconnect test passing. The Python 3.12 Pylint,
 Mypy and Behave checks were repeated successfully for the RC preparation.
 
-The Python 3.10 CI job, multi-architecture Docker builds and real publication
-jobs have not been run locally. Those checks and hardware validation remain
-required before treating this preparation as an approved release.
+The candidate passed the Python 3.10 and 3.12 CI jobs and was published to PyPI.
+On 2026-10-17, the published `2.7.0rc1` wheel and its dependencies were installed
+directly from PyPI without cache in a separate Python 3.13.5 TestPi environment,
+`/home/benni/.venvs/mqtt-io-pypi-2.7.0rc1.tHeNbh`. The wheel SHA256 matched PyPI,
+package imports resolved inside that environment, and `pip check`, CLI help
+and configuration validation passed. A temporary PyPI-only proxy was removed
+after installation; the Pi's network isolation and read-only root remain intact.
+
+The operator also confirmed MQTT messages arriving on Bennibus when running
+the installed candidate with `python -I -m mqtt_io` and an absolute configuration
+path. This avoids importing the local checkout. The configuration uses stdio
+GPIO and a mock sensor, so this is an end-to-end MQTT test, not validation of
+physical GPIO or sensors. Hardware-specific tests remain a separate requirement
+for deployments using those modules. The stable commit must pass CI again
+before merging and tagging; no stable publication is implied by these checks.
 
 ## Publication
 
@@ -139,14 +153,16 @@ candidate packages to PyPI, not TestPyPI.
 3. Test the candidate on the required hardware. If fixes are needed, change all
   three version files to `2.7.0rc2`, commit the fixes, and create a new candidate
   tag and prerelease. Never move published tags or reuse PyPI versions.
-4. After the candidate succeeds, merge the reviewed branch into `develop`.
-  On the final reviewed stable commit, set all three versions to `2.7.0`,
-  consolidate the candidate changelog entries into a dated stable release,
-  rebuild and test, then commit and push. The stable version change can also
-  be reviewed through a separate pull request; it must precede the stable tag.
-5. Create the new tag `2.7.0` on that exact stable commit and publish a new GitHub
-  release without the prerelease checkbox. This publishes the stable package
-  and updates Docker `latest`.
+4. After the candidate succeeds, prepare the stable commit in `release/2.7.0`
+  before merging the pull request. Set all three versions to `2.7.0`, consolidate
+  the candidate changelog entries into a dated stable release, rebuild and test,
+  then commit and push only the release files. Keep local test configurations
+  and credentials out of the commit. Wait for CI on the stable commit, review
+  the changes, then merge the pull request into `develop`.
+5. Verify that the resulting commit on `develop` contains the reviewed stable
+  changes and passes CI. Create the new tag `2.7.0` on that exact commit and
+  publish a new GitHub release without the prerelease checkbox. This publishes
+  the stable package and updates Docker `latest`.
 
 Do not promote the `2.7.0rc1` GitHub release to stable: its tag still contains
 candidate package metadata. Editing or promoting a release does not use the
