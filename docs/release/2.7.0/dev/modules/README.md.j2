@@ -1,0 +1,166 @@
+# Hardware Support Modules
+
+In order to support as much hardware as possible without changing the project's core code, every supported piece of hardware will have a relevant GPIO, sensor or stream module. These reside in `mqtt_io/modules` within the `gpio`, `sensor` and `stream` folders respectively. In each of these folders is an `__init__.py` file which contains the base class for each type of module. The hardware modules must include a class which overrides this base class and is named `GPIO`, `Sensor` or `Stream`.
+
+## Requirements
+
+In order for a module to specify its requirements, a module-level constant is used which lists them in the same format as the `pip install` command.
+
+{{ source(
+    "mqtt_io.modules.gpio.raspberrypi",
+    "//Assign[targets/Name/id='REQUIREMENTS']",
+    "mqtt_io.modules.gpio.raspberrypi:REQUIREMENTS"
+)}}
+
+## Config Schema
+
+Along with the base module schema in `mqtt_io/config/config.schema.yml`, each hardware support module is able to specify extra config schema to allow the user to provide the details needed for using the specific hardware.
+
+To specify extra schema for the module-level config sections (`gpio_modules`, `sensor_modules`, `stream_modules`), a _module-level_ constant called `CONFIG_SCHEMA` is set, containing the [Cerberus Schema](https://docs.python-cerberus.org/en/stable/schemas.html) to add to the base schema.
+
+To specify extra schema for the pin-level config sections (`digital_inputs`, `digital_outputs`, `sensor_inputs` etc.), a _class-level_ constant called `PIN_SCHEMA` is set on the module's main class (`GPIO`, `Sensor`, `Stream`), containing the [Cerberus Schema](https://docs.python-cerberus.org/en/stable/schemas.html) to add to the base schema.
+
+If the pin-level schema only applies to an input or an output (in the case of a GPIO module), then instead of setting it on the `PIN_SCHEMA` class-level constant, use `INPUT_SCHEMA` or `OUTPUT_SCHEMA` respectively.
+
+{{ source(
+    "mqtt_io.modules.gpio.gpiod",
+    "//Assign[targets/Name/id='CONFIG_SCHEMA']",
+    "mqtt_io.modules.gpio.gpiod:CONFIG_SCHEMA"
+)}}
+
+## GPIO Modules
+
+...
+
+### Lifecycle
+
+#### `setup_module()`
+
+During software startup, each GPIO module's `setup_module()` method will be called once per instance of the module in the `gpio_modules` section of the config file.
+
+{{ source(
+    "mqtt_io.modules.gpio",
+    "//ClassDef[name='GenericGPIO']//FunctionDef[name='setup_module']",
+    "mqtt_io.modules.gpio:GenericGPIO.setup_module"
+) }}
+
+For example, the `pcf8574` module's `setup_module()` method will be called twice given the following config:
+
+```yaml
+gpio_modules:
+  - name: pcf1
+    module: pcf8574
+    i2c_bus_num: 1
+    chip_addr: 0x20
+
+  - name: pcf2
+    module: pcf8574
+    i2c_bus_num: 1
+    chip_addr: 0x21
+```
+
+Within this method we import any Python dependencies. It's important to not do this at module level, so that the core code is able to import the module before its dependencies are installed.
+
+The GPIO library is then initialised and an object may be stored (usually at `self.io`) for use by the module during runtime.
+
+It may be appropriate to build mappings of pin directions (input, output), pullups (up, down, off) and interrupt edges (rising, falling, both) if appropriate for this hardware. The base GenericGPIO class uses its own constants to refer to these, so the mappings translate the base GenericGPIO's constants to ones used by the hardware's Python library.
+
+{{ source(
+    "mqtt_io.modules.gpio",
+    "//ClassDef[name='PinDirection']",
+    "mqtt_io.modules.gpio:PinDirection"
+) }}
+
+{{ source(
+    "mqtt_io.modules.gpio",
+    "//ClassDef[name='PinPUD']",
+    "mqtt_io.modules.gpio:PinPUD"
+) }}
+
+{{ source(
+    "mqtt_io.modules.gpio",
+    "//ClassDef[name='InterruptEdge']",
+    "mqtt_io.modules.gpio:InterruptEdge"
+) }}
+
+The `raspberrypi` GPIO module is a good example of the above:
+
+{{ source(
+    "mqtt_io.modules.gpio.raspberrypi",
+    "//ClassDef[name='GPIO']//FunctionDef[name='setup_module']",
+    "mqtt_io.modules.gpio.raspberrypi:GPIO.setup_module"
+) }}
+
+#### Polling Loop
+
+If a digital input is not configured as an [interrupt](config/interrupts.md) (or even [sometimes if it is](config/reference/digital_inputs/?id=digital_inputs-star-interrupt_for)), then a loop will be created which polls the pin's current value and publishes a `DigitalInputChangedEvent` event when it does. As part of the initialisation of each pin, a callback function to publish the new value on MQTT will be subscribed to this event.
+
+{{ source_link(
+    "mqtt_io.server",
+    "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']",
+    "mqtt_io.server.MqttIo._init_digital_inputs"
+)}}
+
+```python
+{{ sources_raw(
+    [
+        (
+            "mqtt_io.server",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']/body/*[1]"
+        ),
+        (
+            "mqtt_io.server",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']//AsyncFunctionDef[name='publish_callback']",
+            None
+        ),
+        (
+            "mqtt_io.server",
+            "//ClassDef[name='MqttIo']//FunctionDef[name='_init_digital_inputs']//Call[args//id='DigitalInputChangedEvent']",
+            None
+        )
+    ],
+    dedent=True
+)}}
+```
+
+#### `setup_pin()`
+
+For each of the entries in `digital_inputs` and `digital_outputs`, `setup_pin()` will be called. This step is for configuring the hardware's pins to be input or outputs, or anything else that must be set at pin level.
+
+{{ source(
+    "mqtt_io.modules.gpio",
+    "//ClassDef[name='GenericGPIO']//FunctionDef[name='setup_pin']",
+    "mqtt_io.modules.gpio:GenericGPIO.setup_pin"
+) }}
+
+For example, it would be called three times given the following configuration:
+
+```yaml
+digital_inputs:
+  - name: doorbell
+    module: raspberrypi
+    pin: 1
+
+  - name: lightswitch
+    module: raspberrypi
+    pin: 2
+
+digital_outputs:
+  - name: lights
+    module: raspberrypi
+    pin: 3
+```
+
+Here's the `raspberrypi` GPIO module's `setup_pin()` implementation:
+
+{{ source(
+    "mqtt_io.modules.gpio.raspberrypi",
+    "//ClassDef[name='GPIO']//FunctionDef[name='setup_pin']",
+    "mqtt_io.modules.gpio.raspberrypi:GPIO.setup_pin"
+) }}
+
+
+## TODO
+
+- Define when 'inverted' values are expected to be inverted or raw.

@@ -1,0 +1,59 @@
+{% for entry in ref_sections -%}
+{% if entry["toplevel_name"] == section -%}
+#{{ "#" * entry["depth"] }} {{ entry["title"] }} :id={{ entry["element_id"] }}
+
+{%- if entry["subtitle"] %}
+
+{{ entry["subtitle"] }}
+{%- endif %}
+
+{%- if "description" in entry["meta"] %}
+
+{{ entry["meta"]["description"] }}
+{%- endif %}
+
+```yaml
+Type: {{ entry["schema"]["type"] }}
+Required: {{ entry["schema"]["required"] }}
+
+{%- if "unit" in entry["meta"] %}
+Unit: {{ entry["meta"]["unit"] }}
+{%- endif %}
+
+{%- if "allowed" in entry["schema"] %}
+Allowed: {{ entry["schema"]["allowed"] }}
+{%- endif %}
+
+{%- if "min_val" in entry["schema"] %}
+Minimum value: {{ entry["schema"]["min_val"] }}
+{%- endif %}
+
+{%- if "max_val" in entry["schema"] %}
+Maximum value: {{ entry["schema"]["max_val"] }}
+{%- endif %}
+
+{%- if "allow_unknown" in entry["schema"] %}
+Unlisted entries accepted: {{ entry["schema"]["allow_unknown"] }}
+{%- endif %}
+
+{%- if "default" in entry["schema"] %}
+Default: {{ entry["schema"]["default"] }}
+{%- endif %}
+```
+
+{%- if "extra_info" in entry["meta"] %}
+
+?> {{ entry["meta"]["extra_info"] }}
+{%- endif %}
+
+{%- if "yaml_example" in entry["meta"] %}
+
+**Example**:
+
+```yaml
+{{ entry["meta"]["yaml_example"] -}}
+```
+{%- endif %}
+
+{% endif %}
+{%- endfor %}
