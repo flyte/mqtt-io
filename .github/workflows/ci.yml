@@ -1,8 +1,9 @@
 name: MQTT IO CI
 on:
-  - push
-  - pull_request
-  - release
+  push:
+  pull_request:
+  release:
+    types: [published]
 jobs:
   test:
     runs-on: ubuntu-22.04
@@ -28,63 +29,88 @@ jobs:
         run: poetry run behave --tags ~fixme mqtt_io/tests/features
       - name: Test stream reconnect
         run: poetry run pytest mqtt_io/tests/test_stream_reconnect.py
+      - name: Test release validation
+        run: poetry run python -m unittest discover -s scripts/tests -v
+
+  release_metadata:
+    name: Validate release metadata
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      stable: ${{ steps.release.outputs.stable }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install 'packaging>=23.2'
+      - name: Validate tag, package version and release type
+        id: release
+        run: python scripts/validate_release.py
 
   publish:
     name: Publish to PyPI
-    if: github.event_name == 'release' && github.event.action == 'created'
+    if: github.event_name == 'release' && github.event.action == 'published'
     runs-on: ubuntu-22.04
-    needs: test
+    needs: [test, release_metadata]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: '3.12'
       - name: Install poetry
         run: pip install poetry
       - name: Build packages
         run: poetry build
       - name: Publish packages
-        uses: pypa/gh-action-pypi-publish@master
-        # if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
 
   build_docker_image:
     name: Build Docker Image
-    if: (github.event_name == 'release' && github.event.action == 'created') || github.event_name == 'push'
+    if: >-
+      always() && needs.test.result == 'success' &&
+      ((github.event_name == 'release' && github.event.action == 'published' && needs.release_metadata.result == 'success') ||
+       (github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name != 'gh-pages'))
     runs-on: ubuntu-22.04
-    needs: test
+    needs: [test, release_metadata]
     steps:
-      - uses: actions/checkout@v2
-      - uses: docker/setup-qemu-action@v1
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
       - id: buildx
-        uses: docker/setup-buildx-action@v1
-      - uses: docker/login-action@v1
+        uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
-      - if: github.event_name == 'release' && github.event.action == 'created'
+      - name: Publish release image
+        if: github.event_name == 'release'
+        env:
+          VERSION: ${{ needs.release_metadata.outputs.version }}
+          STABLE: ${{ needs.release_metadata.outputs.stable }}
         run: |
-          # Remove prefix release
-          TAG_NAME=${GITHUB_REF##*/}
-          # Change slashes to hyphens
-          TAG_NAME=${TAG_NAME//\//-}
-          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${TAG_NAME} -t flyte/mqtt-io:latest --push .
-      - if: github.event_name == 'push'
+          tags=(-t "flyte/mqtt-io:${VERSION}")
+          if [[ "$STABLE" == 'true' ]]; then
+            tags+=(-t flyte/mqtt-io:latest)
+          fi
+          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 "${tags[@]}" --push .
+      - name: Publish branch image
+        if: github.event_name == 'push'
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
         run: |
-          # Remove prefix push
-          TAG_NAME=${GITHUB_REF##*/}
-          # Change slashes to hyphens
-          TAG_NAME=${TAG_NAME//\//-}
-          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t flyte/mqtt-io:${TAG_NAME} --push .
+          TAG_NAME="branch-$(printf '%s' "$BRANCH_NAME" | LC_ALL=C sed 's/[^A-Za-z0-9_.-]/-/g' | cut -c1-120)"
+          docker buildx build --platform linux/arm/v7,linux/arm64/v8,linux/amd64 -t "flyte/mqtt-io:${TAG_NAME}" --push .
 
   generate_docs:
     name: Generate Documentation
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref_name != 'gh-pages'
     concurrency: generate_docs
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Get branch names
@@ -100,10 +126,10 @@ jobs:
         run: |
           git checkout gh-pages
           git checkout ${{ steps.branch-names.outputs.current_branch }}
-      - name: Setup Python 3.8
-        uses: actions/setup-python@v2
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.8
+          python-version: '3.12'
       - name: Install dependencies and generate docs
         run: |
           pip install poetry

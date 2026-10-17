@@ -1,7 +1,25 @@
 Unreleased
 ==========
+
+2.7.0rc1 - Unreleased
+====================
+- Publish candidates with prerelease package versions and without Docker latest.
+- Validate release tags, all package version fields and the GitHub prerelease
+  flag before publishing; use the published event for releases from drafts.
+- Publish branch Docker images under a separate branch- tag namespace.
+- Update unsupported Checkout and Docker Actions runtimes.
+
+2.7.0 - Unreleased
+==================
+- Support configuring the SHT4x sensor chip address.
+- Fix a KeyError when reading GPIO Zero digital output pins during startup.
+- Parse the MQTT_IO_PORT environment variable as an integer.
 - Reopen any stream after a failed read or write, instead of polling a dead
   handle.
+- Replace deprecated pkg_resources usage with importlib.metadata.
+- Drop support for Python 3.8; Python 3.9 or later is required.
+- Use supported Python versions for release and documentation jobs, and align
+  the local tox environments with the Python 3.10 and 3.12 CI matrix.
 
 .v2.4.0 - 2024-07-20
 ====================
