@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mqtt-io"
-version = "2.6.0"
+version = "2.7.0"
 description = "Expose GPIO modules (Raspberry Pi, Beaglebone, PCF8754, PiFace2 etc.), digital sensors (LM75 etc.) and serial streams to an MQTT server for remote control and monitoring."
 readme = "README.md"
 authors = ["Ellis Percival <mqtt-io@failcode.co.uk>"]
@@ -21,6 +21,7 @@ packaging = ">=23.2"
 docutils = "0.18.1"
 
 [tool.poetry.group.dev.dependencies]
+tomli = { version = "^2.0.1", python = "<3.11" }
 mock = { version = "^4.0.3", python = ">=3.6,<3.8" }
 pytest = "^6.2.2"
 tox = "^3.22.0"
