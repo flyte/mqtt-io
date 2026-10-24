@@ -915,6 +915,10 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
     async def stream_poller(self, module: GenericStream, stream_conf: ConfigType) -> None:
         """
         Poll a stream at a given interval and fire the StreamDataReadEvent with read data.
+
+        A read that returns data is followed immediately by another read, so a frame
+        already split across two device buffers is not held for ``read_interval``.
+        The interval applies only while the device has nothing waiting.
         """
         while True:
             try:
@@ -925,9 +929,9 @@ class MqttIo:  # pylint: disable=too-many-instance-attributes
                 )
                 await self._reopen_stream(module, stream_conf)
                 continue
-            else:
-                if data is not None:
-                    self.event_bus.fire(StreamDataReadEvent(stream_conf["name"], data))
+            if data:
+                self.event_bus.fire(StreamDataReadEvent(stream_conf["name"], data))
+                continue
             await asyncio.sleep(stream_conf["read_interval"])
 
     def interrupt_callback(

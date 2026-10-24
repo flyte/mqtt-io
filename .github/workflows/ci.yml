@@ -29,6 +29,8 @@ jobs:
         run: poetry run behave --tags ~fixme mqtt_io/tests/features
       - name: Test stream reconnect
         run: poetry run pytest mqtt_io/tests/test_stream_reconnect.py
+      - name: Test USB stream cleanup
+        run: poetry run pytest mqtt_io/tests/test_stream_usb.py
       - name: Test release validation
         run: poetry run python -m unittest discover -s scripts/tests -v
 
