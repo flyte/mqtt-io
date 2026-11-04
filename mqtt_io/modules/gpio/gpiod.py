@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     # pylint: disable=import-error
     import gpiod  # type: ignore
 
-# Requires libgpiod-devel, libgpiod
-REQUIREMENTS = ("gpiod",)
+# Legacy gpiod 1.x package (hhk7734/python3-gpiod). For libgpiod v2 use gpiod2.
+REQUIREMENTS = ("gpiod<2",)
 
 CONFIG_SCHEMA = {
     "chip": {"type": "string", "required": False, "default": "/dev/gpiochip0"}

@@ -17,7 +17,8 @@ Hardware support is provided by specific GPIO, Sensor and Stream modules. It's e
 ### GPIO Modules
 
   - Beaglebone GPIO (`beaglebone`)
-  - Linux Kernel 4.8+ libgpiod (`gpiod`)
+  - Linux Kernel 4.8+ libgpiod 1.x (`gpiod`)
+  - Linux Kernel 5.10+ libgpiod v2 (`gpiod2`), e.g. Raspberry Pi 5
   - MCP23017 IO expander (`mcp23017`)
   - Orange Pi GPIO (`orangepi`)
   - PCF8574 IO expander (`pcf8574`)
