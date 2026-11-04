@@ -1,5 +1,9 @@
 Unreleased
 ==========
+- Add a `gpiod2` GPIO module for the official libgpiod v2 Python bindings
+  (`gpiod>=2`, Linux 5.10+). This makes GPIO work on the Raspberry Pi 5.
+- Pin the existing `gpiod` module to the legacy `gpiod<2` package it was
+  written for; fresh installs previously pulled 2.x and failed on startup.
 
 2.7.0 - 2026-10-17
 ==================
